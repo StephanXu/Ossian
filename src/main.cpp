@@ -3,6 +3,9 @@
 #include <vector>
 #include <tuple>
 #include <sstream>
+#include <memory>
+#include <future>
+#include <thread>
 #include "ColorFilter.hpp"
 #include "WindmillDetection.hpp"
 #include "ProgressBar.hpp"
@@ -16,7 +19,7 @@ public:
     ResourceLoadException() : std::runtime_error("ResourceLoadException") {}
 };
 
-int main()
+int WindmillTest()
 {
     /* Define color filters and detection object */
     ColorFilter redFilter{{{{170, 100, 100}, {180, 255, 255}},
@@ -107,4 +110,8 @@ int main()
     }
     std::cout << std::endl;
     return 0;
+}
+
+int main()
+{
 }
