@@ -1,8 +1,11 @@
 
-#ifndef INPUT_HPP
-#define INPUT_HPP
+#ifndef IOTYPES_HPP
+#define IOTYPES_HPP
 
 #include <opencv2/opencv.hpp>
+
+namespace NautilusVision
+{
 
 class BaseInput
 {
@@ -28,10 +31,9 @@ class BaseStatus
 {
 };
 
-
 class RoboStatus : public BaseStatus
 {
 };
 
-
+} // namespace NautilusVision
 #endif

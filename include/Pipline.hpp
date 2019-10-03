@@ -43,14 +43,6 @@ public:
         return Process(refInput);
     }
 
-    std::future<OutputType> ProcessTaskAsync(const InputType &refInput)
-    {
-        std::packaged_task<OutputType(refInput)> task{Process};
-        std::thread t{std::move(Process), this, refInput};
-        t.detach();
-        return task.get_future();
-    }
-
     template <typename ActionType>
     void RegisterAction()
     {

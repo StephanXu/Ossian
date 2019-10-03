@@ -4,8 +4,6 @@
 #include <tuple>
 #include <sstream>
 #include <memory>
-#include <future>
-#include <thread>
 #include "ColorFilter.hpp"
 #include "WindmillDetection.hpp"
 #include "ProgressBar.hpp"
