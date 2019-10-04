@@ -1,4 +1,13 @@
-
+/**
+ * @file MultiThread.hpp
+ * @author Xu Zihan (stephanxu@foxmail.com)
+ * @brief 提供多线程支持
+ * @version 0.1
+ * @date 2019-10-04
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #ifndef MULTITHREAD_HPP
 #define MULTITHREAD_HPP
 
