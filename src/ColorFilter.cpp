@@ -23,12 +23,12 @@ ColorFilter::ColorFilter(
 {
 }
 
-ColorFilter::ColorFilter(ColorFilter &&colorFilter)
+ColorFilter::ColorFilter(const ColorFilter &&colorFilter)
 {
     m_Filters = std::move(colorFilter.m_Filters);
 }
 
-ColorFilter::ColorFilter(ColorFilter &colorFilter)
+ColorFilter::ColorFilter(const ColorFilter &colorFilter)
 {
     m_Filters.assign(colorFilter.m_Filters.begin(),
                      colorFilter.m_Filters.end());

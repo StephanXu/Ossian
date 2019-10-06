@@ -53,6 +53,11 @@ public:
      */
     void Process(NautilusVision::BaseInputData& input) override;
 
+    bool IsSkip(const NautilusVision::BaseStatus &refStatus) override
+    {
+        return false;
+    }
+
     const std::vector<cv::Point2f> &Targets();
     const cv::Point2f &Center();
     float Radius();

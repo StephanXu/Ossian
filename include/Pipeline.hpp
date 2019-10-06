@@ -24,9 +24,8 @@ IOAP 模型（输入->动作1->...->动作n->输出）
 class IExecutable
 {
 public:
-    virtual void Process(BaseInputData &refInput,
-                         BaseOutputData &outOutput) = 0;
-    virtual bool IsSkip(const RoboStatus &refStatus) = 0;
+    virtual void Process(BaseInputData &refInput) = 0;
+    virtual bool IsSkip(const BaseStatus &refStatus) = 0;
 };
 
 class Pipeline
@@ -48,32 +47,31 @@ public:
                       "InputType should derived from BaseInputData");
         static_assert(std::is_copy_constructible<InputType>::value,
                       "InputType should be copy constructible");
-        Process(refInput);
+        Process(refInput, m_Status);
     }
 
-    template <typename ActionType>
-    void RegisterAction()
+    template <typename ActionType, typename... Args>
+    void RegisterAction(Args... args)
     {
         static_assert(std::is_base_of<IExecutable, ActionType>::value,
                       "ActionType should derived from IExecutable");
-        m_Actions.emplace_back(new ActionType);
+        m_Actions.emplace_back(new ActionType(std::forward<Args>(args)...));
     }
 
 private:
-    template <typename InputType, typename StatusType>
+    template <typename InputType>
     void Process(const InputType &refInput,
-                 const StatusType refStatus)
+                 const BaseStatus &refStatus)
     {
-        OutputType output;
         InputType input(input);
         for (auto &&action : m_Actions)
         {
             if (action.get()->IsSkip(refStatus))
             {
-                action.get()->Process(input, output);
+                action.get()->Process(input);
             }
         }
-        return output;
+        return;
     }
 
     std::vector<std::shared_ptr<IExecutable>> m_Actions;

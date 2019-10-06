@@ -45,10 +45,11 @@ public:
      * {{0, 100, 100}, {25, 255, 255}}}
      * @param filters 需要过滤的颜色列表
      */
-    explicit ColorFilter(
+    ColorFilter(
         const std::vector<std::tuple<cv::Scalar, cv::Scalar>> filters);
-    explicit ColorFilter(ColorFilter &&colorFilter);
-    explicit ColorFilter(ColorFilter &colorFilter);
+    ColorFilter(const ColorFilter &&colorFilter);
+    ColorFilter(const ColorFilter &colorFilter);
+
 
     cv::Mat Filter(const cv::Mat &source) const override;
 

@@ -194,7 +194,7 @@ class ThreadsGuard
 {
 public:
     explicit ThreadsGuard(ContainerType &threads)
-        : m_Threads(threads);
+        : m_Threads(threads)
     {
     }
 
@@ -226,13 +226,13 @@ public:
      * @param threadNum 线程数目
      */
     ThreadPool(const int threadNum)
-        : m_Guard(m_Threads), m_TerminateSignal(false)
+        : m_TerminateSignal(false), m_Guard(m_Threads)
     {
         try
         {
             for (int i{}; i < threadNum; ++i)
             {
-                m_Threads.emplace_back(Worker, this);
+                m_Threads.emplace_back(&ThreadPool::Worker, this);
             }
         }
         catch (...)

@@ -124,7 +124,9 @@ public:
 
     std::future<std::shared_ptr<BaseInputData>> GetInputAsync() override
     {
-        return std::async(std::launch::async, GetInput, this);
+        return std::async(std::launch::async,
+                          &VideoInputSource::GetInput,
+                          this);
     }
 
 private:
