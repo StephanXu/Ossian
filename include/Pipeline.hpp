@@ -24,39 +24,31 @@ IOAP 模型（输入->动作1->...->动作n->输出）
 class IExecutable
 {
 public:
-    virtual void Process(const BaseInputData &refInput,
-                         BaseOutputData &outResult) = 0;
+    virtual void Process(BaseInputData &refInput,
+                         BaseOutputData &outOutput) = 0;
     virtual bool IsSkip(const RoboStatus &refStatus) = 0;
 };
 
-class BasePipeline
-{
-};
-
-template <typename InputType,
-          typename OutputType,
-          typename StatusType>
-class Pipeline : public BasePipeline
+class Pipeline
 {
 public:
-    explicit BasePipeline(StatusType status)
+    template <typename StatusType>
+    Pipeline(StatusType &status)
         : m_Status(status)
     {
         // Validate template params
-        static_assert(std::is_base_of<BaseInputData, InputType>::value,
-                      "InputType should derived from BaseInputData");
-        static_assert(std::is_base_of<BaseOutputData, OutputType>::value,
-                      "OutputType should derived from BaseOutputData");
         static_assert(std::is_base_of<BaseStatus, StatusType>::value,
                       "StatusType should derived from BaseStatus");
-
-        static_assert(std::is_copy_constructible<InputType>::value,
-                      "InputType should be copy constructible");
     }
 
-    OutputType ProcessTask(const InputType &refInput)
+    template <typename InputType>
+    void ProcessTask(const InputType &refInput)
     {
-        return Process(refInput);
+        static_assert(std::is_base_of<BaseInputData, InputType>::value,
+                      "InputType should derived from BaseInputData");
+        static_assert(std::is_copy_constructible<InputType>::value,
+                      "InputType should be copy constructible");
+        Process(refInput);
     }
 
     template <typename ActionType>
@@ -68,12 +60,12 @@ public:
     }
 
 private:
-    OutputType Process(const InputType &refInput,
-                       const StatusType refStatus)
+    template <typename InputType, typename StatusType>
+    void Process(const InputType &refInput,
+                 const StatusType refStatus)
     {
         OutputType output;
-        InputType input;
-        refInput.CopyTo(input);
+        InputType input(input);
         for (auto &&action : m_Actions)
         {
             if (action.get()->IsSkip(refStatus))
@@ -86,7 +78,7 @@ private:
 
     std::vector<std::shared_ptr<IExecutable>> m_Actions;
 
-    StatusType &m_Status;
+    BaseStatus &m_Status;
 };
 
 } // namespace NautilusVision

@@ -12,6 +12,8 @@
 #define WINDMILL_DETECTION_HPP
 
 #include "ColorFilter.hpp"
+#include "Pipeline.hpp"
+#include "IOTypes.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <vector>
@@ -33,7 +35,7 @@ class IDetection
  * 识别、计算和预测大风车轨迹
  * 
  */
-class WindmillDetection : public IDetection
+class WindmillDetection : public NautilusVision::IExecutable
 {
 public:
     /**
@@ -49,7 +51,7 @@ public:
      * 计算一张图像并刷新（当达到最大采样数量时）当前目标坐标、运动圆心和半径信息
      * @retval 1 成功
      */
-    int FeedImage(const cv::Mat &image) override;
+    void Process(NautilusVision::BaseInputData& input) override;
 
     const std::vector<cv::Point2f> &Targets();
     const cv::Point2f &Center();

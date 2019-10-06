@@ -16,6 +16,7 @@
 #include <functional>
 #include <algorithm>
 #include "ColorFilter.hpp"
+#include "IOTypes.hpp"
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
                                      ColorFilter &colorFilter)
@@ -31,8 +32,12 @@ WindmillDetection::WindmillDetection(std::size_t sampleNum,
 {
 }
 
-int WindmillDetection::FeedImage(const cv::Mat &image)
+void WindmillDetection::Process(NautilusVision::BaseInputData &input)
 {
+    //[注意]：这里是不安全的使用方法，应当优化
+    NautilusVision::ImageInputData *imageInput =
+        static_cast<NautilusVision::ImageInputData *>(&input);
+    cv::Mat image = imageInput->m_Image;
     /* 
     * Pre-treatment
     * Convert color space into hsv for filter the color.
@@ -47,7 +52,7 @@ int WindmillDetection::FeedImage(const cv::Mat &image)
     cv::dilate(mask, mask,
                cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3)),
                cv::Point2f(-1, -1), 1);
-    
+
     /*
     * Get current target position by filting contours.
     */
@@ -81,7 +86,7 @@ int WindmillDetection::FeedImage(const cv::Mat &image)
     if (contoursIndex.size() != 1)
     {
         /* There is only one available target at once */
-        return 0;
+        return;
     }
     cv::RotatedRect minRect{cv::minAreaRect(contours[contoursIndex[0]])};
     cv::Point2f currentTarget{minRect.center};
@@ -99,14 +104,13 @@ int WindmillDetection::FeedImage(const cv::Mat &image)
     else
     {
         RefreshAccumulateCache(currentTarget);
-        return 0;
+        return;
     }
     /*
     * Predict the track and other targets.
     */
     std::tie(m_Center, m_Radius) = FitRound();
     GenerateTargetPosition(currentTarget, m_Center);
-    return 1;
 }
 
 const std::vector<cv::Point2f> &WindmillDetection::Targets()

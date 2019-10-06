@@ -48,34 +48,26 @@ class RoboStatus : public BaseStatus
 {
 };
 
-class BaseAdapter
-{
-};
-
 /**
  * @brief 输入方式基类
  * 数据 BaseInputData 通过该类获得，并可在 Dispatcher 中传递给相匹配的 Pipeline
- * @tparam InputDataType 输入数据类型
  */
-template <typename InputDataType>
-class BaseInputAdapter : public BaseAdapter
+class BaseInputAdapter
 {
 public:
     /**
      * @brief 获得输入
      * 以同步方式获得输入，可能引起线程阻塞以等待输入
-     * @param outData 输入数据
-     * @return true 输入正常
-     * @return false 输入异常，如对象失效
+     * @return std::shared_ptr<InputDataType> 输入数据的指针
      */
-    virtual bool GetInput(InputDataType &outData) = 0;
+    virtual std::shared_ptr<BaseInputData> GetInput() = 0;
 
     /**
      * @brief 获得输入
      * 以异步方式获得输入
-     * @return std::future<std::shared_ptr<InputDataType>> 输入指针的 future
+     * @return std::future<std::shared_ptr<InputDataType>> 输入数据指针的 future
      */
-    virtual std::future<std::shared_ptr<InputDataType>> GetInputAsync() = 0;
+    virtual std::future<std::shared_ptr<BaseInputData>> GetInputAsync() = 0;
 };
 
 /**
@@ -101,7 +93,7 @@ public:
  * @brief 视频输入
  * 此类提供视频输入
  */
-class VideoInputSource : public BaseInputAdapter<ImageInputData>
+class VideoInputSource : public BaseInputAdapter
 {
 public:
     /**
@@ -119,23 +111,20 @@ public:
         }
     }
 
-    bool GetInput(ImageInputData &outData) override
+    std::shared_ptr<BaseInputData> GetInput() override
     {
         if (!m_Valid)
         {
-            return false;
+            return std::shared_ptr<ImageInputData>{};
         }
-        m_VideoSource >> outData.m_Image;
+        std::shared_ptr<ImageInputData> result{new ImageInputData};
+        m_VideoSource >> result->m_Image;
+        return result;
     }
 
-    std::future<std::shared_ptr<ImageInputData>> GetInputAsync() override
+    std::future<std::shared_ptr<BaseInputData>> GetInputAsync() override
     {
-        // 这里没有添加对Valid判定结果的返回
-        return std::async(std::launch::async, [this]() {
-            std::shared_ptr<ImageInputData> result{new ImageInputData};
-            GetInput(*result);
-            return result;
-        });
+        return std::async(std::launch::async, GetInput, this);
     }
 
 private:
