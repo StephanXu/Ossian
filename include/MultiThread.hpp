@@ -272,6 +272,11 @@ public:
         return fut;
     }
 
+    bool Empty()
+    {
+        return m_Tasks.Empty();
+    }
+
 private:
     SafeQueue<TaskWrapper> m_Tasks;
     std::atomic_bool m_TerminateSignal; //< 要结束时为true

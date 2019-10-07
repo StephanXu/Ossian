@@ -22,12 +22,12 @@ public:
 
 NautilusVision::RoboStatus g_Status;
 
+ColorFilter redFilter{{{{170, 100, 100}, {180, 255, 255}},
+                       {{0, 100, 100}, {25, 255, 255}}}};
+ColorFilter blueFilter{{{{85, 100, 100}, {135, 255, 255}}}};
+
 int main()
 {
-    ColorFilter redFilter{{{{170, 100, 100}, {180, 255, 255}},
-                           {{0, 100, 100}, {25, 255, 255}}}};
-    ColorFilter blueFilter{{{{85, 100, 100}, {135, 255, 255}}}};
-
     NautilusVision::Dispatcher dispatcher;
     dispatcher.InitializeStatus<NautilusVision::RoboStatus>();
 
@@ -35,6 +35,7 @@ int main()
     pipe.RegisterAction<WindmillDetection>(80, redFilter);
 
     dispatcher.Register<NautilusVision::VideoInputSource>({&pipe}, "test.avi");
+    dispatcher.Run();
 }
 
 // int WindmillTest()

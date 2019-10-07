@@ -41,13 +41,11 @@ public:
     }
 
     template <typename InputType>
-    void ProcessTask(const InputType &refInput)
+    void ProcessTask(const std::shared_ptr<InputType> &refInput)
     {
         static_assert(std::is_base_of<BaseInputData, InputType>::value,
                       "InputType should derived from BaseInputData");
-        static_assert(std::is_copy_constructible<InputType>::value,
-                      "InputType should be copy constructible");
-        Process(refInput, m_Status);
+        Process(*refInput, m_Status);
     }
 
     template <typename ActionType, typename... Args>
@@ -59,16 +57,15 @@ public:
     }
 
 private:
-    template <typename InputType>
-    void Process(const InputType &refInput,
+    void Process(const BaseInputData &refInput,
                  const BaseStatus &refStatus)
     {
-        InputType input(input);
+        auto input = refInput.Clone();
         for (auto &&action : m_Actions)
         {
-            if (action.get()->IsSkip(refStatus))
+            if (!action.get()->IsSkip(refStatus))
             {
-                action.get()->Process(input);
+                action.get()->Process(*input);
             }
         }
         return;

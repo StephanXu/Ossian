@@ -28,7 +28,7 @@ WindmillDetection::WindmillDetection(std::size_t sampleNum,
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
                                      ColorFilter &&colorFilter)
-    : WindmillDetection(0, colorFilter)
+    : WindmillDetection(sampleNum, colorFilter)
 {
 }
 

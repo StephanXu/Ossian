@@ -25,6 +25,8 @@ namespace NautilusVision
  */
 class BaseInputData
 {
+public:
+    virtual std::shared_ptr<BaseInputData> Clone() const = 0;
 };
 
 /**
@@ -86,6 +88,12 @@ public:
         : m_Image(input.m_Image)
     {
     }
+
+    std::shared_ptr<BaseInputData> Clone() const override
+    {
+        return std::shared_ptr<BaseInputData>{new ImageInputData{*this}};
+    }
+
     cv::Mat m_Image;
 };
 
@@ -119,6 +127,11 @@ public:
         }
         std::shared_ptr<ImageInputData> result{new ImageInputData};
         m_VideoSource >> result->m_Image;
+        if (result->m_Image.empty())
+        {
+            m_Valid = true;
+            return {};
+        }
         return result;
     }
 
