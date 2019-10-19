@@ -9,14 +9,17 @@
  * 
  */
 
-#include "WindmillDetection.hpp"
 #include <opencv2/opencv.hpp>
+
+#include "WindmillDetection.hpp"
+#include "ColorFilter.hpp"
+#include "IOTypes.hpp"
+
 #include <vector>
 #include <tuple>
 #include <functional>
 #include <algorithm>
-#include "ColorFilter.hpp"
-#include "IOTypes.hpp"
+#include <atomic>
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
                                      ColorFilter &colorFilter)
@@ -132,19 +135,19 @@ void WindmillDetection::RefreshAccumulateCache(const cv::Point2f &appendDot,
                                                const cv::Point2f &removeDot)
 {
     /* for performance, I used raw multiply instead of std::pow */
-    m_x += appendDot.x - removeDot.x;
-    m_xSquare += appendDot.x * appendDot.x - removeDot.x * removeDot.x;
-    m_xCube += appendDot.x * appendDot.x * appendDot.x -
-               removeDot.x * removeDot.x * removeDot.x;
-    m_xMultiY += appendDot.x * appendDot.y - removeDot.x * removeDot.y;
-    m_xMultiYSquare += appendDot.x * appendDot.y * appendDot.y -
-                       removeDot.x * removeDot.y * removeDot.y;
-    m_xSquareMultiY += appendDot.x * appendDot.x * appendDot.y -
-                       removeDot.x * removeDot.x * removeDot.y;
-    m_y += appendDot.y - removeDot.y;
-    m_ySquare += appendDot.y * appendDot.y - removeDot.y * removeDot.y;
-    m_yCube += appendDot.y * appendDot.y * appendDot.y -
-               removeDot.y * removeDot.y * removeDot.y;
+    m_x = m_x + appendDot.x - removeDot.x;
+    m_xSquare = m_xSquare + appendDot.x * appendDot.x - removeDot.x * removeDot.x;
+    m_xCube = m_xCube + appendDot.x * appendDot.x * appendDot.x -
+              removeDot.x * removeDot.x * removeDot.x;
+    m_xMultiY = m_xMultiY + appendDot.x * appendDot.y - removeDot.x * removeDot.y;
+    m_xMultiYSquare = m_xMultiY + appendDot.x * appendDot.y * appendDot.y -
+                      removeDot.x * removeDot.y * removeDot.y;
+    m_xSquareMultiY = m_xSquareMultiY + appendDot.x * appendDot.x * appendDot.y -
+                      removeDot.x * removeDot.x * removeDot.y;
+    m_y = m_y + appendDot.y - removeDot.y;
+    m_ySquare = m_ySquare + appendDot.y * appendDot.y - removeDot.y * removeDot.y;
+    m_yCube = m_yCube + appendDot.y * appendDot.y * appendDot.y -
+              removeDot.y * removeDot.y * removeDot.y;
 }
 
 void WindmillDetection::RefreshAccumulateCache(const cv::Point2f &appendDot)

@@ -34,13 +34,14 @@ public:
         static_assert(std::is_base_of<BaseInputAdapter, InputAdapter>::value,
                       "PipelineType should derived from BasePipeline");
         m_Pipelines.push_back(std::make_tuple(
-            std::shared_ptr<BaseInputAdapter>(new InputAdapter{std::forward<Args>(args)...}),
+            std::shared_ptr<BaseInputAdapter>(
+                std::make_shared<InputAdapter>(std::forward<Args>(args)...)),
             std::vector<Pipeline *>(pipelines)));
     }
 
     void Run()
     {
-        pureTick = cv::getTickCount();  //< [注意]：测试代码
+        pureTick = cv::getTickCount(); //< [注意]：测试代码
         while (true)
         {
             for (auto &&item : m_Pipelines)
@@ -48,7 +49,7 @@ public:
                 auto input = std::get<0>(item)->GetInput();
                 if (!input)
                 {
-                    if (m_ThreadPool.Empty())   //< [注意]：测试代码
+                    if (m_ThreadPool.Empty()) //< [注意]：测试代码
                     {
                         std::cout << "Time:"
                                   << (cv::getTickCount() - pureTick) / cv::getTickFrequency()
@@ -75,7 +76,7 @@ private:
         m_Pipelines;
     std::unique_ptr<BaseStatus> m_Status;
 
-    long long pureTick;//< [注意]：测试代码
+    long long pureTick; //< [注意]：测试代码
 };
 
 } // namespace NautilusVision

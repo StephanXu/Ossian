@@ -53,7 +53,8 @@ public:
     {
         static_assert(std::is_base_of<IExecutable, ActionType>::value,
                       "ActionType should derived from IExecutable");
-        m_Actions.emplace_back(new ActionType(std::forward<Args>(args)...));
+        m_Actions.emplace_back(
+            std::make_shared<ActionType>(std::forward<Args>(args)...));
     }
 
 private:

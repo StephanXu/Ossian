@@ -19,6 +19,7 @@
 #include <vector>
 #include <tuple>
 #include <queue>
+#include <atomic>
 
 /**
  * @brief 检测相关基类
@@ -51,7 +52,7 @@ public:
      * 计算一张图像并刷新（当达到最大采样数量时）当前目标坐标、运动圆心和半径信息
      * @retval 1 成功
      */
-    void Process(NautilusVision::BaseInputData& input) override;
+    void Process(NautilusVision::BaseInputData &input) override;
 
     bool IsSkip(const NautilusVision::BaseStatus &refStatus) override
     {
@@ -75,15 +76,15 @@ private:
     * 轨迹累加数据缓存
     * 由 RefreshAccumulateCache 计算
     */
-    float m_x = 0.0;
-    float m_xSquare = 0.0;
-    float m_xCube = 0.0;
-    float m_xMultiY = 0.0;
-    float m_xMultiYSquare = 0.0;
-    float m_xSquareMultiY = 0.0;
-    float m_y = 0.0;
-    float m_ySquare = 0.0;
-    float m_yCube = 0.0;
+    std::atomic<float> m_x{0.0};
+    std::atomic<float> m_xSquare{0.0};
+    std::atomic<float> m_xCube{0.0};
+    std::atomic<float> m_xMultiY{0.0};
+    std::atomic<float> m_xMultiYSquare{0.0};
+    std::atomic<float> m_xSquareMultiY{0.0};
+    std::atomic<float> m_y{0.0};
+    std::atomic<float> m_ySquare{0.0};
+    std::atomic<float> m_yCube{0.0};
 
     /**
      * @brief 刷新轨迹累加数据缓存
@@ -117,18 +118,16 @@ private:
     void GenerateTargetPosition(cv::Point2f &currentTarget,
                                 cv::Point2f &center);
 
-
     /**
      * @brief 用于顶点过滤的状态标记
      * 
      */
     enum class ContoursMark
     {
-        ADD, ///< 加入到结果
+        ADD,    ///< 加入到结果
         IGNORE, ///< 不添加到结果，但会遍历其子轮廓
-        SKIP ///< 不添加到结果，不会遍历其子轮廓
+        SKIP    ///< 不添加到结果，不会遍历其子轮廓
     };
-
 
     /**
      * @brief 遍历轮廓树
