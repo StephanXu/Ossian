@@ -89,6 +89,6 @@ private:
     bool m_Valid;
 };
 
-}; // namespace NautilusVision
+} // namespace NautilusVision
 
 #endif
