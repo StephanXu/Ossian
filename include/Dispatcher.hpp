@@ -9,6 +9,7 @@
 #include "MultiThread.hpp"
 #include "Pipeline.hpp"
 #include "IOTypes.hpp"
+#include "Service.hpp"
 
 namespace NautilusVision
 {
@@ -23,8 +24,7 @@ public:
     template <typename StatusType>
     void InitializeStatus()
     {
-        static_assert(std::is_base_of<BaseStatus, StatusType>::value,
-                      "StatusType should derived from BaseStatus");
+        static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
         m_Status.reset(new StatusType);
     }
 
@@ -33,10 +33,14 @@ public:
     {
         static_assert(std::is_base_of<BaseInputAdapter, InputAdapter>::value,
                       "PipelineType should derived from BasePipeline");
-        m_Pipelines.push_back(std::make_tuple(
-            std::shared_ptr<BaseInputAdapter>(
-                std::make_shared<InputAdapter>(std::forward<Args>(args)...)),
-            std::vector<Pipeline *>(pipelines)));
+        m_Pipelines.push_back(std::make_shared<Pipeline>(m_Status,));
+    }
+
+    template <typename ServiceType, typename... Args>
+    void RegisterService(Args... args)
+    {
+        static_assert(std::is_base_of<IService, ServiceType>::value, "ServiceType should derived from ServiceType");
+        m_Services.push_back(std::make_shared<ServiceType>(std::forward<Args>(args)...));
     }
 
     void Run()
@@ -44,36 +48,30 @@ public:
         pureTick = cv::getTickCount(); //< [注意]：测试代码
         while (true)
         {
-            for (auto &&item : m_Pipelines)
+            for (auto &&pipeline : m_Pipelines)
             {
-                auto input = std::get<0>(item)->GetInput();
-                if (!input)
-                {
-                    if (m_ThreadPool.Empty()) //< [注意]：测试代码
-                    {
-                        std::cout << "Time:"
-                                  << (cv::getTickCount() - pureTick) / cv::getTickFrequency()
-                                  << std::endl;
-                        return;
-                    }
-                    continue;
-                }
-                for (auto &&pipeline : std::get<1>(item))
-                {
-                    // pipeline->ProcessTask(input);
-                    m_ThreadPool.AddTask(&Pipeline::ProcessTask<BaseInputData>,
-                                         pipeline,
-                                         input);
-                }
+                // if (!input)
+                // {
+                //     if (m_ThreadPool.Empty()) //< [注意]：测试代码
+                //     {
+                //         std::cout << "Time:"
+                //                   << (cv::getTickCount() - pureTick) / cv::getTickFrequency()
+                //                   << std::endl;
+                //         return;
+                //     }
+                //     continue;
+                // }
+
+                // pipeline->ProcessTask();
+                m_ThreadPool.AddTask(&Pipeline::ProcessTask, pipeline.get());
             }
         }
     }
 
 private:
     ThreadPool m_ThreadPool;
-    std::vector<std::tuple<std::shared_ptr<BaseInputAdapter>,
-                           std::vector<Pipeline *>>>
-        m_Pipelines;
+    std::vector<std::shared_ptr<Pipeline>> m_Pipelines;
+    std::vector<std::shared_ptr<IService>> m_Services;
     std::unique_ptr<BaseStatus> m_Status;
 
     long long pureTick; //< [注意]：测试代码

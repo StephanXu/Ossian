@@ -10,7 +10,7 @@
 namespace NautilusVision
 {
 
-class BaseService
+class IService
 {
 public:
 private:
@@ -20,7 +20,7 @@ private:
  * @brief 输入方式基类
  * 数据 BaseInputData 通过该类获得，并可在 Dispatcher 中传递给相匹配的 Pipeline
  */
-class BaseInputAdapter
+class BaseInputAdapter : IService
 {
 public:
     /**
@@ -37,7 +37,6 @@ public:
      */
     virtual std::future<std::shared_ptr<BaseInputData>> GetInputAsync() = 0;
 };
-
 
 /**
  * @brief 视频输入

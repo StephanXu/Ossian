@@ -1,3 +1,4 @@
 .vscode
+.vs
 doc/doxygen
 build

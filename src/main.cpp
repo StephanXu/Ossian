@@ -10,6 +10,7 @@
 
 #include "Dispatcher.hpp"
 #include "IOTypes.hpp"
+#include "Service.hpp"
 
 const std::string videoFilename{"test.avi"};
 const std::string videoOutput{"output.avi"};

@@ -12,6 +12,8 @@
 #define PIPELINE_HPP
 
 #include "IOTypes.hpp"
+#include "Service.hpp"
+
 #include <type_traits>
 
 namespace NautilusVision
@@ -31,40 +33,18 @@ public:
 class Pipeline
 {
 public:
-    template <typename StatusType>
-    Pipeline(StatusType &status)
-        : m_Status(status)
+    Pipeline(BaseStatus &status, BaseInputAdapter &refInputAdapter)
+        : m_Status(status),
+          m_InputAdapter(refInputAdapter)
     {
-        // Validate template params
-        static_assert(std::is_base_of<BaseStatus, StatusType>::value,
-                      "StatusType should derived from BaseStatus");
     }
 
-    template <typename InputType>
-    void ProcessTask(const std::shared_ptr<InputType> &refInput)
+    void ProcessTask()
     {
-        static_assert(std::is_base_of<BaseInputData, InputType>::value,
-                      "InputType should derived from BaseInputData");
-        Process(*refInput, m_Status);
-    }
-
-    template <typename ActionType, typename... Args>
-    void RegisterAction(Args... args)
-    {
-        static_assert(std::is_base_of<IExecutable, ActionType>::value,
-                      "ActionType should derived from IExecutable");
-        m_Actions.emplace_back(
-            std::make_shared<ActionType>(std::forward<Args>(args)...));
-    }
-
-private:
-    void Process(const BaseInputData &refInput,
-                 const BaseStatus &refStatus)
-    {
-        auto input = refInput.Clone();
+        auto input = m_InputAdapter.GetInput();
         for (auto &&action : m_Actions)
         {
-            if (!action.get()->IsSkip(refStatus))
+            if (!action.get()->IsSkip(m_Status))
             {
                 action.get()->Process(*input);
             }
@@ -72,9 +52,18 @@ private:
         return;
     }
 
+    template <typename ActionType, typename... Args>
+    void RegisterAction(Args... args)
+    {
+        static_assert(std::is_base_of<IExecutable, ActionType>::value, "ActionType should derived from IExecutable");
+        m_Actions.emplace_back(std::make_shared<ActionType>(std::forward<Args>(args)...));
+    }
+
+private:
     std::vector<std::shared_ptr<IExecutable>> m_Actions;
 
     BaseStatus &m_Status;
+    BaseInputAdapter &m_InputAdapter;
 };
 
 } // namespace NautilusVision
