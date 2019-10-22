@@ -44,6 +44,13 @@ class BaseStatus
 {
 };
 
+template<typename StatusType>
+std::unique_ptr<StatusType> CreateStatus()
+{
+    static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
+    return std::make_unique<StatusType>();
+}
+
 /**
  * @brief 机器人状态
  */

@@ -19,6 +19,9 @@ namespace NautilusVision
 namespace DI
 {
 
+//------------------------------------------------------------------------------
+// 类型封装
+
 /**
  * @brief 建立由 ValueType 包装的类型映射
  * 此类型维护一个由类型的hash作为key的hash表
@@ -222,7 +225,7 @@ private:
         };
         Mark m_Mark = Mark::Unmarked;
 
-        std::string m_DebugTypeName;       //< 依赖类型（调试用途
+        std::string m_DebugTypeName;       //< 依赖类型（调试用途）
         InitializerFunction m_Initializer; //< 依赖建造函数，在此函数中将调用工厂函数并添加到依赖容器
         bool m_HasInitializer = false;     //< 如果为false，则说明节点被依赖但没有提供工厂（即没有注册），这将引起异常
         std::vector<std::type_index> m_Dependencies;
@@ -230,8 +233,8 @@ private:
     /**
      * @brief 实例化依赖
      * 通过对依赖图拓扑遍历依次实例化依赖
-     * @param nodeId 
-     * @param injector 
+     * @param nodeId 节点关键字
+     * @param injector 注入器
      */
     void ToposortVisitNode(std::type_index nodeId, Injector &injector)
     {

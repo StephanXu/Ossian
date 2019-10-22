@@ -66,6 +66,15 @@ private:
     BaseInputAdapter &m_InputAdapter;
 };
 
+template <typename StatusType, typename InputAdapterType>
+std::unique_ptr<Pipeline> CreatePipeline(StatusType *status, InputAdapterType *adapter)
+{
+    static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
+    static_assert(std::is_base_of < BaseInputAdapter, InputAdapterType::value,
+                  "InputAdapterType should derived from BaseInputAdapter");
+    return std::make_unique<Pipeline>(*status, *adapter);
+}
+
 } // namespace NautilusVision
 
 #endif

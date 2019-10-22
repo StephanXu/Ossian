@@ -16,6 +16,12 @@ public:
 private:
 };
 
+template <typename ServiceType, typename... ServiceDependencies>
+std::unique_ptr<ServiceType> CreateService(ServiceDependencies *... args)
+{
+    static_assert(std::is_base_of<IService, ServiceType>::value, "ServiceType should derived from IService");
+    return std::make_unique<ServiceType>(std::forward<ServiceDependencies>(args)...);
+}
 /**
  * @brief 输入方式基类
  * 数据 BaseInputData 通过该类获得，并可在 Dispatcher 中传递给相匹配的 Pipeline
@@ -88,6 +94,11 @@ private:
     cv::VideoCapture m_VideoSource;
     bool m_Valid;
 };
+
+std::unique_ptr<VideoInputSource> CreateVideoInputSource()
+{
+    return std::make_unique<VideoInputSource>("test.avi");
+}
 
 } // namespace NautilusVision
 

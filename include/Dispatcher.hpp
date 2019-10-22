@@ -5,11 +5,13 @@
 #include <vector>
 #include <memory>
 #include <tuple>
+#include <future>
 
 #include "MultiThread.hpp"
 #include "Pipeline.hpp"
 #include "IOTypes.hpp"
 #include "Service.hpp"
+#include "DI.hpp"
 
 namespace NautilusVision
 {
@@ -21,26 +23,17 @@ namespace NautilusVision
 class Dispatcher
 {
 public:
-    template <typename StatusType>
-    void InitializeStatus()
+    Dispatcher() = default;
+    Dispatcher(const Dispatcher &dispatcher) = delete;
+    Dispatcher(const Dispatcher &&dispatcher) = delete;
+    Dispatcher(DI::Injector &&injector,
+               std::vector<std::packaged_task<Pipeline *(DI::Injector &)>> &pipelineRealizer)
     {
-        static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
-        m_Status.reset(new StatusType);
-    }
-
-    template <typename InputAdapter, typename... Args>
-    void Register(std::initializer_list<Pipeline *> pipelines, Args... args)
-    {
-        static_assert(std::is_base_of<BaseInputAdapter, InputAdapter>::value,
-                      "PipelineType should derived from BasePipeline");
-        m_Pipelines.push_back(std::make_shared<Pipeline>(m_Status,));
-    }
-
-    template <typename ServiceType, typename... Args>
-    void RegisterService(Args... args)
-    {
-        static_assert(std::is_base_of<IService, ServiceType>::value, "ServiceType should derived from ServiceType");
-        m_Services.push_back(std::make_shared<ServiceType>(std::forward<Args>(args)...));
+        for (auto &&realizer : pipelineRealizer)
+        {
+            realizer(injector);
+            m_Pipelines.push_back(realizer.get_future().get());
+        }
     }
 
     void Run()
@@ -63,18 +56,58 @@ public:
                 // }
 
                 // pipeline->ProcessTask();
-                m_ThreadPool.AddTask(&Pipeline::ProcessTask, pipeline.get());
+                m_ThreadPool.AddTask(&Pipeline::ProcessTask, pipeline);
             }
         }
     }
 
 private:
     ThreadPool m_ThreadPool;
-    std::vector<std::shared_ptr<Pipeline>> m_Pipelines;
-    std::vector<std::shared_ptr<IService>> m_Services;
-    std::unique_ptr<BaseStatus> m_Status;
-
+    std::vector<Pipeline *> m_Pipelines;
     long long pureTick; //< [注意]：测试代码
+};
+
+class ApplicationBuilder
+{
+public:
+    ApplicationBuilder() = default;
+    ApplicationBuilder(const ApplicationBuilder &dispatcher) = delete;
+    ApplicationBuilder(const ApplicationBuilder &&dispatcher) = delete;
+
+    template <typename StatusType>
+    void RegisterStatusType()
+    {
+        m_DIConfig.Add(CreateStatus<StatusType>);
+        m_StatusRealizer = std::make_unique([](DI::Injector &injector) { return injector.GetInstance<StatusType>(); })
+    }
+
+    template <typename ServiceType, typename... Args>
+    void RegisterService(Args... args)
+    {
+        m_DIConfig.Add(CreateService<ServiceType, Args...>);
+    }
+
+    //now only support single pipeline.
+    template <typename StatusType, typename InputAdapterType>
+    void RegisterPipeline()
+    {
+        m_DIConfig.Add(CreatePipeline<StatusType, InputAdapterType>);
+        m_PipelineRealizer.emplace_back([](DI::Injector &injector) { return injector.GetInstance<Pipeline>() });
+    }
+
+    Dispatcher Realization()
+    {
+        return Dispatcher(m_DIConfig.BuildInjector(), m_PipelineRealizer);
+    }
+
+private:
+    DI::DIConfiguration m_DIConfig;
+
+    // 用于获得实例化后的Pipeline，但此处框架仅支持一个Pipeline，使用vector是为了之后支持多Pipeline做准备
+    std::vector<std::packaged_task<Pipeline *(DI::Injector &)>> m_PipelineRealizer;
+
+    // 用于获得实例化后的Status
+    std::unique_ptr<std::packaged_task<BaseStatus *(DI::Injector &)>> m_StatusRealizer;
 };
 
 } // namespace NautilusVision
