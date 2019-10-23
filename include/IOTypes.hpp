@@ -16,6 +16,7 @@
 #include <future>
 #include <memory>
 #include <string>
+#include <iostream> //< 测试代码
 
 namespace NautilusVision
 {
@@ -44,7 +45,7 @@ class BaseStatus
 {
 };
 
-template<typename StatusType>
+template <typename StatusType>
 std::unique_ptr<StatusType> CreateStatus()
 {
     static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
@@ -56,6 +57,15 @@ std::unique_ptr<StatusType> CreateStatus()
  */
 class RoboStatus : public BaseStatus
 {
+public:
+    RoboStatus() //< 测试代码
+    {
+        std::cout << "Status Constructed" << std::endl;
+    }
+    ~RoboStatus()
+    {
+        std::cout << "Status destory" << std::endl;
+    }
 };
 
 /**
@@ -87,8 +97,6 @@ public:
 
     cv::Mat m_Image;
 };
-
-
 
 } // namespace NautilusVision
 #endif

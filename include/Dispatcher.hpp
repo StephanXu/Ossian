@@ -28,10 +28,11 @@ public:
     Dispatcher(const Dispatcher &&dispatcher) = delete;
     Dispatcher(DI::Injector &&injector,
                std::vector<std::packaged_task<Pipeline *(DI::Injector &)>> &pipelineRealizer)
+               :m_Injector(std::move(injector))
     {
         for (auto &&realizer : pipelineRealizer)
         {
-            realizer(injector);
+            realizer(m_Injector);
             m_Pipelines.push_back(realizer.get_future().get());
         }
     }
@@ -65,6 +66,7 @@ private:
     ThreadPool m_ThreadPool;
     std::vector<Pipeline *> m_Pipelines;
     long long pureTick; //< [注意]：测试代码
+    DI::Injector m_Injector;
 };
 
 class ApplicationBuilder
@@ -78,7 +80,10 @@ public:
     void RegisterStatusType()
     {
         m_DIConfig.Add(CreateStatus<StatusType>);
-        m_StatusRealizer = std::make_unique([](DI::Injector &injector) { return injector.GetInstance<StatusType>(); })
+        m_StatusRealizer = std::make_unique<std::packaged_task<BaseStatus *(DI::Injector &)>>(
+            [](DI::Injector &injector) -> BaseStatus * {
+                return injector.GetInstance<StatusType>();
+            });
     }
 
     template <typename ServiceType, typename... Args>
@@ -88,11 +93,20 @@ public:
     }
 
     //now only support single pipeline.
-    template <typename StatusType, typename InputAdapterType>
+    template <typename StatusType, typename InputAdapterType, typename... Args>
     void RegisterPipeline()
     {
-        m_DIConfig.Add(CreatePipeline<StatusType, InputAdapterType>);
-        m_PipelineRealizer.emplace_back([](DI::Injector &injector) { return injector.GetInstance<Pipeline>() });
+        m_DIConfig.Add(CreatePipeline<StatusType, InputAdapterType, Args...>);
+        m_PipelineRealizer.emplace_back([](DI::Injector &injector) { return injector.GetInstance<Pipeline>(); });
+    }
+
+    template <class InstanceType, class Deleter, class... Deps>
+    using InstanceFactoryFunction = std::unique_ptr<InstanceType, Deleter> (*)(Deps *...);
+
+    template <class InstanceType, class Deleter, class... Deps>
+    void Register(InstanceFactoryFunction<InstanceType, Deleter, Deps...> instanceFactory)
+    {
+        m_DIConfig.Add(instanceFactory);
     }
 
     Dispatcher Realization()

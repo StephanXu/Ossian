@@ -33,8 +33,9 @@ public:
 class Pipeline
 {
 public:
-    Pipeline(BaseStatus &status, BaseInputAdapter &refInputAdapter)
-        : m_Status(status),
+    Pipeline(BaseStatus &status, BaseInputAdapter &refInputAdapter, std::vector<IExecutable *> &&actions)
+        : m_Actions(std::move(actions)),
+          m_Status(status),
           m_InputAdapter(refInputAdapter)
     {
     }
@@ -44,9 +45,9 @@ public:
         auto input = m_InputAdapter.GetInput();
         for (auto &&action : m_Actions)
         {
-            if (!action.get()->IsSkip(m_Status))
+            if (!action->IsSkip(m_Status))
             {
-                action.get()->Process(*input);
+                action->Process(*input);
             }
         }
         return;
@@ -60,19 +61,19 @@ public:
     }
 
 private:
-    std::vector<std::shared_ptr<IExecutable>> m_Actions;
+    std::vector<IExecutable *> m_Actions;
 
     BaseStatus &m_Status;
     BaseInputAdapter &m_InputAdapter;
 };
 
-template <typename StatusType, typename InputAdapterType>
-std::unique_ptr<Pipeline> CreatePipeline(StatusType *status, InputAdapterType *adapter)
+template <typename StatusType, typename InputAdapterType, typename... Args>
+std::unique_ptr<Pipeline> CreatePipeline(StatusType *status, InputAdapterType *adapter, Args *... actions)
 {
     static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
-    static_assert(std::is_base_of < BaseInputAdapter, InputAdapterType::value,
+    static_assert(std::is_base_of<BaseInputAdapter, InputAdapterType>::value,
                   "InputAdapterType should derived from BaseInputAdapter");
-    return std::make_unique<Pipeline>(*status, *adapter);
+    return std::make_unique<Pipeline>(*status, *adapter, std::vector<IExecutable *>{actions...});
 }
 
 } // namespace NautilusVision

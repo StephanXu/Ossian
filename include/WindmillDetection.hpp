@@ -20,6 +20,7 @@
 #include <tuple>
 #include <queue>
 #include <atomic>
+#include <memory>
 
 /**
  * @brief 检测相关基类

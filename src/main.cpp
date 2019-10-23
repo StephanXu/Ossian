@@ -27,16 +27,25 @@ ColorFilter redFilter{{{{170, 100, 100}, {180, 255, 255}},
                        {{0, 100, 100}, {25, 255, 255}}}};
 ColorFilter blueFilter{{{{85, 100, 100}, {135, 255, 255}}}};
 
+std::unique_ptr<WindmillDetection> CreateWindmillDetection()
+{
+    return std::make_unique<WindmillDetection>(80, redFilter);
+}
+
+std::unique_ptr<NautilusVision::VideoInputSource> CreateVideoInputSource()
+{
+    return std::make_unique<NautilusVision::VideoInputSource>("test.avi");
+}
+
+
 int main()
 {
-    NautilusVision::Dispatcher dispatcher;
-    dispatcher.InitializeStatus<NautilusVision::RoboStatus>();
-
-    NautilusVision::Pipeline pipe(g_Status);
-    pipe.RegisterAction<WindmillDetection>(80, redFilter);
-
-    dispatcher.Register<NautilusVision::VideoInputSource>({&pipe}, "test.avi");
-    dispatcher.Run();
+    NautilusVision::ApplicationBuilder builder;
+    builder.RegisterStatusType<NautilusVision::RoboStatus>();
+    builder.Register(CreateWindmillDetection);
+    builder.Register(CreateVideoInputSource);
+    builder.RegisterPipeline<NautilusVision::RoboStatus, NautilusVision::VideoInputSource, WindmillDetection>();
+    builder.Realization().Run();
 }
 
 // int WindmillTest()

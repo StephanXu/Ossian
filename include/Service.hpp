@@ -95,11 +95,6 @@ private:
     bool m_Valid;
 };
 
-std::unique_ptr<VideoInputSource> CreateVideoInputSource()
-{
-    return std::make_unique<VideoInputSource>("test.avi");
-}
-
 } // namespace NautilusVision
 
 #endif
