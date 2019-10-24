@@ -23,10 +23,12 @@
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
                                      ColorFilter &colorFilter)
-    : m_ColorFilter(colorFilter),
+    : m_Valid(false),
+      m_ColorFilter(colorFilter),
       m_TrackSize(sampleNum),
       m_Targets(5)
 {
+    std::cout << "windmill construct\t" << this << std::endl;
 }
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
@@ -41,6 +43,11 @@ void WindmillDetection::Process(NautilusVision::BaseInputData &input)
     NautilusVision::ImageInputData *imageInput =
         static_cast<NautilusVision::ImageInputData *>(&input);
     cv::Mat image = imageInput->m_Image;
+    if (image.empty())
+    {
+        m_Valid = true;
+        return;
+    }
     /* 
     * Pre-treatment
     * Convert color space into hsv for filter the color.
@@ -93,16 +100,19 @@ void WindmillDetection::Process(NautilusVision::BaseInputData &input)
     }
     cv::RotatedRect minRect{cv::minAreaRect(contours[contoursIndex[0]])};
     cv::Point2f currentTarget{minRect.center};
-    m_Track.emplace(currentTarget);
+    // m_Track.emplace(currentTarget);
+    m_Track.Push(currentTarget);
+
     /*
     * Save the track for predicting
     * All related parameters will be refreshed in RefreshAccuulateCache
     */
-    if (m_Track.size() > m_TrackSize)
+    if (m_Track.Size() > m_TrackSize)
     {
-        cv::Point2f removeRecord{m_Track.front()};
-        RefreshAccumulateCache(currentTarget, removeRecord);
-        m_Track.pop();
+        // cv::Point2f removeRecord{m_Track.front()};
+        auto removeRecord = m_Track.WaitAndPop();
+        RefreshAccumulateCache(currentTarget, *removeRecord);
+        // m_Track.pop();
     }
     else
     {
@@ -114,6 +124,8 @@ void WindmillDetection::Process(NautilusVision::BaseInputData &input)
     */
     std::tie(m_Center, m_Radius) = FitRound();
     GenerateTargetPosition(currentTarget, m_Center);
+
+    // AddCount();
 }
 
 const std::vector<cv::Point2f> &WindmillDetection::Targets()

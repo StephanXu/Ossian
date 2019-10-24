@@ -21,8 +21,6 @@ public:
     ResourceLoadException() : std::runtime_error("ResourceLoadException") {}
 };
 
-NautilusVision::RoboStatus g_Status;
-
 ColorFilter redFilter{{{{170, 100, 100}, {180, 255, 255}},
                        {{0, 100, 100}, {25, 255, 255}}}};
 ColorFilter blueFilter{{{{85, 100, 100}, {135, 255, 255}}}};
@@ -37,6 +35,12 @@ std::unique_ptr<NautilusVision::VideoInputSource> CreateVideoInputSource()
     return std::make_unique<NautilusVision::VideoInputSource>("test.avi");
 }
 
+std::atomic<int> m_Count(0);
+void AddCount()
+{
+    m_Count++;
+    std::cout << m_Count << std::endl;
+}
 
 int main()
 {
@@ -44,7 +48,9 @@ int main()
     builder.RegisterStatusType<NautilusVision::RoboStatus>();
     builder.Register(CreateWindmillDetection);
     builder.Register(CreateVideoInputSource);
-    builder.RegisterPipeline<NautilusVision::RoboStatus, NautilusVision::VideoInputSource, WindmillDetection>();
+    builder.RegisterPipeline<NautilusVision::RoboStatus,
+                             NautilusVision::VideoInputSource,
+                             WindmillDetection>();
     builder.Realization().Run();
 }
 

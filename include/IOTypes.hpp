@@ -27,7 +27,15 @@ namespace NautilusVision
 class BaseInputData
 {
 public:
-    virtual std::shared_ptr<BaseInputData> Clone() const = 0;
+    BaseInputData()
+    {
+        std::cout << "ImageInputData construct" << std::endl;
+    }
+    ~BaseInputData()
+    {
+        std::cout << "ImageInputData destory" << std::endl;
+    }
+    virtual std::unique_ptr<BaseInputData> Clone() const = 0;
     virtual BaseInputData *GetData() = 0;
 };
 
@@ -57,15 +65,6 @@ std::unique_ptr<StatusType> CreateStatus()
  */
 class RoboStatus : public BaseStatus
 {
-public:
-    RoboStatus() //< 测试代码
-    {
-        std::cout << "Status Constructed" << std::endl;
-    }
-    ~RoboStatus()
-    {
-        std::cout << "Status destory" << std::endl;
-    }
 };
 
 /**
@@ -85,9 +84,9 @@ public:
     {
     }
 
-    std::shared_ptr<BaseInputData> Clone() const override
+    std::unique_ptr<BaseInputData> Clone() const override
     {
-        return std::make_shared<ImageInputData>(*this);
+        return std::make_unique<ImageInputData>(*this);
     }
 
     ImageInputData *GetData() override
@@ -99,4 +98,6 @@ public:
 };
 
 } // namespace NautilusVision
+
+void AddCount();
 #endif

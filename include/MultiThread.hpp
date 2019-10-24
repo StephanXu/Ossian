@@ -59,6 +59,12 @@ public:
         return m_Queue.empty();
     }
 
+    size_t Size() const
+    {
+        std::lock_guard<std::mutex> lock{m_Mutex};
+        return m_Queue.size();
+    }
+
     /**
      * @brief 等待元素并返回
      * 当队列中有元素时，从队列中取回并弹出元素，没有元素时等待新元素出现

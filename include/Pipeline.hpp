@@ -38,11 +38,20 @@ public:
           m_Status(status),
           m_InputAdapter(refInputAdapter)
     {
+        std::cout << "Pipeline constructor" << std::endl;
+    }
+    ~Pipeline()
+    {
+        std::cout << "Pipeline destory" << std::endl;
     }
 
     void ProcessTask()
     {
         auto input = m_InputAdapter.GetInput();
+        if (!input)
+        {
+            return;
+        }
         for (auto &&action : m_Actions)
         {
             if (!action->IsSkip(m_Status))

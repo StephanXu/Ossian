@@ -28,7 +28,7 @@ public:
     Dispatcher(const Dispatcher &&dispatcher) = delete;
     Dispatcher(DI::Injector &&injector,
                std::vector<std::packaged_task<Pipeline *(DI::Injector &)>> &pipelineRealizer)
-               :m_Injector(std::move(injector))
+        : m_Injector(std::move(injector))
     {
         for (auto &&realizer : pipelineRealizer)
         {
@@ -44,20 +44,16 @@ public:
         {
             for (auto &&pipeline : m_Pipelines)
             {
-                // if (!input)
-                // {
-                //     if (m_ThreadPool.Empty()) //< [注意]：测试代码
-                //     {
-                //         std::cout << "Time:"
-                //                   << (cv::getTickCount() - pureTick) / cv::getTickFrequency()
-                //                   << std::endl;
-                //         return;
-                //     }
-                //     continue;
-                // }
-
                 // pipeline->ProcessTask();
                 m_ThreadPool.AddTask(&Pipeline::ProcessTask, pipeline);
+                AddCount();
+                // if (m_ThreadPool.Empty()) //< [注意]：测试代码
+                // {
+                //     std::cout << "Time:"
+                //               << (cv::getTickCount() - pureTick) / cv::getTickFrequency()
+                //               << std::endl;
+                //     return;
+                // }
             }
         }
     }
@@ -65,8 +61,9 @@ public:
 private:
     ThreadPool m_ThreadPool;
     std::vector<Pipeline *> m_Pipelines;
-    long long pureTick; //< [注意]：测试代码
     DI::Injector m_Injector;
+
+    long long pureTick; //< [注意]：测试代码
 };
 
 class ApplicationBuilder

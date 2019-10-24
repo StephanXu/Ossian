@@ -14,6 +14,7 @@
 #include "ColorFilter.hpp"
 #include "Pipeline.hpp"
 #include "IOTypes.hpp"
+#include "MultiThread.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <vector>
@@ -57,7 +58,7 @@ public:
 
     bool IsSkip(const NautilusVision::BaseStatus &refStatus) override
     {
-        return false;
+        return m_Valid;
     }
 
     const std::vector<cv::Point2f> &Targets();
@@ -65,7 +66,10 @@ public:
     float Radius();
 
 private:
-    std::queue<cv::Point2f> m_Track;
+    std::atomic_bool m_Valid;
+
+    NautilusVision::SafeQueue<cv::Point2f> m_Track;
+    // std::queue<cv::Point2f> m_Track;
     ColorFilter m_ColorFilter;
     const size_t m_TrackSize;
 
