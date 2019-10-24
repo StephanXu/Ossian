@@ -52,9 +52,9 @@ public:
     /**
      * 计算一张图像Process an image to refresh Targets, Center and Radius.
      * 计算一张图像并刷新（当达到最大采样数量时）当前目标坐标、运动圆心和半径信息
-     * @retval 1 成功
+     * @param input 输入数据指针
      */
-    void Process(NautilusVision::BaseInputData &input) override;
+    void Process(NautilusVision::BaseInputData *input) override;
 
     bool IsSkip(const NautilusVision::BaseStatus &refStatus) override
     {

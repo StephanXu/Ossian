@@ -28,7 +28,6 @@ WindmillDetection::WindmillDetection(std::size_t sampleNum,
       m_TrackSize(sampleNum),
       m_Targets(5)
 {
-    std::cout << "windmill construct\t" << this << std::endl;
 }
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
@@ -37,11 +36,11 @@ WindmillDetection::WindmillDetection(std::size_t sampleNum,
 {
 }
 
-void WindmillDetection::Process(NautilusVision::BaseInputData &input)
+void WindmillDetection::Process(NautilusVision::BaseInputData *input)
 {
     //[注意]：这里是不安全的使用方法，应当优化
-    NautilusVision::ImageInputData *imageInput =
-        static_cast<NautilusVision::ImageInputData *>(&input);
+    NautilusVision::ImageInputData *imageInput = dynamic_cast<NautilusVision::ImageInputData *>(input);
+
     cv::Mat image = imageInput->m_Image;
     if (image.empty())
     {
@@ -124,8 +123,6 @@ void WindmillDetection::Process(NautilusVision::BaseInputData &input)
     */
     std::tie(m_Center, m_Radius) = FitRound();
     GenerateTargetPosition(currentTarget, m_Center);
-
-    // AddCount();
 }
 
 const std::vector<cv::Point2f> &WindmillDetection::Targets()

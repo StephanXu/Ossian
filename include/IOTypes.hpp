@@ -16,6 +16,7 @@
 #include <future>
 #include <memory>
 #include <string>
+#include <typeindex>
 #include <iostream> //< 测试代码
 
 namespace NautilusVision
@@ -27,16 +28,12 @@ namespace NautilusVision
 class BaseInputData
 {
 public:
-    BaseInputData()
-    {
-        std::cout << "ImageInputData construct" << std::endl;
-    }
-    ~BaseInputData()
-    {
-        std::cout << "ImageInputData destory" << std::endl;
-    }
     virtual std::unique_ptr<BaseInputData> Clone() const = 0;
     virtual BaseInputData *GetData() = 0;
+    virtual std::type_index GetTypeIndex() const
+	{
+		return std::type_index(typeid(*this));
+	}
 };
 
 /**

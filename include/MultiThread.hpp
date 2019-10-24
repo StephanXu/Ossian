@@ -267,8 +267,7 @@ public:
      * @return std::future<typename std::result_of<F(Args...)>::type> 返回值接收
      */
     template <typename F, typename... Args>
-    std::future<typename std::result_of<F(Args...)>::type>
-    AddTask(F f, Args &&... args)
+    std::future<typename std::result_of<F(Args...)>::type> AddTask(F f, Args &&... args)
     {
         typedef typename std::result_of<F(Args...)>::type ResultType;
         auto binded = std::bind(f, std::forward<Args>(args)...);

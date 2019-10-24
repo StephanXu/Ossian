@@ -6,22 +6,33 @@
 #include <memory>
 #include <string>
 #include <future>
+#include <typeindex>
 
 namespace NautilusVision
 {
 
+/**
+ * @brief 服务对象接口
+ */
 class IService
 {
 public:
 private:
 };
 
-template <typename ServiceType, typename... ServiceDependencies>
-std::unique_ptr<ServiceType> CreateService(ServiceDependencies *... args)
+/**
+ * @brief Create a Service object
+ * 创建一个服务对象
+ * @tparam ServiceType 服务类型
+ * @return std::unique_ptr<ServiceType> 服务对象实例
+ */
+template <typename ServiceType>
+std::unique_ptr<ServiceType> CreateService()
 {
     static_assert(std::is_base_of<IService, ServiceType>::value, "ServiceType should derived from IService");
-    return std::make_unique<ServiceType>(std::forward<ServiceDependencies>(args)...);
+    return std::make_unique<ServiceType>();
 }
+
 /**
  * @brief 输入方式基类
  * 数据 BaseInputData 通过该类获得，并可在 Dispatcher 中传递给相匹配的 Pipeline
@@ -32,16 +43,23 @@ public:
     /**
      * @brief 获得输入
      * 以同步方式获得输入，可能引起线程阻塞以等待输入
-     * @return std::unique_ptr<InputDataType> 输入数据的指针
+     * @return std::shared_ptr<InputDataType> 输入数据的指针
      */
-    virtual std::unique_ptr<BaseInputData> GetInput() = 0;
+    virtual std::shared_ptr<BaseInputData> GetInput() = 0;
 
     /**
      * @brief 获得输入
      * 以异步方式获得输入
-     * @return std::future<std::unique_ptr<InputDataType>> 输入数据指针的 future
+     * @return std::future<std::shared_ptr<InputDataType>> 输入数据指针的 future
      */
-    virtual std::future<std::unique_ptr<BaseInputData>> GetInputAsync() = 0;
+    virtual std::future<std::shared_ptr<BaseInputData>> GetInputAsync() = 0;
+
+    /**
+     * @brief 获得输入类型索引关键字
+     * 获得该输入方式所获得的数据类型索引关键字
+     * @return std::type_index 关键字
+     */
+    virtual std::type_index GetInputTypeIndex() const = 0;
 };
 
 /**
@@ -59,7 +77,6 @@ public:
     explicit VideoInputSource(std::string filename)
         : m_VideoSource(filename), m_Valid(true)
     {
-        std::cout << "VideoInputSource\t" << filename << std::endl;
         if (!m_VideoSource.isOpened())
         {
             m_Valid = false;
@@ -67,17 +84,19 @@ public:
         }
     }
 
-    std::unique_ptr<BaseInputData> GetInput() override
+    VideoInputSource()
+        : VideoInputSource("test.avi")
+    {
+    }
+
+    std::shared_ptr<BaseInputData> GetInput() override
     {
         if (!m_Valid)
         {
             return nullptr;
         }
-        std::unique_ptr<ImageInputData> result = std::make_unique<ImageInputData>();
-        {
-            std::lock_guard<std::mutex> lock{m_Mutex};
-            m_VideoSource >> result->m_Image;
-        }
+        std::shared_ptr<ImageInputData> result = std::make_shared<ImageInputData>();
+        m_VideoSource >> result->m_Image;
         if (result->m_Image.empty())
         {
             m_Valid = false;
@@ -86,18 +105,21 @@ public:
         return result;
     }
 
-    std::future<std::unique_ptr<BaseInputData>> GetInputAsync() override
+    std::future<std::shared_ptr<BaseInputData>> GetInputAsync() override
     {
         return std::async(std::launch::async,
                           &VideoInputSource::GetInput,
                           this);
     }
 
+    std::type_index GetInputTypeIndex() const override
+    {
+        return std::type_index(typeid(ImageInputData));
+    }
+
 private:
     cv::VideoCapture m_VideoSource;
-    std::atomic_bool m_Valid;
-
-    mutable std::mutex m_Mutex;
+    bool m_Valid;
 };
 
 } // namespace NautilusVision

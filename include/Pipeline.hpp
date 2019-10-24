@@ -14,75 +14,81 @@
 #include "IOTypes.hpp"
 #include "Service.hpp"
 
-#include <type_traits>
-
 namespace NautilusVision
 {
 
-/*
-IOAP 模型（输入->动作1->...->动作n->输出）
-*/
-
+/**
+ * @brief 执行体
+ * 执行体定义了可执行的实例，可以被执行，并且提供一个可跳过的判断方法
+ */
 class IExecutable
 {
 public:
-    virtual void Process(BaseInputData &refInput) = 0;
+    virtual void Process(BaseInputData *refInput) = 0;
     virtual bool IsSkip(const BaseStatus &refStatus) = 0;
 };
 
+/**
+ * @brief 管道实现
+ * 管道是被调度器周期性调用的，接受特定输入的集合。其下包含若干个动作，以顺序的方式进行。
+ */
 class Pipeline
 {
 public:
-    Pipeline(BaseStatus &status, BaseInputAdapter &refInputAdapter, std::vector<IExecutable *> &&actions)
+    /**
+     * @brief 创建一个管道实例
+     * 
+     * @param status 状态对象
+     * @param actions 动作实例（有序）
+     */
+    Pipeline(BaseStatus &status, std::vector<IExecutable *> &&actions)
         : m_Actions(std::move(actions)),
-          m_Status(status),
-          m_InputAdapter(refInputAdapter)
+          m_Status(status)
     {
-        std::cout << "Pipeline constructor" << std::endl;
     }
     ~Pipeline()
     {
-        std::cout << "Pipeline destory" << std::endl;
     }
 
-    void ProcessTask()
+    /**
+     * @brief 运行管道
+     * @param inputData 输入数据，输入数据格式应当在注册时指定，不能为空
+     */
+    void ProcessTask(std::shared_ptr<BaseInputData> inputData)
     {
-        auto input = m_InputAdapter.GetInput();
-        if (!input)
+        if (!inputData)
         {
-            return;
+            throw std::runtime_error("inputData should not be null");
         }
         for (auto &&action : m_Actions)
         {
             if (!action->IsSkip(m_Status))
             {
-                action->Process(*input);
+                action->Process(inputData.get());
             }
         }
         return;
     }
 
-    template <typename ActionType, typename... Args>
-    void RegisterAction(Args... args)
-    {
-        static_assert(std::is_base_of<IExecutable, ActionType>::value, "ActionType should derived from IExecutable");
-        m_Actions.emplace_back(std::make_shared<ActionType>(std::forward<Args>(args)...));
-    }
-
 private:
     std::vector<IExecutable *> m_Actions;
-
     BaseStatus &m_Status;
-    BaseInputAdapter &m_InputAdapter;
 };
 
-template <typename StatusType, typename InputAdapterType, typename... Args>
-std::unique_ptr<Pipeline> CreatePipeline(StatusType *status, InputAdapterType *adapter, Args *... actions)
+/**
+ * @brief Create a Pipeline object
+ * 生成一个管道实例
+ * @tparam StatusType 状态类型
+ * @tparam Args 动作类型
+ * @param status 状态
+ * @param actions 所有动作
+ * @return std::unique_ptr<Pipeline> 管道实例
+ */
+template <typename StatusType, typename... Args>
+std::unique_ptr<Pipeline> CreatePipeline(StatusType *status, Args *... actions)
 {
     static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
-    static_assert(std::is_base_of<BaseInputAdapter, InputAdapterType>::value,
-                  "InputAdapterType should derived from BaseInputAdapter");
-    return std::make_unique<Pipeline>(*status, *adapter, std::vector<IExecutable *>{actions...});
+    return std::make_unique<Pipeline>(*status, std::vector<IExecutable *>{actions...});
 }
 
 } // namespace NautilusVision

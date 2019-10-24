@@ -16,6 +16,9 @@
 namespace NautilusVision
 {
 
+template <typename RetT>
+using Realizer = std::packaged_task<RetT(DI::Injector &)>;
+
 /**
  * @brief 分发器类型
  * 
@@ -26,14 +29,21 @@ public:
     Dispatcher() = default;
     Dispatcher(const Dispatcher &dispatcher) = delete;
     Dispatcher(const Dispatcher &&dispatcher) = delete;
+
     Dispatcher(DI::Injector &&injector,
-               std::vector<std::packaged_task<Pipeline *(DI::Injector &)>> &pipelineRealizer)
+               std::vector<Realizer<std::tuple<std::type_index, Pipeline *>>> &pipelineRealizer,
+               std::vector<Realizer<BaseInputAdapter *>> &inputAdapterRealizer)
         : m_Injector(std::move(injector))
     {
         for (auto &&realizer : pipelineRealizer)
         {
             realizer(m_Injector);
             m_Pipelines.push_back(realizer.get_future().get());
+        }
+        for (auto &&realizer : inputAdapterRealizer)
+        {
+            realizer(m_Injector);
+            m_InputAdapters.push_back(realizer.get_future().get());
         }
     }
 
@@ -42,25 +52,36 @@ public:
         pureTick = cv::getTickCount(); //< [注意]：测试代码
         while (true)
         {
-            for (auto &&pipeline : m_Pipelines)
+            for (auto &&inputAdapter : m_InputAdapters)
             {
-                // pipeline->ProcessTask();
-                m_ThreadPool.AddTask(&Pipeline::ProcessTask, pipeline);
-                AddCount();
-                // if (m_ThreadPool.Empty()) //< [注意]：测试代码
-                // {
-                //     std::cout << "Time:"
-                //               << (cv::getTickCount() - pureTick) / cv::getTickFrequency()
-                //               << std::endl;
-                //     return;
-                // }
+                auto input = inputAdapter->GetInput();
+                if (!input)
+                {
+                    if (m_ThreadPool.Empty()) //< [注意]：测试代码
+                    {
+                        std::cout << "Time:"
+                                  << (cv::getTickCount() - pureTick) / cv::getTickFrequency()
+                                  << std::endl;
+                        return;
+                    }
+                    continue;
+                }
+                for (auto &&pipePack : m_Pipelines)
+                {
+                    if (inputAdapter->GetInputTypeIndex() == std::get<0>(pipePack))
+                    {
+                        m_ThreadPool.AddTask(&Pipeline::ProcessTask, std::get<1>(pipePack), input);
+                    }
+                    // pipeline->ProcessTask();
+                }
             }
         }
     }
 
 private:
     ThreadPool m_ThreadPool;
-    std::vector<Pipeline *> m_Pipelines;
+    std::vector<std::tuple<std::type_index, Pipeline *>> m_Pipelines;
+    std::vector<BaseInputAdapter *> m_InputAdapters;
     DI::Injector m_Injector;
 
     long long pureTick; //< [注意]：测试代码
@@ -77,24 +98,24 @@ public:
     void RegisterStatusType()
     {
         m_DIConfig.Add(CreateStatus<StatusType>);
-        m_StatusRealizer = std::make_unique<std::packaged_task<BaseStatus *(DI::Injector &)>>(
-            [](DI::Injector &injector) -> BaseStatus * {
-                return injector.GetInstance<StatusType>();
-            });
     }
 
-    template <typename ServiceType, typename... Args>
-    void RegisterService(Args... args)
+    template <typename ServiceType>
+    void RegisterService()
     {
-        m_DIConfig.Add(CreateService<ServiceType, Args...>);
+        m_DIConfig.Add(CreateService<ServiceType>);
+        m_InputAdapterRealizer.emplace_back([](DI::Injector &injector) { return injector.GetInstance<ServiceType>(); });
     }
 
     //now only support single pipeline.
-    template <typename StatusType, typename InputAdapterType, typename... Args>
+    template <typename StatusType, typename InputType, typename... Args>
     void RegisterPipeline()
     {
-        m_DIConfig.Add(CreatePipeline<StatusType, InputAdapterType, Args...>);
-        m_PipelineRealizer.emplace_back([](DI::Injector &injector) { return injector.GetInstance<Pipeline>(); });
+        m_DIConfig.Add(CreatePipeline<StatusType, Args...>);
+        m_PipelineRealizer.emplace_back([](DI::Injector &injector) {
+            return std::make_tuple(std::type_index(typeid(InputType)),
+                                   injector.GetInstance<Pipeline>());
+        });
     }
 
     template <class InstanceType, class Deleter, class... Deps>
@@ -108,17 +129,17 @@ public:
 
     Dispatcher Realization()
     {
-        return Dispatcher(m_DIConfig.BuildInjector(), m_PipelineRealizer);
+        return Dispatcher(m_DIConfig.BuildInjector(), m_PipelineRealizer, m_InputAdapterRealizer);
     }
 
 private:
     DI::DIConfiguration m_DIConfig;
 
     // 用于获得实例化后的Pipeline，但此处框架仅支持一个Pipeline，使用vector是为了之后支持多Pipeline做准备
-    std::vector<std::packaged_task<Pipeline *(DI::Injector &)>> m_PipelineRealizer;
+    std::vector<Realizer<std::tuple<std::type_index, Pipeline *>>> m_PipelineRealizer;
 
-    // 用于获得实例化后的Status
-    std::unique_ptr<std::packaged_task<BaseStatus *(DI::Injector &)>> m_StatusRealizer;
+    // 用于获得实例化后的InputAdapter
+    std::vector<Realizer<BaseInputAdapter *>> m_InputAdapterRealizer;
 };
 
 } // namespace NautilusVision

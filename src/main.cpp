@@ -35,22 +35,15 @@ std::unique_ptr<NautilusVision::VideoInputSource> CreateVideoInputSource()
     return std::make_unique<NautilusVision::VideoInputSource>("test.avi");
 }
 
-std::atomic<int> m_Count(0);
-void AddCount()
-{
-    m_Count++;
-    std::cout << m_Count << std::endl;
-}
-
 int main()
 {
     NautilusVision::ApplicationBuilder builder;
     builder.RegisterStatusType<NautilusVision::RoboStatus>();
-    builder.Register(CreateWindmillDetection);
-    builder.Register(CreateVideoInputSource);
+    builder.RegisterService<NautilusVision::VideoInputSource>();
     builder.RegisterPipeline<NautilusVision::RoboStatus,
-                             NautilusVision::VideoInputSource,
+                             NautilusVision::ImageInputData,
                              WindmillDetection>();
+    builder.Register(CreateWindmillDetection);
     builder.Realization().Run();
 }
 
