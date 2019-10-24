@@ -11,17 +11,15 @@
 #ifndef IOTYPES_HPP
 #define IOTYPES_HPP
 
-#include <opencv2/opencv.hpp>
-
 #include <future>
 #include <memory>
 #include <string>
 #include <typeindex>
-#include <iostream> //< 测试代码
 
 namespace NautilusVision
 {
-
+namespace IOAP
+{
 /**
  * @brief 数据数据基类
  */
@@ -31,9 +29,9 @@ public:
     virtual std::unique_ptr<BaseInputData> Clone() const = 0;
     virtual BaseInputData *GetData() = 0;
     virtual std::type_index GetTypeIndex() const
-	{
-		return std::type_index(typeid(*this));
-	}
+    {
+        return std::type_index(typeid(*this));
+    }
 };
 
 /**
@@ -50,51 +48,19 @@ class BaseStatus
 {
 };
 
+/**
+ * @brief Create a Status object
+ * 实例化状态类
+ * @tparam StatusType 状态类型
+ * @return std::unique_ptr<StatusType> 状态实例
+ */
 template <typename StatusType>
 std::unique_ptr<StatusType> CreateStatus()
 {
     static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
     return std::make_unique<StatusType>();
 }
-
-/**
- * @brief 机器人状态
- */
-class RoboStatus : public BaseStatus
-{
-};
-
-/**
- * @brief 图像输入
- * OpenCV的Mat图像输入
- */
-class ImageInputData : public BaseInputData
-{
-public:
-    ImageInputData() = default;
-    ImageInputData(cv::Mat image)
-        : m_Image(image)
-    {
-    }
-    ImageInputData(const ImageInputData &input)
-        : m_Image(input.m_Image)
-    {
-    }
-
-    std::unique_ptr<BaseInputData> Clone() const override
-    {
-        return std::make_unique<ImageInputData>(*this);
-    }
-
-    ImageInputData *GetData() override
-    {
-        return this;
-    }
-
-    cv::Mat m_Image;
-};
-
+} // namespace IOAP
 } // namespace NautilusVision
 
-void AddCount();
 #endif

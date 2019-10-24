@@ -3,6 +3,11 @@ cmake_minimum_required(VERSION 3.2)
 # set project name
 project(RoboMaster)
 
+# import NautilusVisionFramework
+add_subdirectory(NautilusVision)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/NautilusVision/include)
+set(NVF_LIBS NautilusVisionFramework)
+
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g3 -ggdb") 
 set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
@@ -32,4 +37,4 @@ aux_source_directory(
 
 add_executable(${PROJECT_NAME} ${DIR_SRC})
 
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${NVF_LIBS})

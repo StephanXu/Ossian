@@ -1,25 +1,21 @@
+#include <nv/nv.hpp>
 #include <opencv2/opencv.hpp>
+
 #include <iostream>
 #include <vector>
 #include <tuple>
 #include <sstream>
 #include <memory>
+
 #include "ColorFilter.hpp"
 #include "WindmillDetection.hpp"
 #include "ProgressBar.hpp"
 
-#include "Dispatcher.hpp"
-#include "IOTypes.hpp"
-#include "Service.hpp"
+#include "InputModel.hpp"
+#include "InputAdapter.hpp"
 
 const std::string videoFilename{"test.avi"};
 const std::string videoOutput{"output.avi"};
-
-class ResourceLoadException : public std::runtime_error
-{
-public:
-    ResourceLoadException() : std::runtime_error("ResourceLoadException") {}
-};
 
 ColorFilter redFilter{{{{170, 100, 100}, {180, 255, 255}},
                        {{0, 100, 100}, {25, 255, 255}}}};
@@ -30,18 +26,17 @@ std::unique_ptr<WindmillDetection> CreateWindmillDetection()
     return std::make_unique<WindmillDetection>(80, redFilter);
 }
 
-std::unique_ptr<NautilusVision::VideoInputSource> CreateVideoInputSource()
+class RoboStatus : public NautilusVision::IOAP::BaseStatus
 {
-    return std::make_unique<NautilusVision::VideoInputSource>("test.avi");
-}
+};
 
 int main()
 {
-    NautilusVision::ApplicationBuilder builder;
-    builder.RegisterStatusType<NautilusVision::RoboStatus>();
-    builder.RegisterService<NautilusVision::VideoInputSource>();
-    builder.RegisterPipeline<NautilusVision::RoboStatus,
-                             NautilusVision::ImageInputData,
+    NautilusVision::IOAP::ApplicationBuilder builder;
+    builder.RegisterStatusType<RoboStatus>();
+    builder.RegisterService<VideoInputSource>();
+    builder.RegisterPipeline<RoboStatus,
+                             ImageInputData,
                              WindmillDetection>();
     builder.Register(CreateWindmillDetection);
     builder.Realization().Run();

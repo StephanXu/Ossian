@@ -1,3 +1,14 @@
+/**
+ * @file Service.hpp
+ * @author Xu Zihan (stephanxu@foxmail.com)
+ * @brief 处理服务相关实现
+ * @version 0.1
+ * @date 2019-10-25
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #ifndef SERVICE_HPP
 #define SERVICE_HPP
 
@@ -10,7 +21,8 @@
 
 namespace NautilusVision
 {
-
+namespace IOAP
+{
 /**
  * @brief 服务对象接口
  */
@@ -61,67 +73,7 @@ public:
      */
     virtual std::type_index GetInputTypeIndex() const = 0;
 };
-
-/**
- * @brief 视频输入
- * 此类提供视频输入
- */
-class VideoInputSource : public BaseInputAdapter
-{
-public:
-    /**
-     * @brief 建立视频输入
-     * 如果视频加载失败，对象将被设置为失效，GetInput GetInputAsync 等函数将不可用。
-     * @param filename 
-     */
-    explicit VideoInputSource(std::string filename)
-        : m_VideoSource(filename), m_Valid(true)
-    {
-        if (!m_VideoSource.isOpened())
-        {
-            m_Valid = false;
-            return;
-        }
-    }
-
-    VideoInputSource()
-        : VideoInputSource("test.avi")
-    {
-    }
-
-    std::shared_ptr<BaseInputData> GetInput() override
-    {
-        if (!m_Valid)
-        {
-            return nullptr;
-        }
-        std::shared_ptr<ImageInputData> result = std::make_shared<ImageInputData>();
-        m_VideoSource >> result->m_Image;
-        if (result->m_Image.empty())
-        {
-            m_Valid = false;
-            return nullptr;
-        }
-        return result;
-    }
-
-    std::future<std::shared_ptr<BaseInputData>> GetInputAsync() override
-    {
-        return std::async(std::launch::async,
-                          &VideoInputSource::GetInput,
-                          this);
-    }
-
-    std::type_index GetInputTypeIndex() const override
-    {
-        return std::type_index(typeid(ImageInputData));
-    }
-
-private:
-    cv::VideoCapture m_VideoSource;
-    bool m_Valid;
-};
-
+} // namespace IOAP
 } // namespace NautilusVision
 
 #endif

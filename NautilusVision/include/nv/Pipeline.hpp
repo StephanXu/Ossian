@@ -14,9 +14,12 @@
 #include "IOTypes.hpp"
 #include "Service.hpp"
 
+#include <vector>
+
 namespace NautilusVision
 {
-
+namespace IOAP
+{
 /**
  * @brief 执行体
  * 执行体定义了可执行的实例，可以被执行，并且提供一个可跳过的判断方法
@@ -41,34 +44,14 @@ public:
      * @param status 状态对象
      * @param actions 动作实例（有序）
      */
-    Pipeline(BaseStatus &status, std::vector<IExecutable *> &&actions)
-        : m_Actions(std::move(actions)),
-          m_Status(status)
-    {
-    }
-    ~Pipeline()
-    {
-    }
+    Pipeline(BaseStatus &status, std::vector<IExecutable *> &&actions);
+    ~Pipeline() = default;
 
     /**
      * @brief 运行管道
      * @param inputData 输入数据，输入数据格式应当在注册时指定，不能为空
      */
-    void ProcessTask(std::shared_ptr<BaseInputData> inputData)
-    {
-        if (!inputData)
-        {
-            throw std::runtime_error("inputData should not be null");
-        }
-        for (auto &&action : m_Actions)
-        {
-            if (!action->IsSkip(m_Status))
-            {
-                action->Process(inputData.get());
-            }
-        }
-        return;
-    }
+    void ProcessTask(std::shared_ptr<BaseInputData> inputData);
 
 private:
     std::vector<IExecutable *> m_Actions;
@@ -90,7 +73,7 @@ std::unique_ptr<Pipeline> CreatePipeline(StatusType *status, Args *... actions)
     static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
     return std::make_unique<Pipeline>(*status, std::vector<IExecutable *>{actions...});
 }
-
+} // namespace IOAP
 } // namespace NautilusVision
 
 #endif

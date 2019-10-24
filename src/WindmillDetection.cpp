@@ -10,10 +10,11 @@
  */
 
 #include <opencv2/opencv.hpp>
+#include <nv/nv.hpp>
 
 #include "WindmillDetection.hpp"
 #include "ColorFilter.hpp"
-#include "IOTypes.hpp"
+#include "InputModel.hpp"
 
 #include <vector>
 #include <tuple>
@@ -36,10 +37,10 @@ WindmillDetection::WindmillDetection(std::size_t sampleNum,
 {
 }
 
-void WindmillDetection::Process(NautilusVision::BaseInputData *input)
+void WindmillDetection::Process(NautilusVision::IOAP::BaseInputData *input)
 {
     //[注意]：这里是不安全的使用方法，应当优化
-    NautilusVision::ImageInputData *imageInput = dynamic_cast<NautilusVision::ImageInputData *>(input);
+    ImageInputData *imageInput = dynamic_cast<ImageInputData *>(input);
 
     cv::Mat image = imageInput->m_Image;
     if (image.empty())

@@ -11,12 +11,11 @@
 #ifndef WINDMILL_DETECTION_HPP
 #define WINDMILL_DETECTION_HPP
 
-#include "ColorFilter.hpp"
-#include "Pipeline.hpp"
-#include "IOTypes.hpp"
-#include "MultiThread.hpp"
-
+#include <nv/nv.hpp>
 #include <opencv2/opencv.hpp>
+
+#include "ColorFilter.hpp"
+
 #include <vector>
 #include <tuple>
 #include <queue>
@@ -38,7 +37,7 @@ class IDetection
  * 识别、计算和预测大风车轨迹
  * 
  */
-class WindmillDetection : public NautilusVision::IExecutable
+class WindmillDetection : public NautilusVision::IOAP::IExecutable
 {
 public:
     /**
@@ -54,9 +53,9 @@ public:
      * 计算一张图像并刷新（当达到最大采样数量时）当前目标坐标、运动圆心和半径信息
      * @param input 输入数据指针
      */
-    void Process(NautilusVision::BaseInputData *input) override;
+    void Process(NautilusVision::IOAP::BaseInputData *input) override;
 
-    bool IsSkip(const NautilusVision::BaseStatus &refStatus) override
+    bool IsSkip(const NautilusVision::IOAP::BaseStatus &refStatus) override
     {
         return m_Valid;
     }
