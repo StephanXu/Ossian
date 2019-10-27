@@ -10,6 +10,7 @@
 #include "ColorFilter.hpp"
 #include "WindmillDetection.hpp"
 #include "ProgressBar.hpp"
+#include "Startup.hpp"
 
 #include "InputModel.hpp"
 #include "InputAdapter.hpp"
@@ -17,29 +18,17 @@
 const std::string videoFilename{"test.avi"};
 const std::string videoOutput{"output.avi"};
 
-ColorFilter redFilter{{{{170, 100, 100}, {180, 255, 255}},
-                       {{0, 100, 100}, {25, 255, 255}}}};
-ColorFilter blueFilter{{{{85, 100, 100}, {135, 255, 255}}}};
-
-std::unique_ptr<WindmillDetection> CreateWindmillDetection()
+std::unique_ptr<NautilusVision::IOAP::ApplicationBuilder> CreateApplicationBuilder()
 {
-    return std::make_unique<WindmillDetection>(80, redFilter);
+    auto builder = std::make_unique<NautilusVision::IOAP::ApplicationBuilder>();
+    Startup::ConfigServices(*builder);
+    Startup::ConfigPipeline(*builder);
+    return builder;
 }
-
-class RoboStatus : public NautilusVision::IOAP::BaseStatus
-{
-};
 
 int main()
 {
-    NautilusVision::IOAP::ApplicationBuilder builder;
-    builder.RegisterStatusType<RoboStatus>();
-    builder.RegisterService<VideoInputSource>();
-    builder.RegisterPipeline<RoboStatus,
-                             ImageInputData,
-                             WindmillDetection>();
-    builder.Register(CreateWindmillDetection);
-    builder.Realization().Run();
+    CreateApplicationBuilder()->Realization().Run();
 }
 
 // int WindmillTest()
