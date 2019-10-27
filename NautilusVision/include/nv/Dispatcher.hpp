@@ -68,8 +68,6 @@ private:
     std::vector<std::tuple<std::type_index, Pipeline *>> m_Pipelines;
     std::vector<BaseInputAdapter *> m_InputAdapters;
     DI::Injector m_Injector;
-
-    // long long pureTick; //< [注意]：测试代码
 };
 } // namespace IOAP
 } // namespace NautilusVision

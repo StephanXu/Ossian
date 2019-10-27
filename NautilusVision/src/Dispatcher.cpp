@@ -1,5 +1,7 @@
 
 #include "nv/Dispatcher.hpp"
+#include <chrono>
+#include <iostream>
 
 namespace NautilusVision
 {
@@ -24,7 +26,7 @@ Dispatcher::Dispatcher(DI::Injector &&injector,
 
 void Dispatcher::Run()
 {
-    // pureTick = cv::getTickCount(); //< [注意]：测试代码
+    auto pureTick = std::chrono::system_clock::now();
     while (true)
     {
         for (auto &&inputAdapter : m_InputAdapters)
@@ -32,13 +34,15 @@ void Dispatcher::Run()
             auto input = inputAdapter->GetInput();
             if (!input)
             {
-                // if (m_ThreadPool.Empty()) //< [注意]：测试代码
-                // {
-                //     std::cout << "Time:"
-                //               << (cv::getTickCount() - pureTick) / cv::getTickFrequency()
-                //               << std::endl;
-                //     return;
-                // }
+                if (m_ThreadPool.Empty()) //< [注意]：测试代码
+                {
+                    std::cout << "Time:"
+                              << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                     std::chrono::system_clock::now() - pureTick)
+                                     .count()
+                              << std::endl;
+                    return;
+                }
                 continue;
             }
             for (auto &&pipePack : m_Pipelines)
