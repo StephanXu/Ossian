@@ -145,10 +145,10 @@ public:
     TaskWrapper() = default;
     template <typename F>
     TaskWrapper(F &&f) : m_Impl(new ImplType<F>(std::move(f))) {}
-    TaskWrapper(TaskWrapper &&t) : m_Impl(std::move(t.m_Impl)) {}
+    TaskWrapper(TaskWrapper &&t) noexcept : m_Impl(std::move(t.m_Impl)) {}
     TaskWrapper(const TaskWrapper &t) = delete;
     TaskWrapper(TaskWrapper &t) = delete;
-    TaskWrapper &operator=(TaskWrapper &&t)
+    TaskWrapper &operator=(TaskWrapper &&t) noexcept
     {
         m_Impl = std::move(t.m_Impl);
         return *this;

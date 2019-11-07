@@ -125,8 +125,8 @@ class Injector
     friend class DIConfiguration;
 
 public:
-    Injector(Injector &&other) { *this = std::move(other); }
-    Injector &operator=(Injector &&other)
+    Injector(Injector &&other) noexcept { *this = std::move(other); }
+    Injector &operator=(Injector &&other) noexcept
     {
         m_InstanceMap = std::move(other.m_InstanceMap);
         return *this;
