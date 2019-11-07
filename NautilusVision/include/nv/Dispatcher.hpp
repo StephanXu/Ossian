@@ -32,7 +32,7 @@ namespace IOAP
  * @tparam RetT 实例化结果
  */
 template <typename RetT>
-using Realizer = std::packaged_task<RetT(DI::Injector &)>;
+using Realizer = std::function<RetT(DI::Injector &)>;
 
 // 位于 Config.hpp
 class ApplicationBuilder;
@@ -48,7 +48,7 @@ class Dispatcher
 public:
     Dispatcher() = delete;
     Dispatcher(const Dispatcher &dispatcher) = delete;
-    Dispatcher(const Dispatcher &&dispatcher) = delete;
+	Dispatcher(const Dispatcher&& dispatcher) = delete;
 
     void Run();
 

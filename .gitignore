@@ -2,3 +2,4 @@
 .vs
 doc/doxygen
 build
+CMakeSettings.json
