@@ -3,3 +3,4 @@
 doc/doxygen
 build
 CMakeSettings.json
+out

@@ -14,13 +14,11 @@ Dispatcher::Dispatcher(DI::Injector &&injector,
 {
     for (auto &&realizer : pipelineRealizer)
     {
-        realizer(m_Injector);
-        m_Pipelines.push_back(realizer.get_future().get());
+        m_Pipelines.push_back(realizer(m_Injector));
     }
     for (auto &&realizer : inputAdapterRealizer)
     {
-        realizer(m_Injector);
-        m_InputAdapters.push_back(realizer.get_future().get());
+        m_InputAdapters.push_back(realizer(m_Injector));
     }
 }
 
