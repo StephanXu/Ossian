@@ -5,8 +5,8 @@
 #define INPUTMODEL_HPP
 
 /**
- * @brief å›¾åƒè¾“å…¥
- * OpenCVçš„Matå›¾åƒè¾“å…¥
+ * @brief Í¼ÏñÊäÈë
+ * OpenCVµÄMatÍ¼ÏñÊäÈë
  */
 class ImageInputData : public NautilusVision::IOAP::BaseInputData
 {

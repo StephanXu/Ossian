@@ -2,7 +2,9 @@
 #include <nv/IOTypes.hpp>
 #include <nv/Service.hpp>
 
+#include "Constants.hpp"
 #include "InputModel.hpp"
+#include "HKCamera.hpp"
 
 #ifndef INPUTADAPTER_HPP
 #define INPUTADAPTER_HPP
@@ -65,6 +67,60 @@ public:
 private:
     cv::VideoCapture m_VideoSource;
     bool m_Valid;
+};
+
+/**
+ * @class	CameraInputSource
+ *
+ * @brief	摄像头输入
+ * 此类提供摄像头输入
+ */
+class CameraInputSource : public NautilusVision::IOAP::BaseInputAdapter
+{
+public:
+	explicit CameraInputSource(const int camIndex,
+							   const int frameWidth,
+							   const int frameHeight)
+		: m_Camera(camIndex,frameWidth,frameHeight), m_Valid(true)
+	{
+		m_Camera.StartGrabFrame();
+		m_Valid = m_Camera.IsValid();
+	}
+
+	CameraInputSource()
+		: CameraInputSource(0, ARMOR_FRAME_WIDTH, ARMOR_FRAME_HEIGHT)
+	{
+	}
+
+	std::shared_ptr<NautilusVision::IOAP::BaseInputData> GetInput() override
+	{
+		if (!m_Valid)
+			return nullptr;
+		std::shared_ptr<ImageInputData> result = std::make_shared<ImageInputData>();
+		m_Camera.ReadFrame(result->m_Image);
+		if (result->m_Image.empty())
+		{
+			m_Valid = false;
+			return nullptr;
+		}
+		return result;
+	}
+
+	std::future<std::shared_ptr<NautilusVision::IOAP::BaseInputData>> GetInputAsync() override
+	{
+		return std::async(std::launch::async,
+						  &CameraInputSource::GetInput,
+						  this);
+	}
+
+	std::type_index GetInputTypeIndex() const override
+	{
+		return std::type_index(typeid(ImageInputData));
+	}
+
+private:
+	HKCamera m_Camera;
+	bool m_Valid;
 };
 
 #endif

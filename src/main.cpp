@@ -14,6 +14,7 @@
 
 #include "InputModel.hpp"
 #include "InputAdapter.hpp"
+#include "HKCamera.hpp"
 
 const std::string videoFilename{"test.avi"};
 const std::string videoOutput{"output.avi"};

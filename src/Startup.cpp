@@ -1,4 +1,5 @@
 #include "Startup.hpp"
+#include "Constants.hpp"
 #include "InputAdapter.hpp"
 #include "WindmillDetection.hpp"
 
@@ -20,7 +21,7 @@ std::unique_ptr<WindmillDetection> CreateWindmillDetection()
 void Startup::ConfigServices(AppBuilder &app)
 {
     app.RegisterStatusType<RoboStatus>();
-    app.RegisterService<VideoInputSource>();
+    app.RegisterService<CameraInputSource>();
 }
 
 void Startup::ConfigPipeline(AppBuilder &app)
