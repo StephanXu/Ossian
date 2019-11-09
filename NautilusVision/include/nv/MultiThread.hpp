@@ -147,7 +147,6 @@ public:
     TaskWrapper(F &&f) : m_Impl(new ImplType<F>(std::move(f))) {}
     TaskWrapper(TaskWrapper &&t) noexcept : m_Impl(std::move(t.m_Impl)) {}
     TaskWrapper(const TaskWrapper &t) = delete;
-    TaskWrapper(TaskWrapper &t) = delete;
     TaskWrapper &operator=(TaskWrapper &&t) noexcept
     {
         m_Impl = std::move(t.m_Impl);
