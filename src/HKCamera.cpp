@@ -31,12 +31,12 @@ HKCamera::~HKCamera()
 	Close();
 }
 
-HKCamera::HKCamera(HKCamera&& camera)
+HKCamera::HKCamera(HKCamera&& camera) noexcept
 {
 	*this = std::move(camera);
 }
 
-HKCamera& HKCamera::operator=(HKCamera&& camera)
+HKCamera& HKCamera::operator=(HKCamera&& camera) noexcept
 {
 	m_IsValid = camera.m_IsValid;
 	m_FrameHeight = camera.m_FrameHeight;

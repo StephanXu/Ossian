@@ -50,10 +50,10 @@ public:
 	~HKCamera();
 
 	HKCamera(const HKCamera& camera) = delete;
-	HKCamera(HKCamera&& camera);
+	HKCamera(HKCamera&& camera) noexcept;
 
 	HKCamera& operator=(HKCamera& camera) = delete;
-	HKCamera& operator=(HKCamera&& camera);
+	HKCamera& operator=(HKCamera&& camera) noexcept;
 
 	/**
 	 * @fn	bool HKCamera::Initialize();

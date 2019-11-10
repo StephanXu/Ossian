@@ -90,6 +90,15 @@ public:
 	CameraInputSource()
 		: CameraInputSource(0, ARMOR_FRAME_WIDTH, ARMOR_FRAME_HEIGHT)
 	{
+		try
+		{
+			m_Camera.Close();
+		}
+		catch (std::exception e)
+		{
+			//[TODO]: Logger
+			std::abort();
+		}
 	}
 
 	std::shared_ptr<NautilusVision::IOAP::BaseInputData> GetInput() override
