@@ -1,4 +1,4 @@
-#include <opencv2/opencv.hpp>
+﻿#include <opencv2/opencv.hpp>
 #include <nv/IOTypes.hpp>
 #include <nv/Service.hpp>
 
@@ -69,6 +69,8 @@ private:
     bool m_Valid;
 };
 
+#ifdef _WIN32
+
 /**
  * @class	CameraInputSource
  *
@@ -132,4 +134,6 @@ private:
 	bool m_Valid;
 };
 
-#endif
+#endif //_WIN32
+
+#endif //INPUTADAPTER_HPP

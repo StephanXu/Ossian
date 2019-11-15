@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file ProgressBar.cpp
  * @author Stephan Xu
  * @brief 进度条的实现

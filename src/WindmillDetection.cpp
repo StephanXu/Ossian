@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file WindmillDetection.cpp
  * @author Stephan Xu
  * @brief 大风车检测的实现
@@ -78,16 +78,16 @@ void WindmillDetection::Process(NautilusVision::IOAP::BaseInputData *input)
         /* Filter by calculating the area */
         double area{cv::contourArea(dots)};
         if (layer == 0 && area < 1000)
-            return ContoursMark::SKIP;
+            return ContoursMark::Skip;
         else if (layer == 0 && area > 5000)
-            return ContoursMark::SKIP;
+            return ContoursMark::Skip;
         else if (layer == 1 && area < 200)
-            return ContoursMark::SKIP;
+            return ContoursMark::Skip;
         if (layer == 1)
         {
-            return ContoursMark::ADD;
+            return ContoursMark::Add;
         }
-        return ContoursMark::IGNORE;
+        return ContoursMark::Ignore;
     };
     std::vector<int> contoursIndex{std::move(EnumContours(contours,
                                                           hierarchy,
@@ -213,11 +213,11 @@ int WindmillDetection::EnumContoursHelper(
 {
     /* validate for collecting */
     ContoursMark filterMark{callback(contours[index], layer)};
-    if (ContoursMark::ADD == filterMark)
+    if (ContoursMark::Add == filterMark)
     {
         outContoursIndex.push_back(index);
     }
-    else if (ContoursMark::SKIP == filterMark)
+    else if (ContoursMark::Skip == filterMark)
     {
         return hierarchy[index][0];
     }

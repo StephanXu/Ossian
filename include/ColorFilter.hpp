@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file ColorFilter.hpp
  * @author Stephan Xu
  * @brief 颜色过滤器

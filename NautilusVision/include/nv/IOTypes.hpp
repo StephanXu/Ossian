@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file IOTypes.hpp
  * @author Xu Zihan (stephanxu@foxmail.com)
  * @brief 输入输入类型

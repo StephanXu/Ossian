@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file Config.hpp
  * @author Xu Zihan (stephanxu@foxmail.com)
  * @brief 配置器的相关实现
@@ -10,6 +10,8 @@
  */
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
+
+#include <spdlog/spdlog.h>
 
 #include "DI.hpp"
 #include "Dispatcher.hpp"
@@ -91,6 +93,7 @@ public:
      */
     Dispatcher Realization()
     {
+		spdlog::info("Initialize configuration");
         return Dispatcher(m_DIConfig.BuildInjector(), m_PipelineRealizer, m_InputAdapterRealizer);
     }
 

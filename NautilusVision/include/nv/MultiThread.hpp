@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file MultiThread.hpp
  * @author Xu Zihan (stephanxu@foxmail.com)
  * @brief 提供多线程支持

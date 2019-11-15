@@ -1,4 +1,4 @@
-#ifndef STARTUP_HPP
+﻿#ifndef STARTUP_HPP
 #define STARTUP_HPP
 
 #include <nv/nv.hpp>

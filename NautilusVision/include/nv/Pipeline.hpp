@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file Pipeline.hpp
  * @author Xu Zihan (stephanxu@foxmail.com)
  * @brief 处理管道相关支持

@@ -1,3 +1,6 @@
+﻿#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 #include "Startup.hpp"
 #include "Constants.hpp"
 #include "InputAdapter.hpp"
@@ -17,9 +20,12 @@ std::unique_ptr<WindmillDetection> CreateWindmillDetection()
     return std::make_unique<WindmillDetection>(80, redFilter);
 }
 
-
 void Startup::ConfigServices(AppBuilder &app)
 {
+	// set logger
+	auto console = spdlog::stderr_color_mt("console");
+	spdlog::set_default_logger(console);
+
     app.RegisterStatusType<RoboStatus>();
     app.RegisterService<CameraInputSource>();
 }

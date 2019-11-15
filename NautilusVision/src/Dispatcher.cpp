@@ -1,3 +1,4 @@
+﻿#include <spdlog/spdlog.h>
 
 #include "nv/Dispatcher.hpp"
 #include <chrono>
@@ -32,15 +33,13 @@ void Dispatcher::Run()
             auto input = inputAdapter->GetInput();
             if (!input)
             {
-                if (m_ThreadPool.Empty()) //< [注意]：测试代码
-                {
-                    std::cout << "Time:"
-                              << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                     std::chrono::system_clock::now() - pureTick)
-                                     .count()
-                              << std::endl;
-                    return;
-                }
+				if (m_ThreadPool.Empty()) //< [注意]：测试代码
+				{
+					spdlog::info("Time: {}",
+								 std::chrono::duration_cast<std::chrono::milliseconds>(
+									 std::chrono::system_clock::now() - pureTick).count());
+					return;
+				}
                 continue;
             }
             for (auto &&pipePack : m_Pipelines)

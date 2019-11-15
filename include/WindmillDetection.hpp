@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file WindmillDetection.hpp
  * @author Stephan Xu (xuzihanapple@live.com)
  * @brief 大风车检测相关图形接口
@@ -128,9 +128,9 @@ private:
      */
     enum class ContoursMark
     {
-        ADD,    ///< 加入到结果
-        IGNORE, ///< 不添加到结果，但会遍历其子轮廓
-        SKIP    ///< 不添加到结果，不会遍历其子轮廓
+        Add,    ///< 加入到结果
+        Ignore, ///< 不添加到结果，但会遍历其子轮廓
+        Skip    ///< 不添加到结果，不会遍历其子轮廓
     };
 
     /**

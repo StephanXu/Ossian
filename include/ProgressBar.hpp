@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file ProgressBar.hpp
  * @author Stephan Xu
  * @brief 控制台下进度条有关设置

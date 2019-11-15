@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file ColorFilter.cpp
  * @author Stephan Xu
  * @brief 颜色过滤器的实现
