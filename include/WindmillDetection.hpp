@@ -80,15 +80,16 @@ private:
     * 轨迹累加数据缓存
     * 由 RefreshAccumulateCache 计算
     */
-    std::atomic<float> m_x{0.0};
-    std::atomic<float> m_xSquare{0.0};
-    std::atomic<float> m_xCube{0.0};
-    std::atomic<float> m_xMultiY{0.0};
-    std::atomic<float> m_xMultiYSquare{0.0};
-    std::atomic<float> m_xSquareMultiY{0.0};
-    std::atomic<float> m_y{0.0};
-    std::atomic<float> m_ySquare{0.0};
-    std::atomic<float> m_yCube{0.0};
+	std::mutex m_CacheLock;
+    float m_x{0.0};
+    float m_xSquare{0.0};
+    float m_xCube{0.0};
+    float m_xMultiY{0.0};
+    float m_xMultiYSquare{0.0};
+    float m_xSquareMultiY{0.0};
+    float m_y{0.0};
+    float m_ySquare{0.0};
+    float m_yCube{0.0};
 
     /**
      * @brief 刷新轨迹累加数据缓存

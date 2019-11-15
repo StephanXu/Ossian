@@ -124,6 +124,24 @@ void WindmillDetection::Process(NautilusVision::IOAP::BaseInputData *input)
     */
     std::tie(m_Center, m_Radius) = FitRound();
     GenerateTargetPosition(currentTarget, m_Center);
+
+	spdlog::info("Center:({},{}),Radius:{}", m_Center.x, m_Center.y, m_Radius);
+	//cv::circle(image, Targets()[0], 10,
+	//		   cv::Scalar{ 0, 255, 0 }, 2);
+	//cv::line(image, Targets()[0], Center(),
+	//		 cv::Scalar{ 0, 255, 0 }, 2);
+	//for (int i{ 1 }; i < 5; ++i)
+	//{
+	//	cv::circle(image, Targets()[i], 10,
+	//			   cv::Scalar{ 0, 0, 255 }, 2);
+	//	cv::line(image, Targets()[i], Center(),
+	//			 cv::Scalar{ 0, 0, 255 }, 2);
+	//}
+	//cv::circle(image, Center(), Radius(),
+	//		   cv::Scalar{ 0, 0, 255 }, 2);
+
+	//cv::imshow("ok", image);
+	//cv::waitKey(1);
 }
 
 const std::vector<cv::Point2f> &WindmillDetection::Targets()
@@ -145,12 +163,13 @@ void WindmillDetection::RefreshAccumulateCache(const cv::Point2f &appendDot,
                                                const cv::Point2f &removeDot)
 {
     /* for performance, I used raw multiply instead of std::pow */
+	std::lock_guard<std::mutex> guard{ m_CacheLock };
     m_x = m_x + appendDot.x - removeDot.x;
     m_xSquare = m_xSquare + appendDot.x * appendDot.x - removeDot.x * removeDot.x;
     m_xCube = m_xCube + appendDot.x * appendDot.x * appendDot.x -
               removeDot.x * removeDot.x * removeDot.x;
     m_xMultiY = m_xMultiY + appendDot.x * appendDot.y - removeDot.x * removeDot.y;
-    m_xMultiYSquare = m_xMultiY + appendDot.x * appendDot.y * appendDot.y -
+    m_xMultiYSquare = m_xMultiYSquare + appendDot.x * appendDot.y * appendDot.y -
                       removeDot.x * removeDot.y * removeDot.y;
     m_xSquareMultiY = m_xSquareMultiY + appendDot.x * appendDot.x * appendDot.y -
                       removeDot.x * removeDot.x * removeDot.y;

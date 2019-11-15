@@ -1,4 +1,4 @@
-﻿#include <spdlog/spdlog.h>
+#include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "Startup.hpp"
@@ -27,7 +27,7 @@ void Startup::ConfigServices(AppBuilder &app)
 	spdlog::set_default_logger(console);
 
     app.RegisterStatusType<RoboStatus>();
-    app.RegisterService<CameraInputSource>();
+    app.RegisterService<VideoInputSource>();
 }
 
 void Startup::ConfigPipeline(AppBuilder &app)
