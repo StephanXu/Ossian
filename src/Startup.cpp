@@ -25,15 +25,16 @@ void Startup::ConfigServices(AppBuilder &app)
 	// set logger
 	auto console = spdlog::stderr_color_mt("console");
 	spdlog::set_default_logger(console);
+	spdlog::set_pattern("[%T.%e] [%-5t] %^[%l]%$  %v");
+	spdlog::set_level(spdlog::level::info);
 
     app.RegisterStatusType<RoboStatus>();
     app.RegisterService<VideoInputSource>();
 }
 
-void Startup::ConfigPipeline(AppBuilder &app)
+void Startup::ConfigPipeline(AppBuilder& app)
 {
-    app.RegisterPipeline<RoboStatus,
-                         ImageInputData,
-                         WindmillDetection>();
-    app.Register(CreateWindmillDetection);
+	app.RegisterPipeline<RoboStatus, ImageInputData,
+		WindmillDetection>();
+	app.Register(CreateWindmillDetection);
 }

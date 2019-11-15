@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <nv/IOTypes.hpp>
+#include <nv/SerialPort.hpp>
 
 #ifndef INPUTMODEL_HPP
 #define INPUTMODEL_HPP
@@ -34,4 +35,4 @@ public:
     cv::Mat m_Image;
 };
 
-#endif
+#endif //INPUTMODEL_HPP

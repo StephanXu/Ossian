@@ -1,3 +1,5 @@
+#include <spdlog/spdlog.h>
+
 #include "HKCamera.hpp"
 
 HKCamera::HKCamera(const int camIndex, const int frameWidth, const int frameHeight) noexcept
@@ -138,12 +140,11 @@ bool HKCamera::ReadFrame(cv::Mat& outMat)
 	MVCC_FLOATVALUE struFloatValue = { 0 };
 	if (MV_OK == MV_CC_GetFloatValue(m_Handle, "ResultingFrameRate", &struFloatValue))
 	{
-		//[TODO]: may change to loggers.
-		// 
-		//printf("Get One Frame: Width[%d], Height[%d], nFrameNum[%d], FPS[%.2f]\n",
-		//	   stImageInfo.nWidth, stImageInfo.nHeight, stImageInfo.nFrameNum, struFloatValue.fCurValue);
-
-		//frameReadFPS = struFloatValue.fCurValue;
+		spdlog::info("Got frame: {}x{} FrameNum: {} FPS: {:<3}",
+					 stImageInfo.nWidth,
+					 stImageInfo.nHeight,
+					 stImageInfo.nFrameNum, 
+					 struFloatValue.fCurValue);
 	}
 	else
 	{

@@ -16,11 +16,15 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src DIR_SRC)
 
+# import fmt
+find_package(fmt CONFIG REQUIRED)
 # import spdlog
 find_package(spdlog CONFIG REQUIRED)
 
 add_library(NautilusVisionFramework ${DIR_SRC})
-target_link_libraries(NautilusVisionFramework spdlog::spdlog)
+target_link_libraries(NautilusVisionFramework
+	fmt::fmt
+	spdlog::spdlog)
 
 set(NVF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE STRING INTERNAL)
 set(NVF_LIBS NautilusVisionFramework CACHE STRING INTERNAL)

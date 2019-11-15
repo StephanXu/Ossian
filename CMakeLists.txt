@@ -12,6 +12,16 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
+# import OpenCV
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+# import fmt
+find_package(fmt CONFIG REQUIRED)
+
+# import spdlog
+find_package(spdlog CONFIG REQUIRED)
+
 # import NautilusVisionFramework
 add_subdirectory(NautilusVision)
 include_directories(${NVF_INCLUDE_DIR})
@@ -23,13 +33,6 @@ if(WIN32)
 	link_directories(3rdparty/HKCamera/libraries/win64)
 endif()
 
-# import OpenCV
-find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
-
-# import spdlog
-find_package(spdlog CONFIG REQUIRED)
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 aux_source_directory(
     ./src DIR_SRC
@@ -39,6 +42,7 @@ add_executable(${PROJECT_NAME} ${DIR_SRC})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(${PROJECT_NAME}
 	spdlog::spdlog 
+	fmt::fmt
 	${HKCAMERA_LIBS} 
 	${OpenCV_LIBS} 
 	${NVF_LIBS})
