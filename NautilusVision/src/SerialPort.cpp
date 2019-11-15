@@ -1,4 +1,4 @@
-#include "..\include\nv\SerialPort.hpp"
+ï»¿#include "..\include\nv\SerialPort.hpp"
 #include "..\include\nv\SerialPort.hpp"
 #include "..\include\nv\SerialPort.hpp"
 #include "..\include\nv\SerialPort.hpp"
@@ -48,18 +48,18 @@ bool SerialPort::Open(std::string portname,
 					  bool synchronizeFlag)
 {
 	m_IsSync = synchronizeFlag;
-	m_Handle = CreateFileA(portname.c_str(), //´®¿ÚÃû
-						   GENERIC_READ | GENERIC_WRITE, //Ö§³Ö¶ÁĞ´
-						   0, //¶ÀÕ¼·½Ê½£¬´®¿Ú²»Ö§³Ö¹²Ïí
-						   NULL,//°²È«ÊôĞÔÖ¸Õë£¬Ä¬ÈÏÖµÎªNULL
-						   OPEN_EXISTING, //´ò¿ªÏÖÓĞµÄ´®¿ÚÎÄ¼ş
-						   m_IsSync ? 0 : FILE_FLAG_OVERLAPPED, //0£ºÍ¬²½·½Ê½£¬FILE_FLAG_OVERLAPPED£ºÒì²½·½Ê½
-						   NULL); //ÓÃÓÚ¸´ÖÆÎÄ¼ş¾ä±ú£¬Ä¬ÈÏÖµÎªNULL£¬¶Ô´®¿Ú¶øÑÔ¸Ã²ÎÊı±ØĞëÖÃÎªNULL
+	m_Handle = CreateFileA(portname.c_str(), //ä¸²å£å
+						   GENERIC_READ | GENERIC_WRITE, //æ”¯æŒè¯»å†™
+						   0, //ç‹¬å æ–¹å¼ï¼Œä¸²å£ä¸æ”¯æŒå…±äº«
+						   NULL,//å®‰å…¨å±æ€§æŒ‡é’ˆï¼Œé»˜è®¤å€¼ä¸ºNULL
+						   OPEN_EXISTING, //æ‰“å¼€ç°æœ‰çš„ä¸²å£æ–‡ä»¶
+						   m_IsSync ? 0 : FILE_FLAG_OVERLAPPED, //0ï¼šåŒæ­¥æ–¹å¼ï¼ŒFILE_FLAG_OVERLAPPEDï¼šå¼‚æ­¥æ–¹å¼
+						   NULL); //ç”¨äºå¤åˆ¶æ–‡ä»¶å¥æŸ„ï¼Œé»˜è®¤å€¼ä¸ºNULLï¼Œå¯¹ä¸²å£è€Œè¨€è¯¥å‚æ•°å¿…é¡»ç½®ä¸ºNULL
 
 	if (INVALID_HANDLE_VALUE == m_Handle)
 		throw std::runtime_error(fmt::format("Open serial port fail: {}", GetLastError()));
 
-	//ÅäÖÃ»º³åÇø´óĞ¡
+	//é…ç½®ç¼“å†²åŒºå¤§å°
 	if (!SetupComm(m_Handle, 1024, 1024))
 	{
 		std::string err{ fmt::format("SetupComm fail: {}",GetLastError()) };
@@ -68,14 +68,14 @@ bool SerialPort::Open(std::string portname,
 		throw std::runtime_error(err);
 	}
 
-	// ÅäÖÃ²ÎÊı
+	// é…ç½®å‚æ•°
 	DCB dcb;
 	memset(&dcb, 0, sizeof(dcb));
 	dcb.DCBlength = sizeof(dcb);
-	dcb.BaudRate = baudrate; //< ²¨ÌØÂÊ
-	dcb.ByteSize = databit; //< Êı¾İÎ»
-	dcb.Parity = parity; //< Ğ£Ñé
-	dcb.StopBits = stopbit; //< ½áÊøÎ»
+	dcb.BaudRate = baudrate; //< æ³¢ç‰¹ç‡
+	dcb.ByteSize = databit; //< æ•°æ®ä½
+	dcb.Parity = parity; //< æ ¡éªŒ
+	dcb.StopBits = stopbit; //< ç»“æŸä½
 	if (!SetCommState(m_Handle, &dcb))
 	{
 		std::string err{ fmt::format("SetCommState fail: {}",GetLastError()) };
@@ -84,14 +84,14 @@ bool SerialPort::Open(std::string portname,
 		throw std::runtime_error(err);
 	}
 
-	//³¬Ê±´¦Àí,µ¥Î»£ººÁÃë
-	//×Ü³¬Ê±£½Ê±¼äÏµÊı¡Á¶Á»òĞ´µÄ×Ö·ûÊı£«Ê±¼ä³£Á¿
+	//è¶…æ—¶å¤„ç†,å•ä½ï¼šæ¯«ç§’
+	//æ€»è¶…æ—¶ï¼æ—¶é—´ç³»æ•°Ã—è¯»æˆ–å†™çš„å­—ç¬¦æ•°ï¼‹æ—¶é—´å¸¸é‡
 	COMMTIMEOUTS TimeOuts;
-	TimeOuts.ReadIntervalTimeout = 1000; //¶Á¼ä¸ô³¬Ê±
-	TimeOuts.ReadTotalTimeoutMultiplier = 500; //¶ÁÊ±¼äÏµÊı
-	TimeOuts.ReadTotalTimeoutConstant = 5000; //¶ÁÊ±¼ä³£Á¿
-	TimeOuts.WriteTotalTimeoutMultiplier = 500; // Ğ´Ê±¼äÏµÊı
-	TimeOuts.WriteTotalTimeoutConstant = 2000; //Ğ´Ê±¼ä³£Á¿
+	TimeOuts.ReadIntervalTimeout = 1000; //è¯»é—´éš”è¶…æ—¶
+	TimeOuts.ReadTotalTimeoutMultiplier = 500; //è¯»æ—¶é—´ç³»æ•°
+	TimeOuts.ReadTotalTimeoutConstant = 5000; //è¯»æ—¶é—´å¸¸é‡
+	TimeOuts.WriteTotalTimeoutMultiplier = 500; // å†™æ—¶é—´ç³»æ•°
+	TimeOuts.WriteTotalTimeoutConstant = 2000; //å†™æ—¶é—´å¸¸é‡
 	if (!SetCommTimeouts(m_Handle, &TimeOuts))
 	{
 		std::string err{ fmt::format("SetCommTimeouts fail: {}",GetLastError()) };
@@ -100,7 +100,7 @@ bool SerialPort::Open(std::string portname,
 		throw std::runtime_error(err);
 	}
 
-	PurgeComm(m_Handle, PURGE_TXCLEAR | PURGE_RXCLEAR); //Çå¿Õ´®¿Ú»º³åÇø
+	PurgeComm(m_Handle, PURGE_TXCLEAR | PURGE_RXCLEAR); //æ¸…ç©ºä¸²å£ç¼“å†²åŒº
 	m_IsOpened = true;
 	return true;
 }
@@ -114,13 +114,13 @@ unsigned int SerialPort::Send(const unsigned char* buf, int len)
 
 	if (m_IsSync)
 	{
-		// Í¬²½·½Ê½
-		DWORD dwBytesWrite = len; //³É¹¦Ğ´ÈëµÄÊı¾İ×Ö½ÚÊı
-		BOOL bWriteStat = WriteFile(m_Handle, //´®¿Ú¾ä±ú
-									buf, //Êı¾İÊ×µØÖ·
-									dwBytesWrite, //Òª·¢ËÍµÄÊı¾İ×Ö½ÚÊı
-									&dwBytesWrite, //DWORD*£¬ÓÃÀ´½ÓÊÕ·µ»Ø³É¹¦·¢ËÍµÄÊı¾İ×Ö½ÚÊı
-									NULL); //NULLÎªÍ¬²½·¢ËÍ£¬OVERLAPPED*ÎªÒì²½·¢ËÍ
+		// åŒæ­¥æ–¹å¼
+		DWORD dwBytesWrite = len; //æˆåŠŸå†™å…¥çš„æ•°æ®å­—èŠ‚æ•°
+		BOOL bWriteStat = WriteFile(m_Handle, //ä¸²å£å¥æŸ„
+									buf, //æ•°æ®é¦–åœ°å€
+									dwBytesWrite, //è¦å‘é€çš„æ•°æ®å­—èŠ‚æ•°
+									&dwBytesWrite, //DWORD*ï¼Œç”¨æ¥æ¥æ”¶è¿”å›æˆåŠŸå‘é€çš„æ•°æ®å­—èŠ‚æ•°
+									NULL); //NULLä¸ºåŒæ­¥å‘é€ï¼ŒOVERLAPPED*ä¸ºå¼‚æ­¥å‘é€
 		if (!bWriteStat)
 		{
 			return 0;
@@ -129,7 +129,7 @@ unsigned int SerialPort::Send(const unsigned char* buf, int len)
 	}
 	else
 	{
-		//Òì²½·½Ê½
+		//å¼‚æ­¥æ–¹å¼
 		OVERLAPPED osWrite = { 0 };
 		DWORD dwWritten, dwToWrite = len;
 		DWORD dwRes;
@@ -198,13 +198,13 @@ unsigned int SerialPort::Receive(unsigned char* buf, int maxlen)
 
 	if (m_IsSync)
 	{
-		//Í¬²½·½Ê½
-		DWORD wCount = maxlen; //³É¹¦¶ÁÈ¡µÄÊı¾İ×Ö½ÚÊı
-		BOOL bReadStat = ReadFile(m_Handle, //´®¿Ú¾ä±ú
-								  buf, //Êı¾İÊ×µØÖ·
-								  wCount, //Òª¶ÁÈ¡µÄÊı¾İ×î´ó×Ö½ÚÊı
-								  &wCount, //DWORD*,ÓÃÀ´½ÓÊÕ·µ»Ø³É¹¦¶ÁÈ¡µÄÊı¾İ×Ö½ÚÊı
-								  NULL); //NULLÎªÍ¬²½·¢ËÍ£¬OVERLAPPED*ÎªÒì²½·¢ËÍ
+		//åŒæ­¥æ–¹å¼
+		DWORD wCount = maxlen; //æˆåŠŸè¯»å–çš„æ•°æ®å­—èŠ‚æ•°
+		BOOL bReadStat = ReadFile(m_Handle, //ä¸²å£å¥æŸ„
+								  buf, //æ•°æ®é¦–åœ°å€
+								  wCount, //è¦è¯»å–çš„æ•°æ®æœ€å¤§å­—èŠ‚æ•°
+								  &wCount, //DWORD*,ç”¨æ¥æ¥æ”¶è¿”å›æˆåŠŸè¯»å–çš„æ•°æ®å­—èŠ‚æ•°
+								  NULL); //NULLä¸ºåŒæ­¥å‘é€ï¼ŒOVERLAPPED*ä¸ºå¼‚æ­¥å‘é€
 		if (!bReadStat)
 		{
 			return 0;
@@ -213,36 +213,36 @@ unsigned int SerialPort::Receive(unsigned char* buf, int maxlen)
 	}
 	else
 	{
-		//Òì²½·½Ê½
-		DWORD wCount = maxlen; //<³É¹¦¶ÁÈ¡µÄÊı¾İ×Ö½ÚÊı
-		DWORD dwErrorFlags; //<´íÎó±êÖ¾
-		COMSTAT comStat; //<Í¨Ñ¶×´Ì¬
-		OVERLAPPED m_osRead; //<Òì²½ÊäÈëÊä³ö½á¹¹Ìå
+		//å¼‚æ­¥æ–¹å¼
+		DWORD wCount = maxlen; //<æˆåŠŸè¯»å–çš„æ•°æ®å­—èŠ‚æ•°
+		DWORD dwErrorFlags; //<é”™è¯¯æ ‡å¿—
+		COMSTAT comStat; //<é€šè®¯çŠ¶æ€
+		OVERLAPPED m_osRead; //<å¼‚æ­¥è¾“å…¥è¾“å‡ºç»“æ„ä½“
 
-							 //´´½¨Ò»¸öÓÃÓÚOVERLAPPEDµÄÊÂ¼ş´¦Àí£¬²»»áÕæÕıÓÃµ½£¬µ«ÏµÍ³ÒªÇóÕâÃ´×ö
+							 //åˆ›å»ºä¸€ä¸ªç”¨äºOVERLAPPEDçš„äº‹ä»¶å¤„ç†ï¼Œä¸ä¼šçœŸæ­£ç”¨åˆ°ï¼Œä½†ç³»ç»Ÿè¦æ±‚è¿™ä¹ˆåš
 		memset(&m_osRead, 0, sizeof(m_osRead));
 		m_osRead.hEvent = CreateEvent(NULL, TRUE, FALSE, "ReadEvent");
-		ClearCommError(m_Handle, &dwErrorFlags, &comStat); //Çå³ıÍ¨Ñ¶´íÎó£¬»ñµÃÉè±¸µ±Ç°×´Ì¬
+		ClearCommError(m_Handle, &dwErrorFlags, &comStat); //æ¸…é™¤é€šè®¯é”™è¯¯ï¼Œè·å¾—è®¾å¤‡å½“å‰çŠ¶æ€
 		if (!comStat.cbInQue)
-			return 0; //Èç¹ûÊäÈë»º³åÇø×Ö½ÚÊıÎª0£¬Ôò·µ»Øfalse
+			return 0; //å¦‚æœè¾“å…¥ç¼“å†²åŒºå­—èŠ‚æ•°ä¸º0ï¼Œåˆ™è¿”å›false
 
-		BOOL bReadStat = ReadFile(m_Handle, //´®¿Ú¾ä±ú
-								  buf, //Êı¾İÊ×µØÖ·
-								  wCount, //Òª¶ÁÈ¡µÄÊı¾İ×î´ó×Ö½ÚÊı
-								  &wCount, //DWORD*,ÓÃÀ´½ÓÊÕ·µ»Ø³É¹¦¶ÁÈ¡µÄÊı¾İ×Ö½ÚÊı
-								  &m_osRead); //NULLÎªÍ¬²½·¢ËÍ£¬OVERLAPPED*ÎªÒì²½·¢ËÍ
+		BOOL bReadStat = ReadFile(m_Handle, //ä¸²å£å¥æŸ„
+								  buf, //æ•°æ®é¦–åœ°å€
+								  wCount, //è¦è¯»å–çš„æ•°æ®æœ€å¤§å­—èŠ‚æ•°
+								  &wCount, //DWORD*,ç”¨æ¥æ¥æ”¶è¿”å›æˆåŠŸè¯»å–çš„æ•°æ®å­—èŠ‚æ•°
+								  &m_osRead); //NULLä¸ºåŒæ­¥å‘é€ï¼ŒOVERLAPPED*ä¸ºå¼‚æ­¥å‘é€
 		if (!bReadStat)
 		{
-			if (GetLastError() == ERROR_IO_PENDING) //Èç¹û´®¿ÚÕıÔÚ¶ÁÈ¡ÖĞ
+			if (GetLastError() == ERROR_IO_PENDING) //å¦‚æœä¸²å£æ­£åœ¨è¯»å–ä¸­
 			{
-				//GetOverlappedResultº¯ÊıµÄ×îºóÒ»¸ö²ÎÊıÉèÎªTRUE
-				//º¯Êı»áÒ»Ö±µÈ´ı£¬Ö±µ½¶Á²Ù×÷Íê³É»òÓÉÓÚ´íÎó¶ø·µ»Ø
+				//GetOverlappedResultå‡½æ•°çš„æœ€åä¸€ä¸ªå‚æ•°è®¾ä¸ºTRUE
+				//å‡½æ•°ä¼šä¸€ç›´ç­‰å¾…ï¼Œç›´åˆ°è¯»æ“ä½œå®Œæˆæˆ–ç”±äºé”™è¯¯è€Œè¿”å›
 				GetOverlappedResult(m_Handle, &m_osRead, &wCount, TRUE);
 			}
 			else
 			{
-				ClearCommError(m_Handle, &dwErrorFlags, &comStat); //Çå³ıÍ¨Ñ¶´íÎó
-				CloseHandle(m_osRead.hEvent); //¹Ø±Õ²¢ÊÍ·ÅhEventµÄÄÚ´æ
+				ClearCommError(m_Handle, &dwErrorFlags, &comStat); //æ¸…é™¤é€šè®¯é”™è¯¯
+				CloseHandle(m_osRead.hEvent); //å…³é—­å¹¶é‡Šæ”¾hEventçš„å†…å­˜
 				return 0;
 			}
 		}

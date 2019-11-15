@@ -1,4 +1,4 @@
-#include <opencv2/opencv.hpp>
+ï»¿#include <opencv2/opencv.hpp>
 #include <nv/IOTypes.hpp>
 #include <nv/SerialPort.hpp>
 
@@ -6,8 +6,8 @@
 #define INPUTMODEL_HPP
 
 /**
- * @brief Í¼ÏñÊäÈë
- * OpenCVµÄMatÍ¼ÏñÊäÈë
+ * @brief å›¾åƒè¾“å…¥
+ * OpenCVçš„Matå›¾åƒè¾“å…¥
  */
 class ImageInputData : public NautilusVision::IOAP::BaseInputData
 {

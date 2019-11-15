@@ -1,4 +1,4 @@
-#ifndef SERIALPORT_HPP
+ï»¿#ifndef SERIALPORT_HPP
 #define SERIALPORT_HPP
 
 #ifdef _WIN32
@@ -13,6 +13,11 @@ namespace IO
 {
 #ifdef _WIN32
 
+/**
+ * @class	SerialPort
+ *
+ * @brief	ä¸²å£é€šä¿¡ç±»å‹ï¼ˆä»…Windowsä¸‹å¯ç”¨ï¼‰
+ */
 class SerialPort
 {
 public:
@@ -20,26 +25,26 @@ public:
 	/**
 	 * @enum	Parity
 	 *
-	 * @brief	Ğ£Ñé·½Ê½£¨ÓÃÓÚ¹¹Ôìº¯Êı»òOpenº¯Êı£©
+	 * @brief	æ ¡éªŒæ–¹å¼ï¼ˆç”¨äºæ„é€ å‡½æ•°æˆ–Openå‡½æ•°ï¼‰
 	 */
 	enum Parity
 	{
-		NoParity = 0, //< ÎŞĞ£Ñé
-		OddParity = 1, //< ÆæĞ£Ñé
-		EvenParity = 2, //< Å¼Ğ£Ñé
-		MarkParity = 3 //< ±ê¼ÇĞ£Ñé
+		NoParity = 0, //< æ— æ ¡éªŒ
+		OddParity = 1, //< å¥‡æ ¡éªŒ
+		EvenParity = 2, //< å¶æ ¡éªŒ
+		MarkParity = 3 //< æ ‡è®°æ ¡éªŒ
 	};
 
 	/**
 	 * @enum	StopBit
 	 *
-	 * @brief	Í£Ö¹Î»£¨ÓÃÓÚ¹¹Ôìº¯Êı»òOpenº¯Êı£©
+	 * @brief	åœæ­¢ä½ï¼ˆç”¨äºæ„é€ å‡½æ•°æˆ–Openå‡½æ•°ï¼‰
 	 */
 	enum StopBit
 	{
-		OneStopBit = 0, //< 1Î»Í£Ö¹Î»
-		One5StopBits = 1, //< 1.5Î»Í£Ö¹Î»
-		TwoStopBits = 2 //< 2Î»Í£Ö¹Î»
+		OneStopBit = 0, //< 1ä½åœæ­¢ä½
+		One5StopBits = 1, //< 1.5ä½åœæ­¢ä½
+		TwoStopBits = 2 //< 2ä½åœæ­¢ä½
 	};
 
 	/**
@@ -47,12 +52,12 @@ public:
 	 *
 	 * @brief	Constructor
 	 *
-	 * @param	portname	   	portname(´®¿ÚÃû): ÔÚWindowsÏÂÊÇ"COM1""COM2"µÈ£¬ÔÚLinuxÏÂÊÇ"/dev/ttyS1"µÈ.
-	 * @param	baudrate	   	baudrate(²¨ÌØÂÊ): 9600¡¢19200¡¢38400¡¢43000¡¢56000¡¢57600¡¢115200.
-	 * @param	parity		   	parity(Ğ£ÑéÎ»): 0ÎªÎŞĞ£Ñé£¬1ÎªÆæĞ£Ñé£¬2ÎªÅ¼Ğ£Ñé£¬3Îª±ê¼ÇĞ£Ñé£¨½öÊÊÓÃÓÚwindows)
-	 * @param	databit		   	databit(Êı¾İÎ»): 4-8(windows),5-8(linux)£¬Í¨³£Îª8Î».
-	 * @param	stopbit		   	stopbit(Í£Ö¹Î»): 1Îª1Î»Í£Ö¹Î»£¬2Îª2Î»Í£Ö¹Î»,3Îª1.5Î»Í£Ö¹Î».
-	 * @param	synchronizeFlag	(Optional) synchronizeflag(Í¬²½¡¢Òì²½,½öÊÊÓÃÓëwindows): 0ÎªÒì²½£¬1ÎªÍ¬²½
+	 * @param	portname	   	portname(ä¸²å£å): åœ¨Windowsä¸‹æ˜¯"COM1""COM2"ç­‰ï¼Œåœ¨Linuxä¸‹æ˜¯"/dev/ttyS1"ç­‰.
+	 * @param	baudrate	   	baudrate(æ³¢ç‰¹ç‡): 9600ã€19200ã€38400ã€43000ã€56000ã€57600ã€115200.
+	 * @param	parity		   	parity(æ ¡éªŒä½): 0ä¸ºæ— æ ¡éªŒï¼Œ1ä¸ºå¥‡æ ¡éªŒï¼Œ2ä¸ºå¶æ ¡éªŒï¼Œ3ä¸ºæ ‡è®°æ ¡éªŒï¼ˆä»…é€‚ç”¨äºwindows)
+	 * @param	databit		   	databit(æ•°æ®ä½): 4-8(windows),5-8(linux)ï¼Œé€šå¸¸ä¸º8ä½.
+	 * @param	stopbit		   	stopbit(åœæ­¢ä½): 1ä¸º1ä½åœæ­¢ä½ï¼Œ2ä¸º2ä½åœæ­¢ä½,3ä¸º1.5ä½åœæ­¢ä½.
+	 * @param	synchronizeFlag	(Optional) synchronizeflag(åŒæ­¥ã€å¼‚æ­¥,ä»…é€‚ç”¨ä¸windows): 0ä¸ºå¼‚æ­¥ï¼Œ1ä¸ºåŒæ­¥
 	 */
 	SerialPort(std::string portname,
 			   unsigned int baudrate,
@@ -67,16 +72,16 @@ public:
 	/**
 	 * @fn	bool SerialPort::Open(std::string portname, unsigned int baudrate, Parity parity, unsigned char databit, StopBit stopbit, bool synchronizeFlag = 1)
 	 *
-	 * @brief	@Brief:		´ò¿ª´®¿Ú,³É¹¦·µ»Øtrue£¬Ê§°Ü·µ»Øfalse
+	 * @brief	@Brief:		æ‰“å¼€ä¸²å£,æˆåŠŸè¿”å›trueï¼Œå¤±è´¥è¿”å›false
 	 *
 	 * @exception	std::runtime_error	Raised when a runtime error condition occurs.
 	 *
-	 * @param	portname	   	portname(´®¿ÚÃû): ÔÚWindowsÏÂÊÇ"COM1""COM2"µÈ£¬ÔÚLinuxÏÂÊÇ"/dev/ttyS1"µÈ.
-	 * @param	baudrate	   	baudrate(²¨ÌØÂÊ): 9600¡¢19200¡¢38400¡¢43000¡¢56000¡¢57600¡¢115200.
-	 * @param	parity		   	parity(Ğ£ÑéÎ»): 0ÎªÎŞĞ£Ñé£¬1ÎªÆæĞ£Ñé£¬2ÎªÅ¼Ğ£Ñé£¬3Îª±ê¼ÇĞ£Ñé£¨½öÊÊÓÃÓÚwindows)
-	 * @param	databit		   	databit(Êı¾İÎ»): 4-8(windows),5-8(linux)£¬Í¨³£Îª8Î».
-	 * @param	stopbit		   	stopbit(Í£Ö¹Î»): 1Îª1Î»Í£Ö¹Î»£¬2Îª2Î»Í£Ö¹Î»,3Îª1.5Î»Í£Ö¹Î».
-	 * @param	synchronizeFlag	(Optional) synchronizeflag(Í¬²½¡¢Òì²½,½öÊÊÓÃÓëwindows): 0ÎªÒì²½£¬1ÎªÍ¬²½
+	 * @param	portname	   	portname(ä¸²å£å): åœ¨Windowsä¸‹æ˜¯"COM1""COM2"ç­‰ï¼Œåœ¨Linuxä¸‹æ˜¯"/dev/ttyS1"ç­‰.
+	 * @param	baudrate	   	baudrate(æ³¢ç‰¹ç‡): 9600ã€19200ã€38400ã€43000ã€56000ã€57600ã€115200.
+	 * @param	parity		   	parity(æ ¡éªŒä½): 0ä¸ºæ— æ ¡éªŒï¼Œ1ä¸ºå¥‡æ ¡éªŒï¼Œ2ä¸ºå¶æ ¡éªŒï¼Œ3ä¸ºæ ‡è®°æ ¡éªŒï¼ˆä»…é€‚ç”¨äºwindows)
+	 * @param	databit		   	databit(æ•°æ®ä½): 4-8(windows),5-8(linux)ï¼Œé€šå¸¸ä¸º8ä½.
+	 * @param	stopbit		   	stopbit(åœæ­¢ä½): 1ä¸º1ä½åœæ­¢ä½ï¼Œ2ä¸º2ä½åœæ­¢ä½,3ä¸º1.5ä½åœæ­¢ä½.
+	 * @param	synchronizeFlag	(Optional) synchronizeflag(åŒæ­¥ã€å¼‚æ­¥,ä»…é€‚ç”¨ä¸windows): 0ä¸ºå¼‚æ­¥ï¼Œ1ä¸ºåŒæ­¥
 	 *
 	 * @returns	True if it succeeds, false if it fails.
 	 */
@@ -91,21 +96,21 @@ public:
 	/**
 	 * @fn	unsigned int SerialPort::Send(const unsigned char* buf, int len)
 	 *
-	 * @brief	·¢ËÍÊı¾İ»òĞ´Êı¾İ£¬³É¹¦·µ»Ø·¢ËÍÊı¾İ³¤¶È£¬Ê§°Ü·µ»Ø0
+	 * @brief	å‘é€æ•°æ®æˆ–å†™æ•°æ®ï¼ŒæˆåŠŸè¿”å›å‘é€æ•°æ®é•¿åº¦ï¼Œå¤±è´¥è¿”å›0
 	 *
 	 * @exception	std::runtime_error	Raised when a runtime error condition occurs.
 	 *
 	 * @param	buf	The buffer.
 	 * @param	len	The length.
 	 *
-	 * @returns	Õı³£Ê±·µ»Ø³É¹¦Ğ´ÈëµÄ×Ö½ÚÊı£¨Í¬²½£©»òÊÇ·ñ³É¹¦£¨Òì²½)
+	 * @returns	æ­£å¸¸æ—¶è¿”å›æˆåŠŸå†™å…¥çš„å­—èŠ‚æ•°ï¼ˆåŒæ­¥ï¼‰æˆ–æ˜¯å¦æˆåŠŸï¼ˆå¼‚æ­¥)
 	 */
 	unsigned int Send(const unsigned char* buf, int len);
 
 	/**
 	 * @fn	unsigned int SerialPort::Receive(unsigned char* buf, int maxlen)
 	 *
-	 * @brief	½ÓÊÜÊı¾İ»ò¶ÁÊı¾İ£¬³É¹¦·µ»Ø¶ÁÈ¡Êµ¼ÊÊı¾İµÄ³¤¶È£¬Ê§°Ü·µ»Ø0
+	 * @brief	æ¥å—æ•°æ®æˆ–è¯»æ•°æ®ï¼ŒæˆåŠŸè¿”å›è¯»å–å®é™…æ•°æ®çš„é•¿åº¦ï¼Œå¤±è´¥è¿”å›0
 	 *
 	 * @param [in,out]	buf   	If non-null, the buffer.
 	 * @param 		  	maxlen	The maxlen.
@@ -117,7 +122,7 @@ public:
 	/**
 	 * @fn	void SerialPort::Close()
 	 *
-	 * @brief	¹Ø±Õ´®¿Ú
+	 * @brief	å…³é—­ä¸²å£
 	 *
 	 */
 	void Close();
