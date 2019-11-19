@@ -29,10 +29,10 @@ public:
 	 */
 	enum Parity
 	{
-		NoParity = 0, //< 无校验
-		OddParity = 1, //< 奇校验
-		EvenParity = 2, //< 偶校验
-		MarkParity = 3 //< 标记校验
+		NoPariDty = 0, ///< 无校验
+		OddParity = 1, ///< 奇校验
+		EvenParity = 2,///< 偶校验
+		MarkParity = 3 ///< 标记校验
 	};
 
 	/**
@@ -42,9 +42,9 @@ public:
 	 */
 	enum StopBit
 	{
-		OneStopBit = 0, //< 1位停止位
-		One5StopBits = 1, //< 1.5位停止位
-		TwoStopBits = 2 //< 2位停止位
+		OneStopBit = 0, ///< 1位停止位
+		One5StopBits = 1, ///< 1.5位停止位
+		TwoStopBits = 2 ///< 2位停止位
 	};
 
 	/**
@@ -68,6 +68,11 @@ public:
 
 	SerialPort();
 	~SerialPort();
+
+	SerialPort(const SerialPort& serialPort) = delete;
+	SerialPort(SerialPort&& serialPort);
+	SerialPort& operator=(const SerialPort& rhs) = delete;
+	SerialPort& operator=(SerialPort&& rhs);
 
 	/**
 	 * @fn	bool SerialPort::Open(std::string portname, unsigned int baudrate, Parity parity, unsigned char databit, StopBit stopbit, bool synchronizeFlag = 1)
@@ -112,7 +117,7 @@ public:
 	 *
 	 * @brief	接受数据或读数据，成功返回读取实际数据的长度，失败返回0
 	 *
-	 * @param [in,out]	buf   	If non-null, the buffer.
+	 * @param	[out]	buf   	If non-null, the buffer.
 	 * @param 		  	maxlen	The maxlen.
 	 *
 	 * @returns	An int.

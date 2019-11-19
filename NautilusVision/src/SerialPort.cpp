@@ -2,6 +2,8 @@
 #include "..\include\nv\SerialPort.hpp"
 #include "..\include\nv\SerialPort.hpp"
 #include "..\include\nv\SerialPort.hpp"
+#include "..\include\nv\SerialPort.hpp"
+#include "..\include\nv\SerialPort.hpp"
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -38,6 +40,22 @@ SerialPort::SerialPort()
 SerialPort::~SerialPort()
 {
 	Close();
+}
+
+SerialPort::SerialPort(SerialPort&& serialPort)
+{
+	*this = std::move(serialPort);
+}
+
+SerialPort& SerialPort::operator=(SerialPort&& rhs)
+{
+	m_IsOpened = rhs.m_IsOpened;
+	m_IsSync = rhs.m_IsSync;
+	m_Handle = rhs.m_Handle;
+
+	rhs.m_IsOpened = false;
+	rhs.m_Handle = NULL;
+	return *this;
 }
 
 bool SerialPort::Open(std::string portname,
