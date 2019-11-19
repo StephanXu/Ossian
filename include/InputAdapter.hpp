@@ -142,97 +142,86 @@ private:
 	bool m_Valid;
 };
 
-class SerialPortIO //[TODO]: Add output pipeline
+/**
+ * @class	SerialPortIO
+ *
+ * @brief	串口输出数据服务
+ *
+ * @author	Xu Zihan
+ * @date	2019/11/20
+ */
+class SerialPortIO : public NautilusVision::IOAP::IService
 {
 public:
+
 	explicit SerialPortIO()
 		:m_SerialPort("COM9",
 					  CBR_115200,
 					  NautilusVision::IO::SerialPort::EvenParity,
 					  8,
 					  NautilusVision::IO::SerialPort::OneStopBit,
-					  false)
+					  true)
 	{
 		m_Valid = m_SerialPort.IsOpened();
 	}
 
-	bool SendData(int aimed, float yaw, float pitch, float dist)
+	/**
+	 * @fn	bool SerialPortIO::SendData(float yaw, float pitch, float dist, unsigned int flag)
+	 *
+	 * @brief	向串口发送数据
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/20
+	 *
+	 * @param	yaw  	yaw 角度
+	 * @param	pitch	pitch 角度
+	 * @param	dist 	距离
+	 * @param	flag 	标志字节（请使用 FlagHelper 生成）
+	 *
+	 * @returns	True if it succeeds, false if it fails.
+	 */
+	bool SendData(float yaw, float pitch, float dist, unsigned int flag)
 	{
-		if (!m_Valid)
-			return false;
-		Pack(aimed, yaw, pitch, dist);
-		return m_SerialPort.Send(sendFrame, sizeof(sendFrame)) == sizeof(sendFrame);
+		unsigned char buffer[dataLength]{};
+		*(buffer + 0) = dataBeginSig;
+		*reinterpret_cast<float*>(buffer + 1) = yaw;
+		*reinterpret_cast<float*>(buffer + 5) = pitch;
+		*reinterpret_cast<float*>(buffer + 9) = dist;
+		*reinterpret_cast<unsigned int*>(buffer + 13) = flag;
+		
+		return m_SerialPort.Send(buffer, sizeof(buffer));
 	}
 
-	bool RecvData(int& signal_1, int& signal_2, int& signal_3)
+	/**
+	 * @fn	unsigned int SerialPortIO::FlagHelper(unsigned char isAimed, unsigned char reserve0, unsigned char reserve1, unsigned char reserve2)
+	 *
+	 * @brief	生成用于SendData函数的flag参数
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/20
+	 *
+	 * @param	isAimed 	是否瞄准
+	 * @param	reserve0	reserve.
+	 * @param	reserve1	reserve.
+	 * @param	reserve2	reserve.
+	 *
+	 * @returns	生成的flag标志.
+	 */
+	unsigned int FlagHelper(unsigned char isAimed,
+							unsigned char reserve0,
+							unsigned char reserve1,
+							unsigned char reserve2)
 	{
-		if (!m_Valid)
-			return false;
-		memset(recvFrame, 0, sizeof(recvFrame));
-		int recvLen = m_SerialPort.Receive(recvFrame, sizeof(recvFrame));
-
-		if (recvLen == 0)
-			return false;
-
-		if (recvFrame[0] == 0xA5 && recvFrame[17] == 0xAA)
-		{
-			UnPack(signal_1, signal_2, signal_3);
-			return true;
-		}
-		else
-			return false;
-
+		return isAimed << 24 | reserve0 << 16 | reserve1 << 8 | reserve2 << 0;
 	}
+
 private:
+	static constexpr unsigned char dataBeginSig = 0xA5;
+	static constexpr unsigned char dataEndSig = 0xAA;
 	static constexpr unsigned int dataLength = 18;
 
 	NautilusVision::IO::SerialPort m_SerialPort;
 	bool m_Valid;
-	unsigned char sendFrame[dataLength];
-	unsigned char recvFrame[dataLength];
-	union FloatByte  //sizeof == 4
-	{
-		float value;
-		unsigned char ubyte[4];  //uint8_t
-	};
-	struct VisionData
-	{
-		FloatByte _yaw;
-		FloatByte _pitch;
-		FloatByte _dist;
-		VisionData(float yaw, float pitch, float dist)
-		{
-			_yaw.value = yaw;
-			_pitch.value = pitch;
-			_dist.value = dist;
-		}
-	};
-
-
-	void Pack(int aimed, float yaw, float pitch, float dist)
-	{
-		VisionData sd(yaw, pitch, dist);
-		memset(sendFrame, 0, sizeof(sendFrame));
-		sendFrame[0] = 0xA5;
-
-		for (int i = 1, j = 0; i <= 4 && j < 4; ++i, ++j)
-			sendFrame[i] = sd._yaw.ubyte[j];
-
-		for (int i = 5, j = 0; i <= 8 && j < 4; ++i, ++j)
-			sendFrame[i] = sd._pitch.ubyte[j];
-
-		for (int i = 9, j = 0; i <= 12 && j < 4; ++i, ++j)
-			sendFrame[i] = sd._dist.ubyte[j];
-
-		sendFrame[13] = (unsigned char)aimed;
-		sendFrame[dataLength - 1] = 0xAA;
-	}
-	void UnPack(int& signal_1, int& signal_2, int& signal_3)
-	{
-		signal_1 = (int)recvFrame[14];
-		signal_2 = (int)recvFrame[15];
-		signal_3 = (int)recvFrame[16];
-	}
 };
 
 #endif //_WIN32

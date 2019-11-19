@@ -276,10 +276,15 @@ public:
         return fut;
     }
 
-    bool Empty()
+    bool Empty() const
     {
         return m_Tasks.Empty();
     }
+
+	size_t WaitingCount() const
+	{
+		return m_Tasks.Size();
+	}
 
 private:
     SafeQueue<TaskWrapper> m_Tasks;
