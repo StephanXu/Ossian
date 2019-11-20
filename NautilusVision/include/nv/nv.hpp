@@ -19,6 +19,7 @@
 #include "nv/MultiThread.hpp"
 #include "nv/Service.hpp"
 #include "nv/Config.hpp"
+#include "nv/Configuration.hpp"
 
 // IO
 #include "nv/SerialPort.hpp"
