@@ -101,12 +101,20 @@ public:
 	template<typename T>
 	T LoadValue(std::string path) const
 	{
-		auto it = m_Content.find(path);
-		if (it == m_Content.end())
+		try
 		{
+			auto it = m_Content.find(path);
+			if (it == m_Content.end())
+			{
+				throw ConfigLoadError(path);
+			}
+			return std::get<T>(it->second);
+		}
+		catch (std::bad_variant_access & e)
+		{
+			spdlog::error(e.what());
 			throw ConfigLoadError(path);
 		}
-		return std::get<T>(it->second);
 	}
 
 	/**
@@ -133,8 +141,8 @@ public:
 		dest = std::move(tmp);
 	}
 
-	void LoadStringValue(String& dest, std::string path) const noexcept { LoadValue<String>(dest, path); }
-	String LoadStringValue(String path) const { return LoadValue<std::string>(path); }
+	void LoadStringValue(String& dest, std::string path) const noexcept { LoadValue<std::string>(dest, path); }
+	String LoadStringValue(std::string path) const { return LoadValue<std::string>(path); }
 
 	void LoadIntegerValue(Integer& dest, std::string path) const noexcept { LoadValue<Integer>(dest, path); }
 	Integer LoadIntegerValue(std::string path) const { return LoadValue<Integer>(path); }

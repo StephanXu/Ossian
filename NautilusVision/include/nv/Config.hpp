@@ -64,15 +64,25 @@ public:
     }
 
     /**
-     * @brief 注册一项服务
+     * @brief 注册一项输入服务
      * @tparam ServiceType 服务类型
      */
-    template <typename ServiceType>
-    void RegisterService()
+    template <typename InputAdapterType>
+    void RegisterInputAdapter()
     {
-        m_DIConfig.Add(CreateGeneralService<ServiceType>);
-        m_InputAdapterRealizer.emplace_back([](DI::Injector &injector) { return injector.GetInstance<ServiceType>(); });
+        m_DIConfig.Add(CreateGeneralService<InputAdapterType>);
+        m_InputAdapterRealizer.emplace_back([](DI::Injector &injector) { return injector.GetInstance<InputAdapterType>(); });
     }
+
+	/**
+	 * @brief 注册一项服务
+	 * @tparam ServiceType 服务类型
+	 */
+	template <typename ServiceType>
+	void RegisterService()
+	{
+		m_DIConfig.Add(CreateGeneralService<ServiceType>);
+	}
 
     /**
      * @brief 注册一条管道

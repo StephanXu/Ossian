@@ -197,24 +197,24 @@ public:
 	}
 
 	/**
-	 * @fn	unsigned int SerialPortIO::FlagHelper(unsigned char isAimed, unsigned char reserve0, unsigned char reserve1, unsigned char reserve2)
+	 * @fn	static unsigned int SerialPortIO::FlagHelper(unsigned char isAimed, unsigned char reserve0, unsigned char reserve1, unsigned char reserve2)
 	 *
 	 * @brief	生成用于SendData函数的flag参数
 	 *
 	 * @author	Xu Zihan
 	 * @date	2019/11/20
 	 *
-	 * @param	isAimed 	是否瞄准
+	 * @param	isAimed 	是否瞄准.
 	 * @param	reserve0	reserve.
 	 * @param	reserve1	reserve.
 	 * @param	reserve2	reserve.
 	 *
 	 * @returns	生成的flag标志.
 	 */
-	unsigned int FlagHelper(unsigned char isAimed,
-							unsigned char reserve0,
-							unsigned char reserve1,
-							unsigned char reserve2)
+	static unsigned int FlagHelper(unsigned char isAimed,
+								   unsigned char reserve0,
+								   unsigned char reserve1,
+								   unsigned char reserve2)
 	{
 		return isAimed << 24 | reserve0 << 16 | reserve1 << 8 | reserve2 << 0;
 	}

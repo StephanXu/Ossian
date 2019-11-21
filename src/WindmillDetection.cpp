@@ -23,17 +23,20 @@
 #include <atomic>
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
-                                     ColorFilter &colorFilter)
-    : m_Valid(false),
-      m_ColorFilter(colorFilter),
-      m_TrackSize(sampleNum),
-      m_Targets(5)
+									 ColorFilter& colorFilter,
+									 SerialPortIO* serialPort)
+	: m_Valid(false)
+	, m_ColorFilter(colorFilter)
+	, m_TrackSize(sampleNum)
+	, m_Targets(5)
+	, m_SerialPort(serialPort)
 {
 }
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
-                                     ColorFilter &&colorFilter)
-    : WindmillDetection(sampleNum, colorFilter)
+									 ColorFilter&& colorFilter,
+									 SerialPortIO* serialPort)
+	: WindmillDetection(sampleNum, colorFilter, serialPort)
 {
 }
 
@@ -126,6 +129,7 @@ void WindmillDetection::Process(NautilusVision::IOAP::BaseInputData *input)
     GenerateTargetPosition(currentTarget, m_Center);
 
 	spdlog::info("Center:({},{}),Radius:{}", m_Center.x, m_Center.y, m_Radius);
+	m_SerialPort->SendData(1, 2, 3, m_SerialPort->FlagHelper(1, 0, 0, 0));
 	//cv::circle(image, Targets()[0], 10,
 	//		   cv::Scalar{ 0, 255, 0 }, 2);
 	//cv::line(image, Targets()[0], Center(),

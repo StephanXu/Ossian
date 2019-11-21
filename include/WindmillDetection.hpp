@@ -15,6 +15,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "ColorFilter.hpp"
+#include "InputAdapter.hpp"
 
 #include <vector>
 #include <tuple>
@@ -45,8 +46,8 @@ public:
      * @param sampleNum 最大采样数量
      * @param colorFilter IFilter 类型的颜色过滤器.
      */
-    explicit WindmillDetection(std::size_t sampleNum, ColorFilter &colorFilter);
-    explicit WindmillDetection(std::size_t sampleNum, ColorFilter &&colorFilter);
+	explicit WindmillDetection(std::size_t sampleNum, ColorFilter& colorFilter, SerialPortIO* serialPort);
+    explicit WindmillDetection(std::size_t sampleNum, ColorFilter &&colorFilter, SerialPortIO* serialPort);
 
     /**
      * 计算一张图像Process an image to refresh Targets, Center and Radius.
@@ -66,6 +67,8 @@ public:
 
 private:
     std::atomic_bool m_Valid;
+
+	SerialPortIO* m_SerialPort;
 
     NautilusVision::SafeQueue<cv::Point2f> m_Track;
     // std::queue<cv::Point2f> m_Track;

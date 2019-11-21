@@ -23,6 +23,8 @@ Configuration::Configuration(std::string configFilename)
 
 bool Configuration::LoadConfig()
 {
+	m_Content.clear();
+
 	simdjson::padded_string p = simdjson::get_corpus(m_ConfigFilename);
 	simdjson::ParsedJson pj;
 	pj.allocate_capacity(p.size());
@@ -35,6 +37,13 @@ bool Configuration::LoadConfig()
 
 	simdjson::ParsedJson::Iterator it(pj);
 	ConfigIterProc(it, "");
+
+#ifdef _DEBUG
+	for (auto&& item : m_Content)
+	{
+		spdlog::info("Load Configuration: {}", item.first);
+	}
+#endif
 }
 
 bool Configuration::LoadConfig(std::string configFilename)
@@ -68,15 +77,15 @@ void Configuration::ConfigIterProc(simdjson::ParsedJson::Iterator& it, std::stri
 	else
 	{
 		if (it.is_true())
-			m_Content.insert(std::pair<std::string, ContentType>(prefix, true));
+			m_Content.insert(std::pair<std::string, ContentType>(prefix, Boolean(true)));
 		else if (it.is_false())
-			m_Content.insert(std::pair<std::string, ContentType>(prefix, false));
+			m_Content.insert(std::pair<std::string, ContentType>(prefix, Boolean(false)));
 		else if (it.is_string())
-			m_Content.insert(std::pair<std::string, ContentType>(prefix, it.get_string()));
+			m_Content.insert(std::pair<std::string, ContentType>(prefix, String(it.get_string())));
 		else if (it.is_integer())
-			m_Content.insert(std::pair<std::string, ContentType>(prefix, it.get_integer()));
+			m_Content.insert(std::pair<std::string, ContentType>(prefix, Integer(it.get_integer())));
 		else if (it.is_double())
-			m_Content.insert(std::pair<std::string, ContentType>(prefix, it.get_double()));
+			m_Content.insert(std::pair<std::string, ContentType>(prefix, Double(it.get_double())));
 	}
 }
 

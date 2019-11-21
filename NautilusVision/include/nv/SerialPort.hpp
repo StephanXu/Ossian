@@ -104,7 +104,7 @@ public:
 			  unsigned int stopbit,
 			  bool synchronizeFlag = 1)
 	{
-		return Open(portname, baudrate, parity, databit, stopbit, synchronizeFlag);
+		return Open(portname, baudrate, static_cast<Parity>(parity), databit, static_cast<StopBit>(stopbit), synchronizeFlag);
 	}
 
 	/**

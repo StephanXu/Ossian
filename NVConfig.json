@@ -1,6 +1,6 @@
 {
   "serialPort": {
-    "portName": "COM9",
+    "portName": "COM3",
     "baudrate": 115200,
     "parity": 2,
     "dataBit": 8,
