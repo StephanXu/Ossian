@@ -19,8 +19,6 @@
 #include <opencv2/opencv.hpp>
 #include <HKCamera/MvCameraControl.h>
 
-#include "Constants.hpp"
-
 #include <exception>
 #include <vector>
 #include <memory>

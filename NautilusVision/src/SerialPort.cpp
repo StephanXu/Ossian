@@ -42,12 +42,12 @@ SerialPort::~SerialPort()
 	Close();
 }
 
-SerialPort::SerialPort(SerialPort&& serialPort)
+SerialPort::SerialPort(SerialPort&& serialPort) noexcept
 {
 	*this = std::move(serialPort);
 }
 
-SerialPort& SerialPort::operator=(SerialPort&& rhs)
+SerialPort& SerialPort::operator=(SerialPort&& rhs) noexcept
 {
 	m_IsOpened = rhs.m_IsOpened;
 	m_IsSync = rhs.m_IsSync;

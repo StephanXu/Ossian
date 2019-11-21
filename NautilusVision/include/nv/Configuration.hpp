@@ -3,96 +3,179 @@
 #define CONFIGURATION_HPP
 
 #include <simdjson/jsonparser.h>
+#include <spdlog/spdlog.h>
+#include <fmt/format.h>
 
 #include <string>
 #include <unordered_map>
 #include <variant>
+#include <memory>
 
 namespace NautilusVision
 {
 
 namespace Utils
 {
+/**
+ * @class	Configuration
+ *
+ * @brief	配置文件解析
+ *
+ * @author	Xu Zihan
+ * @date	2019/11/21
+ */
 class Configuration
 {
 	using ContentType = std::variant<std::string, long long, double, bool>;
 public:
-	Configuration(std::string configFilename)
-		:m_ConfigFilename(configFilename)
-	{
 
-	}
+	using String = std::string;
+	using Integer = long long;
+	using Double = double;
+	using Boolean = bool;
 
-	bool LoadConfig()
+	class ConfigLoadError : public std::runtime_error
 	{
-		simdjson::padded_string p = simdjson::get_corpus(m_ConfigFilename);
-		simdjson::ParsedJson pj;
-		pj.allocate_capacity(p.size());
-		const int res = simdjson::json_parse(p, pj);
-		if (0 != res)
+	public:
+		ConfigLoadError(std::string path)
+			:std::runtime_error(fmt::format("Load configuration {} failed: key doesn't exist.", path))
+			, m_Path(path)
 		{
-			spdlog::error("Parse configuration file failed: {}", simdjson::error_message(res));
-			return false;
 		}
-		
-		simdjson::ParsedJson::Iterator it(pj);
-		ConfigIterProc(it, "");
-	}
 
-	bool LoadConfig(std::string configFilename)
+		std::string Path() { return m_Path; }
+	private:
+		std::string m_Path;
+	};
+
+	/**
+	 * @fn	Configuration::Configuration(std::string configFilename)
+	 *
+	 * @brief	Constructor
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/21
+	 *
+	 * @param	configFilename	Filename of the configuration file.
+	 */
+	Configuration(std::string configFilename);
+
+	/**
+	 * @fn	bool Configuration::LoadConfig()
+	 *
+	 * @brief	Loads the configuration from file
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/21
+	 *
+	 * @returns	True if it succeeds, false if it fails.
+	 */
+	bool LoadConfig();
+
+	/**
+	 * @fn	bool Configuration::LoadConfig(std::string configFilename)
+	 *
+	 * @brief	Loads a configuration from file
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/21
+	 *
+	 * @param	configFilename	Filename of the configuration file.
+	 *
+	 * @returns	True if it succeeds, false if it fails.
+	 */
+	bool LoadConfig(std::string configFilename);
+
+	/**
+	 * @fn	template<typename T> T Configuration::LoadValue(std::string path)
+	 *
+	 * @brief	将配置存储到变量
+	 * 请尽可能使用两个参数的LoadValue函数以控制异常，若执意使用此函数请自行处理异常
+	 * @exception	ConfigLoadError	Raised when a Configuration Load error condition occurs.
+	 *
+	 * @tparam	T	配置数据类型
+	 * @param	path	字段路径
+	 *
+	 * @returns	The value.
+	 */
+	template<typename T>
+	T LoadValue(std::string path) const
 	{
-		m_ConfigFilename = configFilename;
-		return LoadConfig();
+		auto it = m_Content.find(path);
+		if (it == m_Content.end())
+		{
+			throw ConfigLoadError(path);
+		}
+		return std::get<T>(it->second);
 	}
 
-	ContentType& operator[](const std::string key)
+	/**
+	 * @fn	template<typename T> void Configuration::LoadValue(T& dest,std::string path)
+	 *
+	 * @brief	将配置存储到变量
+	 *
+	 * @tparam	T	配置数据类型
+	 * @param [out]		dest	目标变量
+	 * @param 		  	path	字段路径
+	 */
+	template<typename T>
+	void LoadValue(T& dest, std::string path) const noexcept
 	{
-		return m_Content[key];
+		T tmp;
+		try
+		{
+			tmp = std::move(LoadValue<T>(path));
+		}
+		catch(ConfigLoadError& e)
+		{
+			spdlog::error(e.what());
+		}
+		dest = std::move(tmp);
 	}
 
+	void LoadStringValue(String& dest, std::string path) const noexcept { LoadValue<String>(dest, path); }
+	String LoadStringValue(String path) const { return LoadValue<std::string>(path); }
+
+	void LoadIntegerValue(Integer& dest, std::string path) const noexcept { LoadValue<Integer>(dest, path); }
+	Integer LoadIntegerValue(std::string path) const { return LoadValue<Integer>(path); }
+
+	void LoadDoubleValue(Double& dest, std::string path) const noexcept { LoadValue<Double>(dest, path); }
+	Double LoadDoubleValue(std::string path) const { return LoadValue<Double>(path); }
+
+	void LoadBooleanValue(Boolean& dest, std::string path) const noexcept { LoadValue<Boolean>(dest, path); }
+	Boolean LoadBooleanValue(std::string path) const { return LoadValue<Boolean>(path); }
 private:
 
-	void ConfigIterProc(simdjson::ParsedJson::Iterator& it, std::string prefix)
-	{
-		if (it.is_object())
-		{
-			if (it.down())
-			{
-				std::string nextPrefix{ it.get_string() };
-				it.next();
-				ConfigIterProc(it, prefix + "/" + nextPrefix);
-				while (it.next())
-				{
-					nextPrefix = it.get_string();
-					it.next();
-					ConfigIterProc(it, prefix + "/" + nextPrefix);
-				}
-				it.up();
-			}
-		}
-		else if (it.is_array())
-		{
-			return;
-		}
-		else
-		{
-			if (it.is_true())
-				m_Content.insert(std::pair<std::string, ContentType>(prefix, true));
-			else if (it.is_false())
-				m_Content.insert(std::pair<std::string, ContentType>(prefix, false));
-			else if (it.is_string())
-				m_Content.insert(std::pair<std::string, ContentType>(prefix, it.get_string()));
-			else if (it.is_integer())
-				m_Content.insert(std::pair<std::string, ContentType>(prefix, it.get_integer()));
-			else if (it.is_double())
-				m_Content.insert(std::pair<std::string, ContentType>(prefix, it.get_double()));
-		}
-	}
+	/**
+	 * @fn	void Configuration::ConfigIterProc(simdjson::ParsedJson::Iterator& it, std::string prefix)
+	 *
+	 * @brief	Configuration iterator procedure
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/21
+	 *
+	 * @param [in]		it	  	The iterator.
+	 * @param 		  	prefix	The prefix of key path.
+	 */
+	void ConfigIterProc(simdjson::ParsedJson::Iterator& it, std::string prefix);
 
 	std::string m_ConfigFilename;
 
 	std::unordered_map<std::string, ContentType> m_Content;
 };
+
+/**
+ * @fn	std::unique_ptr<Configuration> CreateConfiguration()
+ *
+ * @brief	Creates the configuration
+ *
+ * @author	Xu Zihan
+ * @date	2019/11/21
+ *
+ * @returns	The new configuration.
+ */
+std::unique_ptr<Configuration> CreateConfiguration();
+
 } // Utils
 
 } // NautilusVision

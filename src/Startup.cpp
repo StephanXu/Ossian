@@ -1,8 +1,5 @@
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "Startup.hpp"
-#include "Constants.hpp"
 #include "InputAdapter.hpp"
 #include "WindmillDetection.hpp"
 
@@ -22,12 +19,8 @@ std::unique_ptr<WindmillDetection> CreateWindmillDetection()
 
 void Startup::ConfigServices(AppBuilder &app)
 {
-	// set logger
-	auto console = spdlog::stderr_color_mt("console");
-	spdlog::set_default_logger(console);
-	spdlog::set_pattern("[%T.%e] [%-5t] %^[%l]%$  %v");
-	spdlog::set_level(spdlog::level::info);
-
+	app.InitLog();
+	app.RegisterConfiguration();
     app.RegisterStatusType<RoboStatus>();
     app.RegisterService<VideoInputSource>();
 }

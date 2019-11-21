@@ -1,15 +1,17 @@
-﻿#include <opencv2/opencv.hpp>
+﻿
+#ifndef INPUTADAPTER_HPP
+#define INPUTADAPTER_HPP
+
+#include <opencv2/opencv.hpp>
 #include <nv/IOTypes.hpp>
 #include <nv/Service.hpp>
 #include <nv/SerialPort.hpp>
 #include <spdlog/spdlog.h>
 
-#include "Constants.hpp"
 #include "InputModel.hpp"
 #include "HKCamera.hpp"
 
-#ifndef INPUTADAPTER_HPP
-#define INPUTADAPTER_HPP
+using NautilusVision::Utils::Configuration;
 
 /**
  * @brief 视频输入
@@ -23,19 +25,15 @@ public:
      * 如果视频加载失败，对象将被设置为失效，GetInput GetInputAsync 等函数将不可用。
      * @param filename 
      */
-    explicit VideoInputSource(std::string filename)
-        : m_VideoSource(filename), m_Valid(true)
+    explicit VideoInputSource(NautilusVision::Utils::Configuration* config)
+        : m_VideoSource(config->LoadStringValue("/testVideoSource/filename"))
+		, m_Valid(true)
     {
         if (!m_VideoSource.isOpened())
         {
             m_Valid = false;
             return;
         }
-    }
-
-    VideoInputSource()
-        : VideoInputSource("test.avi")
-    {
     }
 
     std::shared_ptr<NautilusVision::IOAP::BaseInputData> GetInput() override
@@ -82,18 +80,26 @@ private:
 class CameraInputSource : public NautilusVision::IOAP::BaseInputAdapter
 {
 public:
-	explicit CameraInputSource(const int camIndex,
-							   const int frameWidth,
-							   const int frameHeight)
-		: m_Camera(camIndex, frameWidth, frameHeight), m_Valid(true)
+	explicit CameraInputSource(NautilusVision::Utils::Configuration* config)
+		: m_Camera(config->LoadIntegerValue("/camera/deviceIndex"),
+				   config->LoadIntegerValue("/camera/frameWidth"),
+				   config->LoadIntegerValue("/camera/frameHeight"))
+		, m_Valid(true)
 	{
-		m_Camera.StartGrabFrame();
-		m_Valid = m_Camera.IsValid();
-	}
-
-	CameraInputSource()
-		: CameraInputSource(0, ARMOR_FRAME_WIDTH, ARMOR_FRAME_HEIGHT)
-	{
+		try
+		{
+			m_Camera.StartGrabFrame();
+		}
+		catch (std::runtime_error & e)
+		{
+			spdlog::error(e.what());
+			m_Valid = false;
+		}
+		catch (std::bad_alloc & e)
+		{
+			spdlog::error(e.what());
+			m_Valid = false;
+		}
 	}
 
 	~CameraInputSource()
@@ -108,8 +114,6 @@ public:
 			std::abort();
 		}
 	}
-
-
 
 	std::shared_ptr<NautilusVision::IOAP::BaseInputData> GetInput() override
 	{
@@ -154,14 +158,14 @@ class SerialPortIO : public NautilusVision::IOAP::IService
 {
 public:
 
-	explicit SerialPortIO()
-		:m_SerialPort("COM9",
-					  CBR_115200,
-					  NautilusVision::IO::SerialPort::EvenParity,
-					  8,
-					  NautilusVision::IO::SerialPort::OneStopBit,
-					  true)
+	explicit SerialPortIO(Configuration* config)
 	{
+		m_SerialPort.Open(config->LoadStringValue("/serialPort/portName"),
+						  config->LoadIntegerValue("/serialPort/baudrate"),
+						  config->LoadIntegerValue("/serialPort/parity"),
+						  config->LoadIntegerValue("/serialPort/dataBit"),
+						  config->LoadIntegerValue("/serialPort/stopBit"),
+						  config->LoadBooleanValue("/serialPort/synchronize"));
 		m_Valid = m_SerialPort.IsOpened();
 	}
 
@@ -221,6 +225,7 @@ private:
 	static constexpr unsigned int dataLength = 18;
 
 	NautilusVision::IO::SerialPort m_SerialPort;
+
 	bool m_Valid;
 };
 

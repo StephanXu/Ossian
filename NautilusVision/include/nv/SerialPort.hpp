@@ -70,9 +70,9 @@ public:
 	~SerialPort();
 
 	SerialPort(const SerialPort& serialPort) = delete;
-	SerialPort(SerialPort&& serialPort);
+	SerialPort(SerialPort&& serialPort) noexcept;
 	SerialPort& operator=(const SerialPort& rhs) = delete;
-	SerialPort& operator=(SerialPort&& rhs);
+	SerialPort& operator=(SerialPort&& rhs) noexcept;
 
 	/**
 	 * @fn	bool SerialPort::Open(std::string portname, unsigned int baudrate, Parity parity, unsigned char databit, StopBit stopbit, bool synchronizeFlag = 1)
@@ -83,7 +83,7 @@ public:
 	 *
 	 * @param	portname	   	portname(串口名): 在Windows下是"COM1""COM2"等，在Linux下是"/dev/ttyS1"等.
 	 * @param	baudrate	   	baudrate(波特率): 9600、19200、38400、43000、56000、57600、115200.
-	 * @param	parity		   	parity(校验位): 0为无校验，1为奇校验，2为偶校验，3为标记校验（仅适用于windows)
+	 * @param	parity		   	parity(校验位): 0为无校验，1为奇校验，2为偶校验，3为标记校验(仅适用于windows)
 	 * @param	databit		   	databit(数据位): 4-8(windows),5-8(linux)，通常为8位.
 	 * @param	stopbit		   	stopbit(停止位): 1为1位停止位，2为2位停止位,3为1.5位停止位.
 	 * @param	synchronizeFlag	(Optional) synchronizeflag(同步、异步,仅适用与windows): 0为异步，1为同步
@@ -97,6 +97,15 @@ public:
 			  StopBit stopbit,
 			  bool synchronizeFlag = 1);
 
+	bool Open(std::string portname,
+			  unsigned int baudrate,
+			  unsigned int parity,
+			  unsigned char databit,
+			  unsigned int stopbit,
+			  bool synchronizeFlag = 1)
+	{
+		return Open(portname, baudrate, parity, databit, stopbit, synchronizeFlag);
+	}
 
 	/**
 	 * @fn	unsigned int SerialPort::Send(const unsigned char* buf, int len)

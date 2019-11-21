@@ -12,7 +12,11 @@
 #define CONFIG_HPP
 
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <string>
+
+#include "Configuration.hpp"
 #include "DI.hpp"
 #include "Dispatcher.hpp"
 
@@ -20,6 +24,24 @@ namespace NautilusVision
 {
 namespace IOAP
 {
+
+/**
+ * @fn	template<typename T> std::unique_ptr<T> CreateGeneralObject(Utils::Configuration* config)
+ *
+ * @brief	用于仅接收一个配置依赖项的类型的通用工厂函数
+ *
+ * @tparam	T	Generic type parameter.
+ * @param [in]	config	配置依赖项.
+ *
+ * @returns	创建的对象
+ */
+template<typename T>
+std::unique_ptr<T> CreateGeneralObject(Utils::Configuration* config)
+{
+	return std::make_unique<T>(config);
+}
+
+
 /**
  * @brief 配置器实现
  * 通过此类进行配置并生成 Dispatcher 对象
@@ -48,7 +70,7 @@ public:
     template <typename ServiceType>
     void RegisterService()
     {
-        m_DIConfig.Add(CreateService<ServiceType>);
+        m_DIConfig.Add(CreateGeneralService<ServiceType>);
         m_InputAdapterRealizer.emplace_back([](DI::Injector &injector) { return injector.GetInstance<ServiceType>(); });
     }
 
@@ -68,6 +90,32 @@ public:
                                    injector.GetInstance<Pipeline>());
         });
     }
+
+	/**
+	 * @fn	void ApplicationBuilder::RegisterConfiguration()
+	 *
+	 * @brief	Registers the configuration
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/21
+	 */
+	void RegisterConfiguration()
+	{
+		m_DIConfig.Add(Utils::CreateConfiguration);
+	}
+
+	/**
+	 * @fn	template<typename T> void ApplicationBuilder::RegisterGeneral()
+	 *
+	 * @brief	注册一个带
+	 *
+	 * @tparam	T	Generic type parameter.
+	 */
+	template<typename T>
+	void RegisterGeneral()
+	{
+		m_DIConfig.Add(CreateGeneralObject<T>);
+	}
 
     template <class InstanceType, class Deleter, class... Deps>
     using InstanceFactoryFunction = std::unique_ptr<InstanceType, Deleter> (*)(Deps *...);
@@ -97,6 +145,22 @@ public:
         return Dispatcher(m_DIConfig.BuildInjector(), m_PipelineRealizer, m_InputAdapterRealizer);
     }
 
+	/**
+	 * @fn	void ApplicationBuilder::InitLog()
+	 *
+	 * @brief	初始化日志
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/21
+	 */
+	void InitLog()
+	{
+		auto console = spdlog::stderr_color_mt("console");
+		spdlog::set_default_logger(console);
+		spdlog::set_pattern("[%T.%e] [%-5t] %^[%l]%$  %v");
+		spdlog::set_level(spdlog::level::info);
+	}
+
 private:
     DI::DIConfiguration m_DIConfig;
 
@@ -109,4 +173,4 @@ private:
 } // namespace IOAP
 } // namespace NautilusVision
 
-#endif
+#endif // CONFIG_HPP

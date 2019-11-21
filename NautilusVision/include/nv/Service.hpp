@@ -13,6 +13,7 @@
 #define SERVICE_HPP
 
 #include "IOTypes.hpp"
+#include "Configuration.hpp"
 
 #include <memory>
 #include <string>
@@ -34,15 +35,28 @@ private:
 
 /**
  * @brief Create a Service object
- * 创建一个服务对象
+ * 创建一个带有配置依赖的一般服务对象
  * @tparam ServiceType 服务类型
  * @return std::unique_ptr<ServiceType> 服务对象实例
  */
 template <typename ServiceType>
-std::unique_ptr<ServiceType> CreateService()
+std::unique_ptr<ServiceType> CreateGeneralService(Utils::Configuration* config)
 {
-    static_assert(std::is_base_of<IService, ServiceType>::value, "ServiceType should derived from IService");
-    return std::make_unique<ServiceType>();
+	static_assert(std::is_base_of<IService, ServiceType>::value, "ServiceType should derived from IService");
+	return std::make_unique<ServiceType>(config);
+}
+
+/**
+ * @brief Create a Service object
+ * 创建一个不带有配置依赖的一般服务对象
+ * @tparam ServiceType 服务类型
+ * @return std::unique_ptr<ServiceType> 服务对象实例
+ */
+template <typename ServiceType>
+std::unique_ptr<ServiceType> CreateGeneralServiceWithoutConfig()
+{
+	static_assert(std::is_base_of<IService, ServiceType>::value, "ServiceType should derived from IService");
+	return std::make_unique<ServiceType>();
 }
 
 /**

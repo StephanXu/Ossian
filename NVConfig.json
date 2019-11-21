@@ -1,0 +1,18 @@
+{
+  "serialPort": {
+    "portName": "COM9",
+    "baudrate": 115200,
+    "parity": 2,
+    "dataBit": 8,
+    "stopBit": 0,
+    "synchronize": true
+  },
+  "camera": {
+    "deviceIndex": 0,
+    "frameWidth": 1280,
+    "frameHeight": 720
+  },
+  "testVideoSource": {
+    "filename": "test.avi"
+  }
+}

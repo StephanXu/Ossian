@@ -21,6 +21,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(simdjson CONFIG REQUIRED)
 
 add_library(NautilusVisionFramework ${DIR_SRC})
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(NautilusVisionFramework
 	fmt::fmt
 	spdlog::spdlog
