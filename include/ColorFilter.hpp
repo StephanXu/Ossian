@@ -47,7 +47,7 @@ public:
      */
     ColorFilter(
         const std::vector<std::tuple<cv::Scalar, cv::Scalar>> filters);
-    ColorFilter(const ColorFilter &&colorFilter);
+    ColorFilter(ColorFilter &&colorFilter) noexcept;
     ColorFilter(const ColorFilter &colorFilter);
 
 
@@ -56,7 +56,5 @@ public:
 private:
     std::vector<std::tuple<cv::Scalar, cv::Scalar>> m_Filters;
 };
-
-extern ColorFilter g_Color;
 
 #endif

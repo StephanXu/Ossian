@@ -160,13 +160,22 @@ public:
 
 	explicit SerialPortIO(Configuration* config)
 	{
-		m_SerialPort.Open(config->LoadStringValue("/serialPort/portName"),
-						  config->LoadIntegerValue("/serialPort/baudrate"),
-						  config->LoadIntegerValue("/serialPort/parity"),
-						  config->LoadIntegerValue("/serialPort/dataBit"),
-						  config->LoadIntegerValue("/serialPort/stopBit"),
-						  config->LoadBooleanValue("/serialPort/synchronize"));
-		m_Valid = m_SerialPort.IsOpened();
+		try
+		{
+			m_SerialPort.Open(config->LoadStringValue("/serialPort/portName"),
+							  config->LoadIntegerValue("/serialPort/baudrate"),
+							  config->LoadIntegerValue("/serialPort/parity"),
+							  config->LoadIntegerValue("/serialPort/dataBit"),
+							  config->LoadIntegerValue("/serialPort/stopBit"),
+							  config->LoadBooleanValue("/serialPort/synchronize"));
+			m_Valid = m_SerialPort.IsOpened();
+		}
+		catch (std::runtime_error & e)
+		{
+			spdlog::error(e.what());
+			m_Valid = false;
+		}
+		
 	}
 
 	/**

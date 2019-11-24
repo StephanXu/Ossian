@@ -14,16 +14,13 @@
 #include <tuple>
 #include <opencv2/opencv.hpp>
 
-ColorFilter g_Color{{{{170, 100, 100}, {180, 255, 255}},
-                     {{0, 100, 100}, {25, 255, 255}}}};
-
 ColorFilter::ColorFilter(
     const std::vector<std::tuple<cv::Scalar, cv::Scalar>> filters)
     : m_Filters(filters)
 {
 }
 
-ColorFilter::ColorFilter(const ColorFilter &&colorFilter)
+ColorFilter::ColorFilter(ColorFilter &&colorFilter) noexcept
 {
     m_Filters = std::move(colorFilter.m_Filters);
 }
