@@ -19,27 +19,12 @@
 #include "Configuration.hpp"
 #include "DI.hpp"
 #include "Dispatcher.hpp"
+#include "Factory.hpp"
 
 namespace NautilusVision
 {
 namespace IOAP
 {
-
-/**
- * @fn	template<typename T> std::unique_ptr<T> CreateGeneralObject(Utils::Configuration* config)
- *
- * @brief	用于仅接收一个配置依赖项的类型的通用工厂函数
- *
- * @tparam	T	Generic type parameter.
- * @param [in]	config	配置依赖项.
- *
- * @returns	创建的对象
- */
-template<typename T>
-std::unique_ptr<T> CreateGeneralObject(Utils::Configuration* config)
-{
-	return std::make_unique<T>(config);
-}
 
 
 /**
@@ -70,7 +55,7 @@ public:
     template <typename InputAdapterType>
     void RegisterInputAdapter()
     {
-        m_DIConfig.Add(CreateGeneralService<InputAdapterType>);
+        m_DIConfig.Add(Factory::CreateGeneralService<InputAdapterType>);
         m_InputAdapterRealizer.emplace_back([](DI::Injector &injector) { return injector.GetInstance<InputAdapterType>(); });
     }
 
@@ -81,7 +66,7 @@ public:
 	template <typename ServiceType>
 	void RegisterService()
 	{
-		m_DIConfig.Add(CreateGeneralService<ServiceType>);
+		m_DIConfig.Add(Factory::CreateGeneralService<ServiceType>);
 	}
 
     /**
@@ -124,7 +109,7 @@ public:
 	template<typename T>
 	void RegisterGeneral()
 	{
-		m_DIConfig.Add(CreateGeneralObject<T>);
+		m_DIConfig.Add(Factory::CreateGeneralObject<T>);
 	}
 
     template <class InstanceType, class Deleter, class... Deps>

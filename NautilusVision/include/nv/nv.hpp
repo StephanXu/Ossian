@@ -20,6 +20,7 @@
 #include "nv/Service.hpp"
 #include "nv/Config.hpp"
 #include "nv/Configuration.hpp"
+#include "nv/Factory.hpp"
 
 // IO
 #include "nv/SerialPort.hpp"

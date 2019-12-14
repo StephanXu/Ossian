@@ -6,10 +6,14 @@
 #include <nv/IOTypes.hpp>
 #include <nv/Service.hpp>
 #include <nv/SerialPort.hpp>
+#include <nv/Factory.hpp>
 #include <spdlog/spdlog.h>
 
 #include "InputModel.hpp"
 #include "HKCamera.hpp"
+
+namespace Ioap = NautilusVision::IOAP;
+namespace Utils = NautilusVision::Utils;
 
 using NautilusVision::Utils::Configuration;
 
@@ -17,26 +21,26 @@ using NautilusVision::Utils::Configuration;
  * @brief 视频输入
  * 此类提供视频输入
  */
-class VideoInputSource : public NautilusVision::IOAP::BaseInputAdapter
+class VideoInputSource : public Ioap::BaseInputAdapter
 {
-public:
-    /**
-     * @brief 建立视频输入
-     * 如果视频加载失败，对象将被设置为失效，GetInput GetInputAsync 等函数将不可用。
-     * @param filename 
-     */
-    explicit VideoInputSource(NautilusVision::Utils::Configuration* config)
-        : m_VideoSource(config->LoadStringValue("/testVideoSource/filename"))
+	friend class NautilusVision::Factory;
+	/**
+	 * @brief 建立视频输入
+	 * 如果视频加载失败，对象将被设置为失效，GetInput GetInputAsync 等函数将不可用。
+	 * @param filename
+	 */
+	explicit VideoInputSource(Utils::Configuration* config)
+		: m_VideoSource(config->LoadStringValue("/testVideoSource/filename"))
 		, m_Valid(true)
-    {
-        if (!m_VideoSource.isOpened())
-        {
-            m_Valid = false;
-            return;
-        }
-    }
-
-    std::shared_ptr<NautilusVision::IOAP::BaseInputData> GetInput() override
+	{
+		if (!m_VideoSource.isOpened())
+		{
+			m_Valid = false;
+			return;
+		}
+	}
+public:
+    std::shared_ptr<Ioap::BaseInputData> GetInput() override
     {
         if (!m_Valid)
         {
@@ -52,7 +56,7 @@ public:
         return result;
     }
 
-    std::future<std::shared_ptr<NautilusVision::IOAP::BaseInputData>> GetInputAsync() override
+    std::future<std::shared_ptr<Ioap::BaseInputData>> GetInputAsync() override
     {
         return std::async(std::launch::async,
                           &VideoInputSource::GetInput,
@@ -77,9 +81,10 @@ private:
  * @brief	摄像头输入
  * 此类提供摄像头输入
  */
-class CameraInputSource : public NautilusVision::IOAP::BaseInputAdapter
+class CameraInputSource : public Ioap::BaseInputAdapter
 {
-public:
+	friend class NautilusVision::Factory;
+
 	explicit CameraInputSource(NautilusVision::Utils::Configuration* config)
 		: m_Camera(config->LoadIntegerValue("/camera/deviceIndex"),
 				   config->LoadIntegerValue("/camera/frameWidth"),
@@ -114,8 +119,8 @@ public:
 			std::abort();
 		}
 	}
-
-	std::shared_ptr<NautilusVision::IOAP::BaseInputData> GetInput() override
+public:
+	std::shared_ptr<Ioap::BaseInputData> GetInput() override
 	{
 		if (!m_Valid)
 			return nullptr;
@@ -129,7 +134,7 @@ public:
 		return result;
 	}
 
-	std::future<std::shared_ptr<NautilusVision::IOAP::BaseInputData>> GetInputAsync() override
+	std::future<std::shared_ptr<Ioap::BaseInputData>> GetInputAsync() override
 	{
 		return std::async(std::launch::async,
 						  &CameraInputSource::GetInput,
@@ -154,9 +159,9 @@ private:
  * @author	Xu Zihan
  * @date	2019/11/20
  */
-class SerialPortIO : public NautilusVision::IOAP::IService
+class SerialPortIO : public Ioap::IService
 {
-public:
+	friend class NautilusVision::Factory;
 
 	explicit SerialPortIO(Configuration* config)
 	{
@@ -175,9 +180,9 @@ public:
 			spdlog::error(e.what());
 			m_Valid = false;
 		}
-		
-	}
 
+	}
+public:
 	/**
 	 * @fn	bool SerialPortIO::SendData(float yaw, float pitch, float dist, unsigned int flag)
 	 *
