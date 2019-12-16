@@ -91,7 +91,7 @@ public:
 	void SetFrameSize(const int width, const int height);
 
 	/**
-	 * @fn	bool HKCamera::ReadFrame(cv::Mat& outMat);
+	 * @fn	bool HKCamera::ReadFrame(cv::UMat& outMat);
 	 *
 	 * @brief	Reads a frame
 	 *
@@ -99,7 +99,7 @@ public:
 	 *
 	 * @returns	True if it succeeds, false if it fails.
 	 */
-	bool ReadFrame(cv::Mat& outMat);
+	bool ReadFrame(cv::UMat& outMat);
 
 	/**
 	 * @fn	void HKCamera::StartGrabFrame();
@@ -175,7 +175,7 @@ private:
 	}
 
 	/**
-	 * @fn	static bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* DataBuffer, cv::Mat& refDest)
+	 * @fn	static bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* DataBuffer, cv::UMat& refDest)
 	 *
 	 * @brief	convert data stream in Mat format
 	 *
@@ -189,23 +189,28 @@ private:
 	 */
 	static bool ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo,
 								 unsigned char* DataBuffer,
-								 cv::Mat& refDest)
+								 cv::UMat& refDest)
 	{
-		if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8)
+		//if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8)
+		//{
+		//	refDest = cv::UMat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
+		//}
+		//else if (pstImageInfo->enPixelType == PixelType_Gvsp_RGB8_Packed)
+		//{
+		//	RGB2BGR(DataBuffer, pstImageInfo->nWidth, pstImageInfo->nHeight);
+		//	refDest = cv::UMat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC3, DataBuffer);
+		//}
+		if (pstImageInfo->enPixelType == PixelType_Gvsp_BayerRG8)
 		{
-			refDest = cv::Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
-		}
-		else if (pstImageInfo->enPixelType == PixelType_Gvsp_RGB8_Packed)
-		{
-			RGB2BGR(DataBuffer, pstImageInfo->nWidth, pstImageInfo->nHeight);
-			refDest = cv::Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC3, DataBuffer);
+			cv::Mat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
+			cv::cvtColor(BayerRG8Src, refDest, cv::COLOR_BayerRG2RGB);
 		}
 		else
 		{
 			throw std::runtime_error("Unsupported pixel format");
 		}
 
-		if (refDest.data)
+		if (!refDest.empty())
 		{
 			return true;
 		}

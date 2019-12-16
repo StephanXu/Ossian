@@ -1,0 +1,5 @@
+#ifndef POSE_SOLVER_HPP
+#define POSE_SOLVER_HPP
+
+
+#endif // POSE_SOLVER_HPP

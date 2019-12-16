@@ -13,7 +13,7 @@ class ImageInputData : public NautilusVision::IOAP::BaseInputData
 {
 public:
     ImageInputData() = default;
-    ImageInputData(cv::Mat image)
+    ImageInputData(cv::UMat image)
         : m_Image(image)
     {
     }
@@ -32,7 +32,7 @@ public:
         return this;
     }
 
-    cv::Mat m_Image;
+    cv::UMat m_Image;
 };
 
 #endif //INPUTMODEL_HPP

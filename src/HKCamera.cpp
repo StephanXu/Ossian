@@ -129,7 +129,7 @@ void HKCamera::SetFrameSize(const int width, const int height)
 	m_FrameHeight = height;
 }
 
-bool HKCamera::ReadFrame(cv::Mat& outMat)
+bool HKCamera::ReadFrame(cv::UMat& outMat)
 {
 	if (!m_IsValid)
 		return false;

@@ -2,9 +2,11 @@
 #include "Startup.hpp"
 #include "InputAdapter.hpp"
 #include "WindmillDetection.hpp"
+#include "Aimbot.hpp"
 
 class RoboStatus : public NautilusVision::IOAP::BaseStatus
 {
+public:
 };
 
 

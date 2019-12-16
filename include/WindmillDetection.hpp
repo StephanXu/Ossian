@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file WindmillDetection.hpp
  * @author Stephan Xu (xuzihanapple@live.com)
  * @brief 大风车检测相关图形接口
@@ -23,14 +23,7 @@
 #include <atomic>
 #include <memory>
 
-/**
- * @brief 检测相关基类
- * 
- */
-class IDetection
-{
-    virtual int FeedImage(const cv::Mat &image) = 0;
-};
+namespace Ioap = NautilusVision::IOAP;
 
 /**
  * @brief 大风车检测
@@ -38,7 +31,7 @@ class IDetection
  * 识别、计算和预测大风车轨迹
  * 
  */
-class WindmillDetection : public NautilusVision::IOAP::IExecutable
+class WindmillDetection : public Ioap::IExecutable
 {
 public:
     /**
@@ -54,9 +47,9 @@ public:
      * 计算一张图像并刷新（当达到最大采样数量时）当前目标坐标、运动圆心和半径信息
      * @param input 输入数据指针
      */
-    void Process(NautilusVision::IOAP::BaseInputData *input) override;
+    void Process(Ioap::BaseInputData *input) override;
 
-    bool IsSkip(const NautilusVision::IOAP::BaseStatus &refStatus) override
+    bool IsSkip(const Ioap::BaseStatus &refStatus) override
     {
         return m_Valid;
     }

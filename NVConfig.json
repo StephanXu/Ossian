@@ -14,5 +14,46 @@
   },
   "testVideoSource": {
     "filename": "test.avi"
+  },
+  "aimbot": {
+    "maxShootRadius": 120.0,
+
+    "enemyColor": "red"
+    "thres": {
+      "brightness": 30,
+      "thresColor": 50
+    },
+    "lightBar": {
+      "minArea": 15.0,
+      "contourMinSolidity": 0.5,
+      "ellipseMinAspectRatio": 1.8,
+    },
+    "armor": {
+      "maxAngleDiff": 7.5,
+      "maxHeightDiffRatio": 0.6,
+      "maxYDiffRatio": 2.0,
+      "minXDiffRatio": 0.5,
+
+      "bigArmorRatio": 4.2,
+      "smallArmorRatio": 2.0,
+      "armorMinAspectRatio": 1.0,
+      "armorMaxAspectRatio": 5.5
+    },
+    "areaNormalizedBase": 1000.0,
+    "sightOffsetNormalizedBase": 200.0
+  },
+  "poseSolver": {
+    "offsetX": 0.0,
+    "offsetZPitch": 131.0,
+    "offsetYPitch": 50.0,
+    "offsetYYaw": -37.0,
+    "offsetZYaw": 213.0,
+
+    "offsetYaw": 0.0,
+    "offsetPitch": 0.55,
+
+    "initV": 20.0,
+    "initK": 0.026,
+    "gravity": 9.8
   }
 }
