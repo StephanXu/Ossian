@@ -15,7 +15,10 @@ namespace Utils = NautilusVision::Utils;
 class Aimbot : public Ioap::IExecutable
 {
 public:
-    Aimbot(Utils::Configuration* config, SerialPortIO* serialPort);
+	static std::unique_ptr<Aimbot> CreateAimbot(Utils::Configuration* config, SerialPortIO* serialPort)
+	{
+		return std::unique_ptr<Aimbot>(new Aimbot(config, serialPort));
+	}
 
     void Process(Ioap::BaseInputData* input) override;
 
@@ -24,6 +27,7 @@ public:
         return m_Valid;
     }
 private:
+	Aimbot(Utils::Configuration* config, SerialPortIO* serialPort);
 
     enum class ArmorType
     {
@@ -253,19 +257,35 @@ private:
         //Yaw: 逆时针正 顺时针负 ; Pitch:下负 上正
         void Solve(float& yaw, float& pitch, float& dist)
         {
-            m_PNPSolver();
+            PNPSolver();
 
-            cv::Point3f target_3d(m_tvec);
+			cv::Point3f target_3d(m_tvec);
 
-            dist = std::sqrt(m_tvec.at<double>(0, 0) * m_tvec.at<double>(0, 0) + m_tvec.at<double>(0, 1) * m_tvec.at<double>(0, 1) + m_tvec.at<double>(0, 2) * m_tvec.at<double>(0, 2));
-            //dist = target_3d.z;
-            yaw = -std::atan2(m_tvec.at<double>(0, 0), m_tvec.at<double>(2, 0)) / 2 / CV_PI * 360;
-            pitch = -std::atan2(m_tvec.at<double>(1, 0), m_tvec.at<double>(2, 0)) / 2 / CV_PI * 360;
+			dist = sqrt(m_tvec.at<double>(0, 0) * m_tvec.at<double>(0, 0) + m_tvec.at<double>(0, 1) * m_tvec.at<double>(0, 1) + m_tvec.at<double>(0, 2) * m_tvec.at<double>(0, 2));
+			//dist = target_3d.z;
+			yaw = -atan2(m_tvec.at<double>(0, 0), m_tvec.at<double>(2, 0));
+			pitch = -atan2(m_tvec.at<double>(1, 0), m_tvec.at<double>(2, 0));
+
+			//yaw = atan((dist*sin(yaw)) / (dist*cos(yaw) + offsetZ));
+			//pitch = atan((dist*sin(pitch)) / (dist*cos(pitch) + offsetZ));
+
+			//dist = sqrt(pow(offsetZ + dist * cos(yaw), 2) + pow(dist*sin(yaw), 2));
+			if (dist > 1500)
+				pitch = std::atan((std::sin(pitch) - 0.5 * gravity * dist / std::pow(initV, 2)) / std::cos(pitch));
+			yaw = yaw / CV_PI * 180;
+			pitch = pitch / CV_PI * 180;
+			/*
+			#ifdef DEBUG
+				ostringstream ss;
+				ss << "yaw: " << yaw << '\t' << "pitch: " << pitch << '\t' << "dist: " << dist;
+				putText(debugFrameROI, ss.str(), cv::Point(50, 90), cv::FONT_ITALIC, 0.6, cv::Scalar(0, 252, 124));
+				cout << (m_ArmorType == ARMOR_SMALL ? "Small" : "Big") << endl;
+			#endif // DEBUG*/
         }
         //Yaw: 逆时针正 顺时针负 ; Pitch:下正 上负
         void SolveWithCompensation(float& yaw, float& pitch, float& dist)
         {
-            m_PNPSolver();
+            PNPSolver();
 
             cv::Point3f target_3d(m_tvec);
 
@@ -319,17 +339,19 @@ private:
                 y_actual = BulletModel(x, v, a);
                 dy = y - y_actual;
                 y_temp = y_temp + dy;
-                if (fabsf(dy) < 0.001)
+                if (std::fabsf(dy) < 0.001)
                     break;
                 //printf("iteration num %d: angle %f,temp target y:%f,err of y:%f\n",i+1,a*180/3.1415926535,yTemp,dy);
             }
             return a;
         }
 
-        void m_PNPSolver()
+        void PNPSolver()
         {
             const static float smallArmorWidth = 130.0; // mm
             const static float smallArmorHeight = 71.0;
+			const static float bigArmorWidth = 210.0;
+			const static float bigArmorHeight = 60.0;
             const static std::vector<cv::Point3f> smallArmorVertex =
             {
                 cv::Point3f(-smallArmorWidth / 2, -smallArmorHeight / 2, 0),	//tl
@@ -338,12 +360,16 @@ private:
                 cv::Point3f(-smallArmorWidth / 2,  smallArmorHeight / 2, 0)		//bl
             };
             const static std::vector<cv::Point3f> bigArmorVertex =
-            {
-                cv::Point3f(-105, -30, 0),	//tl
-                cv::Point3f(105, -30, 0),	//tr
-                cv::Point3f(105, 30, 0),	//br
-                cv::Point3f(-105, 30, 0)	//bl
-            };
+			{
+				cv::Point3f(-bigArmorWidth / 2, -smallArmorHeight / 2, 0),	//tl
+				cv::Point3f(bigArmorWidth / 2, -smallArmorHeight / 2, 0),	//tr
+				cv::Point3f(bigArmorWidth / 2,  smallArmorHeight / 2, 0),	//br
+				cv::Point3f(-bigArmorWidth / 2,  smallArmorHeight / 2, 0)	//bl
+				//cv::Point3f(-105, -30, 0),	//tl
+				//cv::Point3f(105, -30, 0),	//tr
+				//cv::Point3f(105, 30, 0),	//br
+				//cv::Point3f(-105, 30, 0)	//bl
+			};
             const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1763.56659425676, 0, 755.6922965695335,
                                           0, 1764.629234433968, 560.6661455507484,
                                           0, 0, 1);
@@ -356,9 +382,9 @@ private:
                 m_BBox.br(),
                 m_BBox.tl() + cv::Point2f(0,m_BBox.height) };
             if (m_ArmorType == ArmorType::Small)
-                solvePnP(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, m_rvec, m_tvec);
+                cv::solvePnP(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, m_rvec, m_tvec);
             else
-                solvePnPRansac(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, m_rvec, m_tvec);
+                cv::solvePnPRansac(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, m_rvec, m_tvec);
         }
     };
 
@@ -367,16 +393,16 @@ private:
     public:
         KalmanFilter(int stateNum, int measureNum)
         {
-            stateNum = stateNum;
-            measureNum = measureNum;
+            m_StateNum = stateNum;
+            m_MeasureNum = measureNum;
             KF = cv::KalmanFilter(stateNum, measureNum, 0);
             Init();
         }
         ~KalmanFilter() = default;
         void Init()
         {     //Mat processNoise(stateNum, 1, CV_32F);
-            measurement = cv::Mat::zeros(measureNum, 1, CV_32F);
-            KF.transitionMatrix = (cv::Mat_<float>(stateNum, stateNum) <<  //A 状态转移矩阵
+            measurement = cv::Mat::zeros(m_MeasureNum, 1, CV_32F);
+            KF.transitionMatrix = (cv::Mat_<float>(m_StateNum, m_StateNum) <<  //A 状态转移矩阵
                                    1, 0, 1 * 10, 0,
                                    0, 1, 0, 1 * 10,
                                    0, 0, 1, 0,
@@ -403,7 +429,7 @@ private:
             KF.correct(measurement);
         }
     private:
-        int stateNum, measureNum;
+        int m_StateNum, m_MeasureNum;
         cv::KalmanFilter KF;
         cv::Mat measurement;
     };
@@ -435,7 +461,7 @@ private:
         cv::dilate(binary, binary, element3);
         cv::erode(binary, binary, element3);
 #ifdef _DEBUG
-        cv::imshow("BinaryBrightness", m_BinaryBrightness);
+        //cv::imshow("BinaryBrightness", m_BinaryBrightness);
         cv::imshow("BinaryColor", binaryColor);
         cv::imshow("DebugBinary", binary);
         cv::waitKey(10);
@@ -457,7 +483,7 @@ private:
                 {
                     lightBars.emplace_back(possibleLightBar);
 #ifdef _DEBUG
-                    ellipse(debugFrame, possibleLightBar.Ellipse(), cv::Scalar(255, 255, 0));
+                    //ellipse(debugFrame, possibleLightBar.Ellipse(), cv::Scalar(255, 255, 0));
 #endif // DEBUG
 
                 }
@@ -504,12 +530,12 @@ private:
 #ifdef _DEBUG
         if (armorFound)
         {
-            ShowTargetArmor(cv::Scalar(62, 255, 192), cv::Scalar(62, 255, 192));
+            //ShowTargetArmor(cv::Scalar(62, 255, 192), cv::Scalar(62, 255, 192));
         }
         else
         {
-            cv::rectangle(debugFrame, defaultAimBox, cv::Scalar(250, 255, 245), 2);
-            cv::circle(debugFrame, (defaultAimBox.tl() + defaultAimBox.br()) / 2, 3, cv::Scalar(250, 255, 245), -1);
+            //cv::rectangle(debugFrame, defaultAimBox, cv::Scalar(250, 255, 245), 2);
+            //cv::circle(debugFrame, (defaultAimBox.tl() + defaultAimBox.br()) / 2, 3, cv::Scalar(250, 255, 245), -1);
         }
 #endif // _DEBUG
 

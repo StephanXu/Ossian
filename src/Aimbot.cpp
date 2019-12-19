@@ -31,7 +31,8 @@ double Aimbot::PoseSolver::gravity = 0.0;
 cv::Point2f Aimbot::Armor::frameCenter(0, 0);
 
 Aimbot::Aimbot(Utils::Configuration* config, SerialPortIO* serialPort)
-    :m_Config(config)
+	:m_Valid(false)
+    , m_Config(config)
     , m_SerialPort(serialPort)
 {
     Aimbot::LightBar::minArea = m_Config->LoadDoubleValue("/aimbot/lightBar/minArea");
@@ -73,14 +74,17 @@ void Aimbot::Process(Ioap::BaseInputData* input)
 
     //[注意]：这里是不安全的使用方法，应当优化
     ImageInputData* imageInput = dynamic_cast<ImageInputData*>(input);
-
+	
     cv::UMat origFrame = imageInput->m_Image;
     if (origFrame.empty())
     {
         m_Valid = true;
         return;
     }
-
+#ifdef _DEBUG
+	cv::imshow("damn", origFrame);
+	cv::waitKey(1);
+#endif
     cv::Rect2f armorBBox;
     ArmorType armorType;
     bool shootMode = false;
@@ -120,13 +124,13 @@ void Aimbot::Process(Ioap::BaseInputData* input)
 
     spdlog::info("Send: {}\t{}", sendYaw, sendPitch);
 
-    try
-    {
-        if (m_SerialPort->SendData(sendYaw,
-                                   sendPitch,
-                                   dist,
-                                   SerialPortIO::FlagHelper(foundArmor, shootMode, 0, 0)));
-    }
+	try
+	{
+		m_SerialPort->Commit(sendYaw,
+							 sendPitch,
+							 dist,
+							 SerialPortIO::FlagHelper(foundArmor, shootMode, 0, 0));
+	}
     catch (std::runtime_error & e)
     {
         spdlog::error("Send data error: {}", e.what());

@@ -13,6 +13,7 @@ HKCamera::HKCamera(const int camIndex, const int frameWidth, const int frameHeig
 	catch (std::exception e)
 	{
 		m_IsValid = false;
+		spdlog::error("HKCamera initialize fail: {}", e.what());
 	}
 }
 
@@ -108,8 +109,15 @@ void HKCamera::SetDevice(const int camIndex)
 		throw std::runtime_error("Get PayloadSize fail");
 	m_PayloadSize = stParam.nCurValue;
 
-	if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 700))
-		throw std::runtime_error("SetFloatValue fail");
+	if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 1000*100))
+		throw std::runtime_error("Set ExposureTime fail");
+
+	if (MV_OK != MV_CC_SetEnumValue(m_Handle, "PixelFormat", 0x01080009))
+		throw std::runtime_error("Set PixelFormat fail");
+
+	/*
+	if (MV_OK != MV_CC_SetFloatValue(m_Handle, "Gamma", 0.4))
+		throw std::runtime_error("Set Gamma fail");*/
 }
 
 void HKCamera::SetFrameSize(const int width, const int height)
@@ -120,9 +128,9 @@ void HKCamera::SetFrameSize(const int width, const int height)
 		throw std::runtime_error("Set width fail");
 	if (MV_OK != MV_CC_SetIntValue(m_Handle, "Height", height))
 		throw std::runtime_error("Set height fail");
-	if (MV_OK != MV_CC_SetIntValue(m_Handle, "OffsetX", 80))//80  400 
+	if (MV_OK != MV_CC_SetIntValue(m_Handle, "OffsetX", 0))//80  400  84
 		throw std::runtime_error("Set OffsetX fail");
-	if (MV_OK != MV_CC_SetIntValue(m_Handle, "OffsetY", 220))//220  300
+	if (MV_OK != MV_CC_SetIntValue(m_Handle, "OffsetY", 0))//220  300 360
 		throw std::runtime_error("Set OffsetY fail");
 
 	m_FrameWidth = width;
@@ -134,7 +142,7 @@ bool HKCamera::ReadFrame(cv::UMat& outMat)
 	if (!m_IsValid)
 		return false;
 	// get one frame from camera with timeout= ? ms
-	if (MV_OK != MV_CC_GetOneFrameTimeout(m_Handle, m_Data.get(), m_PayloadSize, &stImageInfo, 10))
+	if (MV_OK != MV_CC_GetOneFrameTimeout(m_Handle, m_Data.get(), m_PayloadSize, &stImageInfo, 10*10000))
 		throw std::runtime_error("Get frame fail"); //[ATTENTION]: Which error code represents time out.
 #ifdef _DEBUG
 	MVCC_FLOATVALUE struFloatValue = { 0 };

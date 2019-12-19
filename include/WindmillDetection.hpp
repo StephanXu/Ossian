@@ -34,13 +34,14 @@ namespace Ioap = NautilusVision::IOAP;
 class WindmillDetection : public Ioap::IExecutable
 {
 public:
-    /**
-     * 构造并初始化一部分参数
-     * @param sampleNum 最大采样数量
-     * @param colorFilter IFilter 类型的颜色过滤器.
-     */
-	explicit WindmillDetection(std::size_t sampleNum, ColorFilter& colorFilter, SerialPortIO* serialPort);
-    explicit WindmillDetection(std::size_t sampleNum, ColorFilter &&colorFilter, SerialPortIO* serialPort);
+	static std::unique_ptr<WindmillDetection> CreateWindmillDetection(SerialPortIO* serialPort)
+	{
+		static ColorFilter redFilter{ {{{170, 100, 100}, {180, 255, 255}},
+									  {{0, 100, 100}, {25, 255, 255}}} };
+		static ColorFilter blueFilter{ {{{85, 100, 100}, {135, 255, 255}}} };
+
+		return std::unique_ptr<WindmillDetection>(new WindmillDetection(80, redFilter, serialPort));
+	}
 
     /**
      * 计算一张图像Process an image to refresh Targets, Center and Radius.
@@ -59,6 +60,14 @@ public:
     float Radius();
 
 private:
+	/**
+	 * 构造并初始化一部分参数
+	 * @param sampleNum 最大采样数量
+	 * @param colorFilter IFilter 类型的颜色过滤器.
+	 */
+	explicit WindmillDetection(std::size_t sampleNum, ColorFilter& colorFilter, SerialPortIO* serialPort);
+	explicit WindmillDetection(std::size_t sampleNum, ColorFilter&& colorFilter, SerialPortIO* serialPort);
+
     std::atomic_bool m_Valid;
 
 	SerialPortIO* m_SerialPort;

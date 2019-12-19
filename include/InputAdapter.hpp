@@ -14,6 +14,7 @@
 
 namespace Ioap = NautilusVision::IOAP;
 namespace Utils = NautilusVision::Utils;
+namespace IO = NautilusVision::IO;
 
 using NautilusVision::Utils::Configuration;
 
@@ -106,6 +107,7 @@ class CameraInputSource : public Ioap::BaseInputAdapter
 			m_Valid = false;
 		}
 	}
+public:
 
 	~CameraInputSource()
 	{
@@ -119,7 +121,7 @@ class CameraInputSource : public Ioap::BaseInputAdapter
 			std::abort();
 		}
 	}
-public:
+
 	std::shared_ptr<Ioap::BaseInputData> GetInput() override
 	{
 		if (!m_Valid)
@@ -164,6 +166,7 @@ class SerialPortIO : public Ioap::IService
 	friend class NautilusVision::Factory;
 
 	explicit SerialPortIO(Configuration* config)
+		:m_SyncThread(nullptr)
 	{
 		try
 		{
@@ -174,6 +177,8 @@ class SerialPortIO : public Ioap::IService
 							  config->LoadIntegerValue("/serialPort/stopBit"),
 							  config->LoadBooleanValue("/serialPort/synchronize"));
 			m_Valid = m_SerialPort.IsOpened();
+			unsigned int syncInterval = config->LoadIntegerValue("/serialPort/syncInterval");
+			StartSync(syncInterval);
 		}
 		catch (std::runtime_error & e)
 		{
@@ -182,7 +187,16 @@ class SerialPortIO : public Ioap::IService
 		}
 
 	}
+
 public:
+	~SerialPortIO()
+	{
+		if (m_SyncThread)
+		{
+			m_SyncThread->join();
+		}
+	}
+
 	/**
 	 * @fn	bool SerialPortIO::SendData(float yaw, float pitch, float dist, unsigned int flag)
 	 *
@@ -200,14 +214,18 @@ public:
 	 */
 	bool SendData(float yaw, float pitch, float dist, unsigned int flag)
 	{
-		unsigned char buffer[dataLength]{};
-		*(buffer + 0) = dataBeginSig;
-		*reinterpret_cast<float*>(buffer + 1) = yaw;
-		*reinterpret_cast<float*>(buffer + 5) = pitch;
-		*reinterpret_cast<float*>(buffer + 9) = dist;
-		*reinterpret_cast<unsigned int*>(buffer + 13) = flag;
-		
-		return m_SerialPort.Send(buffer, sizeof(buffer));
+		//unsigned char buffer[dataLength]{};
+		//*(buffer + 0) = dataBeginSig;
+		//*reinterpret_cast<float*>(buffer + 1) = yaw;
+		//*reinterpret_cast<float*>(buffer + 5) = pitch;
+		//*reinterpret_cast<float*>(buffer + 9) = dist;
+		//*reinterpret_cast<unsigned int*>(buffer + 13) = flag;
+		static OutModel model;
+		model.distance = dist;
+		model.flags = flag;
+		model.pitchAngle = pitch;
+		model.yawAngle = yaw;
+		return m_SerialPort.Send(reinterpret_cast<unsigned char*>(&model), sizeof(OutModel));
 	}
 
 	/**
@@ -232,13 +250,95 @@ public:
 	{
 		return isAimed << 24 | reserve0 << 16 | reserve1 << 8 | reserve2 << 0;
 	}
+#ifdef _WIN32
+#pragma pack(push,1)
+#endif
+	struct InModel
+	{
+		uint8_t beginCode = 0xA5;
+		uint32_t gimbalIndex;
+		float yawMotor;
+		float pitchMotor;
+		uint8_t endCode = 0xAA;
+	};
+
+	struct OutModel
+	{
+		uint8_t beginCode = 0xA5;
+		float yawAngle;
+		float pitchAngle;
+		float distance;
+		uint32_t flags;
+		uint8_t endCode = 0xAA;
+	};
+#ifdef _WIN32
+#pragma pack(pop)
+#endif
+	void SyncStatus(unsigned int interval)
+	{
+		static InModel inModel;
+		static OutModel outModel;
+		while (true)
+		{
+			m_SerialPort.Receive(reinterpret_cast<unsigned char*>(&inModel), sizeof(inModel));
+			m_InModel.store(inModel);
+			outModel = m_OutModel;
+			m_SerialPort.Send(reinterpret_cast<unsigned char*>(&outModel), sizeof(OutModel));
+			std::this_thread::sleep_for(std::chrono::microseconds(interval));
+		}
+	}
+
+	void StartSync(unsigned int interval)
+	{
+		if (m_SyncThreadFlag)
+		{
+			m_SyncThreadFlag = false;
+			if (m_SyncThread)
+				m_SyncThread->join();
+		}
+		m_SyncThread.reset(new std::thread(&SerialPortIO::SyncStatus, this, interval));
+		m_SyncThreadFlag = true;
+	}
+
+	void Intercept(InModel& outData) const
+	{
+		outData = m_InModel;
+	}
+
+	InModel Intercept() const
+	{
+		InModel model;
+		Intercept(model);
+		return model;
+	}
+
+	void Commit(OutModel& refData)
+	{
+		m_OutModel = refData;
+	}
+
+	void Commit(float yaw, float pitch, float dist, unsigned int flag)
+	{
+		static OutModel model;
+		model.distance = dist;
+		model.flags = flag;
+		model.pitchAngle = pitch;
+		model.yawAngle = yaw;
+		Commit(model);
+	}
 
 private:
-	static constexpr unsigned char dataBeginSig = 0xA5;
-	static constexpr unsigned char dataEndSig = 0xAA;
-	static constexpr unsigned int dataLength = 18;
+	std::atomic<InModel> m_InModel;
+	std::atomic<OutModel> m_OutModel;
 
-	NautilusVision::IO::SerialPort m_SerialPort;
+	std::unique_ptr<std::thread> m_SyncThread;
+	bool m_SyncThreadFlag = false;
+
+	//static constexpr unsigned char dataBeginSig = 0xA5;
+	//static constexpr unsigned char dataEndSig = 0xAA;
+	//static constexpr unsigned int dataLength = 18;
+
+	IO::SerialPort m_SerialPort;
 
 	bool m_Valid;
 };

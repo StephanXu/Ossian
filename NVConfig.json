@@ -1,11 +1,12 @@
 {
   "serialPort": {
-    "portName": "COM3",
+    "portName": "COM2",
     "baudrate": 115200,
     "parity": 2,
     "dataBit": 8,
     "stopBit": 0,
-    "synchronize": true
+    "synchronize": true,
+    "syncInterval": 1
   },
   "camera": {
     "deviceIndex": 0,
@@ -17,8 +18,7 @@
   },
   "aimbot": {
     "maxShootRadius": 120.0,
-
-    "enemyColor": "red"
+    "enemyColor": "red",
     "thres": {
       "brightness": 30,
       "thresColor": 50
@@ -26,7 +26,7 @@
     "lightBar": {
       "minArea": 15.0,
       "contourMinSolidity": 0.5,
-      "ellipseMinAspectRatio": 1.8,
+      "ellipseMinAspectRatio": 1.8
     },
     "armor": {
       "maxAngleDiff": 7.5,
