@@ -97,8 +97,6 @@ void Aimbot::Process(Ioap::BaseInputData* input)
         PoseSolver angleSolver(armorBBox, armorType);
         angleSolver.Solve(yaw_measured, pitch_measured, dist); //degree, mm
 
-        spdlog::info("dist: {}", dist);
-
         Math::RegularizeErrAngle(yaw_measured, 'y');
         Math::RegularizeErrAngle(pitch_measured, 'p');
 
@@ -122,7 +120,7 @@ void Aimbot::Process(Ioap::BaseInputData* input)
     Math::RegularizeErrAngle(sendYaw, 'y');
     Math::RegularizeErrAngle(sendPitch, 'p');
 
-    spdlog::info("Send: {}\t{}", sendYaw, sendPitch);
+	spdlog::info("Aimbot Status: {}\t{}\t{}", sendYaw, sendPitch, dist);
 
 	try
 	{

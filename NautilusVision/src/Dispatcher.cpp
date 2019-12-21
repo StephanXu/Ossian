@@ -52,6 +52,7 @@ void Dispatcher::Run()
 					//std::get<1>(pipePack)->ProcessTask(input);
                 }
             }
+			std::this_thread::sleep_for(std::chrono::milliseconds(2)); //[ATTENTIOM]: God damn trick
         }
     }
 }

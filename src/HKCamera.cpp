@@ -109,7 +109,7 @@ void HKCamera::SetDevice(const int camIndex)
 		throw std::runtime_error("Get PayloadSize fail");
 	m_PayloadSize = stParam.nCurValue;
 
-	if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 1000*100))
+	if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 750))
 		throw std::runtime_error("Set ExposureTime fail");
 
 	if (MV_OK != MV_CC_SetEnumValue(m_Handle, "PixelFormat", 0x01080009))
@@ -142,7 +142,7 @@ bool HKCamera::ReadFrame(cv::UMat& outMat)
 	if (!m_IsValid)
 		return false;
 	// get one frame from camera with timeout= ? ms
-	if (MV_OK != MV_CC_GetOneFrameTimeout(m_Handle, m_Data.get(), m_PayloadSize, &stImageInfo, 10*10000))
+	if (MV_OK != MV_CC_GetOneFrameTimeout(m_Handle, m_Data.get(), m_PayloadSize, &stImageInfo, 100))
 		throw std::runtime_error("Get frame fail"); //[ATTENTION]: Which error code represents time out.
 #ifdef _DEBUG
 	MVCC_FLOATVALUE struFloatValue = { 0 };

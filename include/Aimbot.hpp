@@ -261,39 +261,32 @@ private:
 
 			cv::Point3f target_3d(m_tvec);
 
-			dist = sqrt(m_tvec.at<double>(0, 0) * m_tvec.at<double>(0, 0) + m_tvec.at<double>(0, 1) * m_tvec.at<double>(0, 1) + m_tvec.at<double>(0, 2) * m_tvec.at<double>(0, 2));
+			//dist = sqrt(m_tvec.at<double>(0, 0) * m_tvec.at<double>(0, 0) + m_tvec.at<double>(0, 1) * m_tvec.at<double>(0, 1) + m_tvec.at<double>(0, 2) * m_tvec.at<double>(0, 2));
+			dist = std::sqrt(target_3d.x * target_3d.x + target_3d.y * target_3d.y + target_3d.z * target_3d.z);
 			//dist = target_3d.z;
-			yaw = -atan2(m_tvec.at<double>(0, 0), m_tvec.at<double>(2, 0));
-			pitch = -atan2(m_tvec.at<double>(1, 0), m_tvec.at<double>(2, 0));
-
+			yaw = -atan2(target_3d.x, target_3d.z);
+			pitch = -atan2(target_3d.y, target_3d.z);
 			//yaw = atan((dist*sin(yaw)) / (dist*cos(yaw) + offsetZ));
 			//pitch = atan((dist*sin(pitch)) / (dist*cos(pitch) + offsetZ));
-
 			//dist = sqrt(pow(offsetZ + dist * cos(yaw), 2) + pow(dist*sin(yaw), 2));
 			if (dist > 1500)
 				pitch = std::atan((std::sin(pitch) - 0.5 * gravity * dist / std::pow(initV, 2)) / std::cos(pitch));
 			yaw = yaw / CV_PI * 180;
 			pitch = pitch / CV_PI * 180;
-			/*
-			#ifdef DEBUG
-				ostringstream ss;
-				ss << "yaw: " << yaw << '\t' << "pitch: " << pitch << '\t' << "dist: " << dist;
-				putText(debugFrameROI, ss.str(), cv::Point(50, 90), cv::FONT_ITALIC, 0.6, cv::Scalar(0, 252, 124));
-				cout << (m_ArmorType == ARMOR_SMALL ? "Small" : "Big") << endl;
-			#endif // DEBUG*/
         }
+
         //Yaw: 逆时针正 顺时针负 ; Pitch:下正 上负
         void SolveWithCompensation(float& yaw, float& pitch, float& dist)
         {
             PNPSolver();
 
             cv::Point3f target_3d(m_tvec);
-
-            dist = sqrt(m_tvec.at<double>(0, 0) * m_tvec.at<double>(0, 0) + m_tvec.at<double>(0, 1) * m_tvec.at<double>(0, 1) + m_tvec.at<double>(0, 2) * m_tvec.at<double>(0, 2));
+			
+            dist = std::sqrt(target_3d.x * target_3d.x + target_3d.y * target_3d.y + target_3d.z * target_3d.z);
             //dist = target_3d.z;
             //dist = 10941 * pow(m_BBox.height, -1.066);  //灯条高度与实际距离的函数关系
             pitch = GetPitch((dist + offsetZPitch) / 1000, -(target_3d.y + offsetYPitch) / 1000, initV); //rad
-            yaw = -(float)(std::atan2(target_3d.x + offsetX, dist + offsetZYaw)); //rad
+            yaw = -static_cast<float>(std::atan2(target_3d.x + offsetX, dist + offsetZYaw)); //rad
 
             //弧度转角度
             pitch = pitch * 180 / CV_PI;
@@ -303,9 +296,9 @@ private:
     private:
         cv::Rect2f m_BBox;
         ArmorType m_ArmorType;
-        cv::Mat m_rvec, m_tvec;
+        cv::Mat m_tvec;
 
-        /**
+       /**
        * @Brief: 考虑水平方向空气阻力，计算子弹实际的y坐标
        * @Param x: 相机到目标装甲板的距离 单位 m
        * @Param v: 子弹发射速度 单位 m/s
@@ -320,7 +313,7 @@ private:
             return y;
         }
 
-        /**
+       /**
        * @Brief: 计算瞄准所需的云台俯仰角变化量
        * @param x: 相机到目标装甲板的距离 单位 m
        * @param y: 云台坐标系中，击打目标点（装甲板中心）的y坐标 单位 m
@@ -348,6 +341,7 @@ private:
 
         void PNPSolver()
         {
+			// constants
             const static float smallArmorWidth = 130.0; // mm
             const static float smallArmorHeight = 71.0;
 			const static float bigArmorWidth = 210.0;
@@ -365,26 +359,24 @@ private:
 				cv::Point3f(bigArmorWidth / 2, -smallArmorHeight / 2, 0),	//tr
 				cv::Point3f(bigArmorWidth / 2,  smallArmorHeight / 2, 0),	//br
 				cv::Point3f(-bigArmorWidth / 2,  smallArmorHeight / 2, 0)	//bl
-				//cv::Point3f(-105, -30, 0),	//tl
-				//cv::Point3f(105, -30, 0),	//tr
-				//cv::Point3f(105, 30, 0),	//br
-				//cv::Point3f(-105, 30, 0)	//bl
 			};
             const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1763.56659425676, 0, 755.6922965695335,
                                           0, 1764.629234433968, 560.6661455507484,
                                           0, 0, 1);
             const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.05267019741741139, 0.05428699162792178,
                                         -0.0002141029821745741, -0.001124320437987154, -0.4855547217023871);
-
+			
+			// tmp
+			static cv::Mat rvec;
             std::vector<cv::Point2f> targetPts = {
                 m_BBox.tl(),
                 m_BBox.tl() + cv::Point2f(m_BBox.width,0),
                 m_BBox.br(),
                 m_BBox.tl() + cv::Point2f(0,m_BBox.height) };
             if (m_ArmorType == ArmorType::Small)
-                cv::solvePnP(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, m_rvec, m_tvec);
+                cv::solvePnP(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, m_tvec);
             else
-                cv::solvePnPRansac(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, m_rvec, m_tvec);
+                cv::solvePnPRansac(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, m_tvec);
         }
     };
 
@@ -542,7 +534,7 @@ private:
         return armorFound;
     }
 
-    AlgorithmState m_ArmorState = AlgorithmState::Detecting;
+    std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;
     std::atomic_bool m_Valid;
     SerialPortIO* m_SerialPort = nullptr;
     Utils::Configuration* m_Config = nullptr;
