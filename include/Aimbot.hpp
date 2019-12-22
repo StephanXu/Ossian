@@ -534,6 +534,10 @@ private:
         return armorFound;
     }
 
+    float m_Yaw = 0;
+    float m_Pitch = 0;
+    std::mutex m_AngleLock;
+
     std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;
     std::atomic_bool m_Valid;
     SerialPortIO* m_SerialPort = nullptr;

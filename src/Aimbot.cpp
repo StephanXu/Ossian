@@ -124,8 +124,11 @@ void Aimbot::Process(Ioap::BaseInputData* input)
 
 	try
 	{
-		m_SerialPort->Commit(sendYaw,
-							 sendPitch,
+        std::lock_guard<std::mutex> guard{ m_AngleLock };
+        m_Yaw = m_Yaw + sendYaw;
+        m_Pitch = m_Pitch + sendPitch;
+		m_SerialPort->Commit(m_Yaw,
+							 m_Pitch,
 							 dist,
 							 SerialPortIO::FlagHelper(foundArmor, shootMode, 0, 0));
 	}

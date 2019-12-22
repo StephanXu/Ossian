@@ -74,6 +74,41 @@ private:
     bool m_Valid;
 };
 
+class FakeInputSource : public Ioap::BaseInputAdapter
+{
+	friend class NautilusVision::Factory;
+
+	explicit FakeInputSource(Utils::Configuration* config)
+		: m_Valid(true)
+	{
+	}
+public:
+	std::shared_ptr<Ioap::BaseInputData> GetInput() override
+	{
+		if (!m_Valid)
+		{
+			return nullptr;
+		}
+		std::shared_ptr<FakeData> result = std::make_shared<FakeData>(1);
+		return result;
+	}
+
+	std::future<std::shared_ptr<Ioap::BaseInputData>> GetInputAsync() override
+	{
+		return std::async(std::launch::async,
+						  &FakeInputSource::GetInput,
+						  this);
+	}
+
+	std::type_index GetInputTypeIndex() const override
+	{
+		return std::type_index(typeid(FakeData));
+	}
+
+private:
+	bool m_Valid;
+};
+
 #ifdef _WIN32
 
 /**
@@ -278,12 +313,17 @@ public:
 	{
 		static InModel inModel;
 		static OutModel outModel;
-		while (true)
+		while (m_SyncThreadFlag)
 		{
-			m_SerialPort.Receive(reinterpret_cast<unsigned char*>(&inModel), sizeof(inModel));
-			m_InModel.store(inModel);
 			outModel = m_OutModel;
 			m_SerialPort.Send(reinterpret_cast<unsigned char*>(&outModel), sizeof(OutModel));
+
+			m_SerialPort.Receive(reinterpret_cast<unsigned char*>(&inModel), sizeof(inModel));
+			if (0xA5 == inModel.beginCode && 0xAA == inModel.endCode)
+			{
+				m_InModel.store(inModel);
+				//spdlog::info("damn {}\t{}\t{}\t{}", inModel.beginCode, inModel.gimbalIndex, inModel.pitchMotor, inModel.yawMotor);
+			}
 			std::this_thread::sleep_for(std::chrono::microseconds(interval));
 		}
 	}
@@ -327,16 +367,23 @@ public:
 		Commit(model);
 	}
 
+	void CommitRel(float yaw, float pitch, float absDist, unsigned int flag)
+	{
+		static OutModel model;
+		model = m_OutModel;
+		model.yawAngle += yaw;
+		model.pitchAngle += pitch;
+		model.distance = absDist;
+		model.flags = flag;
+		Commit(model);
+	}
+
 private:
 	std::atomic<InModel> m_InModel;
 	std::atomic<OutModel> m_OutModel;
 
 	std::unique_ptr<std::thread> m_SyncThread;
 	bool m_SyncThreadFlag = false;
-
-	//static constexpr unsigned char dataBeginSig = 0xA5;
-	//static constexpr unsigned char dataEndSig = 0xAA;
-	//static constexpr unsigned int dataLength = 18;
 
 	IO::SerialPort m_SerialPort;
 

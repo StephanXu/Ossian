@@ -1,8 +1,8 @@
 {
   "serialPort": {
-    "portName": "COM2",
-    "baudrate": 115200,
-    "parity": 2,
+    "portName": "COM3",
+    "baudrate": 230400,
+    "parity": 0,
     "dataBit": 8,
     "stopBit": 0,
     "synchronize": true,

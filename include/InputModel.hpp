@@ -35,4 +35,27 @@ public:
     cv::UMat m_Image;
 };
 
+
+/**
+ * @brief 空输入
+ * 虚拟的无输入
+ */
+class FakeData : public NautilusVision::IOAP::BaseInputData
+{
+public:
+    FakeData() = default;
+    FakeData(int x) :data(x) {}
+    std::unique_ptr<NautilusVision::IOAP::BaseInputData> Clone() const override
+    {
+        return std::make_unique<FakeData>(*this);
+    }
+
+    FakeData* GetData() override
+    {
+        return this;
+    }
+
+    int data;
+};
+
 #endif //INPUTMODEL_HPP
