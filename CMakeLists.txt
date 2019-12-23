@@ -46,3 +46,5 @@ target_link_libraries(${PROJECT_NAME}
 	${HKCAMERA_LIBS} 
 	${OpenCV_LIBS} 
 	${NVF_LIBS})
+
+add_subdirectory(bench)
