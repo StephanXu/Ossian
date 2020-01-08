@@ -1,10 +1,4 @@
-﻿#include "..\include\nv\SerialPort.hpp"
-#include "..\include\nv\SerialPort.hpp"
-#include "..\include\nv\SerialPort.hpp"
-#include "..\include\nv\SerialPort.hpp"
-#include "..\include\nv\SerialPort.hpp"
-#include "..\include\nv\SerialPort.hpp"
-
+﻿
 #ifdef _WIN32
 #include <Windows.h>
 #endif

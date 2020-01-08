@@ -8,6 +8,7 @@
 #include "Utils.hpp"
 
 #include <atomic>
+#include <cmath>
 
 namespace Ioap = NautilusVision::IOAP;
 namespace Utils = NautilusVision::Utils;
@@ -61,7 +62,7 @@ private:
         *               灯条面积大于一定值（排除噪点） && 拟合的椭圆长短轴比例符合灯条的长宽比 && 轮廓凸度符合灯条凸度 && 符合敌方的颜色
         *	@Return:	真或假
         */
-        bool LightBar::IsLegal() const noexcept
+        bool IsLegal() const noexcept
         {
             if (m_AreaContour > minArea&&
                 m_LongAxis / m_MinorAxis >= ellipseMinAspectRatio)
@@ -75,19 +76,19 @@ private:
         {
             return m_Ellipse;
         }
-        cv::Point2f LightBar::Center() const noexcept
+        cv::Point2f Center() const noexcept
         {
             return m_Ellipse.center;
         }
-        double LightBar::LongAxis() const noexcept
+        double LongAxis() const noexcept
         {
             return m_LongAxis;
         }
-        double LightBar::MinorAxis() const noexcept
+        double MinorAxis() const noexcept
         {
             return m_MinorAxis;
         }
-        double LightBar::Angle() const noexcept
+        double Angle() const noexcept
         {
             return m_Angle;
         }
@@ -332,7 +333,7 @@ private:
                 y_actual = BulletModel(x, v, a);
                 dy = y - y_actual;
                 y_temp = y_temp + dy;
-                if (std::fabsf(dy) < 0.001)
+                if (std::fabs(dy) < 0.001)
                     break;
                 //printf("iteration num %d: angle %f,temp target y:%f,err of y:%f\n",i+1,a*180/3.1415926535,yTemp,dy);
             }
@@ -539,7 +540,7 @@ private:
     std::mutex m_AngleLock;
 
     std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;
-    std::atomic_bool m_Valid;
+    std::atomic_bool m_Valid = false;
     SerialPortIO* m_SerialPort = nullptr;
     Utils::Configuration* m_Config = nullptr;
 };

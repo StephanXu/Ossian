@@ -20,12 +20,22 @@ find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(simdjson CONFIG REQUIRED)
 
+if (WIN32)
+	include_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/include)
+	link_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/out/msvc-x64/Release)
+	set(mimalloc_LIBS mimalloc-override)
+elseif (UNIX)
+	find_package(mimalloc 1.2 REQUIRED)
+	set(mimalloc_LIBS mimalloc)
+endif()
+
 add_library(NautilusVisionFramework ${DIR_SRC})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(NautilusVisionFramework
 	fmt::fmt
 	spdlog::spdlog
-	simdjson::simdjson)
+	simdjson::simdjson
+	${mimalloc_LIBS})
 
 set(NVF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE STRING INTERNAL)
 set(NVF_LIBS NautilusVisionFramework CACHE STRING INTERNAL)

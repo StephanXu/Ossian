@@ -4,6 +4,7 @@
 
 #include <simdjson/jsonparser.h>
 #include <spdlog/spdlog.h>
+
 #include <fmt/format.h>
 
 #include <string>

@@ -109,8 +109,6 @@ private:
 	bool m_Valid;
 };
 
-#ifdef _WIN32
-
 /**
  * @class	CameraInputSource
  *
@@ -187,6 +185,9 @@ private:
 	HKCamera m_Camera;
 	bool m_Valid;
 };
+
+
+#ifdef _WIN32
 
 /**
  * @class	SerialPortIO
@@ -386,6 +387,143 @@ private:
 	bool m_SyncThreadFlag = false;
 
 	IO::SerialPort m_SerialPort;
+
+	bool m_Valid;
+};
+
+#endif //_WIN32
+
+#ifndef _WIN32
+
+/**
+ * @class	SerialPortIO
+ *
+ * @brief	串口输出数据服务（不能使用！！！！！）
+ *
+ * @author	Xu Zihan
+ * @date	2019/11/20
+ */
+class SerialPortIO : public Ioap::IService
+{
+	friend class NautilusVision::Factory;
+
+	explicit SerialPortIO(Configuration* config)
+		:m_SyncThread(nullptr)
+	{
+		
+	}
+
+public:
+	~SerialPortIO()
+	{
+		
+	}
+
+	/**
+	 * @fn	bool SerialPortIO::SendData(float yaw, float pitch, float dist, unsigned int flag)
+	 *
+	 * @brief	向串口发送数据
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/20
+	 *
+	 * @param	yaw  	yaw 角度
+	 * @param	pitch	pitch 角度
+	 * @param	dist 	距离
+	 * @param	flag 	标志字节（请使用 FlagHelper 生成）
+	 *
+	 * @returns	True if it succeeds, false if it fails.
+	 */
+	bool SendData(float yaw, float pitch, float dist, unsigned int flag)
+	{
+		
+	}
+
+	/**
+	 * @fn	static unsigned int SerialPortIO::FlagHelper(unsigned char isAimed, unsigned char reserve0, unsigned char reserve1, unsigned char reserve2)
+	 *
+	 * @brief	生成用于SendData函数的flag参数
+	 *
+	 * @author	Xu Zihan
+	 * @date	2019/11/20
+	 *
+	 * @param	isAimed 	是否瞄准.
+	 * @param	reserve0	reserve.
+	 * @param	reserve1	reserve.
+	 * @param	reserve2	reserve.
+	 *
+	 * @returns	生成的flag标志.
+	 */
+	static unsigned int FlagHelper(unsigned char isAimed,
+								   unsigned char reserve0,
+								   unsigned char reserve1,
+								   unsigned char reserve2)
+	{
+		
+	}
+#ifdef _WIN32
+#pragma pack(push,1)
+#endif
+	struct InModel
+	{
+		uint8_t beginCode = 0xA5;
+		uint32_t gimbalIndex;
+		float yawMotor;
+		float pitchMotor;
+		uint8_t endCode = 0xAA;
+	};
+
+	struct OutModel
+	{
+		uint8_t beginCode = 0xA5;
+		float yawAngle;
+		float pitchAngle;
+		float distance;
+		uint32_t flags;
+		uint8_t endCode = 0xAA;
+	};
+#ifdef _WIN32
+#pragma pack(pop)
+#endif
+	void SyncStatus(unsigned int interval)
+	{
+		
+	}
+
+	void StartSync(unsigned int interval)
+	{
+		
+	}
+
+	void Intercept(InModel& outData) const
+	{
+		
+	}
+
+	InModel Intercept() const
+	{
+		
+	}
+
+	void Commit(OutModel& refData)
+	{
+		
+	}
+
+	void Commit(float yaw, float pitch, float dist, unsigned int flag)
+	{
+		
+	}
+
+	void CommitRel(float yaw, float pitch, float absDist, unsigned int flag)
+	{
+		
+	}
+
+private:
+
+	std::unique_ptr<std::thread> m_SyncThread;
+	bool m_SyncThreadFlag = false;
 
 	bool m_Valid;
 };

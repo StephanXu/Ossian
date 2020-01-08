@@ -1,4 +1,5 @@
-﻿#include <spdlog/spdlog.h>
+#include <spdlog/spdlog.h>
+#include <mimalloc.h>
 
 #include "nv/Dispatcher.hpp"
 
@@ -39,6 +40,7 @@ void Dispatcher::Run()
 					spdlog::info("Time: {}",
 								 std::chrono::duration_cast<std::chrono::milliseconds>(
 									 std::chrono::system_clock::now() - pureTick).count());
+                    mi_stats_print(NULL);
 					return;
 				}
                 continue;

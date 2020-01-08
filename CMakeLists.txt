@@ -22,8 +22,18 @@ find_package(fmt CONFIG REQUIRED)
 # import spdlog
 find_package(spdlog CONFIG REQUIRED)
 
+if (WIN32)
+	include_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/include)
+	link_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/out/msvc-x64/Release)
+	set(mimalloc_LIBS mimalloc-override)
+elseif (UNIX)
+	find_package(mimalloc 1.2 REQUIRED)
+	set(mimalloc_LIBS mimalloc)
+endif()
+
+
 # import NautilusVisionFramework
-add_subdirectory(NautilusVision)
+add_subdirectory(NautilusVisionFramework)
 include_directories(${NVF_INCLUDE_DIR})
 
 if(WIN32)
@@ -31,6 +41,11 @@ if(WIN32)
 	set(HKCAMERA_LIBS MvCameraControl CACHE STRING INTERNAL)
 	include_directories(${HKCAMERA_INCLUDE_DIR})
 	link_directories(3rdparty/HKCamera/libraries/win64)
+elseif(UNIX)
+	set(HKCAMERA_INCLUDE_DIR /opt/MVS/include CACHE STRING INTERNAL)
+	set(HKCAMERA_LIBS MvCameraControl CACHE STRING INTERNAL)
+	include_directories(${HKCAMERA_INCLUDE_DIR})
+	link_directories(/opt/MVS/lib/aarch64)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -43,6 +58,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(${PROJECT_NAME}
 	spdlog::spdlog 
 	fmt::fmt
+	${mimalloc_LIBS}
 	${HKCAMERA_LIBS} 
 	${OpenCV_LIBS} 
 	${NVF_LIBS})

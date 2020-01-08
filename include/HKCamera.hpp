@@ -17,7 +17,12 @@
 #pragma once
 
 #include <opencv2/opencv.hpp>
+
+#ifdef _WIN32
 #include <HKCamera/MvCameraControl.h>
+#else
+#include <MvCameraControl.h>
+#endif
 
 #include <exception>
 #include <vector>
