@@ -793,8 +793,8 @@ WARN_LOGFILE           =
 INPUT                  = src \
                          include \
                          doc \
-                         NautilusVision/include/nv \
-                         NautilusVision/src \
+                         NautilusVisionFramework/include/nv \
+                         NautilusVisionFramework/src \
                          README.md
 
 # This tag can be used to specify the character encoding of the source files

@@ -1,6 +1,5 @@
 ﻿#include "nv/Configuration.hpp"
 
-
 #include <simdjson/jsonparser.h>
 #include <spdlog/spdlog.h>
 #include "nv/Configuration.hpp"

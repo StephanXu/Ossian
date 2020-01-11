@@ -22,6 +22,11 @@ find_package(fmt CONFIG REQUIRED)
 # import spdlog
 find_package(spdlog CONFIG REQUIRED)
 
+# import protobuf
+add_subdirectory(proto)
+set(PROTO_LIBS proto)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/proto)
+
 if (WIN32)
 	include_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/include)
 	link_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/out/msvc-x64/Release)
@@ -53,11 +58,12 @@ aux_source_directory(
     ./src DIR_SRC
 )
 
-add_executable(${PROJECT_NAME} ${DIR_SRC})
+add_executable(${PROJECT_NAME} "${DIR_SRC} ${PROTO_SRCS} ${PROTO_HDRS}")
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(${PROJECT_NAME}
 	spdlog::spdlog 
 	fmt::fmt
+	${PROTO_LIBS}
 	${mimalloc_LIBS}
 	${HKCAMERA_LIBS} 
 	${OpenCV_LIBS} 

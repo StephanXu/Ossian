@@ -24,5 +24,6 @@
 
 // IO
 #include "nv/SerialPort.hpp"
+#include "nv/CanIO.hpp"
 
 #endif

@@ -29,7 +29,7 @@ public:
 	 */
 	enum Parity
 	{
-		NoPariDty = 0, ///< 无校验
+		NoParity = 0, ///< 无校验
 		OddParity = 1, ///< 奇校验
 		EvenParity = 2,///< 偶校验
 		MarkParity = 3 ///< 标记校验

@@ -1,0 +1,56 @@
+
+syntax = "proto3";
+
+package NautilusVisionConfig;
+
+message SerialPort {
+	string portName = 1;
+	int32 baudrate = 2;
+	enum Parity {
+		NoParity = 0; // 无校验
+		OddParity = 1; // 奇校验
+		EvenParity = 2; // 偶校验
+		MarkParity = 3; // 标记校验
+	}
+	Parity parity = 3;
+	int32 dataBit = 4;
+	enum StopBit {
+		OneStopBit = 0, // 1位停止位
+		One5StopBits = 1, // 1.5位停止位
+		TwoStopBits = 2 // 2位停止位
+	}
+	StopBit stopBit = 5;
+	bool synchronize = 6;
+	int32 syncInterval = 7;
+}
+
+message Camera {
+	int32 deviceIndex = 1;
+	int32 frameWidth = 2;
+	int32 frameHeight = 3;
+}
+
+message TestVideoSource {
+	string filename = 1;
+}
+
+message aimbot {
+	float maxShootRadius = 1;
+	enum EnemyColor {
+		Red = 0;
+		Blue = 1;
+	}
+	EnemyColor enemyColor = 2;
+
+	int32 brightness = 3;
+	int32 thresColor = 4;
+
+	//[TOOD]
+}
+
+message Configuration {
+	SerialPort serialPort = 1;
+	Camera camera = 2;
+	TestVideoSource testVideoSource = 3;
+
+}
