@@ -81,10 +81,7 @@ void Aimbot::Process(Ioap::BaseInputData* input)
         m_Valid = true;
         return;
     }
-#ifdef _DEBUG
-	cv::imshow("damn", origFrame);
-	cv::waitKey(1);
-#endif
+    cv::flip(origFrame, origFrame, 0);
     cv::Rect2f armorBBox;
     ArmorType armorType;
     bool shootMode = false;
@@ -124,21 +121,24 @@ void Aimbot::Process(Ioap::BaseInputData* input)
 
 	try
 	{
-        std::lock_guard<std::mutex> guard{ m_AngleLock };
-        m_Yaw = m_Yaw + sendYaw;
-        m_Pitch = m_Pitch + sendPitch;
-		m_SerialPort->Commit(m_Yaw,
-							 m_Pitch,
-							 dist,
-							 SerialPortIO::FlagHelper(foundArmor, shootMode, 0, 0));
+  //      std::lock_guard<std::mutex> guard{ m_AngleLock };
+  //      m_Yaw = m_Yaw + sendYaw;
+  //      m_Pitch = m_Pitch + sendPitch;
+		//m_SerialPort->Commit(m_Yaw,
+		//					 m_Pitch,
+		//					 dist,
+		//					 SerialPortIO::FlagHelper(foundArmor, shootMode, 0, 0));
+        m_SerialPort->SendData(sendYaw,
+                               sendPitch,
+                               dist,
+                               SerialPortIO::FlagHelper(foundArmor, 0, 0, 0));//modified
 	}
     catch (std::runtime_error & e)
     {
         spdlog::error("Send data error: {}", e.what());
         //std::abort();
     }
-
-#ifdef _DEBUG
+#ifndef _DEBUG
     //putText(debugFrame, fmt::format("ms: {:.4f}",ms), cv::Point(30, 50), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(173, 205, 249));
     cv::Mat debugFrame;
     origFrame.copyTo(debugFrame);

@@ -213,7 +213,7 @@ class SerialPortIO : public Ioap::IService
 							  config->LoadBooleanValue("/serialPort/synchronize"));
 			m_Valid = m_SerialPort.IsOpened();
 			unsigned int syncInterval = config->LoadIntegerValue("/serialPort/syncInterval");
-			StartSync(syncInterval);
+			//StartSync(syncInterval);
 		}
 		catch (std::runtime_error & e)
 		{
@@ -283,7 +283,7 @@ public:
 								   unsigned char reserve1,
 								   unsigned char reserve2)
 	{
-		return isAimed << 24 | reserve0 << 16 | reserve1 << 8 | reserve2 << 0;
+		return isAimed << 0 | reserve0 << 8 | reserve1 << 16 | reserve2 << 24;
 	}
 #ifdef _WIN32
 #pragma pack(push,1)
