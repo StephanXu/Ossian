@@ -1,0 +1,87 @@
+
+syntax = "proto3";
+//option optimize_for = LITE_RUNTIME;
+
+package NautilusVisionConfig;
+
+message SerialPort {
+	optional string portName = 1;
+	int32 baudrate = 2;
+	enum Parity {
+		NoParity = 0; // 无校验
+		OddParity = 1; // 奇校验
+		EvenParity = 2; // 偶校验
+		MarkParity = 3; // 标记校验
+	}
+	Parity parity = 3;
+	int32 dataBit = 4;
+	enum StopBit {
+		OneStopBit = 0; // 1位停止位
+		One5StopBits = 1; // 1.5位停止位
+		TwoStopBits = 2; // 2位停止位
+	}
+	StopBit stopBit = 5;
+	bool synchronize = 6;
+	int32 syncInterval = 7;
+}
+
+message Camera {
+	int32 deviceIndex = 1;
+	int32 frameWidth = 2;
+	int32 frameHeight = 3;
+}
+
+message TestVideoSource {
+	string filename = 1;
+}
+
+message Aimbot {
+	float maxShootRadius = 1;
+	enum EnemyColor {
+		Red = 0; // 红色敌人
+		Blue = 1; // 蓝色敌人
+	}
+	EnemyColor enemyColor = 2;
+
+	int32 brightness = 3;
+	int32 thresColor = 4;
+
+	float lightBarMinArea = 5;
+	float lightBarContourMinSolidity = 6;
+	float lightBarEllipseMinAspectRatio = 7;
+
+	float armorMaxAngleDiff = 8;
+	float armorMaxHeightDiffRatio = 9;
+	float armorMaxYDiffRatio = 10;
+	float armorMinXDiffRatio = 11;
+	float armorBigArmorRatio = 12;
+	float armorSmallArmorRatio = 13;
+	float armorMinAspectRatio = 14;
+	float armorMaxAspectRatio = 15;
+
+	float areaNormalizedBase = 16;
+	float sightOffsetNormalizedBase = 17;
+}
+
+message PoseSolver {
+	float offsetX = 1;
+	float offsetZPitch = 2;
+	float offsetYPitch = 3;
+	float offsetYYaw = 4;
+	float offsetZYaw = 5;
+
+	float offsetYaw = 6;
+	float offsetPitch = 7;
+
+	float initV = 8;
+	float initK = 9;
+	float gravity = 10;
+}
+
+message Configuration {
+	SerialPort serialPort = 1;
+	Camera camera = 2;
+	TestVideoSource testVideoSource = 3;
+	Aimbot aimbot = 4;
+	PoseSolver poseSolver = 5;
+}
