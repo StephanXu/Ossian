@@ -1,4 +1,5 @@
 
+#include <nv/nv.hpp>
 #include <mimalloc.h>
 #include "Config.pb.h"
 
@@ -19,9 +20,10 @@ void Startup::ConfigServices(AppBuilder &app)
 {
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 	app.InitLog();
+
 	spdlog::info("MI_VERSION:{}", mi_version());
 	
-	app.RegisterConfiguration();
+	app.RegisterConfigLoader<Configuration>();
     app.RegisterStatusType<RoboStatus>();
     //app.RegisterInputAdapter<CameraInputSource>();
 	//app.RegisterInputAdapter<FakeInputSource>();

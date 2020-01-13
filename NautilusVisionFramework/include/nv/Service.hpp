@@ -13,7 +13,6 @@
 #define SERVICE_HPP
 
 #include "IOTypes.hpp"
-#include "Configuration.hpp"
 
 #include <memory>
 #include <string>

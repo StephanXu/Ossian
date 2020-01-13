@@ -27,6 +27,9 @@ add_subdirectory(proto)
 set(PROTO_LIBS proto)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/proto)
 
+find_package(cpr CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
+
 if (WIN32)
 	include_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/include)
 	link_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/out/msvc-x64/Release)
@@ -63,6 +66,8 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(${PROJECT_NAME}
 	spdlog::spdlog 
 	fmt::fmt
+	cpr
+	ZLIB::ZLIB
 	${PROTO_LIBS}
 	${mimalloc_LIBS}
 	${HKCAMERA_LIBS} 

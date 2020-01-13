@@ -1,8 +1,8 @@
 
 #include <benchmark/benchmark.h>
-
+#include "Config.pb.h"
 #include <cmath>
-
+#include <unordered_map>
 static void BMPow(benchmark::State& state)
 {
     for (auto _ : state)
@@ -25,6 +25,61 @@ static void BMNativeTime(benchmark::State& state)
     }
 }
 
+static void BMProtobufParam(benchmark::State& state)
+{
+    NautilusVisionConfig::Configuration config;
+    auto aimbot = config.mutable_aimbot();
+    aimbot->set_areanormalizedbase(1.25);
+    for (auto _ : state)
+    {
+        float result = aimbot->areanormalizedbase()+202;
+    }
+}
+
+struct config
+{
+    float aimbot;
+};
+
+static void BMNoProtobufParam(benchmark::State& state)
+{
+    config c;
+    c.aimbot = 100;
+    for (auto _ : state)
+    {
+        float result = c.aimbot + 202;
+    }
+}
+
+static void BMIntHashMap(benchmark::State& state)
+{
+    std::unordered_map<int, int> map;
+    map.insert(std::make_pair(1, 2));
+    map.insert(std::make_pair(2, 3));
+    map.insert(std::make_pair(3, 4));
+    for (auto _ : state)
+    {
+        float res = map.find(2)->second + 10;
+    }
+}
+
+static void BMStringHashMap(benchmark::State& state)
+{
+    std::unordered_map<std::string, int> map;
+    map.insert(std::make_pair("1", 2));
+    map.insert(std::make_pair("2", 3));
+    map.insert(std::make_pair("3", 4));
+    for (auto _ : state)
+    {
+        float res = map.find("2")->second + 10;
+    }
+}
+
+BENCHMARK(BMProtobufParam);
+BENCHMARK(BMNoProtobufParam);
 
 BENCHMARK(BMPow)->Arg(8);
 BENCHMARK(BMNativeTime)->Arg(8);
+
+BENCHMARK(BMIntHashMap);
+BENCHMARK(BMStringHashMap);

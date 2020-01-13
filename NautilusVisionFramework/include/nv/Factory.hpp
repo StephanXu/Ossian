@@ -16,7 +16,7 @@ public:
      * @return std::unique_ptr<ServiceType> 服务对象实例
      */
     template <typename ServiceType>
-    static std::unique_ptr<ServiceType> CreateGeneralService(Utils::Configuration* config)
+    static std::unique_ptr<ServiceType> CreateGeneralService(Utils::ConfigLoader* config)
     {
         static_assert(std::is_base_of<IOAP::IService, ServiceType>::value, "ServiceType should derived from IService");
         return std::unique_ptr<ServiceType>(new ServiceType(config));
@@ -47,7 +47,7 @@ public:
      * @returns	创建的对象
      */
     template<typename T>
-    static std::unique_ptr<T> CreateGeneralObject(Utils::Configuration* config)
+    static std::unique_ptr<T> CreateGeneralObject(Utils::ConfigLoader* config)
     {
         return std::unique_ptr<T>(new T(config));
     }

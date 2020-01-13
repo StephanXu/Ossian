@@ -9,6 +9,7 @@
 #include <nv/Factory.hpp>
 #include <spdlog/spdlog.h>
 
+#include "Config.pb.h"
 #include "InputModel.hpp"
 #include "HKCamera.hpp"
 
@@ -16,7 +17,7 @@ namespace Ioap = NautilusVision::IOAP;
 namespace Utils = NautilusVision::Utils;
 namespace IO = NautilusVision::IO;
 
-using NautilusVision::Utils::Configuration;
+using NautilusVisionConfig::Configuration;
 
 /**
  * @brief 视频输入
@@ -30,8 +31,8 @@ class VideoInputSource : public Ioap::BaseInputAdapter
 	 * 如果视频加载失败，对象将被设置为失效，GetInput GetInputAsync 等函数将不可用。
 	 * @param filename
 	 */
-	explicit VideoInputSource(Utils::Configuration* config)
-		: m_VideoSource(config->LoadStringValue("/testVideoSource/filename"))
+	explicit VideoInputSource(Utils::ConfigLoader* config)
+		: m_VideoSource(config->Instance<Configuration>()->mutable_testvideosource()->filename())
 		, m_Valid(true)
 	{
 		if (!m_VideoSource.isOpened())
@@ -78,7 +79,7 @@ class FakeInputSource : public Ioap::BaseInputAdapter
 {
 	friend class NautilusVision::Factory;
 
-	explicit FakeInputSource(Utils::Configuration* config)
+	explicit FakeInputSource(Utils::ConfigLoader* config)
 		: m_Valid(true)
 	{
 	}
@@ -119,10 +120,10 @@ class CameraInputSource : public Ioap::BaseInputAdapter
 {
 	friend class NautilusVision::Factory;
 
-	explicit CameraInputSource(NautilusVision::Utils::Configuration* config)
-		: m_Camera(config->LoadIntegerValue("/camera/deviceIndex"),
-				   config->LoadIntegerValue("/camera/frameWidth"),
-				   config->LoadIntegerValue("/camera/frameHeight"))
+	explicit CameraInputSource(NautilusVision::Utils::ConfigLoader* config)
+		: m_Camera(config->Instance<Configuration>()->mutable_camera()->deviceindex(),
+				   config->Instance<Configuration>()->mutable_camera()->framewidth(),
+				   config->Instance<Configuration>()->mutable_camera()->frameheight())
 		, m_Valid(true)
 	{
 		try
@@ -201,19 +202,19 @@ class SerialPortIO : public Ioap::IService
 {
 	friend class NautilusVision::Factory;
 
-	explicit SerialPortIO(Configuration* config)
+	explicit SerialPortIO(Utils::ConfigLoader* config)
 		:m_SyncThread(nullptr)
 	{
 		try
 		{
-			m_SerialPort.Open(config->LoadStringValue("/serialPort/portName"),
-							  config->LoadIntegerValue("/serialPort/baudrate"),
-							  config->LoadIntegerValue("/serialPort/parity"),
-							  config->LoadIntegerValue("/serialPort/dataBit"),
-							  config->LoadIntegerValue("/serialPort/stopBit"),
-							  config->LoadBooleanValue("/serialPort/synchronize"));
+			m_SerialPort.Open(config->Instance<Configuration>()->mutable_serialport()->portname(),
+							  config->Instance<Configuration>()->mutable_serialport()->baudrate(),
+							  config->Instance<Configuration>()->mutable_serialport()->parity(),
+							  config->Instance<Configuration>()->mutable_serialport()->databit(),
+							  config->Instance<Configuration>()->mutable_serialport()->stopbit(),
+							  config->Instance<Configuration>()->mutable_serialport()->synchronize());
 			m_Valid = m_SerialPort.IsOpened();
-			unsigned int syncInterval = config->LoadIntegerValue("/serialPort/syncInterval");
+			unsigned int syncInterval = config->Instance<Configuration>()->mutable_serialport()->syncinterval();
 			StartSync(syncInterval);
 		}
 		catch (std::runtime_error & e)

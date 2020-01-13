@@ -30,46 +30,46 @@ double Aimbot::PoseSolver::gravity = 0.0;
 
 cv::Point2f Aimbot::Armor::frameCenter(0, 0);
 
-Aimbot::Aimbot(Utils::Configuration* config, SerialPortIO* serialPort)
+Aimbot::Aimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort)
 	:m_Valid(false)
     , m_Config(config)
     , m_SerialPort(serialPort)
 {
-    Aimbot::LightBar::minArea = m_Config->LoadDoubleValue("/aimbot/lightBar/minArea");
-    Aimbot::LightBar::ellipseMinAspectRatio = m_Config->LoadDoubleValue("/aimbot/lightBar/ellipseMinAspectRatio");
+    Aimbot::LightBar::minArea = m_Config->Instance<Configuration>()->mutable_aimbot()->lightbarminarea();
+    Aimbot::LightBar::ellipseMinAspectRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->lightbarellipseminaspectratio();
 
-    Aimbot::Armor::maxAngleDiff = m_Config->LoadDoubleValue("/aimbot/armor/maxAngleDiff");
-    Aimbot::Armor::maxYDiffRatio = m_Config->LoadDoubleValue("/aimbot/armor/maxYDiffRatio");
-    Aimbot::Armor::minXDiffRatio = m_Config->LoadDoubleValue("/aimbot/armor/minXDiffRatio");
-    Aimbot::Armor::maxHeightDiffRatio = m_Config->LoadDoubleValue("/aimbot/armor/maxHeightDiffRatio");
+    Aimbot::Armor::maxAngleDiff = m_Config->Instance<Configuration>()->mutable_aimbot()->armormaxanglediff();
+    Aimbot::Armor::maxYDiffRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armormaxydiffratio();
+    Aimbot::Armor::minXDiffRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armorminxdiffratio();
+    Aimbot::Armor::maxHeightDiffRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armormaxheightdiffratio();
 
-    Aimbot::Armor::armorMinAspectRatio = m_Config->LoadDoubleValue("/aimbot/armor/armorMinAspectRatio");
-    Aimbot::Armor::armorMaxAspectRatio = m_Config->LoadDoubleValue("/aimbot/armor/armorMaxAspectRatio");
+    Aimbot::Armor::armorMinAspectRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armorminaspectratio();
+    Aimbot::Armor::armorMaxAspectRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armormaxaspectratio();
 
-    Aimbot::Armor::bigArmorRatio = m_Config->LoadDoubleValue("/aimbot/armor/bigArmorRatio");
-    Aimbot::Armor::smallArmorRatio = m_Config->LoadDoubleValue("/aimbot/armor/smallArmorRatio");
+    Aimbot::Armor::bigArmorRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armorbigarmorratio();
+    Aimbot::Armor::smallArmorRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armorsmallarmorratio();
 
-    Aimbot::Armor::areaNormalizedBase = m_Config->LoadDoubleValue("/aimbot/areaNormalizedBase");
-    Aimbot::Armor::sightOffsetNormalizedBase = m_Config->LoadDoubleValue("/aimbot/sightOffsetNormalizedBase");
+    Aimbot::Armor::areaNormalizedBase = m_Config->Instance<Configuration>()->mutable_aimbot()->areanormalizedbase();
+    Aimbot::Armor::sightOffsetNormalizedBase = m_Config->Instance<Configuration>()->mutable_aimbot()->sightoffsetnormalizedbase();
 
-    Aimbot::PoseSolver::offsetZPitch = m_Config->LoadDoubleValue("/poseSolver/offsetZPitch");
-    Aimbot::PoseSolver::offsetYPitch = m_Config->LoadDoubleValue("/poseSolver/offsetYPitch");
-    Aimbot::PoseSolver::offsetZYaw = m_Config->LoadDoubleValue("/poseSolver/offsetZYaw");
-    Aimbot::PoseSolver::offsetX = m_Config->LoadDoubleValue("/poseSolver/offsetX");
-    Aimbot::PoseSolver::initV = m_Config->LoadDoubleValue("/poseSolver/initV");
-    Aimbot::PoseSolver::initK = m_Config->LoadDoubleValue("/poseSolver/initK");
-    Aimbot::PoseSolver::gravity = m_Config->LoadDoubleValue("/poseSolver/gravity");
+    Aimbot::PoseSolver::offsetZPitch = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetzpitch();
+    Aimbot::PoseSolver::offsetYPitch = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetypitch();
+    Aimbot::PoseSolver::offsetZYaw = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetzyaw();
+    Aimbot::PoseSolver::offsetX = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetx();
+    Aimbot::PoseSolver::initV = m_Config->Instance<Configuration>()->mutable_posesolver()->initv();
+    Aimbot::PoseSolver::initK = m_Config->Instance<Configuration>()->mutable_posesolver()->initk();
+    Aimbot::PoseSolver::gravity = m_Config->Instance<Configuration>()->mutable_posesolver()->gravity();
 
-    Aimbot::Armor::frameCenter.x = m_Config->LoadIntegerValue("/camera/frameWidth") / 2;
-    Aimbot::Armor::frameCenter.y = m_Config->LoadIntegerValue("/camera/frameHeight") / 2;
+    Aimbot::Armor::frameCenter.x = m_Config->Instance<Configuration>()->mutable_camera()->framewidth();
+    Aimbot::Armor::frameCenter.y = m_Config->Instance<Configuration>()->mutable_camera()->frameheight();
 }
 
 void Aimbot::Process(Ioap::BaseInputData* input)
 {
     const static cv::Point2f redDot(744, 642); //步兵
-    const double maxShootRadius = m_Config->LoadDoubleValue("/aimbot/maxShootRadius");
-    const double offsetYaw = m_Config->LoadDoubleValue("/poseSolver/offsetYaw");
-    const double offsetPitch = m_Config->LoadDoubleValue("/poseSolver/offsetPitch");
+    const double maxShootRadius = m_Config->Instance<Configuration>()->mutable_aimbot()->maxshootradius();
+    const double offsetYaw = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetyaw();
+    const double offsetPitch = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetpitch();
     static KalmanFilter kf(4, 2);
 
     //[注意]：这里是不安全的使用方法，应当优化

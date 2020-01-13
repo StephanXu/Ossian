@@ -19,6 +19,7 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src DIR_SRC)
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(simdjson CONFIG REQUIRED)
+find_package(protobuf CONFIG REQUIRED)
 
 if (WIN32)
 	include_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/include)
@@ -35,6 +36,7 @@ target_link_libraries(NautilusVisionFramework
 	fmt::fmt
 	spdlog::spdlog
 	simdjson::simdjson
+	protobuf::libprotobuf
 	${mimalloc_LIBS})
 
 set(NVF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE STRING INTERNAL)

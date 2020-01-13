@@ -2,9 +2,9 @@
   "serialPort": {
     "portName": "COM3",
     "baudrate": 230400,
-    "parity": 0,
+    "parity": "NoParity",
     "dataBit": 8,
-    "stopBit": 0,
+    "stopBit": "OneStopBit",
     "synchronize": true,
     "syncInterval": 1
   },
@@ -18,27 +18,26 @@
   },
   "aimbot": {
     "maxShootRadius": 120.0,
-    "enemyColor": "red",
-    "thres": {
-      "brightness": 30,
-      "thresColor": 50
-    },
-    "lightBar": {
-      "minArea": 15.0,
-      "contourMinSolidity": 0.5,
-      "ellipseMinAspectRatio": 1.8
-    },
-    "armor": {
-      "maxAngleDiff": 7.5,
-      "maxHeightDiffRatio": 0.6,
-      "maxYDiffRatio": 2.0,
-      "minXDiffRatio": 0.5,
+    "enemyColor": "Red",
 
-      "bigArmorRatio": 4.2,
-      "smallArmorRatio": 2.0,
-      "armorMinAspectRatio": 1.0,
-      "armorMaxAspectRatio": 5.5
-    },
+    "brightness": 30,
+    "thresColor": 50,
+
+    "lightBarMinArea": 15.0,
+    "lightBarContourMinSolidity": 0.5,
+    "lightBarEllipseMinAspectRatio": 1.8,
+
+
+    "armorMaxAngleDiff": 7.5,
+    "armorMaxHeightDiffRatio": 0.6,
+    "armorMaxYDiffRatio": 2.0,
+    "armorMinXDiffRatio": 0.5,
+
+    "armorBigArmorRatio": 4.2,
+    "armorSmallArmorRatio": 2.0,
+    "armorMinAspectRatio": 1.0,
+    "armorMaxAspectRatio": 5.5,
+
     "areaNormalizedBase": 1000.0,
     "sightOffsetNormalizedBase": 200.0
   },

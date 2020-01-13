@@ -16,7 +16,7 @@ namespace Utils = NautilusVision::Utils;
 class Aimbot : public Ioap::IExecutable
 {
 public:
-	static std::unique_ptr<Aimbot> CreateAimbot(Utils::Configuration* config, SerialPortIO* serialPort)
+	static std::unique_ptr<Aimbot> CreateAimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort)
 	{
 		return std::unique_ptr<Aimbot>(new Aimbot(config, serialPort));
 	}
@@ -28,7 +28,7 @@ public:
         return m_Valid;
     }
 private:
-	Aimbot(Utils::Configuration* config, SerialPortIO* serialPort);
+	Aimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort);
 
     enum class ArmorType
     {
@@ -436,9 +436,10 @@ private:
     bool DetectArmor(const cv::UMat& frame,
                      Armor& outTarget) noexcept
     {
-        static int enemyColor = 0 == m_Config->LoadStringValue("/aimbot/enemyColor").compare("red") ? 2 : 0;
-        static int brightness = m_Config->LoadIntegerValue("/aimbot/thres/brightness");
-        static int thresColor = m_Config->LoadIntegerValue("/aimbot/thres/thresColor");
+        using NautilusVisionConfig::Configuration;
+        static int enemyColor = 0 == m_Config->Instance<Configuration>()->mutable_aimbot()->enemycolor();
+        static int brightness = m_Config->Instance<Configuration>()->mutable_aimbot()->brightness();
+        static int thresColor = m_Config->Instance<Configuration>()->mutable_aimbot()->threscolor();
 
         const static cv::Mat element3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
         const static cv::Mat element5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
@@ -542,7 +543,7 @@ private:
     std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;
     std::atomic_bool m_Valid = false;
     SerialPortIO* m_SerialPort = nullptr;
-    Utils::Configuration* m_Config = nullptr;
+    Utils::ConfigLoader* m_Config = nullptr;
 };
 
 #endif // AIMBOT_HPP

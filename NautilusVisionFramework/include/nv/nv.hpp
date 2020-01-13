@@ -19,11 +19,11 @@
 #include "nv/MultiThread.hpp"
 #include "nv/Service.hpp"
 #include "nv/Config.hpp"
-#include "nv/Configuration.hpp"
 #include "nv/Factory.hpp"
+#include "nv/Configuration.hpp"
 
 // IO
 #include "nv/SerialPort.hpp"
-#include "nv/CanIO.hpp"
+//#include "nv/CAN.hpp"
 
 #endif

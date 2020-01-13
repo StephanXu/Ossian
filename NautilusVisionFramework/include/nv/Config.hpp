@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Config.hpp
  * @author Xu Zihan (stephanxu@foxmail.com)
  * @brief 配置器的相关实现
@@ -94,9 +94,10 @@ public:
 	 * @author	Xu Zihan
 	 * @date	2019/11/21
 	 */
-	void RegisterConfiguration()
+    template<typename ConfigType>
+	void RegisterConfigLoader()
 	{
-		m_DIConfig.Add(Utils::CreateConfiguration);
+		m_DIConfig.Add(Utils::CreateConfigLoader<ConfigType>);
 	}
 
 	/**
