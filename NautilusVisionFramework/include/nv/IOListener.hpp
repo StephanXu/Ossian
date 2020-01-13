@@ -1,5 +1,7 @@
 ﻿#ifndef IOLISTENER
 #define IOLISTENER
+#ifdef __linux__
+
 #include "CAN.hpp"
 #include <sys/epoll.h>
 #include <unordered_map>
@@ -104,4 +106,5 @@ namespace NautilusVision
 		CANManager* CANMan;
 	};
 }
+#endif // __linux__
 #endif // IOLISTENER

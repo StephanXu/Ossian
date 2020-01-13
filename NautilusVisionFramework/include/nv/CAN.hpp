@@ -1,6 +1,6 @@
 ﻿#ifndef NAUTILUS_VISION_DEVICE_IO
 #define NAUTILUS_VISION_DEVICE_IO
-
+#ifdef __linux__
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <sys/socket.h>
@@ -248,4 +248,5 @@ namespace NautilusVision
 	};
 } //NautilusVision
 
-#endif //NAUTILUS_VISION_DEVICE_IO
+#endif // __linux__
+#endif // NAUTILUS_VISION_DEVICE_IO
