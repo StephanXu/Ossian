@@ -17,16 +17,14 @@
 #include <tuple>
 #include <exception>
 
+#include "IOError.hpp"
+
 namespace ossian
 {
 	using ReceiveCallback = void(unsigned int id,
 		size_t dataLength,
 		std::shared_ptr<uint8_t[]> data);
-	class IOError :public std::runtime_error
-	{
-	public:
-		IOError(std::string message) :std::runtime_error(message) {}
-	};
+
 	/*
 	 * Controller Area Network Identifier structure
 	 *
@@ -68,7 +66,7 @@ namespace ossian
 		int FD() const noexcept { return m_Socket; }
 		std::string Location() const noexcept { return m_Location; }
 
-		bool Open()
+		void Open()
 		{
 			struct ifreq ifr;
 			struct sockaddr_can addr; //设置can设备
@@ -90,7 +88,6 @@ namespace ossian
 				throw std::runtime_error("setsockopt loopback error");
 			}
 			UpdateFilter();
-			return true;
 		}
 
 		void Close()
@@ -239,14 +236,14 @@ namespace ossian
 			auto it = m_DevicesMap.find(location);
 			if (m_DevicesMap.end() == it)
 			{
-				throw std::runtime_error("No such device");
+				throw std::runtime_error("No such CAN device");
 			}
 			return it->second.get();
 		}
 	private:
 		std::unordered_map<std::string, std::unique_ptr<CANBus>> m_DevicesMap;
 	};
-} //ossian
+} //NautilusVision
 
 #endif // __linux__
 #endif // OSSIAN_CORE_IO_CAN

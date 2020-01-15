@@ -1,12 +1,14 @@
-﻿#ifndef OSSIAN_CORE_IOLISTENER
-#define OSSIAN_CORE_IOLISTENER
+﻿#ifndef NAUTILUS_VISION_DEVICE_IOLISTENER
+#define NAUTILUS_VISION_DEVICE_IOLISTENER
 #ifdef __linux__
+
 #include "CAN.hpp"
+#include "UART.hpp"
 #include <sys/epoll.h>
 #include <unordered_map>
 #include <exception>
 #include <string>
-namespace ossian
+namespace NautilusVision
 {
 	enum class IOType
 	{
@@ -43,9 +45,17 @@ namespace ossian
 					switch (pData->type)
 					{
 					case IOType::CAN:
+					{
 						auto dev = reinterpret_cast<CANBus*>(pData->p);
 						dev->Read();
 						break;
+					}
+					case IOType::UART:
+					{
+						auto dev = reinterpret_cast<UART*>(pData->p);
+						dev->Read();
+						break;
+					}
 					}
 				}
 			}
@@ -53,19 +63,35 @@ namespace ossian
 		// 注册监听
 		void AddListener(IOType type, std::string location, uint32_t id, std::function<ReceiveCallback> callback)
 		{
+			int fd;
+			std::unordered_map<int, std::unique_ptr<CallbackData>>::iterator it;
+			std::unique_ptr<CallbackData> pData;
 			switch (type)
 			{
 			case IOType::CAN:
-				int fd = CANMan->DeviceFD(location);
-				auto it = m_FDRegistered.find(fd);
-				if (it == m_FDRegistered.end())  
+				fd = m_CANMgr->DeviceFD(location);
+				it = m_FDRegistered.find(fd);
+				if (it == m_FDRegistered.end())
 				{
-					auto pData = std::make_unique<CallbackData>();
-					pData->p = CANMan->FindDevice(location);
+					pData = std::make_unique<CallbackData>();
+					pData->p = m_CANMgr->FindDevice(location);
 					pData->type = IOType::CAN;
 					AddEpoll(fd, std::move(pData));
 				}
-				CANMan->AddCallback(location, id, callback);
+				m_CANMgr->AddCallback(location, id, callback);
+				break;
+			case IOType::UART:
+				fd = m_UARTMgr->DeviceFD(location);
+				it = m_FDRegistered.find(fd);
+				id = 0;
+				if (it == m_FDRegistered.end())
+				{
+					pData = std::make_unique<CallbackData>();
+					pData->p = m_UARTMgr->FindDevice(location);
+					pData->type = IOType::UART;
+					AddEpoll(fd, std::move(pData));
+				}
+				m_UARTMgr->AddCallback(location, id, callback);
 				break;
 			}
 		}
@@ -78,7 +104,9 @@ namespace ossian
 			epv.events = EPOLLIN;// 目前Epoll只用于监听输入
 			m_FDRegistered.insert(std::make_pair(fd, std::move(pData)));
 			if (epoll_ctl(m_EpollFD, EPOLL_CTL_ADD, fd, &epv) < 0) // 添加一个节点
+			{
 				throw std::runtime_error("Epoll add failed");
+			}
 		}
 
 		// 删除epoll监听
@@ -98,12 +126,14 @@ namespace ossian
 			}
 		}
 
-		void SetCANManager(CANManager* man) { CANMan = man; }
+		void SetCANManager(CANManager* mgr) { m_CANMgr = mgr; }
+		void SetUARTManager(UARTManager* mgr) { m_UARTMgr = mgr; }
 	private:
 		int m_EpollFD;
 		std::unordered_map<int, std::unique_ptr<CallbackData>> m_FDRegistered;
-		CANManager* CANMan;
+		CANManager* m_CANMgr;
+		UARTManager* m_UARTMgr;
 	};
 }
 #endif // __linux__
-#endif // OSSIAN_CORE_IOLISTENER
+#endif // NAUTILUS_VISION_DEVICE_IOLISTENER
