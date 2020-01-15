@@ -1,9 +1,9 @@
-﻿#ifndef FACTORY_HPP
-#define FACTORY_HPP
+﻿#ifndef OSSIAN_CORE_FACTORY
+#define OSSIAN_CORE_FACTORY
 
 #include "Service.hpp"
 
-namespace NautilusVision
+namespace ossian
 {
 
 class Factory
@@ -53,6 +53,6 @@ public:
     }
 };
 
-} // NautilusVision
+} // ossian
 
-#endif // FACTORY_HPP
+#endif // OSSIAN_CORE_FACTORY

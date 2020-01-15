@@ -8,15 +8,15 @@
  * @copyright Copyright (c) 2019
  * 
  */
-#ifndef PIPELINE_HPP
-#define PIPELINE_HPP
+#ifndef OSSIAN_CORE_PIPELINE
+#define OSSIAN_CORE_PIPELINE
 
 #include "IOTypes.hpp"
 #include "Service.hpp"
 
 #include <vector>
 
-namespace NautilusVision
+namespace ossian
 {
 namespace IOAP
 {
@@ -74,6 +74,6 @@ std::unique_ptr<Pipeline> CreatePipeline(StatusType *status, Args *... actions)
     return std::make_unique<Pipeline>(*status, std::vector<IExecutable *>{actions...});
 }
 } // namespace IOAP
-} // namespace NautilusVision
+} // namespace ossian
 
-#endif
+#endif //OSSIAN_CORE_PIPELINE

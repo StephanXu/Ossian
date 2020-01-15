@@ -9,8 +9,8 @@
  * 
  */
 
-#ifndef SERVICE_HPP
-#define SERVICE_HPP
+#ifndef OSSIAN_CORE_SERVICE
+#define OSSIAN_CORE_SERVICE
 
 #include "IOTypes.hpp"
 
@@ -19,7 +19,7 @@
 #include <future>
 #include <typeindex>
 
-namespace NautilusVision
+namespace ossian
 {
 namespace IOAP
 {
@@ -61,6 +61,6 @@ public:
     virtual std::type_index GetInputTypeIndex() const = 0;
 };
 } // namespace IOAP
-} // namespace NautilusVision
+} // namespace ossian
 
-#endif
+#endif //OSSIAN_CORE_SERVICE

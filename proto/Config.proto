@@ -2,7 +2,7 @@
 syntax = "proto3";
 //option optimize_for = LITE_RUNTIME;
 
-package NautilusVisionConfig;
+package OssianConfig;
 
 message SerialPort {
 	string portName = 1;

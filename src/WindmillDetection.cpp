@@ -10,7 +10,7 @@
  */
 
 #include <opencv2/opencv.hpp>
-#include <nv/nv.hpp>
+#include <ossian/ossian.hpp>
 
 #include "WindmillDetection.hpp"
 #include "ColorFilter.hpp"
@@ -40,7 +40,7 @@ WindmillDetection::WindmillDetection(std::size_t sampleNum,
 {
 }
 
-void WindmillDetection::Process(NautilusVision::IOAP::BaseInputData *input)
+void WindmillDetection::Process(ossian::IOAP::BaseInputData *input)
 {
     //[注意]：这里是不安全的使用方法，应当优化
     ImageInputData *imageInput = dynamic_cast<ImageInputData *>(input);

@@ -1,12 +1,12 @@
 #include <spdlog/spdlog.h>
 #include <mimalloc.h>
 
-#include "nv/Dispatcher.hpp"
+#include "ossian/Dispatcher.hpp"
 
 #include <chrono>
 #include <iostream>
 
-namespace NautilusVision
+namespace ossian
 {
 namespace IOAP
 {
@@ -59,4 +59,4 @@ void Dispatcher::Run()
     }
 }
 } // namespace IOAP
-} // namespace NautilusVision
+} // namespace ossian

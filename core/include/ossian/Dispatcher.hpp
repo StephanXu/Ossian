@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2019
  * 
  */
-#ifndef DISPATCHER_HPP
-#define DISPATCHER_HPP
+#ifndef OSSIAN_CORE_DISPATCHER
+#define OSSIAN_CORE_DISPATCHER
 
 #include <vector>
 #include <memory>
@@ -22,7 +22,7 @@
 #include "Service.hpp"
 #include "DI.hpp"
 
-namespace NautilusVision
+namespace ossian
 {
 namespace IOAP
 {
@@ -70,5 +70,5 @@ private:
     DI::Injector m_Injector;
 };
 } // namespace IOAP
-} // namespace NautilusVision
-#endif
+} // namespace ossian
+#endif // OSSIAN_CORE_DISPATCHER

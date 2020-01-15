@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(NautilusVisionFramework)
-
-# set(CMAKE_BUILD_TYPE "Release")
+project(OssianCore)
 
 # set thread library
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -18,8 +16,9 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src DIR_SRC)
 
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-find_package(simdjson CONFIG REQUIRED)
 find_package(protobuf CONFIG REQUIRED)
+find_package(cpr CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
 
 if (WIN32)
 	include_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/include)
@@ -30,14 +29,15 @@ elseif (UNIX)
 	set(mimalloc_LIBS mimalloc)
 endif()
 
-add_library(NautilusVisionFramework ${DIR_SRC})
+add_library(OssianCore ${DIR_SRC})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-target_link_libraries(NautilusVisionFramework
+target_link_libraries(OssianCore
 	fmt::fmt
 	spdlog::spdlog
-	simdjson::simdjson
+	cpr
+	ZLIB::ZLIB
 	protobuf::libprotobuf
 	${mimalloc_LIBS})
 
-set(NVF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE STRING INTERNAL)
-set(NVF_LIBS NautilusVisionFramework CACHE STRING INTERNAL)
+set(OSSIAN_CORE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE STRING INTERNAL)
+set(OSSIAN_CORE_LIBS OssianCore CACHE STRING INTERNAL)

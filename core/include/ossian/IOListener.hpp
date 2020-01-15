@@ -1,13 +1,12 @@
-﻿#ifndef IOLISTENER
-#define IOLISTENER
+﻿#ifndef OSSIAN_CORE_IOLISTENER
+#define OSSIAN_CORE_IOLISTENER
 #ifdef __linux__
-
 #include "CAN.hpp"
 #include <sys/epoll.h>
 #include <unordered_map>
 #include <exception>
 #include <string>
-namespace NautilusVision
+namespace ossian
 {
 	enum class IOType
 	{
@@ -107,4 +106,4 @@ namespace NautilusVision
 	};
 }
 #endif // __linux__
-#endif // IOLISTENER
+#endif // OSSIAN_CORE_IOLISTENER

@@ -3,21 +3,20 @@
 #define INPUTADAPTER_HPP
 
 #include <opencv2/opencv.hpp>
-#include <nv/IOTypes.hpp>
-#include <nv/Service.hpp>
-#include <nv/SerialPort.hpp>
-#include <nv/Factory.hpp>
+#include <ossian/IOTypes.hpp>
+#include <ossian/Service.hpp>
+#include <ossian/io/SerialPort.hpp>
+#include <ossian/Factory.hpp>
 #include <spdlog/spdlog.h>
 
 #include "Config.pb.h"
 #include "InputModel.hpp"
 #include "HKCamera.hpp"
 
-namespace Ioap = NautilusVision::IOAP;
-namespace Utils = NautilusVision::Utils;
-namespace IO = NautilusVision::IO;
+namespace Ioap = ossian::IOAP;
+namespace Utils = ossian::Utils;
+namespace IO = ossian::IO;
 
-using NautilusVisionConfig::Configuration;
 
 /**
  * @brief 视频输入
@@ -25,14 +24,14 @@ using NautilusVisionConfig::Configuration;
  */
 class VideoInputSource : public Ioap::BaseInputAdapter
 {
-	friend class NautilusVision::Factory;
+	friend class ossian::Factory;
 	/**
 	 * @brief 建立视频输入
 	 * 如果视频加载失败，对象将被设置为失效，GetInput GetInputAsync 等函数将不可用。
 	 * @param filename
 	 */
 	explicit VideoInputSource(Utils::ConfigLoader* config)
-		: m_VideoSource(config->Instance<Configuration>()->mutable_testvideosource()->filename())
+		: m_VideoSource(config->Instance<OssianConfig::Configuration>()->mutable_testvideosource()->filename())
 		, m_Valid(true)
 	{
 		if (!m_VideoSource.isOpened())
@@ -77,7 +76,7 @@ private:
 
 class FakeInputSource : public Ioap::BaseInputAdapter
 {
-	friend class NautilusVision::Factory;
+	friend class ossian::Factory;
 
 	explicit FakeInputSource(Utils::ConfigLoader* config)
 		: m_Valid(true)
@@ -118,12 +117,12 @@ private:
  */
 class CameraInputSource : public Ioap::BaseInputAdapter
 {
-	friend class NautilusVision::Factory;
+	friend class ossian::Factory;
 
-	explicit CameraInputSource(NautilusVision::Utils::ConfigLoader* config)
-		: m_Camera(config->Instance<Configuration>()->mutable_camera()->deviceindex(),
-				   config->Instance<Configuration>()->mutable_camera()->framewidth(),
-				   config->Instance<Configuration>()->mutable_camera()->frameheight())
+	explicit CameraInputSource(ossian::Utils::ConfigLoader* config)
+		: m_Camera(config->Instance<OssianConfig::Configuration>()->mutable_camera()->deviceindex(),
+				   config->Instance<OssianConfig::Configuration>()->mutable_camera()->framewidth(),
+				   config->Instance<OssianConfig::Configuration>()->mutable_camera()->frameheight())
 		, m_Valid(true)
 	{
 		try
@@ -200,21 +199,22 @@ private:
  */
 class SerialPortIO : public Ioap::IService
 {
-	friend class NautilusVision::Factory;
+	friend class ossian::Factory;
 
 	explicit SerialPortIO(Utils::ConfigLoader* config)
 		:m_SyncThread(nullptr)
 	{
 		try
 		{
-			m_SerialPort.Open(config->Instance<Configuration>()->mutable_serialport()->portname(),
-							  config->Instance<Configuration>()->mutable_serialport()->baudrate(),
-							  config->Instance<Configuration>()->mutable_serialport()->parity(),
-							  config->Instance<Configuration>()->mutable_serialport()->databit(),
-							  config->Instance<Configuration>()->mutable_serialport()->stopbit(),
-							  config->Instance<Configuration>()->mutable_serialport()->synchronize());
+			m_Config = config->Instance<OssianConfig::Configuration>()->mutable_serialport();
+			m_SerialPort.Open(m_Config->portname(),
+							  m_Config->baudrate(),
+							  m_Config->parity(),
+							  m_Config->databit(),
+							  m_Config->stopbit(),
+							  m_Config->synchronize());
 			m_Valid = m_SerialPort.IsOpened();
-			unsigned int syncInterval = config->Instance<Configuration>()->mutable_serialport()->syncinterval();
+			unsigned int syncInterval = m_Config->syncinterval();
 			StartSync(syncInterval);
 		}
 		catch (std::runtime_error & e)
@@ -389,6 +389,8 @@ private:
 
 	IO::SerialPort m_SerialPort;
 
+	OssianConfig::SerialPort* m_Config = nullptr;
+
 	bool m_Valid;
 };
 
@@ -406,9 +408,9 @@ private:
  */
 class SerialPortIO : public Ioap::IService
 {
-	friend class NautilusVision::Factory;
+	friend class ossian::Factory;
 
-	explicit SerialPortIO(Configuration* config)
+	explicit SerialPortIO(OssianConfig::Configuration* config)
 		:m_SyncThread(nullptr)
 	{
 		

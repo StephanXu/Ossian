@@ -1,5 +1,5 @@
-﻿#ifndef NAUTILUS_VISION_DEVICE_IO
-#define NAUTILUS_VISION_DEVICE_IO
+﻿#ifndef OSSIAN_CORE_IO_CAN
+#define OSSIAN_CORE_IO_CAN
 #ifdef __linux__
 #include <linux/can.h>
 #include <linux/can/raw.h>
@@ -17,7 +17,7 @@
 #include <tuple>
 #include <exception>
 
-namespace NautilusVision
+namespace ossian
 {
 	using ReceiveCallback = void(unsigned int id,
 		size_t dataLength,
@@ -246,7 +246,7 @@ namespace NautilusVision
 	private:
 		std::unordered_map<std::string, std::unique_ptr<CANBus>> m_DevicesMap;
 	};
-} //NautilusVision
+} //ossian
 
 #endif // __linux__
-#endif // NAUTILUS_VISION_DEVICE_IO
+#endif // OSSIAN_CORE_IO_CAN

@@ -27,7 +27,7 @@ static void BMNativeTime(benchmark::State& state)
 
 static void BMProtobufParam(benchmark::State& state)
 {
-    NautilusVisionConfig::Configuration config;
+    OssianConfig::Configuration config;
     auto aimbot = config.mutable_aimbot();
     aimbot->set_areanormalizedbase(1.25);
     for (auto _ : state)

@@ -9,9 +9,9 @@
 #include <stdexcept>
 #include <string>
 
-#include "nv/SerialPort.hpp"
+#include "ossian/io/SerialPort.hpp"
 
-namespace NautilusVision
+namespace ossian
 {
 namespace IO
 {
@@ -279,4 +279,4 @@ bool SerialPort::IsOpened()
 #endif //_WIN32
 } // IO
 
-} // NautilusVision
+} // ossian

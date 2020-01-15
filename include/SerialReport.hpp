@@ -2,7 +2,7 @@
 #ifndef SERIAL_REPORT_HPP
 #define SERIAL_REPORT_HPP
 
-#include <nv/nv.hpp>
+#include <ossian/ossian.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "InputAdapter.hpp"
@@ -13,7 +13,7 @@
 #include <atomic>
 #include <memory>
 
-namespace Ioap = NautilusVision::IOAP;
+namespace Ioap = ossian::IOAP;
 
 /**
  * @brief ´ó·ç³µ¼ì²â

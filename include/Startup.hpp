@@ -1,11 +1,11 @@
 ﻿#ifndef STARTUP_HPP
 #define STARTUP_HPP
 
-#include <nv/nv.hpp>
+#include <ossian/ossian.hpp>
 
 class Startup
 {
-    using AppBuilder = NautilusVision::IOAP::ApplicationBuilder;
+    using AppBuilder = ossian::IOAP::ApplicationBuilder;
 
 public:
     static void ConfigServices(AppBuilder& app);

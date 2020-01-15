@@ -2,8 +2,8 @@
  * @file DI.hpp
  * @brief 此文件提供依赖注入相关实现
  */
-#ifndef DI_HPP
-#define DI_HPP
+#ifndef OSSIAN_CORE_DI
+#define OSSIAN_CORE_DI
 
 #include <memory>
 #include <atomic>
@@ -14,7 +14,7 @@
 #include <typeindex>
 #include <string>
 
-namespace NautilusVision
+namespace ossian
 {
 namespace DI
 {
@@ -263,6 +263,6 @@ private:
 
 } // namespace DI
 
-} // namespace NautilusVision
+} // namespace ossian
 
-#endif
+#endif //OSSIAN_CORE_DI

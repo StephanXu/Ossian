@@ -1,7 +1,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "nv/Configuration.hpp"
+#include "ossian/Configuration.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -9,7 +9,7 @@
 #include <memory>
 #include <fstream>
 
-namespace NautilusVision
+namespace ossian
 {
 
 namespace Utils
@@ -18,4 +18,4 @@ namespace Utils
 
 } //Utils
 
-} //NautilusVision
+} //ossian

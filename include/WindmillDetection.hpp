@@ -11,7 +11,7 @@
 #ifndef WINDMILL_DETECTION_HPP
 #define WINDMILL_DETECTION_HPP
 
-#include <nv/nv.hpp>
+#include <ossian/ossian.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "ColorFilter.hpp"
@@ -23,7 +23,7 @@
 #include <atomic>
 #include <memory>
 
-namespace Ioap = NautilusVision::IOAP;
+namespace Ioap = ossian::IOAP;
 
 /**
  * @brief 大风车检测
@@ -72,7 +72,7 @@ private:
 
 	SerialPortIO* m_SerialPort;
 
-    NautilusVision::SafeQueue<cv::Point2f> m_Track;
+    ossian::SafeQueue<cv::Point2f> m_Track;
     // std::queue<cv::Point2f> m_Track;
     ColorFilter m_ColorFilter;
     const size_t m_TrackSize;

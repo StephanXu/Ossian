@@ -1,6 +1,6 @@
 
-#ifndef CONFIGURATION_HPP
-#define CONFIGURATION_HPP
+#ifndef OSSIAN_CORE_CONFIGURATION
+#define OSSIAN_CORE_CONFIGURATION
 
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
@@ -13,7 +13,7 @@
 #include <variant>
 #include <memory>
 
-namespace NautilusVision
+namespace ossian
 {
 
 namespace Utils
@@ -102,14 +102,14 @@ template<typename ConfigType>
 std::unique_ptr<ConfigLoader> CreateConfigLoader()
 {
     auto loader = std::make_unique<ConfigLoader>();
-    loader->LoadConfigFromUrl<ConfigType>("http://localhost:3000/config");
+    loader->LoadConfigFromUrl<ConfigType>("http://mrxzh.com:5000/config");
     return std::move(loader);
 }
 
 } //Utils
 
-} //NautilusVision
+} //ossian
 
 
 
-#endif // CONFIGURATION_HPP
+#endif // OSSIAN_CORE_CONFIGURATION

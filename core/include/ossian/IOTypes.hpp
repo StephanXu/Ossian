@@ -8,15 +8,15 @@
  * @copyright Copyright (c) 2019
  * 
  */
-#ifndef IOTYPES_HPP
-#define IOTYPES_HPP
+#ifndef OSSIAN_CORE_IOTYPES
+#define OSSIAN_CORE_IOTYPES
 
 #include <future>
 #include <memory>
 #include <string>
 #include <typeindex>
 
-namespace NautilusVision
+namespace ossian
 {
 namespace IOAP
 {
@@ -61,6 +61,6 @@ std::unique_ptr<StatusType> CreateStatus()
     return std::make_unique<StatusType>();
 }
 } // namespace IOAP
-} // namespace NautilusVision
+} // namespace ossian
 
-#endif
+#endif //OSSIAN_CORE_IOTYPES

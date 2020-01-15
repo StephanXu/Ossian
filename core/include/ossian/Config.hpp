@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2019
  * 
  */
-#ifndef CONFIG_HPP
-#define CONFIG_HPP
+#ifndef OSSIAN_CORE_CONFIG
+#define OSSIAN_CORE_CONFIG
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -21,7 +21,7 @@
 #include "Dispatcher.hpp"
 #include "Factory.hpp"
 
-namespace NautilusVision
+namespace ossian
 {
 namespace IOAP
 {
@@ -167,6 +167,6 @@ private:
     std::vector<Realizer<BaseInputAdapter *>> m_InputAdapterRealizer;
 };
 } // namespace IOAP
-} // namespace NautilusVision
+} // namespace ossian
 
-#endif // CONFIG_HPP
+#endif // OSSIAN_CORE_CONFIG

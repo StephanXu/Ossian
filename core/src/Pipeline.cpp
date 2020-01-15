@@ -1,9 +1,9 @@
 ﻿
-#include "nv/Pipeline.hpp"
+#include "ossian/Pipeline.hpp"
 
 #include <vector>
 
-namespace NautilusVision
+namespace ossian
 {
 namespace IOAP
 {
@@ -29,4 +29,4 @@ void Pipeline::ProcessTask(std::shared_ptr<BaseInputData> inputData)
     return;
 }
 } // namespace IOAP
-} // namespace NautilusVision
+} // namespace ossian

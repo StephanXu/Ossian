@@ -1,5 +1,5 @@
-﻿#ifndef SERIALPORT_HPP
-#define SERIALPORT_HPP
+﻿#ifndef OSSIAN_CORE_IO_SERIALPORT
+#define OSSIAN_CORE_IO_SERIALPORT
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -7,7 +7,7 @@
 
 #include <string>
 
-namespace NautilusVision
+namespace ossian
 {
 namespace IO
 {
@@ -168,6 +168,6 @@ private:
 
 } //IO
 
-} //NautilusVision
+} //ossian
 
-#endif //SERIALPORT_HPP
+#endif //OSSIAN_CORE_IO_SERIALPORT

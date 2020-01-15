@@ -35,6 +35,7 @@ Aimbot::Aimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort)
     , m_Config(config)
     , m_SerialPort(serialPort)
 {
+    using OssianConfig::Configuration;
     Aimbot::LightBar::minArea = m_Config->Instance<Configuration>()->mutable_aimbot()->lightbarminarea();
     Aimbot::LightBar::ellipseMinAspectRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->lightbarellipseminaspectratio();
 
@@ -67,9 +68,9 @@ Aimbot::Aimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort)
 void Aimbot::Process(Ioap::BaseInputData* input)
 {
     const static cv::Point2f redDot(744, 642); //步兵
-    const double maxShootRadius = m_Config->Instance<Configuration>()->mutable_aimbot()->maxshootradius();
-    const double offsetYaw = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetyaw();
-    const double offsetPitch = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetpitch();
+    const double maxShootRadius = m_Config->Instance<OssianConfig::Configuration>()->mutable_aimbot()->maxshootradius();
+    const double offsetYaw = m_Config->Instance<OssianConfig::Configuration>()->mutable_posesolver()->offsetyaw();
+    const double offsetPitch = m_Config->Instance<OssianConfig::Configuration>()->mutable_posesolver()->offsetpitch();
     static KalmanFilter kf(4, 2);
 
     //[注意]：这里是不安全的使用方法，应当优化

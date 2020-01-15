@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12.4)
 
 # set project name
-project(NautilusVision)
+project(Ossian)
 
 # set thread library
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -27,9 +27,6 @@ add_subdirectory(proto)
 set(PROTO_LIBS proto)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/proto)
 
-find_package(cpr CONFIG REQUIRED)
-find_package(ZLIB REQUIRED)
-
 if (WIN32)
 	include_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/include)
 	link_directories(C:/Users/xuzih/Documents/workspace/libs/mimalloc-1.2.2/out/msvc-x64/Release)
@@ -40,9 +37,9 @@ elseif (UNIX)
 endif()
 
 
-# import NautilusVisionFramework
-add_subdirectory(NautilusVisionFramework)
-include_directories(${NVF_INCLUDE_DIR})
+# import OssianCore
+add_subdirectory(core)
+include_directories(${OSSIAN_CORE_INCLUDE_DIR})
 
 if(WIN32)
 	set(HKCAMERA_INCLUDE_DIR 3rdparty/HKCamera/includes CACHE STRING INTERNAL)
@@ -66,12 +63,10 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(${PROJECT_NAME}
 	spdlog::spdlog 
 	fmt::fmt
-	cpr
-	ZLIB::ZLIB
 	${PROTO_LIBS}
 	${mimalloc_LIBS}
 	${HKCAMERA_LIBS} 
 	${OpenCV_LIBS} 
-	${NVF_LIBS})
+	${OSSIAN_CORE_LIBS})
 
 add_subdirectory(bench)

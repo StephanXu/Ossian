@@ -1,5 +1,5 @@
 
-#include <nv/nv.hpp>
+#include <ossian/ossian.hpp>
 #include <mimalloc.h>
 #include "Config.pb.h"
 
@@ -11,7 +11,7 @@
 
 #include <thread>
 
-class RoboStatus : public NautilusVision::IOAP::BaseStatus
+class RoboStatus : public ossian::IOAP::BaseStatus
 {
 public:
 };
@@ -23,7 +23,7 @@ void Startup::ConfigServices(AppBuilder &app)
 
 	spdlog::info("MI_VERSION:{}", mi_version());
 	
-	app.RegisterConfigLoader<Configuration>();
+	app.RegisterConfigLoader<OssianConfig::Configuration>();
     app.RegisterStatusType<RoboStatus>();
     //app.RegisterInputAdapter<CameraInputSource>();
 	//app.RegisterInputAdapter<FakeInputSource>();

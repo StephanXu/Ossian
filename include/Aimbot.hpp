@@ -1,7 +1,7 @@
 #ifndef AIMBOT_HPP
 #define AIMBOT_HPP
 
-#include <nv/nv.hpp>
+#include <ossian/ossian.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "InputAdapter.hpp"
@@ -10,8 +10,8 @@
 #include <atomic>
 #include <cmath>
 
-namespace Ioap = NautilusVision::IOAP;
-namespace Utils = NautilusVision::Utils;
+namespace Ioap = ossian::IOAP;
+namespace Utils = ossian::Utils;
 
 class Aimbot : public Ioap::IExecutable
 {
@@ -436,7 +436,7 @@ private:
     bool DetectArmor(const cv::UMat& frame,
                      Armor& outTarget) noexcept
     {
-        using NautilusVisionConfig::Configuration;
+        using OssianConfig::Configuration;
         static int enemyColor = 0 == m_Config->Instance<Configuration>()->mutable_aimbot()->enemycolor();
         static int brightness = m_Config->Instance<Configuration>()->mutable_aimbot()->brightness();
         static int thresColor = m_Config->Instance<Configuration>()->mutable_aimbot()->threscolor();

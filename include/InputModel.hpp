@@ -1,6 +1,6 @@
 ﻿#include <opencv2/opencv.hpp>
-#include <nv/IOTypes.hpp>
-#include <nv/SerialPort.hpp>
+#include <ossian/IOTypes.hpp>
+#include <ossian/io/SerialPort.hpp>
 
 #ifndef INPUTMODEL_HPP
 #define INPUTMODEL_HPP
@@ -9,7 +9,7 @@
  * @brief 图像输入
  * OpenCV的Mat图像输入
  */
-class ImageInputData : public NautilusVision::IOAP::BaseInputData
+class ImageInputData : public ossian::IOAP::BaseInputData
 {
 public:
     ImageInputData() = default;
@@ -22,7 +22,7 @@ public:
     {
     }
 
-    std::unique_ptr<NautilusVision::IOAP::BaseInputData> Clone() const override
+    std::unique_ptr<ossian::IOAP::BaseInputData> Clone() const override
     {
         return std::make_unique<ImageInputData>(*this);
     }
@@ -40,12 +40,12 @@ public:
  * @brief 空输入
  * 虚拟的无输入
  */
-class FakeData : public NautilusVision::IOAP::BaseInputData
+class FakeData : public ossian::IOAP::BaseInputData
 {
 public:
     FakeData() = default;
     FakeData(int x) :data(x) {}
-    std::unique_ptr<NautilusVision::IOAP::BaseInputData> Clone() const override
+    std::unique_ptr<ossian::IOAP::BaseInputData> Clone() const override
     {
         return std::make_unique<FakeData>(*this);
     }

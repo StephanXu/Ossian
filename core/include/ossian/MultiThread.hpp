@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2019
  * 
  */
-#ifndef MULTITHREAD_HPP
-#define MULTITHREAD_HPP
+#ifndef OSSIAN_CORE_MULTITHREAD
+#define OSSIAN_CORE_MULTITHREAD
 
 #include <queue>
 #include <mutex>
@@ -19,7 +19,7 @@
 #include <future>
 #include <functional>
 
-namespace NautilusVision
+namespace ossian
 {
 /**
  * @brief 线程安全的队列
@@ -313,6 +313,6 @@ private:
     }
 };
 
-} // namespace NautilusVision
+} // namespace ossian
 
-#endif
+#endif // OSSIAN_CORE_MULTITHREAD
