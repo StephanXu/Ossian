@@ -48,8 +48,8 @@ void Dispatcher::Run()
                 if (inputAdapter->GetInputTypeIndex() == std::get<0>(pipePack))
                 {
 					//spdlog::info("Remain task: {}", m_ThreadPool.WaitingCount());
-                    m_ThreadPool.AddTask(&Pipeline::ProcessTask, std::get<1>(pipePack), input);
-					//std::get<1>(pipePack)->ProcessTask(input);
+                    //m_ThreadPool.AddTask(&Pipeline::ProcessTask, std::get<1>(pipePack), input);
+					std::get<1>(pipePack)->ProcessTask(input);
                 }
             }
 			std::this_thread::sleep_for(std::chrono::milliseconds(2)); //[ATTENTIOM]: God damn trick

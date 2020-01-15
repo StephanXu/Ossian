@@ -81,7 +81,7 @@ void Aimbot::Process(Ioap::BaseInputData* input)
         m_Valid = true;
         return;
     }
-    cv::flip(origFrame, origFrame, 0);
+    //cv::flip(origFrame, origFrame, 0);
     cv::Rect2f armorBBox;
     ArmorType armorType;
     bool shootMode = false;
@@ -138,7 +138,7 @@ void Aimbot::Process(Ioap::BaseInputData* input)
         spdlog::error("Send data error: {}", e.what());
         //std::abort();
     }
-#ifndef _DEBUG
+#ifdef _DEBUG
     //putText(debugFrame, fmt::format("ms: {:.4f}",ms), cv::Point(30, 50), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(173, 205, 249));
     cv::Mat debugFrame;
     origFrame.copyTo(debugFrame);
@@ -147,7 +147,8 @@ void Aimbot::Process(Ioap::BaseInputData* input)
     putText(debugFrame, fmt::format("dist: {:.4f}", dist), cv::Point(50, 130), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     putText(debugFrame, fmt::format("ms: {}", armorType == ArmorType::Small ? "Small" : "Big"), cv::Point(50, 150), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     putText(debugFrame, fmt::format("ms: {}", shootMode ? "Shoot" : "Stop shooting"), cv::Point(220, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
-    cv::circle(debugFrame, redDot, 2, cv::Scalar(0, 255, 0), -1);
+    cv::rectangle(debugFrame, armorBBox, cv::Scalar(62, 255, 192));
+    //cv::circle(debugFrame, redDot, 2, cv::Scalar(0, 255, 0), -1);
     imshow("DebugFrame", debugFrame);
     cv::waitKey(10);
 #endif // _DEBUG

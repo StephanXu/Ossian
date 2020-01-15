@@ -13,9 +13,9 @@ double PointDistance(const cv::Point2f& pt1, const cv::Point2f& pt2)
 
 void RegularizeErrAngle(float& angle, char type)
 {
-	const static double MAX_YAW_DIFF = 5;
-	const static double MAX_PITCH_DIFF = 3;
-	const static double MIN_ANGLE_DIFF = 0.2;
+	const static double MAX_YAW_DIFF = 6;
+	const static double MAX_PITCH_DIFF = 4;
+	const static double MIN_ANGLE_DIFF = 0.4;
 	const static double MAX_SHOOT_RADIUS = 120.0;
 
 	if (type == 'y')

@@ -395,8 +395,8 @@ private:
         {     //Mat processNoise(stateNum, 1, CV_32F);
             measurement = cv::Mat::zeros(m_MeasureNum, 1, CV_32F);
             KF.transitionMatrix = (cv::Mat_<float>(m_StateNum, m_StateNum) <<  //A 状态转移矩阵
-                                   1, 0, 1 * 10, 0,
-                                   0, 1, 0, 1 * 10,
+                                   1, 0, 1 * 3, 0,
+                                   0, 1, 0, 1 * 3,
                                    0, 0, 1, 0,
                                    0, 0, 0, 1);
             //这里没有设置控制矩阵B，默认为零
@@ -452,7 +452,7 @@ private:
         cv::bitwise_and(brightness, binaryColor, binary);
         cv::dilate(binary, binary, element3);
         cv::erode(binary, binary, element3);
-#ifdef _DEBUG
+#ifndef _DEBUG
         //cv::imshow("BinaryBrightness", m_BinaryBrightness);
         cv::imshow("BinaryColor", binaryColor);
         cv::imshow("DebugBinary", binary);
