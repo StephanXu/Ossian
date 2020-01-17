@@ -55,10 +55,10 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 aux_source_directory(
-    ./src DIR_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src DIR_SRC
 )
 
-add_executable(${PROJECT_NAME} "${DIR_SRC} ${PROTO_SRCS} ${PROTO_HDRS}")
+add_executable(${PROJECT_NAME} "${DIR_SRC}")
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(${PROJECT_NAME}
 	spdlog::spdlog 
