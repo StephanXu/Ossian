@@ -6,12 +6,13 @@
 #include <fmt/format.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
-#include <cpr/cpr.h>
 
 #include <string>
 #include <unordered_map>
 #include <variant>
 #include <memory>
+
+#include "Http.hpp"
 
 namespace ossian
 {
@@ -71,15 +72,16 @@ public:
     }
 
     template<typename ConfigType>
-    void LoadConfigFromUrl(std::string url)
+    void LoadConfigFromUrl(std::string host, int port, std::string path)
     {
-        auto r = cpr::Get(cpr::Url{ url });
-        if (r.status_code != 200)
+        httplib::Client cli(host, port);
+        auto res = cli.Get(path.c_str());
+        if (!res || res->status != 200)
         {
-            throw std::runtime_error(fmt::format("Can't get configuration from url: {}", r.text));
+            throw std::runtime_error(fmt::format("Can't get configuration from url: {}", res->status));
         }
-        spdlog::info("Load configuration from url: {}", url);
-        LoadConfig<ConfigType>(r.text);
+        spdlog::info("Load configuration from {}", host);
+        LoadConfig<ConfigType>(res->body);
     }
 
     bool Valid() const noexcept { return m_Valid; }
@@ -102,7 +104,7 @@ template<typename ConfigType>
 std::unique_ptr<ConfigLoader> CreateConfigLoader()
 {
     auto loader = std::make_unique<ConfigLoader>();
-    loader->LoadConfigFromUrl<ConfigType>("http://mrxzh.com:5000/config");
+    loader->LoadConfigFromUrl<ConfigType>("mrxzh.com", 5000, "/config");
     return std::move(loader);
 }
 

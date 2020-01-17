@@ -1,6 +1,6 @@
 
 include(FindProtobuf)
-find_package(protobuf CONFIG REQUIRED)
+find_package(Protobuf REQUIRED)
 
 SET(PROTO_META_BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 LIST(APPEND PROTO_FLAGS -I${CMAKE_CURRENT_SOURCE_DIR})

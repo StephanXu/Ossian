@@ -16,8 +16,7 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src DIR_SRC)
 
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-find_package(protobuf CONFIG REQUIRED)
-find_package(cpr CONFIG REQUIRED)
+find_package(Protobuf REQUIRED)
 find_package(ZLIB REQUIRED)
 
 if (WIN32)
@@ -34,7 +33,6 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(OssianCore
 	fmt::fmt
 	spdlog::spdlog
-	cpr
 	ZLIB::ZLIB
 	protobuf::libprotobuf
 	${mimalloc_LIBS})
