@@ -16,8 +16,8 @@
 #include <cstring>
 #include <tuple>
 #include <exception>
-
 #include "IOError.hpp"
+
 
 namespace ossian
 {
@@ -131,6 +131,8 @@ namespace ossian
 			}
 			// 指定波特率
 			tcgetattr(m_FD, &opt);
+			opt.c_cc[VMIN] = 0;
+			opt.c_cc[VTIME] = 0;
 			ClearFlag(opt.c_cflag, CIBAUD);
 			cfsetispeed(&opt, baudrate);
 			cfsetospeed(&opt, baudrate);
@@ -175,7 +177,8 @@ namespace ossian
 				throw std::runtime_error("Software flow control not supported");
 				break;
 			}
-			SetFlag(opt.c_lflag, ECHO | ECHONL | IEXTEN | ISIG | ICANON);
+			ClearFlag(opt.c_lflag, ICANON | ECHO | ECHOE | ISIG);
+			ClearFlag(opt.c_iflag, BRKINT | ICRNL | INPCK | ISTRIP | IXON); // exp
 			if (tcsetattr(m_FD, TCSANOW, &opt) < 0)
 			{
 				throw std::runtime_error("UART Configure failed");
@@ -275,8 +278,9 @@ namespace ossian
 		// 从指定位置读取FrameData
 		FrameData ReadFrom(std::string location)
 		{
+
 			auto dev = FindDevice(location);
-			dev->Read();
+			return dev->Read();
 		}
 		//注册设备
 		void AddDevice(std::string location, UART::Baudrate baudrate, UART::FlowControl flowctrl, UART::DataBits databits, UART::StopBits stopbits, UART::Parity parity)

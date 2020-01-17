@@ -243,7 +243,7 @@ namespace ossian
 	private:
 		std::unordered_map<std::string, std::unique_ptr<CANBus>> m_DevicesMap;
 	};
-} //NautilusVision
+} // ossian
 
 #endif // __linux__
 #endif // OSSIAN_CORE_IO_CAN

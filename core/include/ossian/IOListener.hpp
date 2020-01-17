@@ -1,14 +1,16 @@
-﻿#ifndef NAUTILUS_VISION_DEVICE_IOLISTENER
-#define NAUTILUS_VISION_DEVICE_IOLISTENER
+﻿#ifndef OSSIAN_CORE_IOLISTENER
+#define OSSIAN_CORE_IOLISTENER
 #ifdef __linux__
 
-#include "CAN.hpp"
-#include "UART.hpp"
+#include "io/CAN.hpp"
+#include "io/UART.hpp"
 #include <sys/epoll.h>
 #include <unordered_map>
 #include <exception>
 #include <string>
-namespace NautilusVision
+
+#include <iostream>
+namespace ossian
 {
 	enum class IOType
 	{
@@ -134,6 +136,6 @@ namespace NautilusVision
 		CANManager* m_CANMgr;
 		UARTManager* m_UARTMgr;
 	};
-}
+} // ossian
 #endif // __linux__
-#endif // NAUTILUS_VISION_DEVICE_IOLISTENER
+#endif // OSSIAN_CORE_IOLISTENER
