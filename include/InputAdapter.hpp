@@ -410,7 +410,7 @@ class SerialPortIO : public Ioap::IService
 {
 	friend class ossian::Factory;
 
-	explicit SerialPortIO(OssianConfig::Configuration* config)
+	explicit SerialPortIO(Utils::ConfigLoader* config)
 		:m_SyncThread(nullptr)
 	{
 		
