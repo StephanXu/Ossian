@@ -6,7 +6,6 @@ SET(PROTO_META_BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 LIST(APPEND PROTO_FLAGS -I${CMAKE_CURRENT_SOURCE_DIR})
 
 FILE(GLOB BAR_PROTOS "*.proto")
-
 FOREACH(FIL ${BAR_PROTOS})
   GET_FILENAME_COMPONENT(ABS_FIL ${FIL} ABSOLUTE)
   GET_FILENAME_COMPONENT(FIL_WE ${FIL} NAME_WE)
@@ -20,6 +19,13 @@ FOREACH(FIL ${BAR_PROTOS})
   )
 ENDFOREACH()
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-ADD_LIBRARY(proto ${PROTO_SRCS})
+add_library(proto)
+target_include_directories(proto
+        PUBLIC
+          "${CMAKE_CURRENT_BINARY_DIR}"
+        )
+target_sources(proto
+        PUBLIC
+          "${PROTO_SRCS}"
+        )
 target_link_libraries(proto protobuf::libprotobuf)

@@ -3,7 +3,8 @@
 #include "Config.pb.h"
 #include <cmath>
 #include <unordered_map>
-static void BMPow(benchmark::State& state)
+
+static void BMPow(benchmark::State &state)
 {
     for (auto _ : state)
     {
@@ -14,7 +15,7 @@ static void BMPow(benchmark::State& state)
     }
 }
 
-static void BMNativeTime(benchmark::State& state)
+static void BMNativeTime(benchmark::State &state)
 {
     for (auto _ : state)
     {
@@ -25,14 +26,14 @@ static void BMNativeTime(benchmark::State& state)
     }
 }
 
-static void BMProtobufParam(benchmark::State& state)
+static void BMProtobufParam(benchmark::State &state)
 {
     OssianConfig::Configuration config;
     auto aimbot = config.mutable_aimbot();
     aimbot->set_areanormalizedbase(1.25);
     for (auto _ : state)
     {
-        float result = aimbot->areanormalizedbase()+202;
+        float result = aimbot->areanormalizedbase() + 202;
     }
 }
 
@@ -41,7 +42,7 @@ struct config
     float aimbot;
 };
 
-static void BMNoProtobufParam(benchmark::State& state)
+static void BMNoProtobufParam(benchmark::State &state)
 {
     config c;
     c.aimbot = 100;
@@ -51,7 +52,7 @@ static void BMNoProtobufParam(benchmark::State& state)
     }
 }
 
-static void BMIntHashMap(benchmark::State& state)
+static void BMIntHashMap(benchmark::State &state)
 {
     std::unordered_map<int, int> map;
     map.insert(std::make_pair(1, 2));
@@ -63,7 +64,7 @@ static void BMIntHashMap(benchmark::State& state)
     }
 }
 
-static void BMStringHashMap(benchmark::State& state)
+static void BMStringHashMap(benchmark::State &state)
 {
     std::unordered_map<std::string, int> map;
     map.insert(std::make_pair("1", 2));
@@ -75,6 +76,21 @@ static void BMStringHashMap(benchmark::State& state)
     }
 }
 
+static void BMSharedPtrHashMap(benchmark::State &state)
+{
+    std::unordered_map<std::shared_ptr<int>, int> map;
+    auto ptr1 = std::make_shared<int>(1);
+    auto ptr2 = std::make_shared<int>(2);
+    auto ptr3 = std::make_shared<int>(3);
+    map.insert(std::make_pair(ptr1, 2));
+    map.insert(std::make_pair(ptr2, 3));
+    map.insert(std::make_pair(ptr3, 4));
+    for (auto _ : state)
+    {
+        float res = map.find(ptr3)->second + 10;
+    }
+}
+
 BENCHMARK(BMProtobufParam);
 BENCHMARK(BMNoProtobufParam);
 
@@ -83,3 +99,4 @@ BENCHMARK(BMNativeTime)->Arg(8);
 
 BENCHMARK(BMIntHashMap);
 BENCHMARK(BMStringHashMap);
+BENCHMARK(BMSharedPtrHashMap);
