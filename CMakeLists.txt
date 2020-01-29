@@ -19,7 +19,6 @@ target_sources(Ossian
         PRIVATE
             src/Aimbot.cpp
             src/ColorFilter.cpp
-            src/HKCamera.cpp
             src/main.cpp
             src/ProgressBar.cpp
             src/Startup.cpp
@@ -32,6 +31,7 @@ target_include_directories(Ossian
         )
 target_link_libraries(Ossian
         PRIVATE
+            HKCamera
             spdlog::spdlog
             fmt::fmt
             mimalloc

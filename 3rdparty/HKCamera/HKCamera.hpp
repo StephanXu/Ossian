@@ -14,22 +14,15 @@
 ///  修订说明：
 //////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#ifndef HK_CAMERA_HPP
+#define HK_CAMERA_HPP
 
 #include <opencv2/opencv.hpp>
-
-#ifdef _WIN32
-#include <HKCamera/MvCameraControl.h>
-#else
 #include <MvCameraControl.h>
-#endif
 
 #include <exception>
 #include <vector>
 #include <memory>
-
-#ifndef HK_CAMERA_HPP
-#define HK_CAMERA_HPP
 
 class HKCamera
 {
@@ -163,21 +156,7 @@ private:
 	 */
 	static int RGB2BGR(unsigned char* pRgbData,
 					   unsigned int width,
-					   unsigned int height)
-	{
-		if (NULL == pRgbData)
-		{
-			return MV_E_PARAMETER;
-		}
-		for (unsigned int j = 0; j < height; j++)
-		{
-			for (unsigned int i = 0; i < width; i++)
-			{
-				std::swap(pRgbData[j * (width * 3) + i * 3], pRgbData[j * (width * 3) + i * 3 + 2]);
-			}
-		}
-		return MV_OK;
-	}
+					   unsigned int height);
 
 	/**
 	 * @fn	static bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* DataBuffer, cv::UMat& refDest)
@@ -194,33 +173,7 @@ private:
 	 */
 	static bool ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo,
 								 unsigned char* DataBuffer,
-								 cv::UMat& refDest)
-	{
-		//if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8)
-		//{
-		//	refDest = cv::UMat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
-		//}
-		//else if (pstImageInfo->enPixelType == PixelType_Gvsp_RGB8_Packed)
-		//{
-		//	RGB2BGR(DataBuffer, pstImageInfo->nWidth, pstImageInfo->nHeight);
-		//	refDest = cv::UMat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC3, DataBuffer);
-		//}
-		if (pstImageInfo->enPixelType == PixelType_Gvsp_BayerRG8)
-		{
-			cv::Mat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
-			cv::cvtColor(BayerRG8Src, refDest, cv::COLOR_BayerRG2RGB);
-		}
-		else
-		{
-			throw std::runtime_error("Unsupported pixel format");
-		}
-
-		if (!refDest.empty())
-		{
-			return true;
-		}
-		return false;
-	}
+								 cv::UMat& refDest);
 };
 
 #endif //HK_CAMERA_HPP
