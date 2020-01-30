@@ -1,8 +1,10 @@
-#ifndef NAUTILUS_VISION_DEVICE_IOERROR
-#define NAUTILUS_VISION_DEVICE_IOERROR
+#ifndef OSSIAN_CORE_IOERROR
+#define OSSIAN_CORE_IOERROR
+#ifdef __linux
 class IOError :public std::runtime_error
 {
 public:
 	IOError(std::string message) :std::runtime_error(message) {}
 };
-#endif
+#endif // __linux
+#endif // OSSIAN_CORE_IOERROR

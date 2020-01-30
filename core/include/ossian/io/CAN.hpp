@@ -17,13 +17,11 @@
 #include <tuple>
 #include <exception>
 
+#include "IO.hpp"
 #include "IOError.hpp"
-
+#include "IODeviceMap.hpp"
 namespace ossian
 {
-	using ReceiveCallback = void(unsigned int id,
-		size_t dataLength,
-		std::shared_ptr<uint8_t[]> data);
 
 	/*
 	 * Controller Area Network Identifier structure
@@ -35,12 +33,13 @@ namespace ossian
 	 */
 	using FrameData = std::tuple<unsigned int, size_t, std::shared_ptr<uint8_t[]>>;
 	// 0->CAN ID 1->数据长度 2->数据
-	class CANBus
+	class CANBus : public IIO
 	{
 	public:
 		CANBus() = delete;
-		CANBus(std::string location) noexcept :m_Location(location)
+		CANBus(std::string location, bool isLoopback) noexcept :m_isLoopback(isLoopback)
 		{
+			m_Location = location;
 			Open();
 		}
 		CANBus(const CANBus& canDevice) = delete;
@@ -51,6 +50,7 @@ namespace ossian
 		CANBus& operator=(CANBus&& canBus)
 		{
 			m_Location = canBus.m_Location;
+			return *this;
 		}
 		~CANBus()
 		{
@@ -63,36 +63,39 @@ namespace ossian
 				std::abort();
 			}
 		}
-		int FD() const noexcept { return m_Socket; }
-		std::string Location() const noexcept { return m_Location; }
 
-		void Open()
+		bool Open()
 		{
 			struct ifreq ifr;
 			struct sockaddr_can addr; //设置can设备
 			int loopback = m_isLoopback ? 1 : 0;
-			m_Socket = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW); // 非阻塞模式
+			m_FD = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW); // 非阻塞模式
 			strcpy(ifr.ifr_name, m_Location.c_str()); //指定can设备
-			if (ioctl(m_Socket, SIOCGIFINDEX, &ifr) < 0)
+			if (ioctl(m_FD, SIOCGIFINDEX, &ifr) < 0)
 			{
 				throw std::runtime_error("ioctl error");
+				return false;
 			}
 			addr.can_family = AF_CAN;
 			addr.can_ifindex = ifr.ifr_ifindex;
-			if (bind(m_Socket, (struct sockaddr*) & addr, sizeof(addr)) < 0) // 绑定Socket
+			if (bind(m_FD, (struct sockaddr*) & addr, sizeof(addr)) < 0) // 绑定Socket
 			{
 				throw std::runtime_error("bind error");
+				return false;
 			}
-			if (setsockopt(m_Socket, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &loopback, sizeof(loopback)) < 0)
+			if (setsockopt(m_FD, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &loopback, sizeof(loopback)) < 0)
 			{
 				throw std::runtime_error("setsockopt loopback error");
+				return false;
 			}
 			UpdateFilter();
+			return true;
 		}
 
-		void Close()
+		bool Close()
 		{
-			close(m_Socket); //关闭套接字
+			close(m_FD); //关闭套接字
+			return true;
 		}
 
 		bool AddReceiveCallback(uint32_t id, std::function<ReceiveCallback> callback)
@@ -118,12 +121,12 @@ namespace ossian
 			return true;
 		}
 
-		FrameData ReadCANRaw()
+		FrameData ReadRaw()
 		{
 			struct can_frame rawFrame;
 			while (1)
 			{
-				int	nbytes = read(m_Socket, &rawFrame, sizeof(rawFrame));
+				int	nbytes = read(m_FD, &rawFrame, sizeof(rawFrame));
 				if ((nbytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待接收
 				{
 					continue;//继续接收数据
@@ -139,7 +142,7 @@ namespace ossian
 
 		FrameData Read()
 		{
-			FrameData frameData = ReadCANRaw();//raw frame
+			FrameData frameData = ReadRaw();//raw frame
 			auto it = m_InIdMap.find(std::get<0>(frameData));
 			if (m_InIdMap.end() != it)
 			{
@@ -148,7 +151,7 @@ namespace ossian
 			return frameData;
 		}
 
-		void WriteCANRaw(unsigned int can_id, size_t can_dlc, uint8_t* data)
+		void WriteRaw(unsigned int can_id, size_t can_dlc, uint8_t* data)
 		{
 			struct can_frame rawFrame;
 			rawFrame.can_id = can_id;
@@ -156,7 +159,7 @@ namespace ossian
 			memcpy(rawFrame.data, data, can_dlc);
 			while (1)
 			{
-				int	nbytes = write(m_Socket, &rawFrame, sizeof(rawFrame));
+				int	nbytes = write(m_FD, &rawFrame, sizeof(rawFrame));
 				if ((nbytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待处理
 				{
 					continue;//继续接收数据
@@ -165,10 +168,7 @@ namespace ossian
 			}
 		}
 
-	protected:
-		std::string m_Location;
-		std::unordered_map<uint32_t, std::function<ReceiveCallback>> m_InIdMap;
-		int m_Socket;
+	private:
 		bool m_isLoopback;
 
 		void UpdateFilter()
@@ -182,46 +182,44 @@ namespace ossian
 				rf.can_mask = (CAN_EFF_FLAG | CAN_SFF_MASK); // Standard frame
 				rfilters.push_back(rf);
 			}
-			setsockopt(m_Socket, SOL_CAN_RAW, CAN_RAW_FILTER, rfilters.data(), sizeof(struct can_filter) * size); // 设置过滤规则
+			setsockopt(m_FD, SOL_CAN_RAW, CAN_RAW_FILTER, rfilters.data(), sizeof(struct can_filter) * size); // 设置过滤规则
 		}
-
 	};
 
-	class CANManager
+	class CANManager : public IIOManager
 	{
 	public:
 		CANManager()
 		{
 		}
-
+		IOType Type() const noexcept { return IOType::CAN; }
 		/* 发送原始数据到指定位置 */
 		void SendToRaw(std::string location, unsigned int can_id, size_t can_dlc, uint8_t* data)
 		{
 			auto dev = FindDevice(location);
-			dev->WriteCANRaw(can_id, can_dlc, data);
+			dev->WriteRaw(can_id, can_dlc, data);
 		}
 		/* 从指定位置读取FrameData */
 		FrameData ReadFrom(std::string location)
 		{
 			auto dev = FindDevice(location);
-			dev->Read();
+			return dev->Read();
 		}
-		/*注册设备*/
-		void AddDevice(std::string location)
+		// 注册设备
+		bool AddDevice(std::string location)
 		{
-			auto device = std::make_unique<CANBus>(location);
-			m_DevicesMap.insert(std::make_pair(location, std::move(device)));
+			return AddDevice(location, false);
 		}
-		/*销毁设备*/
-		
-		//void Destroy(std::string location)
-		//{
-		//	auto dev = FindDevice(location);
-		//	dev->release();
-		//	//m_DevicesMap.erase(it); erase map
-		//}
-		/*获取设备描述符*/
-		int DeviceFD(std::string location)
+		bool AddDevice(std::string location, bool isLoopback)
+		{
+			auto device = std::make_shared<CANBus>(location, isLoopback);
+			return m_DeviceMap.Insert(device);
+		}
+		bool DelDevice(std::string location)
+		{
+			return m_DeviceMap.Erase(location);
+		}
+		FileDescriptor DeviceFD(std::string location)
 		{
 			auto dev = FindDevice(location);
 			return dev->FD();
@@ -233,15 +231,33 @@ namespace ossian
 		}
 		CANBus* FindDevice(std::string location)
 		{
-			auto it = m_DevicesMap.find(location);
-			if (m_DevicesMap.end() == it)
+			auto it = m_DeviceMap.Find(location);
+			if (nullptr == it)
 			{
 				throw std::runtime_error("No such CAN device");
 			}
-			return it->second.get();
+			return it.get();
+		}
+		CANBus* FindDevice(FileDescriptor fd)
+		{
+			auto it = m_DeviceMap.Find(fd);
+			if (nullptr == it)
+			{
+				throw std::runtime_error("No such CAN device");
+			}
+			return it.get();
+		}
+		std::vector<FileDescriptor> FDs()
+		{
+			std::vector<FileDescriptor> fd;
+			for(auto it = m_DeviceMap.begin(); it != m_DeviceMap.end(); ++it)
+			{
+				fd.push_back(it->second->FD());
+			}
+			return std::move(fd);
 		}
 	private:
-		std::unordered_map<std::string, std::unique_ptr<CANBus>> m_DevicesMap;
+		DeviceMap<CANBus> m_DeviceMap;
 	};
 } // ossian
 

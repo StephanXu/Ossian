@@ -1,11 +1,11 @@
 ﻿/**
  * @file ossian.hpp
  * @author Xu Zihan (stephanxu@foxmail.com)
- * @brief 包含所有NautilusVisionFramework的头文件
- * @version 0.1
- * @date 2019-10-25
+ * @brief 包含所有Ossian Core的头文件
+ * @version 0.2
+ * @date 2020-1-29
  * 
- * @copyright Copyright (c) 2019
+ * @copyright Copyright (c) 2020
  * 
  */
 
@@ -23,7 +23,10 @@
 #include "ossian/Configuration.hpp"
 
 // IO
+#include "ossian/io/IO.hpp"
 #include "ossian/io/SerialPort.hpp"
 #include "ossian/io/CAN.hpp"
-
+#include "ossian/io/UART.hpp"
+#include "ossian/io/IOError.hpp"
+#include "ossian/io/IOTypes.hpp"
 #endif // OSSIAN_CORE_OSSIAN
