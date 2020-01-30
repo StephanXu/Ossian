@@ -8,10 +8,10 @@
 #include <ossian/io/SerialPort.hpp>
 #include <ossian/Factory.hpp>
 #include <spdlog/spdlog.h>
+#include <HKCamera.hpp>
 
 #include "Config.pb.h"
 #include "InputModel.hpp"
-#include "HKCamera.hpp"
 
 namespace Ioap = ossian::IOAP;
 namespace Utils = ossian::Utils;

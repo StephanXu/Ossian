@@ -16,9 +16,9 @@
 namespace Ioap = ossian::IOAP;
 
 /**
- * @brief ´ó·ç³µ¼ì²â
+ * @brief å¤§é£è½¦æ£€æµ‹
  *
- * Ê¶±ğ¡¢¼ÆËãºÍÔ¤²â´ó·ç³µ¹ì¼£
+ * è¯†åˆ«ã€è®¡ç®—å’Œé¢„æµ‹å¤§é£è½¦è½¨è¿¹
  *
  */
 class SerialReport : public Ioap::IExecutable
@@ -30,9 +30,9 @@ public:
 	}
 
 	/**
-	 * ¼ÆËãÒ»ÕÅÍ¼ÏñProcess an image to refresh Targets, Center and Radius.
-	 * ¼ÆËãÒ»ÕÅÍ¼Ïñ²¢Ë¢ĞÂ£¨µ±´ïµ½×î´ó²ÉÑùÊıÁ¿Ê±£©µ±Ç°Ä¿±ê×ø±ê¡¢ÔË¶¯Ô²ĞÄºÍ°ë¾¶ĞÅÏ¢
-	 * @param input ÊäÈëÊı¾İÖ¸Õë
+	 * è®¡ç®—ä¸€å¼ å›¾åƒProcess an image to refresh Targets, Center and Radius.
+	 * è®¡ç®—ä¸€å¼ å›¾åƒå¹¶åˆ·æ–°ï¼ˆå½“è¾¾åˆ°æœ€å¤§é‡‡æ ·æ•°é‡æ—¶ï¼‰å½“å‰ç›®æ ‡åæ ‡ã€è¿åŠ¨åœ†å¿ƒå’ŒåŠå¾„ä¿¡æ¯
+	 * @param input è¾“å…¥æ•°æ®æŒ‡é’ˆ
 	 */
 	void Process(Ioap::BaseInputData* input) override
 	{
@@ -48,9 +48,9 @@ public:
 
 private:
 	/**
-	 * ¹¹Ôì²¢³õÊ¼»¯Ò»²¿·Ö²ÎÊı
-	 * @param sampleNum ×î´ó²ÉÑùÊıÁ¿
-	 * @param colorFilter IFilter ÀàĞÍµÄÑÕÉ«¹ıÂËÆ÷.
+	 * æ„é€ å¹¶åˆå§‹åŒ–ä¸€éƒ¨åˆ†å‚æ•°
+	 * @param sampleNum æœ€å¤§é‡‡æ ·æ•°é‡
+	 * @param colorFilter IFilter ç±»å‹çš„é¢œè‰²è¿‡æ»¤å™¨.
 	 */
 	explicit SerialReport(SerialPortIO* serialPort)
 		:m_SerialPort(serialPort)
