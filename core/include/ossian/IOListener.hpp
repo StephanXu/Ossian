@@ -13,7 +13,7 @@ namespace ossian
 {
 	struct CallbackData
 	{
-		IIO* io; //对象指针
+		std::shared_ptr<IIO> io; //对象指针
 	};
 	class IOListener
 	{

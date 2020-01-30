@@ -10,18 +10,14 @@ namespace ossian {
 	class IIO
 	{
 	public:
-		FileDescriptor FD() const noexcept { return m_FD; }
-		std::string Location() const noexcept { return m_Location; }
+		virtual FileDescriptor FD() const noexcept = 0;
+		virtual std::string Location() const noexcept = 0;
 		virtual bool Open() = 0;
 		virtual bool Close() = 0;
 		virtual bool AddReceiveCallback(unsigned int id, std::function<ReceiveCallback> callback) = 0;
 		virtual bool RemoveReceiveCallback(unsigned int id) = 0;
 		virtual FrameData Read() = 0; // 带回调的读函数
 		virtual void WriteRaw(unsigned int id, size_t length, uint8_t* data) = 0;
-	protected:
-		FileDescriptor m_FD;
-		std::string m_Location;
-		std::unordered_map<unsigned int, std::function<ReceiveCallback>> m_InIdMap;
 	};
 
 	class IIOManager
@@ -33,16 +29,19 @@ namespace ossian {
 		// 从指定位置读取FrameData并触发回调
 		virtual FrameData ReadFrom(std::string location) = 0;
 		// 注册设备
-		virtual bool AddDevice(std::string location) = 0;
+		virtual std::shared_ptr<IIO> AddDevice(std::string location) = 0;
 		// 销毁设备
 		virtual bool DelDevice(std::string location) = 0;
-		// 获取设备描述符
-		virtual FileDescriptor DeviceFD(std::string location) = 0;
+		virtual bool DelDevice(FileDescriptor fd) = 0;
+		virtual bool DelDevice(std::shared_ptr<IIO> dev) = 0;
 		// 添加回调
-		virtual void AddCallback(std::string location, unsigned int id, std::function<ReceiveCallback> callback) = 0;
+		virtual bool AddCallback(std::string location, unsigned int id, std::function<ReceiveCallback> callback) = 0;
+		virtual bool AddCallback(FileDescriptor fd, uint32_t id, std::function<ReceiveCallback> callback) = 0;
+		virtual bool AddCallback(std::shared_ptr<IIO> dev, uint32_t id, std::function<ReceiveCallback> callback) = 0;
 		// 获取设备
-		virtual IIO* FindDevice(std::string location) = 0;
-		virtual IIO* FindDevice(FileDescriptor fd) = 0;
+		virtual std::shared_ptr<IIO> FindDevice(std::string location) = 0;
+		virtual std::shared_ptr<IIO> FindDevice(FileDescriptor fd) = 0;
+		
 		virtual std::vector<FileDescriptor> FDs() = 0;
 	};
 } // ossian

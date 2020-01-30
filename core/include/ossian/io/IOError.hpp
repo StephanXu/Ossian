@@ -1,4 +1,4 @@
-#ifndef OSSIAN_CORE_IOERROR
+﻿#ifndef OSSIAN_CORE_IOERROR
 #define OSSIAN_CORE_IOERROR
 #ifdef __linux
 class IOError :public std::runtime_error

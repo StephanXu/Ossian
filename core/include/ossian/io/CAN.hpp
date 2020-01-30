@@ -1,4 +1,11 @@
-﻿#ifndef OSSIAN_CORE_IO_CAN
+﻿/**
+ * @file	D:\Workspace\Ossian-Dev\core\include\ossian\io\CAN.hpp.
+ *
+ * @brief	Declares the can class
+ */
+
+#ifndef OSSIAN_CORE_IO_CAN
+///< .
 #define OSSIAN_CORE_IO_CAN
 #ifdef __linux__
 #include <linux/can.h>
@@ -20,38 +27,38 @@
 #include "IO.hpp"
 #include "IOError.hpp"
 #include "IODeviceMap.hpp"
+
+/**
+ * @namespace	ossian
+ *
+ * @brief	.
+ */
+
 namespace ossian
 {
 
-	/*
-	 * Controller Area Network Identifier structure
-	 *
-	 * bit 0-28	: CAN identifier (11/29 bit)
-	 * bit 29	: error message frame flag (0 = data frame, 1 = error message)
-	 * bit 30	: remote transmission request flag (1 = rtr frame)
-	 * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
-	 */
+	 /** @brief	The identifier
+	  * Controller Area Network Identifier structure
+	  *
+	  * bit 0-28	: CAN identifier (11/29 bit)
+	  * bit 29	: error message frame flag (0 = data frame, 1 = error message)
+	  * bit 30	: remote transmission request flag (1 = rtr frame)
+	  * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
+	  */
 	using FrameData = std::tuple<unsigned int, size_t, std::shared_ptr<uint8_t[]>>;
 	// 0->CAN ID 1->数据长度 2->数据
+
 	class CANBus : public IIO
 	{
 	public:
 		CANBus() = delete;
+
 		CANBus(std::string location, bool isLoopback) noexcept :m_isLoopback(isLoopback)
 		{
 			m_Location = location;
 			Open();
 		}
 		CANBus(const CANBus& canDevice) = delete;
-		CANBus(CANBus&& canBus)
-		{
-			*this = std::move(canBus);
-		}
-		CANBus& operator=(CANBus&& canBus)
-		{
-			m_Location = canBus.m_Location;
-			return *this;
-		}
 		~CANBus()
 		{
 			try
@@ -64,6 +71,9 @@ namespace ossian
 			}
 		}
 
+		FileDescriptor FD() const noexcept { return m_FD; }
+		std::string Location() const noexcept { return m_Location; }
+		
 		bool Open()
 		{
 			struct ifreq ifr;
@@ -170,7 +180,9 @@ namespace ossian
 
 	private:
 		bool m_isLoopback;
-
+		FileDescriptor m_FD;
+		std::string m_Location;
+		std::unordered_map<unsigned int, std::function<ReceiveCallback>> m_InIdMap;
 		void UpdateFilter()
 		{
 			size_t size = m_InIdMap.size();
@@ -189,11 +201,13 @@ namespace ossian
 	class CANManager : public IIOManager
 	{
 	public:
+
 		CANManager()
 		{
 		}
+
 		IOType Type() const noexcept { return IOType::CAN; }
-		/* 发送原始数据到指定位置 */
+
 		void SendToRaw(std::string location, unsigned int can_id, size_t can_dlc, uint8_t* data)
 		{
 			auto dev = FindDevice(location);
@@ -206,47 +220,67 @@ namespace ossian
 			return dev->Read();
 		}
 		// 注册设备
-		bool AddDevice(std::string location)
+		std::shared_ptr<IIO> AddDevice(std::string location)
 		{
 			return AddDevice(location, false);
 		}
-		bool AddDevice(std::string location, bool isLoopback)
+		std::shared_ptr<IIO> AddDevice(std::string location, bool isLoopback)
 		{
 			auto device = std::make_shared<CANBus>(location, isLoopback);
-			return m_DeviceMap.Insert(device);
+			m_DeviceMap.Insert(device);
+			return device;
+		}
+
+		bool DelDevice(std::shared_ptr<IIO> dev)
+		{
+			return m_DeviceMap.Erase(dev->FD());
+		}
+		bool DelDevice(FileDescriptor fd)
+		{
+			return m_DeviceMap.Erase(fd);
 		}
 		bool DelDevice(std::string location)
 		{
 			return m_DeviceMap.Erase(location);
 		}
-		FileDescriptor DeviceFD(std::string location)
+
+		bool AddCallback(std::string location, uint32_t id, std::function<ReceiveCallback> callback)
 		{
 			auto dev = FindDevice(location);
-			return dev->FD();
+			return dev->AddReceiveCallback(id, callback);
 		}
-		void AddCallback(std::string location, uint32_t id, std::function<ReceiveCallback> callback)
+		bool AddCallback(FileDescriptor fd, uint32_t id, std::function<ReceiveCallback> callback)
 		{
-			auto dev = FindDevice(location);
-			dev->AddReceiveCallback(id, callback);
+			auto dev = FindDevice(fd);
+			return dev->AddReceiveCallback(id, callback);
 		}
-		CANBus* FindDevice(std::string location)
+		bool AddCallback(std::shared_ptr<IIO> dev, uint32_t id, std::function<ReceiveCallback> callback)
 		{
-			auto it = m_DeviceMap.Find(location);
-			if (nullptr == it)
+			return dev->AddReceiveCallback(id, callback);
+		}
+		
+		std::shared_ptr<IIO> FindDevice(std::string location)
+		{
+			auto dev = m_DeviceMap.Find(location);
+			if (nullptr == dev)
 			{
 				throw std::runtime_error("No such CAN device");
+				return nullptr;
 			}
-			return it.get();
+			return dev;
 		}
-		CANBus* FindDevice(FileDescriptor fd)
+
+		std::shared_ptr<IIO> FindDevice(FileDescriptor fd)
 		{
-			auto it = m_DeviceMap.Find(fd);
-			if (nullptr == it)
+			auto dev = m_DeviceMap.Find(fd);
+			if (nullptr == dev)
 			{
 				throw std::runtime_error("No such CAN device");
+				return nullptr;
 			}
-			return it.get();
+			return dev;
 		}
+
 		std::vector<FileDescriptor> FDs()
 		{
 			std::vector<FileDescriptor> fd;

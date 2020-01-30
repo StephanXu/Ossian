@@ -1,4 +1,4 @@
-#ifndef OSSIAN_CORE_IO_TYPES
+﻿#ifndef OSSIAN_CORE_IO_TYPES
 #define OSSIAN_CORE_IO_TYPES
 #include <memory>
 #include <tuple>

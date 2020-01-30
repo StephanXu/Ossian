@@ -94,15 +94,7 @@ namespace ossian
 			Open();
 		}
 		UART(const UART& canDevice) = delete;
-		UART(UART&& uart)
-		{
-			*this = std::move(uart);
-		}
-		UART& operator=(UART&& uart)
-		{
-			m_Location = uart.m_Location;
-			return *this;
-		}
+		
 		~UART()
 		{
 			try
@@ -267,6 +259,11 @@ namespace ossian
 		DataBits m_DataBits;
 		StopBits m_StopBits;
 		Parity m_Parity;
+		
+		FileDescriptor m_FD;
+		
+		std::string m_Location;
+		std::unordered_map<unsigned int, std::function<ReceiveCallback>> m_InIdMap;
 	};
 
 	class UARTManager : public IIOManager
@@ -290,16 +287,17 @@ namespace ossian
 			return dev->Read();
 		}
 		//注册设备
-		bool AddDevice(std::string location)
+		std::shared_ptr<IIO> AddDevice(std::string location)
 		{
 			return AddDevice(location, UART::Baudrate::R115200, UART::FlowControl::FlowControlNone,
 				UART::DataBits::DataBits8, UART::StopBits::StopBits1, UART::Parity::ParityNone);
 		}
-		bool AddDevice(std::string location, UART::Baudrate baudrate, UART::FlowControl flowctrl,
+		std::shared_ptr<IIO> AddDevice(std::string location, UART::Baudrate baudrate, UART::FlowControl flowctrl,
 			UART::DataBits databits, UART::StopBits stopbits, UART::Parity parity)
 		{
 			auto device = std::make_shared<UART>(location, baudrate, flowctrl, databits, stopbits, parity);
-			return m_DeviceMap.Insert(device);
+			m_DeviceMap.Insert(device);
+			return device;
 		}
 		//销毁设备
 		bool DelDevice(std::string location)
@@ -310,35 +308,46 @@ namespace ossian
 		{
 			return m_DeviceMap.Erase(fd);
 		}
-		//获取设备描述符
-		FileDescriptor DeviceFD(std::string location)
+		bool DelDevice(std::shared_ptr<IIO> dev)
 		{
-			auto dev = FindDevice(location);
-			return dev->FD();
+			return m_DeviceMap.Erase(dev->FD());
 		}
-		void AddCallback(std::string location, uint32_t id, std::function<ReceiveCallback> callback)
+
+		bool AddCallback(std::string location, uint32_t id, std::function<ReceiveCallback> callback)
 		{
 			id = 0;
 			auto dev = FindDevice(location);
-			dev->AddReceiveCallback(id, callback);
+			return dev->AddReceiveCallback(id, callback);
 		}
-		UART* FindDevice(std::string location)
+		bool AddCallback(FileDescriptor fd, uint32_t id, std::function<ReceiveCallback> callback)
 		{
-			auto it = m_DeviceMap.Find(location);
-			if (nullptr == it)
+			id = 0;
+			auto dev = FindDevice(fd);
+			return dev->AddReceiveCallback(id, callback);
+		}
+		bool AddCallback(std::shared_ptr<IIO> dev, uint32_t id, std::function<ReceiveCallback> callback)
+		{
+			return dev->AddReceiveCallback(id, callback);
+		}
+		std::shared_ptr<IIO> FindDevice(std::string location)
+		{
+			auto dev = m_DeviceMap.Find(location);
+			if (nullptr == dev)
 			{
 				throw std::runtime_error("No such CAN device");
+				return nullptr;
 			}
-			return it.get();
+			return dev;
 		}
-		UART* FindDevice(FileDescriptor fd)
+		std::shared_ptr<IIO> FindDevice(FileDescriptor fd)
 		{
-			auto it = m_DeviceMap.Find(fd);
-			if (nullptr == it)
+			auto dev = m_DeviceMap.Find(fd);
+			if (nullptr == dev)
 			{
 				throw std::runtime_error("No such CAN device");
+				return nullptr;
 			}
-			return it.get();
+			return dev;
 		}
 		std::vector<FileDescriptor> FDs()
 		{

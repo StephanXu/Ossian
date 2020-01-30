@@ -1,4 +1,4 @@
-#ifndef OSSIAN_CORE_IO_DEVICEMAP
+﻿#ifndef OSSIAN_CORE_IO_DEVICEMAP
 #define OSSIAN_CORE_IO_DEVICEMAP
 #ifdef __linux__
 #include <vector>
