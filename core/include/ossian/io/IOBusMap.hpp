@@ -1,5 +1,5 @@
-﻿#ifndef OSSIAN_CORE_IO_DEVICEMAP
-#define OSSIAN_CORE_IO_DEVICEMAP
+﻿#ifndef OSSIAN_CORE_IO_BUSMAP
+#define OSSIAN_CORE_IO_BUSMAP
 #ifdef __linux__
 #include <vector>
 #include <unordered_map>
@@ -10,7 +10,7 @@
 namespace ossian
 {
 	template <typename T>
-	class DeviceMap
+	class BusMap
 	{
 	public:
 		bool Insert(std::shared_ptr<T> dev)
@@ -97,4 +97,4 @@ namespace ossian
 	};
 } // ossian
 #endif // __linux__
-#endif // OSSIAN_CORE_IO_DEVICEMAP
+#endif // OSSIAN_CORE_IO_BUSMAP
