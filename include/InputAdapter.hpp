@@ -24,13 +24,13 @@ namespace IO = ossian::IO;
  */
 class VideoInputSource : public Ioap::BaseInputAdapter
 {
-	friend class ossian::Factory;
+public:
 	/**
 	 * @brief 建立视频输入
 	 * 如果视频加载失败，对象将被设置为失效，GetInput GetInputAsync 等函数将不可用。
 	 * @param filename
 	 */
-	explicit VideoInputSource(Utils::ConfigLoader* config)
+	OSSIAN_SERVICE_SETUP(VideoInputSource(Utils::ConfigLoader* config))
 		: m_VideoSource(config->Instance<OssianConfig::Configuration>()->mutable_testvideosource()->filename())
 		, m_Valid(true)
 	{
@@ -40,7 +40,7 @@ class VideoInputSource : public Ioap::BaseInputAdapter
 			return;
 		}
 	}
-public:
+
     std::shared_ptr<Ioap::BaseInputData> GetInput() override
     {
         if (!m_Valid)
@@ -76,13 +76,12 @@ private:
 
 class FakeInputSource : public Ioap::BaseInputAdapter
 {
-	friend class ossian::Factory;
-
-	explicit FakeInputSource(Utils::ConfigLoader* config)
+public:
+	OSSIAN_SERVICE_SETUP(FakeInputSource(Utils::ConfigLoader* config))
 		: m_Valid(true)
 	{
 	}
-public:
+
 	std::shared_ptr<Ioap::BaseInputData> GetInput() override
 	{
 		if (!m_Valid)
@@ -117,9 +116,8 @@ private:
  */
 class CameraInputSource : public Ioap::BaseInputAdapter
 {
-	friend class ossian::Factory;
-
-	explicit CameraInputSource(ossian::Utils::ConfigLoader* config)
+public:
+	OSSIAN_SERVICE_SETUP(CameraInputSource(ossian::Utils::ConfigLoader* config))
 		: m_Camera(config->Instance<OssianConfig::Configuration>()->mutable_camera()->deviceindex(),
 				   config->Instance<OssianConfig::Configuration>()->mutable_camera()->framewidth(),
 				   config->Instance<OssianConfig::Configuration>()->mutable_camera()->frameheight())
@@ -140,7 +138,6 @@ class CameraInputSource : public Ioap::BaseInputAdapter
 			m_Valid = false;
 		}
 	}
-public:
 
 	~CameraInputSource()
 	{
@@ -199,9 +196,8 @@ private:
  */
 class SerialPortIO : public Ioap::IService
 {
-	friend class ossian::Factory;
-
-	explicit SerialPortIO(Utils::ConfigLoader* config)
+public:
+	OSSIAN_SERVICE_SETUP(SerialPortIO(Utils::ConfigLoader* config))
 		:m_SyncThread(nullptr)
 	{
 		try
@@ -225,7 +221,6 @@ class SerialPortIO : public Ioap::IService
 
 	}
 
-public:
 	~SerialPortIO()
 	{
 		if (m_SyncThread)
@@ -408,15 +403,12 @@ private:
  */
 class SerialPortIO : public Ioap::IService
 {
-	friend class ossian::Factory;
-
-	explicit SerialPortIO(Utils::ConfigLoader* config)
+public:
+	OSSIAN_SERVICE_SETUP(SerialPortIO(Utils::ConfigLoader* config))
 		:m_SyncThread(nullptr)
 	{
-		
-	}
 
-public:
+	}
 	~SerialPortIO()
 	{
 		
