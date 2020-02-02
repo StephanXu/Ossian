@@ -6,6 +6,7 @@ target_sources(OssianCore
 			src/Dispatcher.cpp
 			src/Pipeline.cpp
 			src/SerialPort.cpp
+			src/io/CAN.cpp
 		)
 target_include_directories(OssianCore
 		PUBLIC
