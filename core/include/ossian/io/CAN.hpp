@@ -1,11 +1,9 @@
 ﻿/**
- * @file	D:\Workspace\Ossian-Dev\core\include\ossian\io\CAN.hpp.
+ * @file	ossian\io\CAN.hpp
  *
  * @brief	Declares the can class
  */
-
 #ifndef OSSIAN_CORE_IO_CAN
-///< .
 #define OSSIAN_CORE_IO_CAN
 #ifdef __linux__
 #include <linux/can.h>
@@ -26,36 +24,64 @@
 
 #include "IO.hpp"
 #include "IOError.hpp"
-#include "IODeviceMap.hpp"
 
-/**
- * @namespace	ossian
- *
- * @brief	.
- */
+ /**
+  * @namespace	ossian
+  *
+  * @brief	.
+  */
 
 namespace ossian
 {
 
-	 /** @brief	The identifier
-	  * Controller Area Network Identifier structure
-	  *
-	  * bit 0-28	: CAN identifier (11/29 bit)
-	  * bit 29	: error message frame flag (0 = data frame, 1 = error message)
-	  * bit 30	: remote transmission request flag (1 = rtr frame)
-	  * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
-	  */
-	using FrameData = std::tuple<unsigned int, size_t, std::shared_ptr<uint8_t[]>>;
-	// 0->CAN ID 1->数据长度 2->数据
+	/**
+	 * Controller Area Network Identifier structure
+	 *
+	 * bit 0-28	: CAN identifier (11/29 bit)
+	 * bit 29	: error message frame flag (0 = data frame, 1 = error message)
+	 * bit 30	: remote transmission request flag (1 = rtr frame)
+	 * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
+	 */
+	class CANBus;
+	class CANDevice;
+	class CANManager;
 
-	class CANBus : public IIO
+	class CANDevice : public BaseDevice
+	{
+	public:
+		CANDevice() = delete;
+		CANDevice(std::shared_ptr<CANBus> bus,
+			unsigned int id,
+			std::function<ReceiveCallback> callback) noexcept
+			:m_Bus(bus), m_Id(id), m_Callback(callback) {};
+
+		std::shared_ptr<IIOBus> Bus() { return std::dynamic_pointer_cast<IIOBus>(m_Bus); }
+		void Invoke(size_t length, std::shared_ptr<uint8_t[]> data)
+		{
+			m_Callback(length, data);
+		}
+		void WriteRaw(size_t length, std::shared_ptr<uint8_t[]> data)
+		{
+			m_Bus->WriteRaw(m_Id, length, data);
+		}
+		void SetCallback(std::function<ReceiveCallback> callback)
+		{
+			m_Callback = callback;
+		} //非线程安全
+	private:
+		unsigned int m_Id;
+		std::shared_ptr<CANBus> m_Bus;
+		std::function<ReceiveCallback> m_Callback;
+	};
+
+	class CANBus : public IIOBus, private std::enable_shared_from_this<CANBus>
 	{
 	public:
 		CANBus() = delete;
 
-		CANBus(std::string location, bool isLoopback) noexcept :m_isLoopback(isLoopback)
+		CANBus(std::string location, bool isLoopback) :
+			m_Location(location), m_isLoopback(isLoopback), m_IsOpened(false)
 		{
-			m_Location = location;
 			Open();
 		}
 		CANBus(const CANBus& canDevice) = delete;
@@ -73,7 +99,8 @@ namespace ossian
 
 		FileDescriptor FD() const noexcept { return m_FD; }
 		std::string Location() const noexcept { return m_Location; }
-		
+		bool IsOpened() const noexcept { return m_IsOpened; }
+
 		bool Open()
 		{
 			struct ifreq ifr;
@@ -84,6 +111,7 @@ namespace ossian
 			if (ioctl(m_FD, SIOCGIFINDEX, &ifr) < 0)
 			{
 				throw std::runtime_error("ioctl error");
+				m_IsOpened = false;
 				return false;
 			}
 			addr.can_family = AF_CAN;
@@ -91,103 +119,115 @@ namespace ossian
 			if (bind(m_FD, (struct sockaddr*) & addr, sizeof(addr)) < 0) // 绑定Socket
 			{
 				throw std::runtime_error("bind error");
+				m_IsOpened = false;
 				return false;
 			}
 			if (setsockopt(m_FD, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &loopback, sizeof(loopback)) < 0)
 			{
 				throw std::runtime_error("setsockopt loopback error");
+				m_IsOpened = false;
 				return false;
 			}
 			UpdateFilter();
+			m_IsOpened = true;
 			return true;
 		}
 
 		bool Close()
 		{
 			close(m_FD); //关闭套接字
+			m_IsOpened = false;
 			return true;
 		}
 
-		bool AddReceiveCallback(uint32_t id, std::function<ReceiveCallback> callback)
+		std::shared_ptr<BaseDevice> AddDevice(unsigned int id,
+			std::function<ReceiveCallback> callback)
 		{
-			auto it = m_InIdMap.find(id);
-			if (m_InIdMap.end() != it)
+			auto it = m_DeviceMap.find(id);
+			std::shared_ptr<CANDevice> device;
+			if (it == m_DeviceMap.end())
 			{
-				return false; //Maybe need exception
+				device = std::make_shared<CANDevice>(shared_from_this(), id, callback);
+				m_DeviceMap.insert(std::make_pair(id, device));
+				UpdateFilter();
 			}
-			m_InIdMap.insert(std::make_pair(id, callback));
-			UpdateFilter();
-			return true;
-		}
-
-		bool RemoveReceiveCallback(uint32_t id)
-		{
-			auto it = m_InIdMap.find(id);
-			if (m_InIdMap.end() == it)
+			else
 			{
-				return false;
+				device = it->second;
+				device->SetCallback(callback);
 			}
-			m_InIdMap.erase(it);
-			return true;
+			return std::dynamic_pointer_cast<BaseDevice>(device);
 		}
 
-		FrameData ReadRaw()
+		void Read()
 		{
-			struct can_frame rawFrame;
-			while (1)
+			if (true == m_IsOpened)
 			{
-				int	nbytes = read(m_FD, &rawFrame, sizeof(rawFrame));
-				if ((nbytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待接收
+				struct can_frame rawFrame;
+				while (1)
 				{
-					continue;//继续接收数据
+					int	nbytes = read(m_FD, &rawFrame, sizeof(rawFrame));
+					if ((nbytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待接收
+					{
+						continue;//继续接收数据
+					}
+					break;//跳出接收循环
 				}
-				break;//跳出接收循环
-			}
-			unsigned int id = rawFrame.can_id;
-			size_t length = rawFrame.can_dlc;
-			auto buffer = std::shared_ptr<uint8_t[]>(new uint8_t[rawFrame.can_dlc]);
-			memcpy(buffer.get(), rawFrame.data, length);
-			return std::move(std::make_tuple(id, length, buffer));
-		}
 
-		FrameData Read()
-		{
-			FrameData frameData = ReadRaw();//raw frame
-			auto it = m_InIdMap.find(std::get<0>(frameData));
-			if (m_InIdMap.end() != it)
-			{
-				std::apply(it->second, frameData);
-			}
-			return frameData;
-		}
+				unsigned int id = rawFrame.can_id;
+				size_t length = rawFrame.can_dlc;
+				auto buffer = std::make_shared<uint8_t[]>(rawFrame.can_dlc);
+				memcpy(buffer.get(), rawFrame.data, length);
 
-		void WriteRaw(unsigned int can_id, size_t can_dlc, uint8_t* data)
-		{
-			struct can_frame rawFrame;
-			rawFrame.can_id = can_id;
-			rawFrame.can_dlc = can_dlc;
-			memcpy(rawFrame.data, data, can_dlc);
-			while (1)
-			{
-				int	nbytes = write(m_FD, &rawFrame, sizeof(rawFrame));
-				if ((nbytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待处理
+				auto it = m_DeviceMap.find(id);
+				if (it != m_DeviceMap.end())
 				{
-					continue;//继续接收数据
+					it->second->Invoke(length, buffer);
 				}
-				break;//跳出接收循环
 			}
 		}
 
+		void WriteRaw(unsigned int can_id, size_t length, std::shared_ptr<uint8_t[]> data)
+		{
+			if (true == m_IsOpened)
+			{
+				struct can_frame rawFrame;
+				rawFrame.can_id = can_id;
+				rawFrame.can_dlc = length;
+				memcpy(rawFrame.data, data.get(), length);
+				while (1)
+				{
+					int	nbytes = write(m_FD, &rawFrame, sizeof(rawFrame));
+					if ((nbytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待处理
+					{
+						continue;//继续接收数据
+					}
+					break;//跳出接收循环
+				}
+			}
+		}
+
+		std::vector<std::shared_ptr<BaseDevice>> GetDevices()
+		{
+			std::vector<std::shared_ptr<BaseDevice>> devices;
+			for (auto it = m_DeviceMap.begin(); it != m_DeviceMap.end(); ++it)
+			{
+				devices.push_back(it->second);
+			}
+			return std::move(devices);
+		}
+		
 	private:
+		bool m_IsOpened;
 		bool m_isLoopback;
 		FileDescriptor m_FD;
 		std::string m_Location;
-		std::unordered_map<unsigned int, std::function<ReceiveCallback>> m_InIdMap;
+		std::unordered_map<unsigned int, std::shared_ptr<CANDevice>> m_DeviceMap;
 		void UpdateFilter()
 		{
-			size_t size = m_InIdMap.size();
+			size_t size = m_DeviceMap.size();
 			std::vector<struct can_filter> rfilters;
-			for (auto&& it : m_InIdMap)
+			for (auto&& it : m_DeviceMap)
 			{
 				struct can_filter rf;
 				rf.can_id = it.first;
@@ -208,90 +248,60 @@ namespace ossian
 
 		IOType Type() const noexcept { return IOType::CAN; }
 
-		void SendToRaw(std::string location, unsigned int can_id, size_t can_dlc, uint8_t* data)
-		{
-			auto dev = FindDevice(location);
-			dev->WriteRaw(can_id, can_dlc, data);
-		}
-		/* 从指定位置读取FrameData */
-		FrameData ReadFrom(std::string location)
-		{
-			auto dev = FindDevice(location);
-			return dev->Read();
-		}
 		// 注册设备
-		std::shared_ptr<IIO> AddDevice(std::string location)
+		std::shared_ptr<IIOBus> AddBus(std::string location)
 		{
-			return AddDevice(location, false);
+			return AddBus(location, false);
 		}
-		std::shared_ptr<IIO> AddDevice(std::string location, bool isLoopback)
+		std::shared_ptr<IIOBus> AddBus(std::string location, bool isLoopback)
 		{
 			auto device = std::make_shared<CANBus>(location, isLoopback);
-			m_DeviceMap.Insert(device);
+			m_BusMap.insert(std::make_pair(location, device));
 			return device;
 		}
 
-		bool DelDevice(std::shared_ptr<IIO> dev)
+		bool DelBus(std::shared_ptr<IIOBus> bus)
 		{
-			return m_DeviceMap.Erase(dev->FD());
+			return m_BusMap.erase(bus->Location());
 		}
-		bool DelDevice(FileDescriptor fd)
+		bool DelBus(std::string location)
 		{
-			return m_DeviceMap.Erase(fd);
-		}
-		bool DelDevice(std::string location)
-		{
-			return m_DeviceMap.Erase(location);
+			return m_BusMap.erase(location);
 		}
 
-		bool AddCallback(std::string location, uint32_t id, std::function<ReceiveCallback> callback)
+		void WriteTo(std::shared_ptr<BaseDevice> device, size_t length, std::shared_ptr<uint8_t[]> data)
 		{
-			auto dev = FindDevice(location);
-			return dev->AddReceiveCallback(id, callback);
+			device->WriteRaw(length, data);
 		}
-		bool AddCallback(FileDescriptor fd, uint32_t id, std::function<ReceiveCallback> callback)
+
+		std::shared_ptr<BaseDevice> AddDevice(std::shared_ptr<CANBus> bus, unsigned int id,
+			std::function<ReceiveCallback> callback)
 		{
-			auto dev = FindDevice(fd);
-			return dev->AddReceiveCallback(id, callback);
+			return bus->AddDevice(id, callback);
 		}
-		bool AddCallback(std::shared_ptr<IIO> dev, uint32_t id, std::function<ReceiveCallback> callback)
+
+		std::shared_ptr<IIOBus> Bus(std::string location)
 		{
-			return dev->AddReceiveCallback(id, callback);
-		}
-		
-		std::shared_ptr<IIO> FindDevice(std::string location)
-		{
-			auto dev = m_DeviceMap.Find(location);
-			if (nullptr == dev)
+			auto it = m_BusMap.find(location);
+			if (it == m_BusMap.end())
 			{
 				throw std::runtime_error("No such CAN device");
 				return nullptr;
 			}
-			return dev;
+			return it->second;
 		}
 
-		std::shared_ptr<IIO> FindDevice(FileDescriptor fd)
+		std::vector<std::shared_ptr<IIOBus>> GetBuses()
 		{
-			auto dev = m_DeviceMap.Find(fd);
-			if (nullptr == dev)
+			std::vector<std::shared_ptr<IIOBus>> buses;
+			for (auto it = m_BusMap.begin(); it != m_BusMap.end(); ++it)
 			{
-				throw std::runtime_error("No such CAN device");
-				return nullptr;
+				buses.push_back(it->second);
 			}
-			return dev;
-		}
-
-		std::vector<FileDescriptor> FDs()
-		{
-			std::vector<FileDescriptor> fd;
-			for(auto it = m_DeviceMap.begin(); it != m_DeviceMap.end(); ++it)
-			{
-				fd.push_back(it->second->FD());
-			}
-			return std::move(fd);
+			return std::move(buses);
 		}
 	private:
-		DeviceMap<CANBus> m_DeviceMap;
+		std::unordered_map<std::string, std::shared_ptr<IIOBus>> m_BusMap;
 	};
 } // ossian
 

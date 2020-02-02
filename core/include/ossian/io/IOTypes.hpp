@@ -5,8 +5,7 @@
 
 namespace ossian {
 	using ReceiveCallback = void(
-		unsigned int id,
-		size_t dataLength,
+		size_t length,
 		std::shared_ptr<uint8_t[]> data);
 	using FileDescriptor = int;
 	using FrameData = std::tuple<size_t, std::shared_ptr<uint8_t[]>>;

@@ -1,5 +1,5 @@
 ﻿/**
- * @file	core\include\ossian\io\IO.hpp.
+ * @file	ossian\io\IO.hpp.
  *
  * @brief	IO接口的定义
  */
@@ -14,10 +14,10 @@
 
 #include "IOTypes.hpp"
 
-/**
- * @namespace	ossian
- * @brief	.
- */
+ /**
+  * @namespace	ossian
+  * @brief	.
+  */
 
 namespace ossian {
 
@@ -27,7 +27,7 @@ namespace ossian {
 	 * @author	Mlekow
 	 * @date	2020/1/31
 	 */
-
+	class IIOBus;
 	class BaseDevice
 	{
 	public:
@@ -40,7 +40,7 @@ namespace ossian {
 		 * @returns	A std::shared_ptr&lt;IIOBus&gt;
 		 */
 
-		virtual std::shared_ptr<IIOBus> Bus() const noexcept = 0;
+		virtual std::shared_ptr<IIOBus> Bus() = 0;
 
 		/**
 		 * @fn	virtual void BaseDevice::WriteRaw(size_t length, uint8_t* data) = 0;
@@ -51,7 +51,7 @@ namespace ossian {
 		 * @param [in]		data  	原始数据
 		 */
 
-		virtual void WriteRaw(size_t length, uint8_t* data) = 0;
+		virtual void WriteRaw(size_t length, std::shared_ptr<uint8_t[]> data) = 0;
 
 		/**
 		 * @fn	virtual void BaseDevice::Invoke(size_t length, uint8_t* data) = 0;
@@ -62,7 +62,7 @@ namespace ossian {
 		 * @param [in,out]	data  	If non-null, the data.
 		 */
 
-		virtual void Invoke(size_t length, uint8_t* data) = 0;
+		virtual void Invoke(size_t length, std::shared_ptr<uint8_t[]> data) = 0;
 
 		/**
 		 * @fn	virtual void BaseDevice::SetCallback(std::function<ReceiveCallback> callback) = 0;
@@ -107,6 +107,17 @@ namespace ossian {
 
 		virtual std::string Location() const noexcept = 0;
 
+
+		/**
+		 * @fn	virtual bool IIOBus::IsOpened() = 0;
+		 * @brief	查询总线是否开启
+		 * @author	Mlekow
+		 * @date	2020/1/31
+		 * @returns	True if opened, false if not.
+		 */
+
+		virtual bool IsOpened() const noexcept = 0;
+
 		/**
 		 * @fn	virtual bool IIOBus::Open() = 0;
 		 * @brief	打开总线
@@ -137,24 +148,14 @@ namespace ossian {
 		virtual void Read() = 0;
 
 		/**
-		 * @fn	virtual bool IIOBus::IsOpened() = 0;
-		 * @brief	查询总线是否开启
-		 * @author	Mlekow
-		 * @date	2020/1/31
-		 * @returns	True if opened, false if not.
-		 */
-
-		virtual bool IsOpened() = 0;
-
-		/**
-		 * @fn	virtual std::vector<IIOBus> IIOManager::GetBuses() = 0;
+		 * @fn	virtual std::vector<std::shared_ptr<BaseDevice>> IIOBus::GetDevices() = 0;
 		 * @brief	获取所申请的所有Device
 		 * @author	Mlekow
 		 * @date	2020/1/31
 		 * @returns	A std::vector&lt;FileDescriptor&gt;
 		 */
 
-		virtual std::vector<BaseDevice> GetDevices() = 0;
+		virtual std::vector<std::shared_ptr<BaseDevice>> GetDevices() = 0;
 	};
 
 	/**
@@ -208,11 +209,11 @@ namespace ossian {
 		 * @brief	通过句柄删除Bus
 		 * @author	Mlekow
 		 * @date	2020/1/31
-		 * @param 	dev	The fd.
+		 * @param 	bus	总线的句柄
 		 * @returns	True if it succeeds, false if it fails.
 		 */
 
-		virtual bool DelBus(std::shared_ptr<IIOBus> dev) = 0;
+		virtual bool DelBus(std::shared_ptr<IIOBus> bus) = 0;
 
 		/**
 		 * @fn	virtual std::shared_ptr<IIOBus> IIOManager::Bus(std::string location) = 0;
@@ -223,8 +224,19 @@ namespace ossian {
 		 * @returns	A std::shared_ptr&lt;IIOBus&gt;
 		 */
 
-		virtual std::shared_ptr<IIOBus> Bus(std::string location) = 0;
+		 /**
+		  * @fn	virtual bool IIOManager::WriteTo(std::shared_ptr<BaseDevice> dev) = 0;
+		  * @brief	写入具体的设备
+		  * @author	Mlekow
+		  * @date	2020/2/2
+		  * @param 	device	设备的句柄
+		  * @returns	True if it succeeds, false if it fails.
+		  */
 
+		virtual void WriteTo(std::shared_ptr<BaseDevice> device, size_t length, std::shared_ptr<uint8_t[]> data) = 0;
+		
+		virtual std::shared_ptr<IIOBus> Bus(std::string location) = 0;
+		
 		/**
 		 * @fn	virtual std::vector<IIOBus> IIOManager::GetBuses() = 0;
 		 * @brief	获取所管理的所有总线
@@ -233,7 +245,7 @@ namespace ossian {
 		 * @returns	A std::vector&lt;FileDescriptor&gt;
 		 */
 
-		virtual std::vector<IIOBus> GetBuses() = 0;
+		virtual std::vector<std::shared_ptr<IIOBus>> GetBuses() = 0;
 	};
 } // ossian
 #endif // __linux__
