@@ -154,7 +154,7 @@ namespace ossian {
 		 * @returns	A std::vector&lt;FileDescriptor&gt;
 		 */
 
-		virtual std::vector<IIOBus> GetBuses() = 0;
+		virtual std::vector<BaseDevice> GetDevices() = 0;
 	};
 
 	/**
