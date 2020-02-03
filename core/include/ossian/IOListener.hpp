@@ -16,7 +16,7 @@ namespace ossian
 {
 struct CallbackData
 {
-    std::shared_ptr<IIO> io; //对象指针
+    std::shared_ptr<IIOBus> io; //对象指针
 };
 
 class IOListener
@@ -87,13 +87,14 @@ public:
             throw std::runtime_error("Manager already exist");
             return false;
         }
-        auto fds = mgr->FDs();
+        auto buses = mgr->GetBuses();
         m_IOManagers.insert(std::make_pair(type, mgr));
         // 将所有的IO都注册到Epoll中
-        for (auto&& fd : fds)
+        for (auto&& bus : buses)
         {
+            auto fd = bus->FD();
             auto pData = std::make_unique<CallbackData>();
-            pData->io = mgr->FindDevice(fd);
+            pData->io = bus;
             AddEpoll(fd, std::move(pData));
         }
         return true;

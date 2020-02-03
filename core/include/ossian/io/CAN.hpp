@@ -5,7 +5,6 @@
  */
 #ifndef OSSIAN_CORE_IO_CAN
 #define OSSIAN_CORE_IO_CAN
-
 #ifdef __linux__
 
 #include <linux/can.h>
@@ -39,31 +38,10 @@ namespace ossian
  * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
  */
 class CANBus;
-
 class CANDevice;
-
 class CANManager;
 
-class CANDevice : public BaseDevice
-{
-public:
-    CANDevice() = delete;
-    CANDevice(std::shared_ptr<CANBus> bus,
-              unsigned int id,
-              std::function<ReceiveCallback> callback) noexcept;
-
-    std::shared_ptr<IIOBus> Bus() override;
-    void Invoke(size_t length, std::shared_ptr<uint8_t[]> data) override;
-    void WriteRaw(size_t length, std::shared_ptr<uint8_t[]> data) override;
-    void SetCallback(std::function<ReceiveCallback> callback) override; //非线程安全
-
-private:
-    unsigned int m_Id;
-    std::shared_ptr<CANBus> m_Bus;
-    std::function<ReceiveCallback> m_Callback;
-};
-
-class CANBus : public IIOBus, private std::enable_shared_from_this<CANBus>
+class CANBus : public IIOBus, std::enable_shared_from_this<CANBus>
 {
 public:
     CANBus() = delete;
@@ -80,17 +58,36 @@ public:
     std::vector<std::shared_ptr<BaseDevice>> GetDevices() override;
 
     std::shared_ptr<BaseDevice> AddDevice(unsigned int id,
-                                          std::function<ReceiveCallback> callback);
-    void WriteRaw(unsigned int can_id, size_t length, std::shared_ptr<uint8_t[]> data);
+        std::function<ReceiveCallback> callback);
+    void WriteRaw(unsigned int id, size_t length, std::shared_ptr<uint8_t[]> data);
 
 private:
     bool m_IsOpened;
-    bool m_isLoopback;
+    bool m_IsLoopback;
     FileDescriptor m_FD;
     std::string m_Location;
     std::unordered_map<unsigned int, std::shared_ptr<CANDevice>> m_DeviceMap;
 
     void UpdateFilter();
+};
+
+class CANDevice : public BaseDevice
+{
+public:
+    CANDevice() = delete;
+    CANDevice(std::shared_ptr<CANBus> bus,
+              unsigned int id,
+              std::function<ReceiveCallback> callback) noexcept;
+
+    std::shared_ptr<IIOBus> Bus() override;
+    void Invoke(size_t length, std::shared_ptr<uint8_t[]> data) override;
+    void WriteRaw(size_t length, std::shared_ptr<uint8_t[]> data) override;
+    void SetCallback(std::function<ReceiveCallback> callback) override; //非线程安全
+
+private:
+    const unsigned int m_Id;
+    std::shared_ptr<CANBus> m_Bus;
+    std::function<ReceiveCallback> m_Callback;
 };
 
 class CANManager : public IIOManager
@@ -105,7 +102,7 @@ public:
     std::shared_ptr<IIOBus> AddBus(std::string location, bool isLoopback);
 
     bool DelBus(std::shared_ptr<IIOBus> bus) override;
-    bool DelBus(std::string location);
+    bool DelBus(std::string location) override;
 
     void WriteTo(std::shared_ptr<BaseDevice> device, size_t length, std::shared_ptr<uint8_t[]> data) override;
 
