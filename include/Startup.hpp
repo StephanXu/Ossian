@@ -5,7 +5,7 @@
 
 class Startup
 {
-    using AppBuilder = ossian::IOAP::ApplicationBuilder;
+    using AppBuilder = ossian::ApplicationBuilder;
 
 public:
     static void ConfigServices(AppBuilder& app);

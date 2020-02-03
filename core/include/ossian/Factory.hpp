@@ -42,7 +42,7 @@ struct InstanceFactory;
 template<typename R, typename ...Deps>
 struct InstanceFactory<R(Deps...)>
 {
-	static auto Value(std::function<void(R&)> configProc)
+	static auto Value(std::function<void(R&)> configProc) -> std::function<std::unique_ptr<R>(Deps...)>
 	{
 		return std::function<std::unique_ptr<R>(Deps...)>
 		{

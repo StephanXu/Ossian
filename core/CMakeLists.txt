@@ -2,7 +2,6 @@ add_library(OssianCore)
 
 target_sources(OssianCore
 		PUBLIC
-			src/Configuration.cpp
 			src/Dispatcher.cpp
 			src/Pipeline.cpp
 			src/SerialPort.cpp

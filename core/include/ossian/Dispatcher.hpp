@@ -24,6 +24,10 @@
 
 namespace ossian
 {
+
+// 位于 Config.hpp
+class ApplicationBuilder;
+
 namespace IOAP
 {
 /**
@@ -34,16 +38,13 @@ namespace IOAP
 template <typename RetT>
 using Realizer = std::function<RetT(DI::Injector &)>;
 
-// 位于 Config.hpp
-class ApplicationBuilder;
-
 /**
  * @brief 分发器类型
  * 分发器类型应当由 ApplicationBuilder 创建
  */
 class Dispatcher
 {
-    friend class ApplicationBuilder;
+    friend class ossian::ApplicationBuilder;
 
 public:
     Dispatcher() = delete;

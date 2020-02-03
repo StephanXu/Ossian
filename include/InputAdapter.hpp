@@ -6,7 +6,7 @@
 #include <ossian/IOTypes.hpp>
 #include <ossian/Service.hpp>
 #include <ossian/io/SerialPort.hpp>
-#include <ossian/Factory.hpp>
+#include <ossian/Configuration.hpp>
 #include <spdlog/spdlog.h>
 #include <HKCamera.hpp>
 
@@ -72,23 +72,6 @@ public:
 private:
     cv::VideoCapture m_VideoSource;
     bool m_Valid;
-};
-
-template<>
-class Ioap::ServiceBuilder<VideoInputSource> : private Ioap::BaseServiceBuilder<VideoInputSource>
-{
-public:
-    ServiceBuilder(ApplicationBuilder& appBuilder,
-                   std::function<void(VideoInputSource)> configureProc)
-        : BaseServiceBuilder<VideoInputSource>(appBuilder, configureProc)
-    {
-    }
-
-    ServiceBuilder& AsInputAdapter()
-    {
-        m_InputAdapterRealizer.emplace_back(
-            [](DI::Injector& injector) { return injector.GetInstance<InputAdapterType>(); });
-    }
 };
 
 class FakeInputSource : public Ioap::BaseInputAdapter

@@ -13,11 +13,13 @@
 #define OSSIAN_CORE_SERVICE
 
 #include "IOTypes.hpp"
+#include "Factory.hpp"
 
 #include <memory>
 #include <string>
 #include <future>
 #include <typeindex>
+#include <type_traits>
 
 namespace ossian
 {
@@ -60,6 +62,10 @@ public:
      */
     virtual std::type_index GetInputTypeIndex() const = 0;
 };
+
+class ApplicationBuilder;
+
+
 } // namespace IOAP
 } // namespace ossian
 

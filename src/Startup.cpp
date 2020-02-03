@@ -14,39 +14,34 @@
 class RoboStatus : public ossian::IOAP::BaseStatus
 {
 public:
-	OSSIAN_SERVICE_SETUP(RoboStatus()) {}
+    OSSIAN_SERVICE_SETUP(RoboStatus())
+    {
+    }
 };
 
 void Startup::ConfigServices(AppBuilder& app)
 {
-	GOOGLE_PROTOBUF_VERIFY_VERSION;
-	app.InitLog();
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+    app.InitLog();
+    spdlog::info("MI_VERSION:{}", mi_version());
 
-	spdlog::info("MI_VERSION:{}", mi_version());
-	app.AddService<Utils::ConfigLoader>(
-		[](Utils::ConfigLoader& option)
-		{
-			option.LoadConfigFromUrl<OssianConfig::Configuration>(
-				"mrxzh.com",
-				5000,
-				"/config");
-		});
-	app.AddService<RoboStatus>();
-	//app.AddInputAdapter<CameraInputSource>();
-	//app.AddInputAdapter<FakeInputSource>();
-	app.AddInputAdapter<VideoInputSource>();
-	app.AddService<SerialPortIO>();
+    app.AddService<Utils::ConfigLoader>().LoadFromUrl<OssianConfig::Configuration>("mrxzh.com", 5000, "/config");
+    app.AddService<RoboStatus>();
+    app.AddService<VideoInputSource>().AsInputAdapter();
+    app.AddService<SerialPortIO>();
+    //app.AddInputAdapter<CameraInputSource>();
+    //app.AddInputAdapter<FakeInputSource>();
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)
 {
-	//app.RegisterPipeline<RoboStatus, FakeData,
-	//	SerialReport>();
+    //app.RegisterPipeline<RoboStatus, FakeData,
+    //	SerialReport>();
 
-	app.RegisterPipeline<RoboStatus, ImageInputData,
-		WindmillDetection>();
-	app.Add(WindmillDetection::CreateWindmillDetection);
+    app.RegisterPipeline<RoboStatus, ImageInputData,
+                         WindmillDetection>();
+    app.Add(WindmillDetection::CreateWindmillDetection);
 
-	//app.Register(Aimbot::CreateAimbot);
-	//app.Register(SerialReport::CreateSerialReport);
+    //app.Register(Aimbot::CreateAimbot);
+    //app.Register(SerialReport::CreateSerialReport);
 }
