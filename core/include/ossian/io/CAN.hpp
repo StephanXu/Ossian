@@ -41,7 +41,7 @@ class CANBus;
 class CANDevice;
 class CANManager;
 
-class CANBus : public IIOBus, std::enable_shared_from_this<CANBus>
+class CANBus : public IIOBus, public std::enable_shared_from_this<CANBus>
 {
 public:
     CANBus() = delete;

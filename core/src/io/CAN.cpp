@@ -223,9 +223,9 @@ namespace ossian
 
 	std::shared_ptr<IIOBus> CANManager::AddBus(std::string location, bool isLoopback)
 	{
-		auto device = std::make_shared<CANBus>(location, isLoopback);
-		m_BusMap.insert(std::make_pair(location, device));
-		return device;
+		auto bus = std::make_shared<CANBus>(location, isLoopback);
+		m_BusMap.insert(std::make_pair(location, bus));
+		return bus;
 	}
 
 	bool CANManager::DelBus(std::shared_ptr<IIOBus> bus)
