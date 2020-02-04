@@ -20,6 +20,7 @@
 #include "ossian/ApplicationBuilder.hpp"
 #include "ossian/Factory.hpp"
 #include "ossian/Configuration.hpp"
+#include "ossian/Motor.hpp"
 
 // IO
 #include "ossian/IOListener.hpp"
