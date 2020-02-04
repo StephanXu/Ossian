@@ -14,11 +14,11 @@
 class RoboStatus : public ossian::IOAP::BaseStatus
 {
 public:
-	OSSIAN_SERVICE_SETUP(RoboStatus()){}
+	OSSIAN_SERVICE_SETUP(RoboStatus()) {}
 };
 
 void Startup::ConfigServices(AppBuilder& app)
-{	
+{
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 	app.InitLog();
 	spdlog::info("MI_VERSION:{}", mi_version());
@@ -28,10 +28,12 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<RoboStatus>();
 	app.AddService<VideoInputSource>().AsInputAdapter();
 	app.AddService<SerialPortIO>();
-	//app.AddService<ossian::IOListener>([](ossian::IOListener& option)
-	//								   {
-
-	//								   });
+	app.AddService<ossian::IIOManager, ossian::CANManager>(
+		[](ossian::CANManager& mgr)
+		{
+			mgr.AddBus("can0", true);
+		});
+	app.AddService<ossian::IOListener>();
 	//app.AddInputAdapter<CameraInputSource>();
 	//app.AddInputAdapter<FakeInputSource>();
 }

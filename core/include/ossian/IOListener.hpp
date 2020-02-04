@@ -22,9 +22,10 @@ struct CallbackData
 class IOListener
 {
 public:
-	IOListener()
+	OSSIAN_SERVICE_SETUP(IOListener(DI::ServiceCollection<IIOManager>* ioManagers))
 	{
 		m_EpollFD = epoll_create(MAX_EVENTS); //创建一个Epoll
+		for (auto item : *ioManagers) { AddManager(item); }
 	}
 
 	const size_t MAX_EVENTS = 128; //应该写在配置文件当中
@@ -78,7 +79,7 @@ public:
 	}
 
 	// 让一个Manager被epoll接管
-	bool AddManager(std::shared_ptr<IIOManager> mgr)
+	bool AddManager(IIOManager* mgr)
 	{
 		auto type = mgr->Type();
 		auto it = m_IOManagers.find(type);
@@ -103,8 +104,9 @@ public:
 private:
 	int m_EpollFD;
 	std::unordered_map<int, std::unique_ptr<CallbackData>> m_FDRegistered;
-	std::unordered_map<IOType, std::shared_ptr<IIOManager>> m_IOManagers;
+	std::unordered_map<IOType, IIOManager*> m_IOManagers;
 };
+
 } // ossian
 #endif // __linux__
 #endif // OSSIAN_CORE_IOLISTENER
