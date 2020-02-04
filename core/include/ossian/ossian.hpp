@@ -12,21 +12,20 @@
 #ifndef OSSIAN_CORE_OSSIAN
 #define OSSIAN_CORE_OSSIAN
 
-#include "ossian/IOTypes.hpp"
 #include "ossian/DI.hpp"
 #include "ossian/Pipeline.hpp"
 #include "ossian/Dispatcher.hpp"
 #include "ossian/MultiThread.hpp"
 #include "ossian/Service.hpp"
-#include "ossian/Config.hpp"
+#include "ossian/ApplicationBuilder.hpp"
 #include "ossian/Factory.hpp"
 #include "ossian/Configuration.hpp"
 
 // IO
+#include "ossian/IOListener.hpp"
 #include "ossian/io/IO.hpp"
 #include "ossian/io/SerialPort.hpp"
 #include "ossian/io/CAN.hpp"
 #include "ossian/io/UART.hpp"
 #include "ossian/io/IOError.hpp"
-#include "ossian/io/IOTypes.hpp"
 #endif // OSSIAN_CORE_OSSIAN
