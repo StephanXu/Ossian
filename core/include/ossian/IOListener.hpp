@@ -78,7 +78,7 @@ public:
 	}
 
 	// 让一个Manager被epoll接管
-	bool AddManager(IIOManager* mgr)
+	bool AddManager(std::shared_ptr<IIOManager> mgr)
 	{
 		auto type = mgr->Type();
 		auto it = m_IOManagers.find(type);
@@ -103,7 +103,7 @@ public:
 private:
 	int m_EpollFD;
 	std::unordered_map<int, std::unique_ptr<CallbackData>> m_FDRegistered;
-	std::unordered_map<IOType, IIOManager*> m_IOManagers;
+	std::unordered_map<IOType, std::shared_ptr<IIOManager>> m_IOManagers;
 };
 } // ossian
 #endif // __linux__
