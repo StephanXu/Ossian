@@ -13,11 +13,14 @@
 #include <typeinfo>
 #include <typeindex>
 #include <string>
+#include <algorithm>
 
 namespace ossian
 {
 namespace DI
 {
+
+class DuplicateRegistration : std::exception {};
 
 //------------------------------------------------------------------------------
 // 类型封装
@@ -46,8 +49,12 @@ public:
 	template <class Key>
 	iterator find() { return m_Container.find(std::type_index(typeid(Key))); }
 
+	iterator find(std::type_index typeIndex) { return m_Container.find(typeIndex); }
+
 	template <class Key>
 	const_iterator find() const { return m_Container.find(std::type_index(typeid(Key))); }
+
+	const_iterator find(std::type_index typeIndex) const { return m_Container.find(typeIndex); }
 
 	template <class Key>
 	void put(ValueType&& value)
@@ -103,6 +110,54 @@ std::unique_ptr<AbstractInstanceContainer> WrapIntoInsatanceContainer(std::uniqu
 	return std::make_unique<InstanceContainer<T, Deleter>>(std::move(ptr));
 }
 
+class DIConfiguration;
+
+/**
+ * @brief Collection服务。
+ * 每个接口将同时生成一个Collection服务，用于接口的多实现
+ * @tparam T
+ */
+template<class T>
+class ServiceCollection
+{
+	using iterator = typename std::vector<T*>::iterator;
+	using const_iterator = typename std::vector<T*>::const_iterator;
+	using reverse_iterator = typename std::vector<T*>::reverse_iterator;
+	using const_reverse_iterator = typename std::vector<T*>::const_reverse_iterator;
+	friend class DIConfiguration;
+	ServiceCollection(std::vector<T*> servicesTypeIndex) :m_Services(servicesTypeIndex) {}
+	void AddServiceInstance(void* servicePointer)
+	{
+		m_Services.push_back(static_cast<T*>(servicePointer));
+	}
+	T* GetLastOne()
+	{
+		return *m_Services.rbegin();
+	}
+	std::vector<T*> m_Services;
+
+public:
+	iterator begin() { return m_Services.begin(); }
+	iterator end() { return m_Services.end(); }
+
+	const_iterator begin() const { return m_Services.begin(); }
+	const_iterator end() const { return m_Services.end(); }
+
+	const_iterator cbegin() const { return m_Services.cbegin(); }
+	const_iterator cend() const { return m_Services.cend(); }
+
+	reverse_iterator rbegin() { return m_Services.rbegin(); }
+	reverse_iterator rend() { return m_Services.rend(); }
+
+	const_reverse_iterator rbegin() const { return m_Services.rbegin(); }
+	const_reverse_iterator rend() const { return m_Services.rend(); }
+
+	const_reverse_iterator crbegin() const { return m_Services.crbegin(); }
+	const_reverse_iterator crend() const { return m_Services.crend(); }
+
+	size_t size() const { return m_Services.size(); }
+};
+
 //------------------------------------------------------------------------------
 // 注入器
 
@@ -116,7 +171,7 @@ template <class InstanceType, class Deleter, class... Deps>
 using InstanceFactoryFunction = std::function<std::unique_ptr<InstanceType, Deleter>(Deps *...)>;
 
 template <class InstanceType, class Deleter, class... Deps>
-using InstanceFactoryNativeFunction = std::unique_ptr<InstanceType, Deleter> (*)(Deps *...);
+using InstanceFactoryNativeFunction = std::unique_ptr<InstanceType, Deleter>(*)(Deps *...);
 
 /**
  * @brief 注入器
@@ -138,7 +193,13 @@ public:
 	template <class T, class Dependee = std::nullptr_t>
 	T* GetInstance() const
 	{
-		auto it = m_InstanceMap.find<T>();
+		auto it = m_InstanceMap.find<ServiceCollection<T>>();
+		if (it != m_InstanceMap.end())
+		{
+			return *(static_cast<ServiceCollection<T>*>(it->second->Get())->rbegin());
+		}
+
+		it = m_InstanceMap.find<T>();
 		if (it == m_InstanceMap.end())
 		{
 			throw std::runtime_error(std::string(typeid(T).name()) +
@@ -148,6 +209,7 @@ public:
 		return static_cast<T*>(it->second->Get());
 	}
 
+private:
 	template <class InstanceType, class Deleter, class... Deps>
 	std::unique_ptr<InstanceType, Deleter>
 		Inject(InstanceFactoryFunction<InstanceType, Deleter, Deps...> instanceFactory) const
@@ -156,7 +218,17 @@ public:
 							   typename std::remove_const_t<InstanceType>>()...);
 	}
 
-private:
+	void* GetInstance(std::type_index typeIndex)
+	{
+		auto it = m_InstanceMap.find(typeIndex);
+		if (it == m_InstanceMap.end())
+		{
+			throw std::runtime_error(std::string(typeIndex.name()) +
+									 ": unsatisfied dependency");
+		}
+		return it->second->Get();
+	}
+
 	Injector() = default;
 
 	using InstanceMap = TypeMap<std::unique_ptr<AbstractInstanceContainer>>;
@@ -178,25 +250,45 @@ public:
 	 * @tparam Deps 依赖项
 	 * @param instanceFactory 工厂函数
 	 */
-	template <class InstanceType, class Deleter, class... Deps>
+	template <class InterfaceType, class InstanceType, class Deleter, class... Deps>
 	void Add(InstanceFactoryFunction<InstanceType, Deleter, Deps...> instanceFactory)
 	{
 		std::type_index instanceTypeId = std::type_index(typeid(typename std::remove_const_t<InstanceType>));
 		DependencyNode& node = m_Graph[instanceTypeId];
-		node.m_Initializer = [instanceFactory](Injector& inj) {
+		node.m_DebugTypeName = typeid(typename std::remove_const_t<InterfaceType>).name();
+		node.m_Initializer = [instanceFactory](Injector& inj)
+		{
+			// 此处无法支持同一个服务注册到两个接口
 			auto instance = WrapIntoInsatanceContainer(inj.Inject(instanceFactory));
 			inj.m_InstanceMap.put<InstanceType>(std::move(instance));
 		};
 		node.m_HasInitializer = true;
 		node.m_DebugTypeName = typeid(typename std::remove_const_t<InstanceType>).name();
 		node.m_Dependencies = { std::type_index(typeid(typename std::remove_const_t<Deps>))... };
+
+		std::type_index interfaceTypeId =
+			std::type_index(typeid(typename std::remove_const_t<ServiceCollection<InterfaceType>>));
+		DependencyNode& collectionNode = m_Graph[interfaceTypeId];
+		collectionNode.m_Dependencies.push_back(instanceTypeId);
+		collectionNode.m_Initializer = [dependencies = collectionNode.m_Dependencies](Injector& inj)
+		{
+			std::vector<InterfaceType*> services;
+			for (auto&& item : dependencies)
+			{
+				services.push_back(static_cast<InterfaceType*>(inj.GetInstance(item)));
+			}
+			auto instance = WrapIntoInsatanceContainer(
+				std::unique_ptr<ServiceCollection<InterfaceType>>(new ServiceCollection<InterfaceType>(services)));
+			inj.m_InstanceMap.put<ServiceCollection<InterfaceType>>(std::move(instance));
+		};
+		collectionNode.m_HasInitializer = true;
 	}
 
-	template <class InstanceType, class Deleter, class... Deps>
+	template <class InterfaceType, class InstanceType, class Deleter, class... Deps>
 	void Add(InstanceFactoryNativeFunction<InstanceType, Deleter, Deps...> instanceFactory)
 	{
 		InstanceFactoryFunction<InstanceType, Deleter, Deps...> factoryFunction{ instanceFactory };
-		Add(factoryFunction);
+		Add<InterfaceType>(factoryFunction);
 	}
 
 	/**
@@ -267,7 +359,6 @@ private:
 			}
 		}
 	}
-
 	std::unordered_map<std::type_index, DependencyNode> m_Graph;
 };
 

@@ -26,6 +26,7 @@
 #include "ossian/io/IO.hpp"
 #include "ossian/io/SerialPort.hpp"
 #include "ossian/io/CAN.hpp"
-#include "ossian/io/UART.hpp"
+//#include "ossian/io/UART.hpp"
 #include "ossian/io/IOError.hpp"
+
 #endif // OSSIAN_CORE_OSSIAN

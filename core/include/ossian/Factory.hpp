@@ -36,46 +36,28 @@ namespace ossian
 	using _OssianServiceInjectorType=Signature;	\
 	Signature
 
-template<typename T>
+template<typename ServiceType>
 struct InstanceFactory;
 
-template<typename R, typename ...Deps>
-struct InstanceFactory<R(Deps...)>
+template<typename ServiceType, typename ...Deps>
+struct InstanceFactory<ServiceType(Deps...)>
 {
-	static auto Value(std::function<void(R&)> configProc) -> std::function<std::unique_ptr<R>(Deps...)>
-	{
-		return std::function<std::unique_ptr<R>(Deps...)>
-		{
-			[configProc](Deps...deps)
-			{
-				auto instance = std::make_unique<R>(deps...);
-				if (configProc)
-				{
-					configProc(*instance);
-				}
-				return instance;
-			}
-		};
-	}
+    static auto Value(std::function<void(ServiceType&)> configProc)
+    {
+        return std::function<std::unique_ptr<ServiceType>(Deps...)>
+        {
+            [configProc](Deps...deps)
+            {
+                auto instance = std::make_unique<ServiceType>(deps...);
+                if (configProc)
+                {
+                    configProc(*instance);
+                }
+                return std::move(instance);
+            }
+        };
+    }
 };
-
-//class Factory
-//{
-//public:
-//	template<class ServiceType, class ...Deps>
-//	static std::unique_ptr<ServiceType> CreateGeneralService(Deps*...deps)
-//	{
-//		return std::unique_ptr<ServiceType>(new ServiceType(deps...)); ///< std::make_unique无法访问ServiceType的私有域
-//	}
-//
-//	template<class ConfigureService, class ConfigureProc>
-//	static std::unique_ptr<ConfigureService> CreateGeneralServiceConfigure(ConfigureProc configureProc)
-//	{
-//		auto instance = std::unique_ptr<ConfigureService>(new ConfigureService);
-//		configureProc(*instance);
-//		return instance;
-//	}
-//};
 
 } // ossian
 
