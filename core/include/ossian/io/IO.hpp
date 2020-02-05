@@ -35,6 +35,7 @@ using FrameData = std::tuple<size_t, std::shared_ptr<uint8_t[]>>;
 
 enum class IOType
 {
+	Undefined,
 	UART,
 	CAN
 };

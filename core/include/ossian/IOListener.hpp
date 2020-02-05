@@ -1,13 +1,14 @@
 ﻿#ifndef OSSIAN_CORE_IOLISTENER
 #define OSSIAN_CORE_IOLISTENER
 
-#ifdef __linux__
 
+#ifdef __linux__
+#include "Factory.hpp"
+#include "DI.hpp"
 #include <sys/epoll.h>
 #include <unordered_map>
-#include <exception>
 #include <string>
-
+#include <vector>
 #include <iostream>
 
 #include "io/IO.hpp"
@@ -22,13 +23,15 @@ struct CallbackData
 class IOListener
 {
 public:
-	OSSIAN_SERVICE_SETUP(IOListener(DI::ServiceCollection<IIOManager>* ioManagers))
+	const size_t MAX_EVENTS = 128; //应该写在配置文件当中
+	
+	OSSIAN_SERVICE_SETUP(IOListener(std::vector<IIOManager*>* ioManagers))
 	{
 		m_EpollFD = epoll_create(MAX_EVENTS); //创建一个Epoll
 		for (auto item : *ioManagers) { AddManager(item); }
 	}
 
-	const size_t MAX_EVENTS = 128; //应该写在配置文件当中
+	
 	void Listen(long timeout)
 	{
 		struct epoll_event events[MAX_EVENTS + 1];

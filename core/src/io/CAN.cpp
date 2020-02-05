@@ -252,12 +252,23 @@ std::shared_ptr<BaseDevice> CANManager::AddDevice(std::shared_ptr<CANBus> bus,
 	return bus->AddDevice(id, callback);
 }
 
+std::shared_ptr<BaseDevice> CANManager::AddDevice(std::string location,
+	const unsigned int id,
+	const std::function<ReceiveCallback> callback)
+{
+	auto bus = Bus(location);
+	if (nullptr == bus)
+	{
+		bus = AddBus(location);
+	}
+	return std::dynamic_pointer_cast<CANBus>(bus)->AddDevice(id, callback);
+}
+
 std::shared_ptr<IIOBus> CANManager::Bus(const std::string location)
 {
 	const auto it = m_BusMap.find(location);
 	if (it == m_BusMap.end())
 	{
-		throw std::runtime_error("No such CAN device");
 		return nullptr;
 	}
 	return it->second;
