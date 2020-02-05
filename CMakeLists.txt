@@ -24,6 +24,8 @@ target_sources(Ossian
             src/Startup.cpp
             src/Utils.cpp
             src/WindmillDetection.cpp
+            src/Gimbal.cpp
+            src/Chassis.cpp
         )
 target_include_directories(Ossian
         PRIVATE

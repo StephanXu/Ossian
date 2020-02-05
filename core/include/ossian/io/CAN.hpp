@@ -58,7 +58,7 @@ public:
 	std::vector<std::shared_ptr<BaseDevice>> GetDevices() override;
 
 	std::shared_ptr<BaseDevice> AddDevice(unsigned int id,
-		std::function<ReceiveCallback> callback);
+										  std::function<ReceiveCallback> callback);
 	void WriteRaw(unsigned int id, size_t length, std::shared_ptr<uint8_t[]> data);
 
 private:
@@ -76,8 +76,8 @@ class CANDevice : public BaseDevice, public std::enable_shared_from_this<CANDevi
 public:
 	CANDevice() = delete;
 	CANDevice(std::shared_ptr<CANBus> bus,
-		unsigned int id,
-		std::function<ReceiveCallback> callback) noexcept;
+			  unsigned int id,
+			  std::function<ReceiveCallback> callback) noexcept;
 
 	std::shared_ptr<IIOBus> Bus() override;
 	void Invoke(size_t length, std::shared_ptr<uint8_t[]> data) override;
@@ -107,11 +107,11 @@ public:
 	void WriteTo(std::shared_ptr<BaseDevice> device, size_t length, std::shared_ptr<uint8_t[]> data) override;
 
 	std::shared_ptr<BaseDevice> AddDevice(std::shared_ptr<CANBus> bus, unsigned int id,
-		std::function<ReceiveCallback> callback);
+										  std::function<ReceiveCallback> callback);
 	std::shared_ptr<BaseDevice> AddDevice(std::string location,
-		const unsigned int id,
-		const std::function<ReceiveCallback> callback);
-	
+										  const unsigned int id,
+										  const std::function<ReceiveCallback> callback);
+
 	std::shared_ptr<IIOBus> Bus(std::string location) override;
 
 	std::vector<std::shared_ptr<IIOBus>> GetBuses() override;
