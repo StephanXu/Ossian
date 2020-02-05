@@ -108,7 +108,10 @@ public:
 
 	std::shared_ptr<BaseDevice> AddDevice(std::shared_ptr<CANBus> bus, unsigned int id,
 		std::function<ReceiveCallback> callback);
-
+	std::shared_ptr<BaseDevice> AddDevice(std::string location,
+		const unsigned int id,
+		const std::function<ReceiveCallback> callback);
+	
 	std::shared_ptr<IIOBus> Bus(std::string location) override;
 
 	std::vector<std::shared_ptr<IIOBus>> GetBuses() override;
