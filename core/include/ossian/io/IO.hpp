@@ -50,7 +50,7 @@ enum class IOType
 class BaseDevice
 {
 public:
-
+	virtual ~BaseDevice();
 	/**
 	 * @fn	virtual std::shared_ptr<IIOBus> BaseDevice::Bus() const noexcept = 0;
 	 * @brief	获取设备所在总线的句柄
@@ -93,6 +93,7 @@ public:
 
 	virtual void SetCallback(std::function<ReceiveCallback> callback) = 0;
 };
+inline BaseDevice::~BaseDevice() = default;
 
 /**
  * @class	IIOBus
@@ -104,7 +105,7 @@ public:
 class IIOBus
 {
 public:
-
+	virtual ~IIOBus();
 	/**
 	 * @fn	virtual std::shared_ptr<IIOBus> BaseDevice::Bus() const noexcept = 0;
 	 * @brief	获取总线管理器的句柄
@@ -186,6 +187,7 @@ public:
 
 	virtual std::vector<std::shared_ptr<BaseDevice>> GetDevices() = 0;
 };
+inline IIOBus::~IIOBus() = default;
 
 /**
  * @class	IIOManager
@@ -197,7 +199,7 @@ public:
 class IIOManager
 {
 public:
-
+	virtual ~IIOManager();
 	/**
 	 * @fn	virtual IOType IIOManager::Type() const noexcept = 0;
 	 * @brief	所管理的IO类型
@@ -275,6 +277,7 @@ public:
 
 	virtual std::vector<std::shared_ptr<IIOBus>> GetBuses() = 0;
 };
+inline IIOManager::~IIOManager() = default;
 } // ossian
 #endif // __linux__
 #endif // OSSIAN_CORE_IO_INTERFACES
