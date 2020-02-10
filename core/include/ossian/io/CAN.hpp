@@ -7,24 +7,12 @@
 #define OSSIAN_CORE_IO_CAN
 #ifdef __linux__
 
-#include <linux/can.h>
-#include <linux/can/raw.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <unistd.h>
-
 #include <functional>
 #include <unordered_map>
 #include <memory>
 #include <vector>
 #include <string>
-#include <cstring>
-#include <tuple>
-#include <exception>
-
 #include "IO.hpp"
-#include "IOError.hpp"
 
 namespace ossian
 {
@@ -46,7 +34,7 @@ class CANBus : public IIOBus, public std::enable_shared_from_this<CANBus>
 public:
 	CANBus() = delete;
 	CANBus(std::shared_ptr<CANManager> manager, std::string location, bool isLoopback);
-	CANBus(const CANBus& canDevice) = delete;
+	CANBus(const CANBus&) = delete;
 	~CANBus();
 	std::shared_ptr<IIOManager> Manager() override;
 	FileDescriptor FD() const noexcept override;
@@ -78,7 +66,8 @@ public:
 	CANDevice(std::shared_ptr<CANBus> bus,
 			  unsigned int id,
 			  std::function<ReceiveCallback> callback) noexcept;
-
+	CANDevice(const CANDevice&) = delete;
+	
 	std::shared_ptr<IIOBus> Bus() override;
 	void Invoke(size_t length, std::shared_ptr<uint8_t[]> data) override;
 	void WriteRaw(size_t length, std::shared_ptr<uint8_t[]> data) override;
@@ -94,7 +83,7 @@ class CANManager : public IIOManager, public std::enable_shared_from_this<CANMan
 {
 public:
 	CANManager() = default;
-
+	CANManager(const CANManager&) = delete;
 	IOType Type() const noexcept override;
 
 	// 注册设备

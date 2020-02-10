@@ -12,7 +12,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
-#include <tuple>
+#include <mutex>
 #include <exception>
 
 #include "ossian/io/IO.hpp"
@@ -149,14 +149,18 @@ void CANBus::WriteRaw(unsigned int id, size_t length, std::shared_ptr<uint8_t[]>
 		rawFrame.can_id = id;
 		rawFrame.can_dlc = length;
 		memcpy(rawFrame.data, data.get(), length);
-		while (1)
+		static std::mutex writeMutex;
 		{
-			const int bytes = write(m_FD, &rawFrame, sizeof(rawFrame));
-			if ((bytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待处理
+			std::lock_guard<std::mutex> writeLock(writeMutex);
+			while (1)
 			{
-				continue;//继续接收数据
+				const int bytes = write(m_FD, &rawFrame, sizeof(rawFrame));
+				if ((bytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待处理
+				{
+					continue;//继续接收数据
+				}
+				break;//跳出接收循环
 			}
-			break;//跳出接收循环
 		}
 	}
 }
@@ -188,7 +192,7 @@ void CANBus::UpdateFilter()
 // CANDevice
 
 CANDevice::CANDevice(std::shared_ptr<CANBus> bus, unsigned int id, std::function<ReceiveCallback> callback) noexcept
-	: m_Bus(bus), m_Id(id), m_Callback(callback)
+	:  m_Id(id), m_Bus(bus), m_Callback(callback)
 {}
 
 std::shared_ptr<IIOBus> CANDevice::Bus()
