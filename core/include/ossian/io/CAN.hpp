@@ -33,13 +33,13 @@ class CANBus : public IIOBus, public std::enable_shared_from_this<CANBus>
 {
 public:
 	CANBus() = delete;
-	CANBus(std::shared_ptr<CANManager> manager, std::string location, bool isLoopback);
+	explicit CANBus(std::shared_ptr<CANManager> manager, std::string location, bool isLoopback);
 	CANBus(const CANBus&) = delete;
 	~CANBus();
-	std::shared_ptr<IIOManager> Manager() override;
-	FileDescriptor FD() const noexcept override;
-	std::string Location() const noexcept override;
-	bool IsOpened() const noexcept override;
+	const std::shared_ptr<IIOManager> Manager() override { return std::static_pointer_cast<IIOManager>(m_Manager); }
+	FileDescriptor FD() const noexcept override { return m_FD; }
+	const std::string Location() const noexcept override { return m_Location; }
+	bool IsOpened() const noexcept override { return m_IsOpened; }
 	bool Open() override;
 	bool Close() override;
 	void Read() override;
@@ -63,15 +63,15 @@ class CANDevice : public BaseDevice, public std::enable_shared_from_this<CANDevi
 {
 public:
 	CANDevice() = delete;
-	CANDevice(std::shared_ptr<CANBus> bus,
+	explicit CANDevice(std::shared_ptr<CANBus> bus,
 			  unsigned int id,
 			  std::function<ReceiveCallback> callback) noexcept;
 	CANDevice(const CANDevice&) = delete;
-	
-	std::shared_ptr<IIOBus> Bus() override;
-	void Invoke(size_t length, std::shared_ptr<uint8_t[]> data) override;
-	void WriteRaw(size_t length, std::shared_ptr<uint8_t[]> data) override;
-	void SetCallback(std::function<ReceiveCallback> callback) override; //非线程安全
+
+	const std::shared_ptr<IIOBus> Bus() const override { return std::dynamic_pointer_cast<IIOBus>(m_Bus); }
+	void Invoke(const size_t length, std::shared_ptr<uint8_t[]> const& data) override { m_Callback(shared_from_this(), length, data); }
+	void WriteRaw(const size_t length, std::shared_ptr<uint8_t[]> const& data) override { m_Bus->WriteRaw(m_Id, length, data); }
+	void SetCallback(std::function<ReceiveCallback> const& callback) override { m_Callback = callback; }
 
 private:
 	const unsigned int m_Id;
@@ -82,28 +82,28 @@ private:
 class CANManager : public IIOManager, public std::enable_shared_from_this<CANManager>
 {
 public:
-	CANManager() = default;
+	explicit CANManager() = default;
 	CANManager(const CANManager&) = delete;
-	IOType Type() const noexcept override;
+	IOType Type() const noexcept override { return IOType::CAN; }
 
 	// 注册设备
-	std::shared_ptr<IIOBus> AddBus(std::string location) override;
-	std::shared_ptr<IIOBus> AddBus(std::string location, bool isLoopback);
+	const std::shared_ptr<IIOBus> AddBus(std::string const& location) override;
+	const std::shared_ptr<IIOBus> AddBus(std::string const& location, bool isLoopback);
 
 	bool DelBus(std::shared_ptr<IIOBus> bus) override;
-	bool DelBus(std::string location) override;
+	bool DelBus(std::string const& location) override;
 
-	void WriteTo(std::shared_ptr<BaseDevice> device, size_t length, std::shared_ptr<uint8_t[]> data) override;
+	void WriteTo(std::shared_ptr<BaseDevice> const& device, size_t length, std::shared_ptr<uint8_t[]> const& data) override;
 
-	std::shared_ptr<BaseDevice> AddDevice(std::shared_ptr<CANBus> bus, unsigned int id,
-										  std::function<ReceiveCallback> callback);
-	std::shared_ptr<BaseDevice> AddDevice(std::string location,
-										  const unsigned int id,
-										  const std::function<ReceiveCallback> callback);
+	const std::shared_ptr<BaseDevice> AddDevice(std::shared_ptr<CANBus> const& bus, const unsigned id,
+												std::function<ReceiveCallback> const& callback);
+	const std::shared_ptr<BaseDevice> AddDevice(std::string const& location,
+												const unsigned int id,
+												const std::function<ReceiveCallback> callback);
 
-	std::shared_ptr<IIOBus> Bus(std::string location) override;
+	const std::shared_ptr<IIOBus> Bus(std::string const& location) const override;
 
-	std::vector<std::shared_ptr<IIOBus>> GetBuses() override;
+	const std::vector<std::shared_ptr<IIOBus>> GetBuses() const override;
 
 private:
 	std::unordered_map<std::string, std::shared_ptr<IIOBus>> m_BusMap;
