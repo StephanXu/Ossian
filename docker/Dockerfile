@@ -1,27 +1,3 @@
-# 
-# You can build a mock development enviornment from this Dockerfile.
-#
-# Note: Docker can't support running aarch container on x64 platform so this 
-# environment can only used to validate compile-time correctness.
-#
-# You may also need to connect development container, here is a initialization 
-# sample:
-#
-#   > service ssh start
-#   > useradd -m -d /home/<user-name> -s /bin/bash -G sudo <user-name>
-#   > passwd <user-name>
-#
-# If you connect the development container through IDEs support CMake. You may 
-# need these parameters:
-#
-#   Vcpkg toolchain path: /tmp/vcpkg/scripts/buildsystems/vcpkg.cmake
-#   CMake path: /usr/local/bin/cmake
-#   CMake arguments: 
-#       -DCMAKE_PREFIX_PATH="/opt/MVS/include;/opt/MVS/lib/64"
-#
-# docker run -itd --name ossian-dev -p 20022:22 ossian-dev-env /bin/bash
-#
-
 
 FROM ubuntu:18.04 as build
  

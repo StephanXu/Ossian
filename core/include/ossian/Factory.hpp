@@ -1,6 +1,9 @@
 ﻿#ifndef OSSIAN_CORE_FACTORY
 #define OSSIAN_CORE_FACTORY
 
+#include <functional>
+#include <memory>
+
 namespace ossian
 {
 

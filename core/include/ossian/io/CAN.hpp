@@ -12,7 +12,9 @@
 #include <memory>
 #include <vector>
 #include <string>
+
 #include "IO.hpp"
+#include "../Factory.hpp"
 
 namespace ossian
 {
@@ -82,7 +84,7 @@ private:
 class CANManager : public IIOManager, public std::enable_shared_from_this<CANManager>
 {
 public:
-	explicit CANManager() = default;
+	OSSIAN_SERVICE_SETUP(CANManager()) = default;
 	CANManager(const CANManager&) = delete;
 	IOType Type() const noexcept override { return IOType::CAN; }
 
