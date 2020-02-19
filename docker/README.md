@@ -35,7 +35,13 @@ docker rm ossian-dev
 
 ### SSH support
 
-You may also need to connect development container, here is a initialization sample:
+By default, container will create a user in `root` group and set a password for SSH connection. The default username is `Ossian` and default password is `Ossian`. You can specify username and password through setting enviornment variables as follow:
+
+```bash
+docker run -itd --name ossian-dev -p 20022:22 -e username=<user-name> -e password=<password> stephanxu/ossian-dev-env:<tag>
+```
+
+It equivalent to run following command automatically when the container start:
 
 ```bash
 service ssh start

@@ -17,7 +17,7 @@ RUN cd /tmp \
     && dpkg -i MVS-2.0.0_x86_64_20191126.deb
 
 RUN cd /tmp \
-    && wget https://github.com/microsoft/CMake/releases/download/v3.16.3311152/cmake-3.16.3311152-MSVC_2-Linux-x64.sh \
+    && wget "https://github.com/microsoft/CMake/releases/download/v3.16.3311152/cmake-3.16.3311152-MSVC_2-Linux-x64.sh" \
     && chmod +x cmake-3.16.3311152-MSVC_2-Linux-x64.sh \
     && ./cmake-3.16.3311152-MSVC_2-Linux-x64.sh --prefix=/usr/local --skip-license \
     && rm cmake-3.16.3311152-MSVC_2-Linux-x64.sh
@@ -65,6 +65,38 @@ RUN cd /tmp \
     && cmake -DCMAKE_BUILD_TYPE=Debug ../.. \
     && make -j4
 
+RUN apt install -y libcpprest-dev \
+    && cd /tmp \
+    && git clone https://github.com/StephanXu/SignalR-Client-Cpp.git -n \
+    && cd SignalR-Client-Cpp \
+    && git checkout 0b86c8ec6aa02f4dd3e92c172f9b0a516f06e728 \
+    && git submodule update --init \
+    && mkdir build.release \
+    && cd build.release \
+    && cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DUSE_CPPRESTSDK=true \
+        -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/ \
+        -DCMAKE_INSTALL_PREFIX=/tmp/libs/release/SignalR-Client-Cpp \
+    && make -j4 \
+    && make install \
+    && cd .. \
+    && mkdir build.debug \
+    && cd build.debug \
+    && cmake .. \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DUSE_CPPRESTSDK=true \
+        -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/ \
+        -DCMAKE_INSTALL_PREFIX=/tmp/libs/debug/SignalR-Client-Cpp/ \
+    && make -j4 \
+    && make install
+
 EXPOSE 22
 
-CMD ["bin/bash"]
+ENV username=Ossian
+ENV password=Ossian
+
+CMD service ssh restart \
+    && useradd -m -d /home/$username -s /bin/bash -G root $username \
+    && (echo $password; echo $password) | passwd $username \
+    && /bin/bash
