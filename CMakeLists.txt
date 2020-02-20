@@ -7,7 +7,7 @@ add_executable(Ossian)
 find_package(OpenCV REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-find_package(mimalloc 1.4 REQUIRED)
+find_package(mimalloc 1.6 REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 
 add_subdirectory(proto)

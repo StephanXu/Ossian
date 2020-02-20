@@ -97,6 +97,6 @@ ENV username=Ossian
 ENV password=Ossian
 
 CMD service ssh restart \
-    && useradd -m -d /home/$username -s /bin/bash -G root $username \
+    && useradd -m -d /home/$username -s /bin/bash -G root $username || true \
     && (echo $password; echo $password) | passwd $username \
     && /bin/bash

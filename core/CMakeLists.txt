@@ -16,6 +16,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(mimalloc 1.6 REQUIRED)
 
 target_compile_features(OssianCore PUBLIC cxx_std_17)
 target_link_libraries(OssianCore
@@ -24,6 +25,7 @@ target_link_libraries(OssianCore
 			spdlog::spdlog
 			ZLIB::ZLIB
 			protobuf::libprotobuf
+			mimalloc
 		)
 
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
