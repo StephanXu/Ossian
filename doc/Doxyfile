@@ -793,6 +793,7 @@ WARN_LOGFILE           =
 INPUT                  = src \
                          include \
                          doc \
+                         docker \
                          core/include/ossian \
                          core/src \
                          README.md

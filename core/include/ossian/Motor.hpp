@@ -74,7 +74,9 @@ public:
 	{
 		if (buffer)
 		{
-			std::memcpy(&outModel, buffer.get(), bufferSize);
+			std::copy(buffer.get(),
+					  buffer.get() + bufferSize,
+					  reinterpret_cast<uint8_t*>(&outModel));
 		}
 	}
 
