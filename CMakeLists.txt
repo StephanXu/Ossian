@@ -8,6 +8,7 @@ find_package(OpenCV REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(mimalloc 1.4 REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED)
 
 add_subdirectory(proto)
 add_subdirectory(core)
@@ -40,6 +41,7 @@ target_link_libraries(Ossian
             proto
             ${OpenCV_LIBS}
             OssianCore
+            Eigen3::Eigen
         )
 
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")

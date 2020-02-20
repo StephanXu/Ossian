@@ -2,6 +2,7 @@
 #define OSSIAN_CORE_MOTOR
 
 #include <chrono>
+#include <cstring>
 
 #include "Factory.hpp"
 #include "io/CAN.hpp"
@@ -13,6 +14,9 @@ class IMotor
 {
 public:
 	virtual auto Parse(std::shared_ptr<uint8_t[]> buffer, size_t bufferSize)->void = 0;
+	//virtual auto Status()->ReceiveModel & = 0;
+	virtual auto MotorID()->uint32_t = 0;
+	virtual auto TimeStamp()->std::chrono::high_resolution_clock::time_point = 0;
 };
 
 template<class MotorType>
@@ -56,14 +60,14 @@ public:
 #pragma pack(push,1)
 	struct ReceiveModel
 	{
-		uint16_t m_Angle;
-		int16_t m_Speed;
+		uint16_t m_Encoding;
+		int16_t m_RPM;
 		int16_t m_Current;
 		uint8_t m_Temperature;
 		uint8_t m_Reserve;
 	};
 #pragma pack(pop)
-
+	
 	static auto Parse(ReceiveModel& outModel,
 					  std::shared_ptr<uint8_t[]> buffer,
 					  const size_t bufferSize)
@@ -82,9 +86,13 @@ public:
 
 	auto Status()->ReceiveModel& { return m_Status; }
 
+	auto MotorID()->uint32_t override { return m_MotorID; }
+	auto TimeStamp()->std::chrono::high_resolution_clock::time_point override { return m_TimeStamp; }
+
 private:
 	ReceiveModel m_Status = {};
 	std::chrono::high_resolution_clock::time_point m_TimeStamp;
+	uint32_t m_MotorID;
 };
 
 } // ossian
