@@ -1,3 +1,6 @@
+#ifndef CTRLALGORITHMS_HPP
+#define CTRLALGORITHMS_HPP
+
 #include <cmath>
 #include <limits>
 #include <chrono>
@@ -160,3 +163,5 @@ private:
 	double m_ThresIntegral, m_ThresOutput;
 	double m_DeadValue; //死区：PID输出小于此值，执行机构没反应
 };
+
+#endif //CTRLALGORITHMS_HPP
