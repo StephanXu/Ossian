@@ -1,4 +1,4 @@
-#ifndef OSSIAN_CHASSIS_HPP
+ï»¿#ifndef OSSIAN_CHASSIS_HPP
 #define OSSIAN_CHASSIS_HPP
 
 #include <ossian/Motor.hpp>
@@ -14,37 +14,37 @@
 class Chassis
 {	
 public:
-	//ÂóÂÖÔË¶¯
+	//éº¦è½®è¿åŠ¨
 	static constexpr double WHEEL_RADIUS = 76 / 1000;
 	static constexpr double WHEEL_XN = 175 / 1000;
 	static constexpr double WHEEL_YN = 232.5 / 1000;
-	static constexpr double LIMIT_WHEEL_SPEED = 5;  //µ¥¸öÂóÂÖµÄ×î´óËÙ¶È
+	static constexpr double LIMIT_WHEEL_SPEED = 5;  //å•ä¸ªéº¦è½®çš„æœ€å¤§é€Ÿåº¦
 	static constexpr double MOTOR_RPM_TO_WHEEL_SPEED = 1 / 9.5;
 
-	//µ×ÅÌ¹¦ÂÊ¿ØÖÆ
+	//åº•ç›˜åŠŸç‡æ§åˆ¶
 	static constexpr double LIMIT_BUFFER_TOTAL_CURRENT = 16000;
 	static constexpr double LIMIT_POWER_TOTAL_CURRENT = 20000;
 	static constexpr double SPCAP_WARN_VOLTAGE = 1;
 
-	//Ò£¿ØÆ÷½âÎö
-	static constexpr size_t CHASSIS_X_CHANNEL = 1; //¿ØÖÆµ×ÅÌ Ç°ºó ËÙ¶ÈµÄÒ£¿ØÆ÷Í¨µÀ
-	static constexpr size_t CHASSIS_Y_CHANNEL = 0; //¿ØÖÆµ×ÅÌ ×óÓÒ ËÙ¶ÈµÄÒ£¿ØÆ÷Í¨µÀ
-	static constexpr size_t CHASSIS_Z_CHANNEL = 2; //¿ØÖÆµ×ÅÌ Ğı×ª ËÙ¶ÈµÄÒ£¿ØÆ÷Í¨µÀ
-	static constexpr size_t CHASSIS_MODE_CHANNEL = 0; //Ñ¡Ôñµ×ÅÌ×´Ì¬µÄ¿ª¹ØÍ¨µÀ
+	//é¥æ§å™¨è§£æ
+	static constexpr size_t CHASSIS_X_CHANNEL = 1; //æ§åˆ¶åº•ç›˜ å‰å é€Ÿåº¦çš„é¥æ§å™¨é€šé“
+	static constexpr size_t CHASSIS_Y_CHANNEL = 0; //æ§åˆ¶åº•ç›˜ å·¦å³ é€Ÿåº¦çš„é¥æ§å™¨é€šé“
+	static constexpr size_t CHASSIS_Z_CHANNEL = 2; //æ§åˆ¶åº•ç›˜ æ—‹è½¬ é€Ÿåº¦çš„é¥æ§å™¨é€šé“
+	static constexpr size_t CHASSIS_MODE_CHANNEL = 0; //é€‰æ‹©åº•ç›˜çŠ¶æ€çš„å¼€å…³é€šé“
 
 	static constexpr uint16_t RC_SW_UP = 1;
 	static constexpr uint16_t RC_SW_MID = 3;
 	static constexpr uint16_t RC_SW_DOWN = 2;
 
-	static constexpr int16_t CHASSIS_RC_DEADBAND = 10; //Ò¡¸ËËÀÇø
-	static constexpr double CHASSIS_VX_RC_SEN = 0.006; //Ò£¿ØÆ÷Ç°½øÒ¡¸Ë£¨max 660£©×ª»¯³É³µÌåÇ°½øËÙ¶È£¨m/s£©µÄ±ÈÀı
-	static constexpr double CHASSIS_VY_RC_SEN = 0.005; //Ò£¿ØÆ÷×óÓÒÒ¡¸Ë£¨max 660£©×ª»¯³É³µÌå×óÓÒËÙ¶È£¨m/s£©µÄ±ÈÀı
-	static constexpr double CHASSIS_WZ_RC_SEN = 0.01;  //²»¸úËæÔÆÌ¨µÄÊ±ºò£¬Ò£¿ØÆ÷µÄyawÒ£¸Ë£¨max 660£©×ª»¯³É³µÌåĞı×ªËÙ¶ÈµÄ±ÈÀı
+	static constexpr int16_t CHASSIS_RC_DEADBAND = 10; //æ‘‡æ†æ­»åŒº
+	static constexpr double CHASSIS_VX_RC_SEN = 0.006; //é¥æ§å™¨å‰è¿›æ‘‡æ†ï¼ˆmax 660ï¼‰è½¬åŒ–æˆè½¦ä½“å‰è¿›é€Ÿåº¦ï¼ˆm/sï¼‰çš„æ¯”ä¾‹
+	static constexpr double CHASSIS_VY_RC_SEN = 0.005; //é¥æ§å™¨å·¦å³æ‘‡æ†ï¼ˆmax 660ï¼‰è½¬åŒ–æˆè½¦ä½“å·¦å³é€Ÿåº¦ï¼ˆm/sï¼‰çš„æ¯”ä¾‹
+	static constexpr double CHASSIS_WZ_RC_SEN = 0.01;  //ä¸è·Ÿéšäº‘å°çš„æ—¶å€™ï¼Œé¥æ§å™¨çš„yawé¥æ†ï¼ˆmax 660ï¼‰è½¬åŒ–æˆè½¦ä½“æ—‹è½¬é€Ÿåº¦çš„æ¯”ä¾‹
 
-	//µ×ÅÌÔË¶¯
+	//åº•ç›˜è¿åŠ¨
 	static constexpr double CHASSIS_VX_MAX = 4.5; // m/s
 	static constexpr double CHASSIS_VY_MAX = 1.5; // m/s
-	static constexpr double TOP_WZ = 3;  //µ×ÅÌÍÓÂİĞı×ªËÙ¶È rad/s
+	static constexpr double TOP_WZ = 3;  //åº•ç›˜é™€èºæ—‹è½¬é€Ÿåº¦ rad/s
 
 	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager))
 		: m_MotorManager(motorManager)
@@ -74,10 +74,10 @@ public:
 
 	enum ChassisMode
 	{
-		DISABLE,             //Ê§ÄÜ
-		FOLLOW_GIMBAL_YAW,   //¸úËæÔÆÌ¨
-		FOLLOW_CHASSIS_YAW,  //Ò£¿ØÆ÷¿ØÖÆµ×ÅÌĞı×ª£¬µ×ÅÌ×ÔÉí½ÇËÙ¶È±Õ»·
-		TOP					 //Ğ¡ÍÓÂİ
+		DISABLE,             //å¤±èƒ½
+		FOLLOW_GIMBAL_YAW,   //è·Ÿéšäº‘å°
+		FOLLOW_CHASSIS_YAW,  //é¥æ§å™¨æ§åˆ¶åº•ç›˜æ—‹è½¬ï¼Œåº•ç›˜è‡ªèº«è§’é€Ÿåº¦é—­ç¯
+		TOP					 //å°é™€èº
 	};
 	
 	auto AddMotor(MotorPosition position,
@@ -98,32 +98,32 @@ public:
 
 	void CalcWheelSpeed();
 
-	//Í¨¹ı¿ØÖÆµ×ÅÌµç»úµÄµçÁ÷À´ÊµÏÖ
+	//é€šè¿‡æ§åˆ¶åº•ç›˜ç”µæœºçš„ç”µæµæ¥å®ç°
 	void ChassisPowerCtrl();
 
-	//½«Ò£¿ØÆ÷¸ËÁ¿×ªÎªµ×ÅÌÈıÖáÔË¶¯ÆÚÍû
+	//å°†é¥æ§å™¨æ†é‡è½¬ä¸ºåº•ç›˜ä¸‰è½´è¿åŠ¨æœŸæœ›
 	void RCToChassisSpeed();
 
-	//Í¨¹ıÒ£¿ØÆ÷ÉèÖÃµ×ÅÌÔË¶¯Ä£Ê½
+	//é€šè¿‡é¥æ§å™¨è®¾ç½®åº•ç›˜è¿åŠ¨æ¨¡å¼
 	void ChassisModeSet();
 
-	//½«µ×ÅÌÈıÖá¿ØÖÆÁ¿×ª»»³ÉµçÁ÷·¢¸øµç»ú
+	//å°†åº•ç›˜ä¸‰è½´æ§åˆ¶é‡è½¬æ¢æˆç”µæµå‘ç»™ç”µæœº
 	void ChassisCtrl();
 
-	//¸ù¾İµ±Ç°Ä£Ê½£¬¼ÆËãµ×ÅÌÈıÖáËÙ¶È
+	//æ ¹æ®å½“å‰æ¨¡å¼ï¼Œè®¡ç®—åº•ç›˜ä¸‰è½´é€Ÿåº¦
 	void ChassisAxisSpeedSet();
 
 	auto MotorReceiveProc(std::shared_ptr<ossian::DJIMotor> motor, MotorPosition position)->void
 	{
 		m_MotorMsgCheck[position] = true;
-		if (!(m_MotorMsgCheck[0] && m_MotorMsgCheck[1] && m_MotorMsgCheck[2] && m_MotorMsgCheck[3]))  //¸©ÊÓ£¬×óÇ°£¬×óºó£¬ÓÒºó£¬ÓÒÇ°£¬ÄæÊ±Õë
+		if (!(m_MotorMsgCheck[0] && m_MotorMsgCheck[1] && m_MotorMsgCheck[2] && m_MotorMsgCheck[3]))  //ä¿¯è§†ï¼Œå·¦å‰ï¼Œå·¦åï¼Œå³åï¼Œå³å‰ï¼Œé€†æ—¶é’ˆ
 			return;
 
 		//chassis_task
 		UpdateChassisSensorFeedback();
 
 		ChassisModeSet();
-		//[TODO] Ä£Ê½ÇĞ»»¹ı¶É
+		//[TODO] æ¨¡å¼åˆ‡æ¢è¿‡æ¸¡
 
 		ChassisAxisSpeedSet();
 		
@@ -138,16 +138,16 @@ private:
 
 	struct ChassisSensorFeedback 
 	{ 
-		struct RC { int16_t ch[5]; 	char s[2]; } rc;	 //Ò£¿ØÆ÷Êı¾İ
-		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //µ×ÅÌimuÊı¾İ [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
-		double spCapInputVtg, spCapCurVtg, spCapInputCrt, spCapTargetPwr;    //³¬¼¶µçÈİÊı¾İ
-		double refereeCurPwr, refereeCurBuf, refereeMaxPwr, refereeMaxBuf;   //²ÃÅĞÏµÍ³Êı¾İ
-		double relativeAngle; //µ×ÅÌ×ø±êÏµÓëÔÆÌ¨×ø±êÏµµÄ¼Ğ½Ç µ±Ç°yaw±àÂëÖµ¼õÈ¥ÖĞÖµ rad
+		struct RC { int16_t ch[5]; 	char s[2]; } rc;	 //é¥æ§å™¨æ•°æ®
+		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //åº•ç›˜imuæ•°æ® [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
+		double spCapInputVtg, spCapCurVtg, spCapInputCrt, spCapTargetPwr;    //è¶…çº§ç”µå®¹æ•°æ®
+		double refereeCurPwr, refereeCurBuf, refereeMaxPwr, refereeMaxBuf;   //è£åˆ¤ç³»ç»Ÿæ•°æ®
+		double relativeAngle; //åº•ç›˜åæ ‡ç³»ä¸äº‘å°åæ ‡ç³»çš„å¤¹è§’ å½“å‰yawç¼–ç å€¼å‡å»ä¸­å€¼ rad
 		//double gimbalEcdYaw;
 	} m_ChassisSensorValues;
 
-	double m_VxSet, m_VySet, m_WzSet; //ÈıÖáËÙ¶ÈÆÚÍû
-	double m_AngleSet;  //µ×ÅÌ½Ç¶ÈÄ¿±êÖµ
+	double m_VxSet, m_VySet, m_WzSet; //ä¸‰è½´é€Ÿåº¦æœŸæœ›
+	double m_AngleSet;  //åº•ç›˜è§’åº¦ç›®æ ‡å€¼
 	
 
 	ChassisMode m_CurChassisMode, m_LastChassisMode;
@@ -156,8 +156,8 @@ private:
 	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
 	std::array<double, 4> m_CurrentSend;
 
-	PIDController m_PIDChassisAngle; //µ×ÅÌÒªĞı×ªµÄ½Ç¶È--->µ×ÅÌĞı×ª½ÇËÙ¶È
-	std::array<PIDController, 4> m_PIDChassisSpeed; //ÂóÂÖ×ªËÙ--->3508µçÁ÷
+	PIDController m_PIDChassisAngle; //åº•ç›˜è¦æ—‹è½¬çš„è§’åº¦--->åº•ç›˜æ—‹è½¬è§’é€Ÿåº¦
+	std::array<PIDController, 4> m_PIDChassisSpeed; //éº¦è½®è½¬é€Ÿ--->3508ç”µæµ
 };
 
 #endif // OSSIAN_CHASSIS_HPP

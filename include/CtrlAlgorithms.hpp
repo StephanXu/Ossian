@@ -1,4 +1,4 @@
-#ifndef CTRLALGORITHMS_HPP
+ï»¿#ifndef CTRLALGORITHMS_HPP
 #define CTRLALGORITHMS_HPP
 
 #include <cmath>
@@ -11,7 +11,7 @@ constexpr double PI = 3.14159265359;
 constexpr double MOTOR_ECD_TO_RAD_COEF = 2 * PI / 8192;
 
 
-// ÏŞ·ùº¯Êı
+// é™å¹…å‡½æ•°
 template<typename T>
 inline T Clamp(T value, const T lowerBnd, const T upperBnd)
 {
@@ -23,7 +23,7 @@ inline T Clamp(T value, const T lowerBnd, const T upperBnd)
 		return value;
 }
 
-//ËÀÇøÏŞÖÆ
+//æ­»åŒºé™åˆ¶
 template<typename T>
 inline T DeadbandLimit(T value, const T deadband)
 {
@@ -33,7 +33,7 @@ inline T DeadbandLimit(T value, const T deadband)
 		return 0;
 }
 
-//Ñ­»·ÏŞ·ù
+//å¾ªç¯é™å¹…
 template<typename T>
 inline T ClampLoop(T value, const T lowerBnd, const T upperBnd)
 {
@@ -47,8 +47,9 @@ inline T ClampLoop(T value, const T lowerBnd, const T upperBnd)
 	return value;
 }
 
-//¼ÆËãµ±Ç°±àÂëÖµÓëÖĞÖµÖ®¼äµÄÏà¶Ô½Ç¶Èrad
-double RelativeEcdToRad(uint16_t ecd, const uint16_t ecdMid)
+
+//è®¡ç®—å½“å‰ç¼–ç å€¼ä¸ä¸­å€¼ä¹‹é—´çš„ç›¸å¯¹è§’åº¦rad
+inline double RelativeEcdToRad(uint16_t ecd, const uint16_t ecdMid)
 {
 	static constexpr uint16_t HALF_ECD_RANGE = 4096;
 	static constexpr uint16_t ECD_RANGE = 8191;
@@ -61,11 +62,11 @@ double RelativeEcdToRad(uint16_t ecd, const uint16_t ecdMid)
 	return relativeEcd * MOTOR_ECD_TO_RAD_COEF;
 }
 
-// Ò»½×µÍÍ¨ÂË²¨Æ÷
+// ä¸€é˜¶ä½é€šæ»¤æ³¢å™¨
 class FirstOrderFilter   
 {
 public:
-	FirstOrderFilter(double k) : m_Coef(k) { m_LastValue = 0; }  //²ÎÊıÈ¡¾öÓÚÂË²¨Ê±¼äºÍ²ÉÑùÖÜÆÚ
+	FirstOrderFilter(double k) : m_Coef(k) { m_LastValue = 0; }  //å‚æ•°å–å†³äºæ»¤æ³¢æ—¶é—´å’Œé‡‡æ ·å‘¨æœŸ
 	double Calc(double curValue)
 	{
 		double result = (1.0 - m_Coef) * m_LastValue + m_Coef * curValue;
@@ -77,7 +78,7 @@ private:
 	double m_LastValue;
 };
 
-// Î»ÖÃÊ½PID
+// ä½ç½®å¼PID
 class PIDController
 {
 public:
@@ -89,7 +90,7 @@ public:
 		m_ThresIntegral = m_ThresOutput = DOUBLE_MAX;
 		m_DeadValue = 0.0;
 	}
-	//ÉèÖÃPIDÈı²ÎÊı
+	//è®¾ç½®PIDä¸‰å‚æ•°
 	void SetPIDParams(double kp, double ki, double kd)
 	{
 		m_Kp = kp;
@@ -97,7 +98,7 @@ public:
 		m_Kd = kd;
 	}
 
-	//ÉèÖÃ¿ØÖÆÆÚÍûÖµ
+	//è®¾ç½®æ§åˆ¶æœŸæœ›å€¼
 	/*void SetExpectation(double expectation)
 	{
 		m_Expectation = expectation;
@@ -137,15 +138,15 @@ public:
 		//double error = m_Expectation - feedback;
 		double error = expectation - feedback;
 		if (flagRadLimit)
-			error = ClampLoop(error, -PI, PI);  //½Ç¶È»·£¬½Ç¶ÈÎó²î·¶Î§ÏŞÖÆ
+			error = ClampLoop(error, -PI, PI);  //è§’åº¦ç¯ï¼Œè§’åº¦è¯¯å·®èŒƒå›´é™åˆ¶
 		double output = 0.0;
-		//»ı·Ö·ÖÀë·¨£ºÈç¹ûÎó²î³¬¹ı ¡Àm_ThresError1 ·¶Î§£¬Ôò»ı·ÖÇåÁã
+		//ç§¯åˆ†åˆ†ç¦»æ³•ï¼šå¦‚æœè¯¯å·®è¶…è¿‡ Â±m_ThresError1 èŒƒå›´ï¼Œåˆ™ç§¯åˆ†æ¸…é›¶
 		if (fabs(error) >= m_ThresError1)
 			m_Integral = 0.0;
-		//Èç¹ûÎó²îÔÚ ¡Àm_ThresError2 ·¶Î§ÄÚ£¬Ôò×ö»ı·Ö£¬·ñÔò²»×ö»ı·Ö
+		//å¦‚æœè¯¯å·®åœ¨ Â±m_ThresError2 èŒƒå›´å†…ï¼Œåˆ™åšç§¯åˆ†ï¼Œå¦åˆ™ä¸åšç§¯åˆ†
 		if (fabs(error) < m_ThresError2)
 			m_Integral += error;
-		//½«»ı·Ö×öÏŞ·ù´¦Àí
+		//å°†ç§¯åˆ†åšé™å¹…å¤„ç†
 		m_Integral = Clamp( m_Integral, -m_ThresIntegral, m_ThresIntegral);
 		
 		output = m_Kp * error + ki * m_Integral + kd * (error - m_LastError);
@@ -153,17 +154,17 @@ public:
 			output += m_DeadValue;
 		else if (output < 0)
 			output += -m_DeadValue;
-		//½«pidÊä³ö×öÏŞ·ù´¦Àí
+		//å°†pidè¾“å‡ºåšé™å¹…å¤„ç†
 		return Clamp(output, -m_ThresOutput, m_ThresOutput);
 	}
 
 private:
 	double m_Kp, m_Ki, m_Kd;
-	std::chrono::high_resolution_clock::time_point m_LastTimestamp; //ÊäÈëPIDµÄÉÏÒ»Ìõ±¨ÎÄµÄÊ±¼ä´Á
+	std::chrono::high_resolution_clock::time_point m_LastTimestamp; //è¾“å…¥PIDçš„ä¸Šä¸€æ¡æŠ¥æ–‡çš„æ—¶é—´æˆ³
 	double m_LastError, /*m_Expectation,*/ m_Integral;
 	double m_ThresError1, m_ThresError2;  //ThresError1 > ThresError2
 	double m_ThresIntegral, m_ThresOutput;
-	double m_DeadValue; //ËÀÇø£ºPIDÊä³öĞ¡ÓÚ´ËÖµ£¬Ö´ĞĞ»ú¹¹Ã»·´Ó¦
+	double m_DeadValue; //æ­»åŒºï¼šPIDè¾“å‡ºå°äºæ­¤å€¼ï¼Œæ‰§è¡Œæœºæ„æ²¡ååº”
 };
 
 class KalmanFilter
@@ -218,7 +219,7 @@ public:
 		return X;
 	}
 
-	//U£º¿ØÖÆÏòÁ¿
+	//Uï¼šæ§åˆ¶å‘é‡
 	Eigen::VectorXd Predict(Eigen::VectorXd U)
 	{
 		X = (A * X0) + (B * U);
@@ -226,7 +227,7 @@ public:
 		return X;
 	}
 
-	//Z£º¹Û²âÏòÁ¿
+	//Zï¼šè§‚æµ‹å‘é‡
 	void Correct(Eigen::VectorXd Z)
 	{
 		K = (P * H.transpose()) * (H * P * H.transpose() + R).inverse();
@@ -238,27 +239,27 @@ public:
 	}
 
 private:
-	//ÎÊÌâ¹æÄ£
-	int n; //×´Ì¬Êı
-	int m; //¹Û²âÁ¿Êı
-	int u; //¿ØÖÆÏòÁ¿Î¬¶È
+	//é—®é¢˜è§„æ¨¡
+	int n; //çŠ¶æ€æ•°
+	int m; //è§‚æµ‹é‡æ•°
+	int u; //æ§åˆ¶å‘é‡ç»´åº¦
 
-	//¹Ì¶¨¾ØÕó
-	Eigen::MatrixXd A; //×´Ì¬×ªÒÆ¾ØÕó
-	Eigen::MatrixXd B; //¿ØÖÆ¾ØÕó
-	Eigen::MatrixXd H; //¹Û²â¾ØÕó
-	Eigen::MatrixXd Q; //¹ı³ÌÔëÉùĞ­·½²î¾ØÕó
-	Eigen::MatrixXd R; //²âÁ¿ÔëÉùĞ­·½²î¾ØÕó
-	Eigen::MatrixXd I; //µ¥Î»¾ØÕó
+	//å›ºå®šçŸ©é˜µ
+	Eigen::MatrixXd A; //çŠ¶æ€è½¬ç§»çŸ©é˜µ
+	Eigen::MatrixXd B; //æ§åˆ¶çŸ©é˜µ
+	Eigen::MatrixXd H; //è§‚æµ‹çŸ©é˜µ
+	Eigen::MatrixXd Q; //è¿‡ç¨‹å™ªå£°åæ–¹å·®çŸ©é˜µ
+	Eigen::MatrixXd R; //æµ‹é‡å™ªå£°åæ–¹å·®çŸ©é˜µ
+	Eigen::MatrixXd I; //å•ä½çŸ©é˜µ
 
-	//±äÁ¿¾ØÕó
-	Eigen::VectorXd X; //µ±Ç°Ê±¿Ì×´Ì¬ÏòÁ¿
-	Eigen::MatrixXd P; //×´Ì¬Ğ­·½²î¾ØÕó
-	Eigen::MatrixXd K; //¿¨¶ûÂüÔöÒæ¾ØÕó
+	//å˜é‡çŸ©é˜µ
+	Eigen::VectorXd X; //å½“å‰æ—¶åˆ»çŠ¶æ€å‘é‡
+	Eigen::MatrixXd P; //çŠ¶æ€åæ–¹å·®çŸ©é˜µ
+	Eigen::MatrixXd K; //å¡å°”æ›¼å¢ç›ŠçŸ©é˜µ
 
-	//³õÊ¼×´Ì¬
-	Eigen::VectorXd X0; //³õÊ¼×´Ì¬ÏòÁ¿
-	Eigen::MatrixXd P0; //³õÊ¼×´Ì¬Ğ­·½²î¾ØÕó
+	//åˆå§‹çŠ¶æ€
+	Eigen::VectorXd X0; //åˆå§‹çŠ¶æ€å‘é‡
+	Eigen::MatrixXd P0; //åˆå§‹çŠ¶æ€åæ–¹å·®çŸ©é˜µ
 
 /*
 *	A: n x n

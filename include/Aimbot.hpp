@@ -1,4 +1,4 @@
-#ifndef AIMBOT_HPP
+ï»¿#ifndef AIMBOT_HPP
 #define AIMBOT_HPP
 
 #include <ossian/ossian.hpp>
@@ -58,9 +58,9 @@ private:
         ~LightBar() = default;
 
         /**
-        *	@Brief:		ÅĞ¶Ï´ËÂÖÀªÊÇ·ñÎªµÆÌõµÄÂÖÀª
-        *               µÆÌõÃæ»ı´óÓÚÒ»¶¨Öµ£¨ÅÅ³ıÔëµã£© && ÄâºÏµÄÍÖÔ²³¤¶ÌÖá±ÈÀı·ûºÏµÆÌõµÄ³¤¿í±È && ÂÖÀªÍ¹¶È·ûºÏµÆÌõÍ¹¶È && ·ûºÏµĞ·½µÄÑÕÉ«
-        *	@Return:	Õæ»ò¼Ù
+        *	@Brief:		åˆ¤æ–­æ­¤è½®å»“æ˜¯å¦ä¸ºç¯æ¡çš„è½®å»“
+        *               ç¯æ¡é¢ç§¯å¤§äºä¸€å®šå€¼ï¼ˆæ’é™¤å™ªç‚¹ï¼‰ && æ‹Ÿåˆçš„æ¤­åœ†é•¿çŸ­è½´æ¯”ä¾‹ç¬¦åˆç¯æ¡çš„é•¿å®½æ¯” && è½®å»“å‡¸åº¦ç¬¦åˆç¯æ¡å‡¸åº¦ && ç¬¦åˆæ•Œæ–¹çš„é¢œè‰²
+        *	@Return:	çœŸæˆ–å‡
         */
         bool IsLegal() const noexcept
         {
@@ -168,16 +168,16 @@ private:
                 && armorAspectRatio >= armorMinAspectRatio
                 && armorAspectRatio <= armorMaxAspectRatio)
             {
-                //TODO: ¼ì²â×°¼×°åÊı×Ö
+                //TODO: æ£€æµ‹è£…ç”²æ¿æ•°å­—
 
                 cv::Point2f leftLightRectPts[4], rightLightRectPts[4];
                 m_LeftLight.Ellipse().points(leftLightRectPts);
                 m_RightLight.Ellipse().points(rightLightRectPts);
 
-                m_Vertexes.emplace_back(cv::Point2f(leftLightRectPts[2].x, leftLightRectPts[2].y)); //×óÉÏ
-                m_Vertexes.emplace_back(cv::Point2f(rightLightRectPts[2].x, rightLightRectPts[2].y)); //ÓÒÉÏ
-                m_Vertexes.emplace_back(cv::Point2f(rightLightRectPts[0].x, rightLightRectPts[0].y)); //ÓÒÏÂ
-                m_Vertexes.emplace_back(cv::Point2f(leftLightRectPts[0].x, leftLightRectPts[0].y)); //×óÏÂ
+                m_Vertexes.emplace_back(cv::Point2f(leftLightRectPts[2].x, leftLightRectPts[2].y)); //å·¦ä¸Š
+                m_Vertexes.emplace_back(cv::Point2f(rightLightRectPts[2].x, rightLightRectPts[2].y)); //å³ä¸Š
+                m_Vertexes.emplace_back(cv::Point2f(rightLightRectPts[0].x, rightLightRectPts[0].y)); //å³ä¸‹
+                m_Vertexes.emplace_back(cv::Point2f(leftLightRectPts[0].x, leftLightRectPts[0].y)); //å·¦ä¸‹
 
                 cv::Point2f center1 = (m_Vertexes[0] + m_Vertexes[2]) / 2.0;
                 cv::Point2f center2 = (m_Vertexes[1] + m_Vertexes[3]) / 2.0;
@@ -198,7 +198,7 @@ private:
                     ratioOffset = std::max(smallArmorRatio - armorAspectRatio, 0.0);
                 }
 
-                //¼ÆËã´Ë×°¼×°åµÄµÃ·Ö¡£Èç¹ûÓĞ¶à¸ö×°¼×°å£¬Ñ¡Ôñ´òµÃ·Ö¸ßµÄ £¬µÃ·Ö = ×°¼×°åµÄ´óĞ¡ && ×°¼×°å¾àÀëÊÓÒ°ÖĞĞÄµÄ¾àÀë && ×°¼×°åµÄÊÓÒ°Õı¶Ô³Ì¶È
+                //è®¡ç®—æ­¤è£…ç”²æ¿çš„å¾—åˆ†ã€‚å¦‚æœæœ‰å¤šä¸ªè£…ç”²æ¿ï¼Œé€‰æ‹©æ‰“å¾—åˆ†é«˜çš„ ï¼Œå¾—åˆ† = è£…ç”²æ¿çš„å¤§å° && è£…ç”²æ¿è·ç¦»è§†é‡ä¸­å¿ƒçš„è·ç¦» && è£…ç”²æ¿çš„è§†é‡æ­£å¯¹ç¨‹åº¦
                 double scoreSize = std::exp(cv::contourArea(m_Vertexes)) / areaNormalizedBase;
                 double sightOffset = Math::PointDistance(m_Center, frameCenter);
                 double scoreDist = exp(-sightOffset / sightOffsetNormalizedBase);
@@ -235,7 +235,7 @@ private:
     private:
         LightBar m_LeftLight;
         LightBar m_RightLight;
-        std::vector<cv::Point2f> m_Vertexes;  ///<×°¼×°åµÄËÄ¸ö¶¥µã£¬´Ó×óÉÏµã¿ªÊ¼£¬Ë³Ê±ÕëÅÅÁĞ
+        std::vector<cv::Point2f> m_Vertexes;  ///<è£…ç”²æ¿çš„å››ä¸ªé¡¶ç‚¹ï¼Œä»å·¦ä¸Šç‚¹å¼€å§‹ï¼Œé¡ºæ—¶é’ˆæ’åˆ—
         cv::Point2f m_Center;
         ArmorType m_ArmorType;
         double m_Score;
@@ -255,7 +255,7 @@ private:
 
         PoseSolver(const cv::Rect2f& bbox, ArmorType armorType) : m_BBox(bbox), m_ArmorType(armorType) {}
         ~PoseSolver() {}
-        //Yaw: ÄæÊ±ÕëÕı Ë³Ê±Õë¸º ; Pitch:ÏÂ¸º ÉÏÕı
+        //Yaw: é€†æ—¶é’ˆæ­£ é¡ºæ—¶é’ˆè´Ÿ ; Pitch:ä¸‹è´Ÿ ä¸Šæ­£
         void Solve(float& yaw, float& pitch, float& dist)
         {
             PNPSolver();
@@ -276,7 +276,7 @@ private:
 			pitch = pitch / CV_PI * 180;
         }
 
-        //Yaw: ÄæÊ±ÕëÕı Ë³Ê±Õë¸º ; Pitch:ÏÂÕı ÉÏ¸º
+        //Yaw: é€†æ—¶é’ˆæ­£ é¡ºæ—¶é’ˆè´Ÿ ; Pitch:ä¸‹æ­£ ä¸Šè´Ÿ
         void SolveWithCompensation(float& yaw, float& pitch, float& dist)
         {
             PNPSolver();
@@ -285,11 +285,11 @@ private:
 			
             dist = std::sqrt(target_3d.x * target_3d.x + target_3d.y * target_3d.y + target_3d.z * target_3d.z);
             //dist = target_3d.z;
-            //dist = 10941 * pow(m_BBox.height, -1.066);  //µÆÌõ¸ß¶ÈÓëÊµ¼Ê¾àÀëµÄº¯Êı¹ØÏµ
+            //dist = 10941 * pow(m_BBox.height, -1.066);  //ç¯æ¡é«˜åº¦ä¸å®é™…è·ç¦»çš„å‡½æ•°å…³ç³»
             pitch = GetPitch((dist + offsetZPitch) / 1000, -(target_3d.y + offsetYPitch) / 1000, initV); //rad
             yaw = -static_cast<float>(std::atan2(target_3d.x + offsetX, dist + offsetZYaw)); //rad
 
-            //»¡¶È×ª½Ç¶È
+            //å¼§åº¦è½¬è§’åº¦
             pitch = pitch * 180 / CV_PI;
             yaw = yaw * 180 / CV_PI;
         }
@@ -300,11 +300,11 @@ private:
         cv::Mat m_tvec;
 
        /**
-       * @Brief: ¿¼ÂÇË®Æ½·½Ïò¿ÕÆø×èÁ¦£¬¼ÆËã×Óµ¯Êµ¼ÊµÄy×ø±ê
-       * @Param x: Ïà»úµ½Ä¿±ê×°¼×°åµÄ¾àÀë µ¥Î» m
-       * @Param v: ×Óµ¯·¢ÉäËÙ¶È µ¥Î» m/s
-       * @Param angle: ×Óµ¯·¢ÉäµÄ¸©Ñö½Ç µ¥Î» rad
-       * @Return: ÔÆÌ¨×ø±êÏµÖĞ£¬×Óµ¯Êµ¼ÊÂäµãµÄy×ø±ê µ¥Î» m
+       * @Brief: è€ƒè™‘æ°´å¹³æ–¹å‘ç©ºæ°”é˜»åŠ›ï¼Œè®¡ç®—å­å¼¹å®é™…çš„yåæ ‡
+       * @Param x: ç›¸æœºåˆ°ç›®æ ‡è£…ç”²æ¿çš„è·ç¦» å•ä½ m
+       * @Param v: å­å¼¹å‘å°„é€Ÿåº¦ å•ä½ m/s
+       * @Param angle: å­å¼¹å‘å°„çš„ä¿¯ä»°è§’ å•ä½ rad
+       * @Return: äº‘å°åæ ‡ç³»ä¸­ï¼Œå­å¼¹å®é™…è½ç‚¹çš„yåæ ‡ å•ä½ m
        */
         float BulletModel(float x, float v, float angle)
         {
@@ -315,18 +315,18 @@ private:
         }
 
        /**
-       * @Brief: ¼ÆËãÃé×¼ËùĞèµÄÔÆÌ¨¸©Ñö½Ç±ä»¯Á¿
-       * @param x: Ïà»úµ½Ä¿±ê×°¼×°åµÄ¾àÀë µ¥Î» m
-       * @param y: ÔÆÌ¨×ø±êÏµÖĞ£¬»÷´òÄ¿±êµã£¨×°¼×°åÖĞĞÄ£©µÄy×ø±ê µ¥Î» m
-       * @param v: ×Óµ¯·¢ÉäËÙ¶È µ¥Î» m/s
-       * @return: ÔÆÌ¨¸©Ñö½Ç±ä»¯Á¿ µ¥Î» rad
+       * @Brief: è®¡ç®—ç„å‡†æ‰€éœ€çš„äº‘å°ä¿¯ä»°è§’å˜åŒ–é‡
+       * @param x: ç›¸æœºåˆ°ç›®æ ‡è£…ç”²æ¿çš„è·ç¦» å•ä½ m
+       * @param y: äº‘å°åæ ‡ç³»ä¸­ï¼Œå‡»æ‰“ç›®æ ‡ç‚¹ï¼ˆè£…ç”²æ¿ä¸­å¿ƒï¼‰çš„yåæ ‡ å•ä½ m
+       * @param v: å­å¼¹å‘å°„é€Ÿåº¦ å•ä½ m/s
+       * @return: äº‘å°ä¿¯ä»°è§’å˜åŒ–é‡ å•ä½ rad
        */
         float GetPitch(float x, float y, float v)
         {
             float y_temp, y_actual, dy;
             float a;
             y_temp = y;
-            // 20´Îµü´ú£¬ÊıÖµËã·¨
+            // 20æ¬¡è¿­ä»£ï¼Œæ•°å€¼ç®—æ³•
             for (int i = 0; i < 20; ++i)
             {
                 a = (float)std::atan2(y_temp, x);
@@ -395,20 +395,20 @@ private:
         void Init()
         {     //Mat processNoise(stateNum, 1, CV_32F);
             measurement = cv::Mat::zeros(m_MeasureNum, 1, CV_32F);
-            KF.transitionMatrix = (cv::Mat_<float>(m_StateNum, m_StateNum) <<  //A ×´Ì¬×ªÒÆ¾ØÕó
+            KF.transitionMatrix = (cv::Mat_<float>(m_StateNum, m_StateNum) <<  //A çŠ¶æ€è½¬ç§»çŸ©é˜µ
                                    1, 0, 1 * 10, 0,
                                    0, 1, 0, 1 * 10,
                                    0, 0, 1, 0,
                                    0, 0, 0, 1);
-            //ÕâÀïÃ»ÓĞÉèÖÃ¿ØÖÆ¾ØÕóB£¬Ä¬ÈÏÎªÁã
+            //è¿™é‡Œæ²¡æœ‰è®¾ç½®æ§åˆ¶çŸ©é˜µBï¼Œé»˜è®¤ä¸ºé›¶
             setIdentity(KF.measurementMatrix);								//H=[1,0,0,0;
-                                                                                //	 0,1,0,0] ¹Û²â¾ØÕó
-            //setIdentity( KF.processNoiseCov, cv::Scalar::all( 1e-2 ) );			//Q¸ßË¹°×ÔëÉù£¬µ¥Î»Õó  bigger ---- slower regression
-            //setIdentity( KF.measurementNoiseCov, cv::Scalar::all( 1e-2 ) );		//²âÁ¿Îó²îR ¸ßË¹°×ÔëÉù£¬µ¥Î»Õó smaller --- quicker regression
-            setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-2));			//Q¸ßË¹°×ÔëÉù£¬µ¥Î»Õó  bigger ---- slower regression
-            setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-2));		//²âÁ¿Îó²îR ¸ßË¹°×ÔëÉù£¬µ¥Î»Õó smaller --- quicker regression
-            setIdentity(KF.errorCovPost, cv::Scalar::all(1));				//PºóÑéÎó²î¹À¼ÆĞ­·½²î¾ØÕó£¬³õÊ¼»¯Îªµ¥Î»Õó
-            randn(KF.statePost, cv::Scalar::all(0), cv::Scalar::all(0.1));	//³õÊ¼»¯×´Ì¬ÎªËæ»úÖµ
+                                                                                //	 0,1,0,0] è§‚æµ‹çŸ©é˜µ
+            //setIdentity( KF.processNoiseCov, cv::Scalar::all( 1e-2 ) );			//Qé«˜æ–¯ç™½å™ªå£°ï¼Œå•ä½é˜µ  bigger ---- slower regression
+            //setIdentity( KF.measurementNoiseCov, cv::Scalar::all( 1e-2 ) );		//æµ‹é‡è¯¯å·®R é«˜æ–¯ç™½å™ªå£°ï¼Œå•ä½é˜µ smaller --- quicker regression
+            setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-2));			//Qé«˜æ–¯ç™½å™ªå£°ï¼Œå•ä½é˜µ  bigger ---- slower regression
+            setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-2));		//æµ‹é‡è¯¯å·®R é«˜æ–¯ç™½å™ªå£°ï¼Œå•ä½é˜µ smaller --- quicker regression
+            setIdentity(KF.errorCovPost, cv::Scalar::all(1));				//PåéªŒè¯¯å·®ä¼°è®¡åæ–¹å·®çŸ©é˜µï¼Œåˆå§‹åŒ–ä¸ºå•ä½é˜µ
+            randn(KF.statePost, cv::Scalar::all(0), cv::Scalar::all(0.1));	//åˆå§‹åŒ–çŠ¶æ€ä¸ºéšæœºå€¼
         }
         void PredictAndCorrect(float& gimbalYawPredicted, float& gimbalPitchPredicted, float gimbalYawMeasured, float gimbalPitchMeasured)
         {
@@ -499,7 +499,7 @@ private:
 
         if (!armors.empty())
         {
-            std::sort(armors.rbegin(), armors.rend()); //armor[0]ÊÇµÃ·Ö×î¸ßµÄ×°¼×°å£¬Ò²¾ÍÊÇ»÷´òÄ¿±ê
+            std::sort(armors.rbegin(), armors.rend()); //armor[0]æ˜¯å¾—åˆ†æœ€é«˜çš„è£…ç”²æ¿ï¼Œä¹Ÿå°±æ˜¯å‡»æ‰“ç›®æ ‡
             outTarget = armors[0];
         }
 

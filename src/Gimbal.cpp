@@ -1,4 +1,4 @@
-
+ï»¿
 #include "Gimbal.hpp"
 
 
@@ -10,10 +10,10 @@ double Gimbal::PitchCtrlInputProc()
 		m_CtrlMode = AUTOAIM;
 	if (m_CurGimbalMode == RC)
 	{
-		if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_UP) //»ØÖĞ
+		if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_UP) //å›ä¸­
 			return PITCH_MID_RAD;
 		else
-			return DeadbandLimit(m_GimbalSensorValues.rc.ch[PITCH_CHANNEL], GIMBAL_RC_DEADBAND) * PITCH_RC_SEN; //Ò£¿ØÆ÷´«À´µÄpitch½Ç¶ÈÆÚÍûrad
+			return DeadbandLimit(m_GimbalSensorValues.rc.ch[PITCH_CHANNEL], GIMBAL_RC_DEADBAND) * PITCH_RC_SEN; //é¥æ§å™¨ä¼ æ¥çš„pitchè§’åº¦æœŸæœ›rad
 	}
 
 }
@@ -26,14 +26,14 @@ double Gimbal::YawCtrlInputProc()
 		m_CtrlMode = AUTOAIM;
 	if (m_CurGimbalMode == RC)
 	{
-		if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_UP) //»ØÖĞ
+		if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_UP) //å›ä¸­
 			return YAW_MID_RAD;
 		else
-			return DeadbandLimit(m_GimbalSensorValues.rc.ch[YAW_CHANNEL], GIMBAL_RC_DEADBAND) * YAW_RC_SEN; //Ò£¿ØÆ÷´«À´µÄyaw½Ç¶ÈÆÚÍûrad
+			return DeadbandLimit(m_GimbalSensorValues.rc.ch[YAW_CHANNEL], GIMBAL_RC_DEADBAND) * YAW_RC_SEN; //é¥æ§å™¨ä¼ æ¥çš„yawè§’åº¦æœŸæœ›rad
 	}
 }
 
-//Ò£¿ØÆ÷£º¾ø¶ÔÁ¿¿ØÖÆ  [TODO]Êó±ê£ºÔöÁ¿¿ØÖÆ
+//é¥æ§å™¨ï¼šç»å¯¹é‡æ§åˆ¶  [TODO]é¼ æ ‡ï¼šå¢é‡æ§åˆ¶
 void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 {
 	double curEcdAngle = curEcd * MOTOR_ECD_TO_RAD_COEF;
@@ -43,7 +43,7 @@ void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 		if (m_CurGimbalMode == GYROANGLE)
 		{
 			double errorAngle = ClampLoop(m_GyroPitchAngleSet - m_GimbalSensorValues.gyroY, -PI, PI);
-			//ÅĞ¶Ï»á²»»áÔ½¹ı»úĞµÏŞÎ»
+			//åˆ¤æ–­ä¼šä¸ä¼šè¶Šè¿‡æœºæ¢°é™ä½
 			if (curEcdAngle + errorAngle + ecdAngleAdd > PITCH_MAX_RELATIVE_ANGLE)
 			{
 				if (ecdAngleAdd > 0)
@@ -74,7 +74,7 @@ void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 		if (m_CurGimbalMode == GYROANGLE)
 		{
 			double errorAngle = ClampLoop(m_GyroYawAngleSet - m_GimbalSensorValues.gyroZ, -PI, PI);
-			//ÅĞ¶Ï»á²»»áÔ½¹ı»úĞµÏŞÎ»
+			//åˆ¤æ–­ä¼šä¸ä¼šè¶Šè¿‡æœºæ¢°é™ä½
 			if (curEcdAngle + errorAngle + ecdAngleAdd > YAW_MAX_RELATIVE_ANGLE)
 			{
 				if (ecdAngleAdd > 0)
@@ -105,8 +105,8 @@ void Gimbal::CtrlPitch()
 	}
 	else if (m_CurGimbalMode == ECDANGLE)
 	{
-		//[TODO]ÓÃµç»ú×ªËÙrpm»»Ëã³öÔÆÌ¨½ÇËÙ¶È
-		//³õÊ¼Ê±¿Ì£¬ÎŞ·¨Í¨¹ı²î·Ö¼ÆËã³ö½ÇËÙ¶È 
+		//[TODO]ç”¨ç”µæœºè½¬é€Ÿrpmæ¢ç®—å‡ºäº‘å°è§’é€Ÿåº¦
+		//åˆå§‹æ—¶åˆ»ï¼Œæ— æ³•é€šè¿‡å·®åˆ†è®¡ç®—å‡ºè§’é€Ÿåº¦ 
 		if (m_LastEcdTimeStampPitch.time_since_epoch().count() == 0)  
 			return;
 		double interval = std::chrono::duration<double, std::milli>(m_Motors[Pitch]->TimeStamp() - m_LastEcdTimeStampPitch).count();  //ms
@@ -131,8 +131,8 @@ void Gimbal::CtrlYaw()
 	}
 	else if (m_CurGimbalMode == ECDANGLE)
 	{
-		//[TODO]ÓÃµç»ú×ªËÙrpm»»Ëã³öÔÆÌ¨½ÇËÙ¶È
-		//³õÊ¼Ê±¿Ì£¬ÎŞ·¨Í¨¹ı²î·Ö¼ÆËã³ö½ÇËÙ¶È 
+		//[TODO]ç”¨ç”µæœºè½¬é€Ÿrpmæ¢ç®—å‡ºäº‘å°è§’é€Ÿåº¦
+		//åˆå§‹æ—¶åˆ»ï¼Œæ— æ³•é€šè¿‡å·®åˆ†è®¡ç®—å‡ºè§’é€Ÿåº¦ 
 		if (m_LastEcdTimeStampYaw.time_since_epoch().count() == 0)
 			return;
 		double interval = std::chrono::duration<double, std::milli>(m_Motors[Yaw]->TimeStamp() - m_LastEcdTimeStampYaw).count();  //ms

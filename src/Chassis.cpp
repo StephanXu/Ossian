@@ -1,4 +1,4 @@
-
+ï»¿
 #include "Chassis.hpp"
 #include "CtrlAlgorithms.hpp"
 
@@ -8,7 +8,7 @@ void Chassis::CalcWheelSpeed()
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);
 	m_WheelSpeedSet = m_WheelKinematicMat * vSet / WHEEL_RADIUS; //[4, 3] * [3, 1] -- > [4, 1]
 
-	//ÏŞÖÆÂóÂÖ×î´óËÙ¶È
+	//é™åˆ¶éº¦è½®æœ€å¤§é€Ÿåº¦
 	double maxWheelSpeedItem = m_WheelSpeedSet.maxCoeff();
 	if (maxWheelSpeedItem > LIMIT_WHEEL_SPEED)
 	{
@@ -19,13 +19,13 @@ void Chassis::CalcWheelSpeed()
 
 void Chassis::ChassisPowerCtrl()
 {
-	//double curPwr, curBuf, maxPwr, maxBuf; //ÕâËÄ¸öÁ¿´Ó²ÃÅĞÏµÍ³»ñÈ¡
+	//double curPwr, curBuf, maxPwr, maxBuf; //è¿™å››ä¸ªé‡ä»è£åˆ¤ç³»ç»Ÿè·å–
 	double warnBuf = m_ChassisSensorValues.refereeMaxBuf * 0.9;
 	double warnPwr = m_ChassisSensorValues.refereeMaxPwr * 0.9;
 	
-	double scalePwr;  //¹¦ÂÊËõĞ¡ÏµÊı
-	double limitCurrent; //µ×ÅÌµç»ú×ÜµçÁ÷ÉÏÏŞ
-	//»º³åÄÜÁ¿Ğ¡ÓÚÔ¤¾¯ÖµÔòËµÃ÷¹¦ÂÊ³¬ÏŞ
+	double scalePwr;  //åŠŸç‡ç¼©å°ç³»æ•°
+	double limitCurrent; //åº•ç›˜ç”µæœºæ€»ç”µæµä¸Šé™
+	//ç¼“å†²èƒ½é‡å°äºé¢„è­¦å€¼åˆ™è¯´æ˜åŠŸç‡è¶…é™
 	if (m_ChassisSensorValues.refereeCurBuf < m_ChassisSensorValues.refereeMaxBuf)
 	{
 		if (m_ChassisSensorValues.refereeCurBuf > warnBuf * 0.1)
@@ -61,9 +61,9 @@ void Chassis::RCToChassisSpeed()
 {
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_X_CHANNEL], CHASSIS_RC_DEADBAND) * CHASSIS_VX_RC_SEN;		// m/s
 	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_Y_CHANNEL], CHASSIS_RC_DEADBAND) * (-CHASSIS_VY_RC_SEN);  // m/s
-	//[TODO] ¼üÅÌ²Ù×÷
+	//[TODO] é”®ç›˜æ“ä½œ
 
-	//Ò»½×µÍÍ¨ÂË²¨´úÌæĞ±ÆÂº¯Êı×÷Îªµ×ÅÌËÙ¶ÈÊäÈë
+	//ä¸€é˜¶ä½é€šæ»¤æ³¢ä»£æ›¿æ–œå¡å‡½æ•°ä½œä¸ºåº•ç›˜é€Ÿåº¦è¾“å…¥
 	FirstOrderFilter foFilterVX(0.17), foFilterVY(0.33);
 	m_VxSet = foFilterVX.Calc(vxChannelSet);
 	m_VySet = foFilterVY.Calc(vyChannelSet);
@@ -91,7 +91,7 @@ void Chassis::ChassisCtrl()
 	for (size_t i = 0; i < 4; ++i)
 		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM * MOTOR_RPM_TO_WHEEL_SPEED, m_Motors[i]->TimeStamp());
 	
-	//Èç¹û³¬¼¶µçÈİ¿ìÃ»µçÁË
+	//å¦‚æœè¶…çº§ç”µå®¹å¿«æ²¡ç”µäº†
 	if (m_ChassisSensorValues.spCapCurVtg < SPCAP_WARN_VOLTAGE)
 		ChassisPowerCtrl();
 
@@ -100,7 +100,7 @@ void Chassis::ChassisCtrl()
 
 void Chassis::ChassisAxisSpeedSet()
 {
-	//[TODO] ¼ìÑéÈı½Çº¯ÊıµÄ·ûºÅ
+	//[TODO] æ£€éªŒä¸‰è§’å‡½æ•°çš„ç¬¦å·
 	if (m_CurChassisMode == DISABLE)
 		m_VxSet = m_VySet = m_WzSet = 0;
 	else if (m_CurChassisMode == FOLLOW_CHASSIS_YAW)
@@ -108,7 +108,7 @@ void Chassis::ChassisAxisSpeedSet()
 		RCToChassisSpeed();
 		m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[CHASSIS_Z_CHANNEL] * CHASSIS_WZ_RC_SEN, -PI, PI);
 		double deltaAngle = ClampLoop(m_AngleSet - m_ChassisSensorValues.gyroZ, -PI, PI);
-		m_WzSet = m_PIDChassisAngle.Calc(deltaAngle, 0, std::chrono::high_resolution_clock::now(), true); //·ûºÅÎª¸º£¿
+		m_WzSet = m_PIDChassisAngle.Calc(deltaAngle, 0, std::chrono::high_resolution_clock::now(), true); //ç¬¦å·ä¸ºè´Ÿï¼Ÿ
 		m_VxSet = Clamp(m_VxSet, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
 		m_VySet = Clamp(m_VySet, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
 	}
@@ -130,6 +130,6 @@ void Chassis::ChassisAxisSpeedSet()
 		double vy = m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -CHASSIS_VX_MAX, CHASSIS_VX_MAX); 		
 		m_VySet = Clamp(vy, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
-		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, std::chrono::high_resolution_clock::now(), true); //·ûºÅÎª¸º£¿
+		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, std::chrono::high_resolution_clock::now(), true); //ç¬¦å·ä¸ºè´Ÿï¼Ÿ
 	}
 }

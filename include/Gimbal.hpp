@@ -1,4 +1,4 @@
-#ifndef OSSIAN_GIMBAL_HPP
+ï»¿#ifndef OSSIAN_GIMBAL_HPP
 #define OSSIAN_GIMBAL_HPP
 
 #include <ossian/Motor.hpp>
@@ -10,7 +10,7 @@
 
 class Gimbal
 {
-	//ÔÆÌ¨ÌØÊâÎ»ÖÃ
+	//äº‘å°ç‰¹æ®Šä½ç½®
 	static constexpr uint16_t PITCH_MID_ECD = 100;
 	static constexpr uint16_t YAW_MID_ECD = 200;
 	static constexpr uint16_t PITCH_MAX_ECD = 300;
@@ -20,7 +20,7 @@ class Gimbal
 	static constexpr double   PITCH_MID_RAD = PITCH_MID_ECD * MOTOR_ECD_TO_RAD_COEF;
 	static constexpr double   YAW_MID_RAD = YAW_MID_ECD * MOTOR_ECD_TO_RAD_COEF;
 
-	//×î´ó×îÐ¡µÄ Ïà¶Ô£¨ÖÐÖµµÄ£©½Ç¶È
+	//æœ€å¤§æœ€å°çš„ ç›¸å¯¹ï¼ˆä¸­å€¼çš„ï¼‰è§’åº¦
 	const double PITCH_MAX_RELATIVE_ANGLE = RelativeEcdToRad(PITCH_MAX_ECD, PITCH_MID_ECD);
 	const double PITCH_MIN_RELATIVE_ANGLE = RelativeEcdToRad(PITCH_MIN_ECD, PITCH_MID_ECD);
 	const double YAW_MAX_RELATIVE_ANGLE = RelativeEcdToRad(YAW_MAX_ECD, YAW_MID_ECD);
@@ -32,11 +32,11 @@ class Gimbal
 	static constexpr double   YAW_MIN_RAD   = YAW_MIN_ECD   * MOTOR_ECD_TO_RAD_COEF;
 	*/
 
-	//Ò£¿ØÆ÷½âÎö
-	static constexpr int16_t GIMBAL_RC_DEADBAND = 10; //Ò¡¸ËËÀÇø
+	//é¥æŽ§å™¨è§£æž
+	static constexpr int16_t GIMBAL_RC_DEADBAND = 10; //æ‘‡æ†æ­»åŒº
 	static constexpr size_t YAW_CHANNEL = 4;
 	static constexpr size_t PITCH_CHANNEL = 3;
-	static constexpr size_t GIMBAL_MODE_CHANNEL = 1; //Ñ¡ÔñÔÆÌ¨×´Ì¬µÄ¿ª¹ØÍ¨µÀ
+	static constexpr size_t GIMBAL_MODE_CHANNEL = 1; //é€‰æ‹©äº‘å°çŠ¶æ€çš„å¼€å…³é€šé“
 	static constexpr uint16_t RC_SW_UP = 1;
 	static constexpr uint16_t RC_SW_MID = 3;
 	static constexpr uint16_t RC_SW_DOWN = 2;
@@ -117,15 +117,15 @@ public:
 
 	void UpdateGimbalSensorFeedback() {}
 
-	//»ñµÃ²Ù×÷ÊÖÆÚÍûµÄ½Ç¶È
+	//èŽ·å¾—æ“ä½œæ‰‹æœŸæœ›çš„è§’åº¦
 	double PitchCtrlInputProc();
 	double YawCtrlInputProc();
 
-	//¸ù¾ÝÒ£¿ØÊý¾Ý£¬ÉèÖÃ½Ç¶ÈÆÚÍûÖµrad
+	//æ ¹æ®é¥æŽ§æ•°æ®ï¼Œè®¾ç½®è§’åº¦æœŸæœ›å€¼rad
 	void SetPitch(double angleInput, uint16_t curEcd);
 	void SetYaw(double angleInput, uint16_t curEcd);
 
-	//Ë«»·pid¼ÆËã 
+	//åŒçŽ¯pidè®¡ç®— 
 	void CtrlPitch();
 	void CtrlYaw();
 
@@ -152,19 +152,19 @@ private:
 	GimbalCtrlMode m_CtrlMode;
 	struct GimbalSensorFeedback
 	{
-		struct RC { int16_t ch[5]; 	char s[2]; } rc;	 //Ò£¿ØÆ÷Êý¾Ý
-		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //µ×ÅÌimuÊý¾Ý [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
+		struct RC { int16_t ch[5]; 	char s[2]; } rc;	 //é¥æŽ§å™¨æ•°æ®
+		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //åº•ç›˜imuæ•°æ® [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
 
 	double m_LastEcdAnglePitch, m_LastEcdAngleYaw;
 	std::chrono::high_resolution_clock::time_point m_LastEcdTimeStampPitch, m_LastEcdTimeStampYaw;
 
-	/*double m_YawAdd, m_PitchAdd; //½Ç¶ÈÔöÁ¿rad
+	/*double m_YawAdd, m_PitchAdd; //è§’åº¦å¢žé‡rad
 	double m_LastYaw, m_LastPitch;*/
-	double m_GyroPitchAngleSet, m_GyroYawAngleSet; //ÀÛ¼Ó ÍÓÂÝÒÇÄ£Ê½
-	double m_EcdPitchAngleSet, m_EcdYawAngleSet; //ÀÛ¼Ó ±àÂëÆ÷Ä£Ê½
+	double m_GyroPitchAngleSet, m_GyroYawAngleSet; //ç´¯åŠ  é™€èžºä»ªæ¨¡å¼
+	double m_EcdPitchAngleSet, m_EcdYawAngleSet; //ç´¯åŠ  ç¼–ç å™¨æ¨¡å¼
 
-	PIDController m_PIDPitchAngleEcd, m_PIDPitchAngleGyro, m_PIDPitchAngleSpeed; //Éè¶¨½Ç¶È--->Ðý×ª½ÇËÙ¶È  Ðý×ª½ÇËÙ¶È-->6020¿ØÖÆµçÑ¹
+	PIDController m_PIDPitchAngleEcd, m_PIDPitchAngleGyro, m_PIDPitchAngleSpeed; //è®¾å®šè§’åº¦--->æ—‹è½¬è§’é€Ÿåº¦  æ—‹è½¬è§’é€Ÿåº¦-->6020æŽ§åˆ¶ç”µåŽ‹
 	PIDController m_PIDYawAngleEcd, m_PIDYawAngleGyro, m_PIDYawAngleSpeed;
 };
 
