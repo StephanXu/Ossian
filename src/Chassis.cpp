@@ -2,6 +2,7 @@
 #include "Chassis.hpp"
 #include "CtrlAlgorithms.hpp"
 
+
 void Chassis::CalcWheelSpeed()
 {
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);

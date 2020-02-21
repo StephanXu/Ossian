@@ -7,43 +7,43 @@
 #include <chrono>
 #include <memory>
 
-//云台特殊位置
-constexpr uint16_t PITCH_MID_ECD = 100;
-constexpr uint16_t YAW_MID_ECD   = 200;
-constexpr uint16_t PITCH_MAX_ECD = 300;
-constexpr uint16_t YAW_MAX_ECD   = 600;
-constexpr uint16_t PITCH_MIN_ECD = 50;
-constexpr uint16_t YAW_MIN_ECD   = 10;
-constexpr double   PITCH_MID_RAD = PITCH_MID_ECD * MOTOR_ECD_TO_RAD_COEF;
-constexpr double   YAW_MID_RAD = YAW_MID_ECD * MOTOR_ECD_TO_RAD_COEF;
-
-//最大最小的 相对（中值的）角度
-const double PITCH_MAX_RELATIVE_ANGLE = RelativeEcdToRad(PITCH_MAX_ECD, PITCH_MID_ECD);
-const double PITCH_MIN_RELATIVE_ANGLE = RelativeEcdToRad(PITCH_MIN_ECD, PITCH_MID_ECD);
-const double YAW_MAX_RELATIVE_ANGLE = RelativeEcdToRad(YAW_MAX_ECD, YAW_MID_ECD);
-const double YAW_MIN_RELATIVE_ANGLE = RelativeEcdToRad(YAW_MIN_ECD, YAW_MID_ECD);
-/*
-constexpr double   PITCH_MAX_RAD = PITCH_MAX_ECD * MOTOR_ECD_TO_RAD_COEF;
-constexpr double   PITCH_MIN_RAD = PITCH_MIN_ECD * MOTOR_ECD_TO_RAD_COEF;
-constexpr double   YAW_MAX_RAD   = YAW_MAX_ECD   * MOTOR_ECD_TO_RAD_COEF;
-constexpr double   YAW_MIN_RAD   = YAW_MIN_ECD   * MOTOR_ECD_TO_RAD_COEF;
-*/
-
-//遥控器解析
-constexpr int16_t GIMBAL_RC_DEADBAND = 10; //摇杆死区
-constexpr size_t YAW_CHANNEL = 4;
-constexpr size_t PITCH_CHANNEL = 3;
-constexpr size_t GIMBAL_MODE_CHANNEL = 1; //选择云台状态的开关通道
-constexpr uint16_t RC_SW_UP = 1; 
-constexpr uint16_t RC_SW_MID = 3; 
-constexpr uint16_t RC_SW_DOWN = 2;
-
-constexpr double YAW_RC_SEN = -0.000005;
-constexpr double PITCH_RC_SEN = -0.000006; //0.005
-
 
 class Gimbal
 {
+	//云台特殊位置
+	static constexpr uint16_t PITCH_MID_ECD = 100;
+	static constexpr uint16_t YAW_MID_ECD = 200;
+	static constexpr uint16_t PITCH_MAX_ECD = 300;
+	static constexpr uint16_t YAW_MAX_ECD = 600;
+	static constexpr uint16_t PITCH_MIN_ECD = 50;
+	static constexpr uint16_t YAW_MIN_ECD = 10;
+	static constexpr double   PITCH_MID_RAD = PITCH_MID_ECD * MOTOR_ECD_TO_RAD_COEF;
+	static constexpr double   YAW_MID_RAD = YAW_MID_ECD * MOTOR_ECD_TO_RAD_COEF;
+
+	//最大最小的 相对（中值的）角度
+	const double PITCH_MAX_RELATIVE_ANGLE = RelativeEcdToRad(PITCH_MAX_ECD, PITCH_MID_ECD);
+	const double PITCH_MIN_RELATIVE_ANGLE = RelativeEcdToRad(PITCH_MIN_ECD, PITCH_MID_ECD);
+	const double YAW_MAX_RELATIVE_ANGLE = RelativeEcdToRad(YAW_MAX_ECD, YAW_MID_ECD);
+	const double YAW_MIN_RELATIVE_ANGLE = RelativeEcdToRad(YAW_MIN_ECD, YAW_MID_ECD);
+	/*
+	static constexpr double   PITCH_MAX_RAD = PITCH_MAX_ECD * MOTOR_ECD_TO_RAD_COEF;
+	static constexpr double   PITCH_MIN_RAD = PITCH_MIN_ECD * MOTOR_ECD_TO_RAD_COEF;
+	static constexpr double   YAW_MAX_RAD   = YAW_MAX_ECD   * MOTOR_ECD_TO_RAD_COEF;
+	static constexpr double   YAW_MIN_RAD   = YAW_MIN_ECD   * MOTOR_ECD_TO_RAD_COEF;
+	*/
+
+	//遥控器解析
+	static constexpr int16_t GIMBAL_RC_DEADBAND = 10; //摇杆死区
+	static constexpr size_t YAW_CHANNEL = 4;
+	static constexpr size_t PITCH_CHANNEL = 3;
+	static constexpr size_t GIMBAL_MODE_CHANNEL = 1; //选择云台状态的开关通道
+	static constexpr uint16_t RC_SW_UP = 1;
+	static constexpr uint16_t RC_SW_MID = 3;
+	static constexpr uint16_t RC_SW_DOWN = 2;
+
+	static constexpr double YAW_RC_SEN = -0.000005;
+	static constexpr double PITCH_RC_SEN = -0.000006; //0.005
+
 public:
 	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager))
 		: m_MotorManager(motorManager)

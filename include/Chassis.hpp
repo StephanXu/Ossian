@@ -10,42 +10,42 @@
 #include <cmath>
 #include <array>
 
-//麦轮运动
-constexpr double WHEEL_RADIUS = 76 / 1000;
-constexpr double WHEEL_XN = 175 / 1000;
-constexpr double WHEEL_YN = 232.5 / 1000;  
-constexpr double LIMIT_WHEEL_SPEED = 5;  //单个麦轮的最大速度
-constexpr double MOTOR_RPM_TO_WHEEL_SPEED = 1 / 9.5;
-
-//底盘功率控制
-constexpr double LIMIT_BUFFER_TOTAL_CURRENT = 16000;
-constexpr double LIMIT_POWER_TOTAL_CURRENT = 20000;
-constexpr double SPCAP_WARN_VOLTAGE = 1;
-
-//遥控器解析
-constexpr size_t CHASSIS_X_CHANNEL = 1; //控制底盘 前后 速度的遥控器通道
-constexpr size_t CHASSIS_Y_CHANNEL = 0; //控制底盘 左右 速度的遥控器通道
-constexpr size_t CHASSIS_Z_CHANNEL = 2; //控制底盘 旋转 速度的遥控器通道
-constexpr size_t CHASSIS_MODE_CHANNEL = 0; //选择底盘状态的开关通道
-
-constexpr uint16_t RC_SW_UP = 1;
-constexpr uint16_t RC_SW_MID = 3;
-constexpr uint16_t RC_SW_DOWN = 2;
-
-constexpr int16_t CHASSIS_RC_DEADBAND = 10; //摇杆死区
-constexpr double CHASSIS_VX_RC_SEN = 0.006; //遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
-constexpr double CHASSIS_VY_RC_SEN = 0.005; //遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
-constexpr double CHASSIS_WZ_RC_SEN = 0.01;  //不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
-
-//底盘运动
-constexpr double CHASSIS_VX_MAX = 4.5; // m/s
-constexpr double CHASSIS_VY_MAX = 1.5; // m/s
-constexpr double TOP_WZ = 3;  //底盘陀螺旋转速度 rad/s
-
 
 class Chassis
 {	
 public:
+	//麦轮运动
+	static constexpr double WHEEL_RADIUS = 76 / 1000;
+	static constexpr double WHEEL_XN = 175 / 1000;
+	static constexpr double WHEEL_YN = 232.5 / 1000;
+	static constexpr double LIMIT_WHEEL_SPEED = 5;  //单个麦轮的最大速度
+	static constexpr double MOTOR_RPM_TO_WHEEL_SPEED = 1 / 9.5;
+
+	//底盘功率控制
+	static constexpr double LIMIT_BUFFER_TOTAL_CURRENT = 16000;
+	static constexpr double LIMIT_POWER_TOTAL_CURRENT = 20000;
+	static constexpr double SPCAP_WARN_VOLTAGE = 1;
+
+	//遥控器解析
+	static constexpr size_t CHASSIS_X_CHANNEL = 1; //控制底盘 前后 速度的遥控器通道
+	static constexpr size_t CHASSIS_Y_CHANNEL = 0; //控制底盘 左右 速度的遥控器通道
+	static constexpr size_t CHASSIS_Z_CHANNEL = 2; //控制底盘 旋转 速度的遥控器通道
+	static constexpr size_t CHASSIS_MODE_CHANNEL = 0; //选择底盘状态的开关通道
+
+	static constexpr uint16_t RC_SW_UP = 1;
+	static constexpr uint16_t RC_SW_MID = 3;
+	static constexpr uint16_t RC_SW_DOWN = 2;
+
+	static constexpr int16_t CHASSIS_RC_DEADBAND = 10; //摇杆死区
+	static constexpr double CHASSIS_VX_RC_SEN = 0.006; //遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
+	static constexpr double CHASSIS_VY_RC_SEN = 0.005; //遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
+	static constexpr double CHASSIS_WZ_RC_SEN = 0.01;  //不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+
+	//底盘运动
+	static constexpr double CHASSIS_VX_MAX = 4.5; // m/s
+	static constexpr double CHASSIS_VY_MAX = 1.5; // m/s
+	static constexpr double TOP_WZ = 3;  //底盘陀螺旋转速度 rad/s
+
 	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager))
 		: m_MotorManager(motorManager)
 	{

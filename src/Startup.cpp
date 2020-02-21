@@ -8,6 +8,8 @@
 #include "WindmillDetection.hpp"
 #include "Aimbot.hpp"
 #include "SerialReport.hpp"
+#include "Chassis.hpp"
+#include "Gimbal.hpp"
 
 #include <thread>
 
