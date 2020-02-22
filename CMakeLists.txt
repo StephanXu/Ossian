@@ -27,6 +27,7 @@ target_sources(Ossian
             src/WindmillDetection.cpp
             src/Gimbal.cpp
             src/Chassis.cpp
+            src/OnlineDebug.cpp
         )
 target_include_directories(Ossian
         PRIVATE
@@ -34,6 +35,7 @@ target_include_directories(Ossian
         )
 target_link_libraries(Ossian
         PRIVATE
+            signalrclient
             HKCamera
             spdlog::spdlog
             fmt::fmt

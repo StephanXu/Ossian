@@ -10,6 +10,7 @@
 #include "SerialReport.hpp"
 #include "Chassis.hpp"
 #include "Gimbal.hpp"
+#include "OnlineDebug.hpp"
 
 #include <thread>
 
@@ -27,6 +28,14 @@ void Startup::ConfigServices(AppBuilder& app)
 
 	app.AddService<Utils::ConfigLoader>()
 		.LoadFromUrl<OssianConfig::Configuration>("mrxzh.com", 5000, "/config");
+	app.AddService<OnlineDebug>(
+		[](OnlineDebug& option)
+		{
+			option.Connect("http://host.docker.internal:5000/logger");
+			option.StartLogging("OnlineLog",
+								"OssianLog",
+								"A piece of log.");
+		});
 	app.AddService<RoboStatus>();
 	app.AddService<VideoInputSource>().AsInputAdapter();
 	app.AddService<SerialPortIO>();
