@@ -17,7 +17,7 @@ namespace ossian
 {
 struct CallbackData
 {
-	std::shared_ptr<IIOBus> io; //对象指针
+	std::shared_ptr<BaseHardwareBus> io; //对象指针
 };
 
 class IOListener
@@ -25,7 +25,7 @@ class IOListener
 public:
 	const size_t MAX_EVENTS = 128; //应该写在配置文件当中
 	
-	OSSIAN_SERVICE_SETUP(IOListener(std::vector<IIOManager*>* ioManagers))
+	OSSIAN_SERVICE_SETUP(IOListener(std::vector<BaseHardwareManager*>* ioManagers))
 	{
 		m_EpollFD = epoll_create(MAX_EVENTS); //创建一个Epoll
 		for (auto item : *ioManagers) { AddManager(item); }
@@ -82,7 +82,7 @@ public:
 	}
 
 	// 让一个Manager被epoll接管
-	bool AddManager(IIOManager* mgr)
+	bool AddManager(BaseHardwareManager* mgr)
 	{
 		auto type = mgr->Type();
 		auto it = m_IOManagers.find(type);
@@ -107,7 +107,7 @@ public:
 private:
 	int m_EpollFD;
 	std::unordered_map<int, std::unique_ptr<CallbackData>> m_FDRegistered;
-	std::unordered_map<IOType, IIOManager*> m_IOManagers;
+	std::unordered_map<IOType, BaseHardwareManager*> m_IOManagers;
 };
 
 } // ossian

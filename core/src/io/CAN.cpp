@@ -180,19 +180,19 @@ CANDevice::CANDevice(std::shared_ptr<CANBus> bus, unsigned int id, std::function
 
 // CANManager
 
-const std::shared_ptr<IIOBus> CANManager::AddBus(std::string const& location)
+const std::shared_ptr<BaseHardwareBus> CANManager::AddBus(std::string const& location)
 {
 	return AddBus(location, false);
 }
 
-const std::shared_ptr<IIOBus> CANManager::AddBus(std::string const& location, bool isLoopback)
+const std::shared_ptr<BaseHardwareBus> CANManager::AddBus(std::string const& location, bool isLoopback)
 {
 	auto bus = std::make_shared<CANBus>(shared_from_this(), location, isLoopback);
 	m_BusMap.insert(std::make_pair(location, bus));
 	return bus;
 }
 
-bool CANManager::DelBus(std::shared_ptr<IIOBus> bus)
+bool CANManager::DelBus(std::shared_ptr<BaseHardwareBus> bus)
 {
 	return m_BusMap.erase(bus->Location());
 }
@@ -226,7 +226,7 @@ const std::shared_ptr<BaseDevice> CANManager::AddDevice(std::string const& locat
 	return std::dynamic_pointer_cast<CANBus>(bus)->AddDevice(id, callback);
 }
 
-const std::shared_ptr<IIOBus> CANManager::Bus(std::string const& location) const
+const std::shared_ptr<BaseHardwareBus> CANManager::Bus(std::string const& location) const
 {
 	const auto it = m_BusMap.find(location);
 	if (it == m_BusMap.end())
@@ -236,9 +236,9 @@ const std::shared_ptr<IIOBus> CANManager::Bus(std::string const& location) const
 	return it->second;
 }
 
-const std::vector<std::shared_ptr<IIOBus>> CANManager::GetBuses() const
+const std::vector<std::shared_ptr<BaseHardwareBus>> CANManager::GetBuses() const
 {
-	std::vector<std::shared_ptr<IIOBus>> buses;
+	std::vector<std::shared_ptr<BaseHardwareBus>> buses;
 	for (auto& it : m_BusMap)
 	{
 		buses.push_back(it.second);

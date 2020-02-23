@@ -5,7 +5,14 @@
  */
 #ifndef OSSIAN_CORE_IO_CAN
 #define OSSIAN_CORE_IO_CAN
+
 #ifdef __linux__
+#include <termios.h>
+#include <fcntl.h> 
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <unistd.h>
 
 #include <functional>
 #include <unordered_map>
@@ -14,8 +21,7 @@
 #include <string>
 
 #include "IO.hpp"
-#include "../Factory.hpp"
-
+#include "ossian/Factory.hpp"
 namespace ossian
 {
 
@@ -31,14 +37,14 @@ class CANBus;
 class CANDevice;
 class CANManager;
 
-class CANBus : public IIOBus, public std::enable_shared_from_this<CANBus>
+class CANBus : public BaseHardwareBus, public std::enable_shared_from_this<CANBus>
 {
 public:
 	CANBus() = delete;
 	explicit CANBus(std::shared_ptr<CANManager> manager, std::string location, bool isLoopback);
 	CANBus(const CANBus&) = delete;
 	~CANBus();
-	const std::shared_ptr<IIOManager> Manager() override { return std::static_pointer_cast<IIOManager>(m_Manager); }
+	const std::shared_ptr<BaseHardwareManager> Manager() override { return std::static_pointer_cast<BaseHardwareManager>(m_Manager); }
 	FileDescriptor FD() const noexcept override { return m_FD; }
 	const std::string Location() const noexcept override { return m_Location; }
 	bool IsOpened() const noexcept override { return m_IsOpened; }
@@ -70,7 +76,7 @@ public:
 			  std::function<ReceiveCallback> callback) noexcept;
 	CANDevice(const CANDevice&) = delete;
 
-	const std::shared_ptr<IIOBus> Bus() const override { return std::dynamic_pointer_cast<IIOBus>(m_Bus); }
+	const std::shared_ptr<BaseHardwareBus> Bus() const override { return std::dynamic_pointer_cast<BaseHardwareBus>(m_Bus); }
 	void Invoke(const size_t length, std::shared_ptr<uint8_t[]> const& data) override { m_Callback(shared_from_this(), length, data); }
 	void WriteRaw(const size_t length, std::shared_ptr<uint8_t[]> const& data) override { m_Bus->WriteRaw(m_Id, length, data); }
 	void SetCallback(std::function<ReceiveCallback> const& callback) override { m_Callback = callback; }
@@ -81,19 +87,12 @@ private:
 	std::function<ReceiveCallback> m_Callback;
 };
 
-class CANManager : public IIOManager, public std::enable_shared_from_this<CANManager>
+class CANManager : public BaseHardwareManager, public std::enable_shared_from_this<CANManager>
 {
 public:
 	OSSIAN_SERVICE_SETUP(CANManager()) = default;
 	CANManager(const CANManager&) = delete;
 	IOType Type() const noexcept override { return IOType::CAN; }
-
-	// 注册设备
-	const std::shared_ptr<IIOBus> AddBus(std::string const& location) override;
-	const std::shared_ptr<IIOBus> AddBus(std::string const& location, bool isLoopback);
-
-	bool DelBus(std::shared_ptr<IIOBus> bus) override;
-	bool DelBus(std::string const& location) override;
 
 	void WriteTo(std::shared_ptr<BaseDevice> const& device, size_t length, std::shared_ptr<uint8_t[]> const& data) override;
 
@@ -103,12 +102,18 @@ public:
 												const unsigned int id,
 												const std::function<ReceiveCallback> callback);
 
-	const std::shared_ptr<IIOBus> Bus(std::string const& location) const override;
+	const std::shared_ptr<BaseHardwareBus> Bus(std::string const& location) const override;
 
-	const std::vector<std::shared_ptr<IIOBus>> GetBuses() const override;
+	const std::vector<std::shared_ptr<BaseHardwareBus>> GetBuses() const override;
 
 private:
-	std::unordered_map<std::string, std::shared_ptr<IIOBus>> m_BusMap;
+	std::unordered_map<std::string, std::shared_ptr<BaseHardwareBus>> m_BusMap;
+
+	const std::shared_ptr<BaseHardwareBus> AddBus(std::string const& location);
+	const std::shared_ptr<BaseHardwareBus> AddBus(std::string const& location, bool isLoopback);
+
+	bool DelBus(std::shared_ptr<BaseHardwareBus> bus);
+	bool DelBus(std::string const& location);
 };
 
 } // ossian

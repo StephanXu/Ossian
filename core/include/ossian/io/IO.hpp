@@ -26,21 +26,21 @@ class BaseDevice;
 
 
 /**
- * @class	IIOBus
+ * @class	BaseHardwareBus
  * @brief	IO总线接口
  * @author	Mlekow
  * @date	2020/2/14
  */
-class IIOBus;
+class BaseHardwareBus;
 
 
 /**
- * @class	IIOManager
+ * @class	BaseHardwareManager
  * @brief	IO管理器接口
  * @author	Mlekow
  * @date	2020/2/14
  */
-class IIOManager;
+class BaseHardwareManager;
 
 /** @brief	The receive callback */
 using ReceiveCallback = void(
@@ -88,13 +88,13 @@ public:
 
 
 	/**
-	 * @fn	virtual const std::shared_ptr<IIOBus> BaseDevice::Bus() const = 0;
+	 * @fn	virtual const std::shared_ptr<BaseHardwareBus> BaseDevice::Bus() const = 0;
 	 * @brief	获取设备所在总线的句柄
 	 * @author	Mlekow
 	 * @date	2020/1/31
-	 * @returns	A std::shared_ptr&lt;IIOBus&gt;
+	 * @returns	A std::shared_ptr&lt;BaseHardwareBus&gt;
 	 */
-	virtual const std::shared_ptr<IIOBus> Bus() const = 0;
+	virtual const std::shared_ptr<BaseHardwareBus> Bus() const = 0;
 
 
 	/**
@@ -133,37 +133,37 @@ inline BaseDevice::~BaseDevice() = default;
 
 
 /**
- * @class	IIOBus
+ * @class	BaseHardwareBus
  *
  * @brief	IO总线接口
  *
  * @author	Mlekow
  * @date	2020/1/31
  */
-class IIOBus
+class BaseHardwareBus
 {
 public:
 	/**
-	 * @fn	virtual IIOBus::~IIOBus();
+	 * @fn	virtual BaseHardwareBus::~BaseHardwareBus();
 	 * @brief	Destructor
 	 * @author	Mlekow
 	 * @date	2020/2/14
 	 */
-	virtual ~IIOBus();
+	virtual ~BaseHardwareBus();
 
 
 	/**
-	 * @fn	virtual const std::shared_ptr<IIOManager> IIOBus::Manager() = 0;
+	 * @fn	virtual const std::shared_ptr<BaseHardwareManager> BaseHardwareBus::Manager() = 0;
 	 * @brief	获取总线管理器的句柄
 	 * @author	Mlekow
 	 * @date	2020/1/31
-	 * @returns	A std::shared_ptr&lt;IIOBus&gt;
+	 * @returns	A std::shared_ptr&lt;BaseHardwareBus&gt;
 	 */
-	virtual const std::shared_ptr<IIOManager> Manager() = 0;
+	virtual const std::shared_ptr<BaseHardwareManager> Manager() = 0;
 
 
 	/**
-	 * @fn	virtual FileDescriptor IIOBus::FD() const = 0;
+	 * @fn	virtual FileDescriptor BaseHardwareBus::FD() const = 0;
 	 * @brief	获取总线文件描述符
 	 * @author	Mlekow
 	 * @date	2020/1/31
@@ -173,7 +173,7 @@ public:
 
 
 	/**
-	 * @fn	virtual const std::string IIOBus::Location() const noexcept = 0;
+	 * @fn	virtual const std::string BaseHardwareBus::Location() const noexcept = 0;
 	 * @brief	获取总线Location
 	 * @author	Mlekow
 	 * @date	2020/1/31
@@ -183,7 +183,7 @@ public:
 
 
 	/**
-	 * @fn	virtual bool IIOBus::IsOpened() const noexcept = 0;
+	 * @fn	virtual bool BaseHardwareBus::IsOpened() const noexcept = 0;
 	 * @brief	查询总线是否开启
 	 * @author	Mlekow
 	 * @date	2020/1/31
@@ -193,7 +193,7 @@ public:
 
 
 	/**
-	 * @fn	virtual bool IIOBus::Open() = 0;
+	 * @fn	virtual bool BaseHardwareBus::Open() = 0;
 	 * @brief	打开总线
 	 * @author	Mlekow
 	 * @date	2020/1/31
@@ -203,7 +203,7 @@ public:
 
 
 	/**
-	 * @fn	virtual bool IIOBus::Close() = 0;
+	 * @fn	virtual bool BaseHardwareBus::Close() = 0;
 	 * @brief	关闭总线
 	 * @author	Mlekow
 	 * @date	2020/1/31
@@ -213,7 +213,7 @@ public:
 
 
 	/**
-	 * @fn	virtual void IIOBus::Read() = 0;
+	 * @fn	virtual void BaseHardwareBus::Read() = 0;
 	 * @brief	读取数据、触发对应的回调，注意此处并不会直接返回读到的数据
 	 * @author	Mlekow
 	 * @date	2020/1/31
@@ -222,7 +222,7 @@ public:
 
 
 	/**
-	 * @fn	virtual std::vector<std::shared_ptr<BaseDevice>> IIOBus::GetDevices() = 0;
+	 * @fn	virtual std::vector<std::shared_ptr<BaseDevice>> BaseHardwareBus::GetDevices() = 0;
 	 * @brief	获取所申请的所有Device
 	 * @author	Mlekow
 	 * @date	2020/1/31
@@ -233,34 +233,34 @@ public:
 
 
 /**
- * @fn	inline IIOBus::~IIOBus() = default;
+ * @fn	inline BaseHardwareBus::~BaseHardwareBus() = default;
  * @brief	Destructor
  * @author	Mlekow
  * @date	2020/2/14
  */
-inline IIOBus::~IIOBus() = default;
+inline BaseHardwareBus::~BaseHardwareBus() = default;
 
 
 /**
- * @class	IIOManager
+ * @class	BaseHardwareManager
  * @brief	IO总线的管理器
  * @author	Mlekow
  * @date	2020/1/31
  */
-class IIOManager
+class BaseHardwareManager
 {
 public:
 	/**
-	 * @fn	virtual IIOManager::~IIOManager();
+	 * @fn	virtual BaseHardwareManager::~BaseHardwareManager();
 	 * @brief	Destructor
 	 * @author	Mlekow
 	 * @date	2020/2/14
 	 */
-	virtual ~IIOManager();
+	virtual ~BaseHardwareManager();
 
 
 	/**
-	 * @fn	virtual IOType IIOManager::Type() const noexcept = 0;
+	 * @fn	virtual IOType BaseHardwareManager::Type() const noexcept = 0;
 	 * @brief	所管理的IO类型
 	 * @author	Mlekow
 	 * @date	2020/1/31
@@ -270,51 +270,18 @@ public:
 
 
 	/**
-	 * @fn	virtual const std::shared_ptr<IIOBus> IIOManager::AddBus(std::string const& location) = 0;
-	 * @brief	添加Bus，返回具体句柄
-	 * @author	Mlekow
-	 * @date	2020/1/31
-	 * @param 	location	The location.
-	 * @returns	A std::shared_ptr&lt;IIOBus&gt;
-	 */
-	virtual const std::shared_ptr<IIOBus> AddBus(std::string const& location) = 0;
-
-
-	/**
-	 * @fn	virtual bool IIOManager::DelBus(std::string const& location) = 0;
-	 * @brief	通过Location删除Bus
-	 * @author	Mlekow
-	 * @date	2020/1/31
-	 * @param 	location	The location.
-	 * @returns	True if it succeeds, false if it fails.
-	 */
-	virtual bool DelBus(std::string const& location) = 0;
-
-
-	/**
-	 * @fn	virtual bool IIOManager::DelBus(std::shared_ptr<IIOBus> bus) = 0;
-	 * @brief	通过句柄删除Bus
-	 * @author	Mlekow
-	 * @date	2020/1/31
-	 * @param 	bus	总线的句柄.
-	 * @returns	True if it succeeds, false if it fails.
-	 */
-	virtual bool DelBus(std::shared_ptr<IIOBus> bus) = 0;
-
-
-	/**
-	 * @fn	virtual const std::shared_ptr<IIOBus> IIOManager::Bus(std::string const& location) const = 0;
+	 * @fn	virtual const std::shared_ptr<BaseHardwareBus> BaseHardwareManager::Bus(std::string const& location) const = 0;
 	 * @brief	通过指定的Location去获取Bus
 	 * @author	Mlekow
 	 * @date	2020/1/31
 	 * @param 	location	The location.
-	 * @returns	A std::shared_ptr&lt;IIOBus&gt;
+	 * @returns	A std::shared_ptr&lt;BaseHardwareBus&gt;
 	 */
-	virtual const std::shared_ptr<IIOBus> Bus(std::string const& location) const = 0;
+	virtual const std::shared_ptr<BaseHardwareBus> Bus(std::string const& location) const = 0;
 
 
 	/**
-	 * @fn	virtual void IIOManager::WriteTo(std::shared_ptr<BaseDevice> const& device, const size_t length, std::shared_ptr<uint8_t[]> const& data) = 0;
+	 * @fn	virtual void BaseHardwareManager::WriteTo(std::shared_ptr<BaseDevice> const& device, const size_t length, std::shared_ptr<uint8_t[]> const& data) = 0;
 	 * @brief	写入具体的设备
 	 * @author	Mlekow
 	 * @date	2020/2/2
@@ -327,16 +294,16 @@ public:
 
 
 	/**
-	 * @fn	virtual const std::vector<std::shared_ptr<IIOBus>> IIOManager::GetBuses() const = 0;
+	 * @fn	virtual const std::vector<std::shared_ptr<BaseHardwareBus>> BaseHardwareManager::GetBuses() const = 0;
 	 * @brief	获取所管理的所有总线
 	 * @author	Mlekow
 	 * @date	2020/1/31
 	 * @returns	A std::vector&lt;FileDescriptor&gt;
 	 */
-	virtual const std::vector<std::shared_ptr<IIOBus>> GetBuses() const = 0;
+	virtual const std::vector<std::shared_ptr<BaseHardwareBus>> GetBuses() const = 0;
 };
 
-inline IIOManager::~IIOManager() = default;
+inline BaseHardwareManager::~BaseHardwareManager() = default;
 } // ossian
 #endif // __linux__
 #endif // OSSIAN_CORE_IO_INTERFACES

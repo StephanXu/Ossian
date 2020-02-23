@@ -39,10 +39,10 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<RoboStatus>();
 	app.AddService<VideoInputSource>().AsInputAdapter();
 	app.AddService<SerialPortIO>();
-	app.AddService<ossian::IIOManager, ossian::CANManager>(
+	app.AddService<ossian::BaseHardwareManager, ossian::CANManager>(
 		[](ossian::CANManager& mgr)
 		{
-			mgr.AddBus("can0", true);
+			// mgr.AddBus("can0", true);
 		});
 	app.AddService<ossian::IOListener>();
 	//app.AddInputAdapter<CameraInputSource>();

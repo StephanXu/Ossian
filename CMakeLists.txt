@@ -14,6 +14,7 @@ add_subdirectory(proto)
 add_subdirectory(core)
 add_subdirectory(3rdparty)
 add_subdirectory(bench)
+add_subdirectory(tests)
 
 target_compile_features(Ossian PUBLIC cxx_std_17)
 target_sources(Ossian
