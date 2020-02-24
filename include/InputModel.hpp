@@ -13,7 +13,7 @@ class ImageInputData : public ossian::IOAP::BaseInputData
 {
 public:
     ImageInputData() = default;
-    ImageInputData(cv::UMat image)
+    ImageInputData(cv::Mat image)
         : m_Image(image)
     {
     }
@@ -32,7 +32,7 @@ public:
         return this;
     }
 
-    cv::UMat m_Image;
+    cv::Mat m_Image;
 };
 
 

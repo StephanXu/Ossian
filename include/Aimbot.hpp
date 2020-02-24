@@ -9,6 +9,10 @@
 
 #include <atomic>
 #include <cmath>
+#include <Eigen/Dense>
+#include <opencv2/core/eigen.hpp>
+
+
 
 namespace Ioap = ossian::IOAP;
 namespace Utils = ossian::Utils;
@@ -120,12 +124,12 @@ private:
                 m_RightLight = lightBar1;
             }
         }
-        Armor(const cv::Rect2f& armorRect, ArmorType armorType) noexcept
+        Armor(const cv::Rect2d& armorRect, ArmorType armorType) noexcept
         {
-            m_Vertexes.emplace_back(cv::Point2f(armorRect.x, armorRect.y));
-            m_Vertexes.emplace_back(cv::Point2f(armorRect.x + armorRect.width, armorRect.y));
-            m_Vertexes.emplace_back(cv::Point2f(armorRect.x + armorRect.width, armorRect.y + armorRect.height));
-            m_Vertexes.emplace_back(cv::Point2f(armorRect.x, armorRect.y + armorRect.height));
+            m_Vertexes.emplace_back(cv::Point2d(armorRect.x, armorRect.y));
+            m_Vertexes.emplace_back(cv::Point2d(armorRect.x + armorRect.width, armorRect.y));
+            m_Vertexes.emplace_back(cv::Point2d(armorRect.x + armorRect.width, armorRect.y + armorRect.height));
+            m_Vertexes.emplace_back(cv::Point2d(armorRect.x, armorRect.y + armorRect.height));
 
             m_MinRect = cv::minAreaRect(m_Vertexes);
             m_Center = (armorRect.tl() + armorRect.br()) / 2;
@@ -147,7 +151,7 @@ private:
         static double areaNormalizedBase;
         static double sightOffsetNormalizedBase;
 
-        static cv::Point2f frameCenter;
+        static cv::Point2d frameCenter;
 
         bool IsLegal()
         {
@@ -174,13 +178,13 @@ private:
                 m_LeftLight.Ellipse().points(leftLightRectPts);
                 m_RightLight.Ellipse().points(rightLightRectPts);
 
-                m_Vertexes.emplace_back(cv::Point2f(leftLightRectPts[2].x, leftLightRectPts[2].y)); //左上
-                m_Vertexes.emplace_back(cv::Point2f(rightLightRectPts[2].x, rightLightRectPts[2].y)); //右上
-                m_Vertexes.emplace_back(cv::Point2f(rightLightRectPts[0].x, rightLightRectPts[0].y)); //右下
-                m_Vertexes.emplace_back(cv::Point2f(leftLightRectPts[0].x, leftLightRectPts[0].y)); //左下
+                m_Vertexes.emplace_back(cv::Point2d(leftLightRectPts[2].x, leftLightRectPts[2].y)); //左上
+                m_Vertexes.emplace_back(cv::Point2d(rightLightRectPts[2].x, rightLightRectPts[2].y)); //右上
+                m_Vertexes.emplace_back(cv::Point2d(rightLightRectPts[0].x, rightLightRectPts[0].y)); //右下
+                m_Vertexes.emplace_back(cv::Point2d(leftLightRectPts[0].x, leftLightRectPts[0].y)); //左下
 
-                cv::Point2f center1 = (m_Vertexes[0] + m_Vertexes[2]) / 2.0;
-                cv::Point2f center2 = (m_Vertexes[1] + m_Vertexes[3]) / 2.0;
+                cv::Point2d center1 = (m_Vertexes[0] + m_Vertexes[2]) / 2.0;
+                cv::Point2d center2 = (m_Vertexes[1] + m_Vertexes[3]) / 2.0;
                 m_Center = (center1 + center2) / 2.0;
                 m_MinRect = cv::minAreaRect(m_Vertexes);
 
@@ -218,7 +222,7 @@ private:
         {
             return m_MinRect;
         }
-        cv::Point2f Center() const
+        cv::Point2d Center() const
         {
             return m_Center;
         }
@@ -226,7 +230,7 @@ private:
         {
             return m_ArmorType;
         }
-        std::vector<cv::Point2f> Vertexes() const
+        std::vector<cv::Point2d> Vertexes() const
         {
             return m_Vertexes;
         }
@@ -235,8 +239,8 @@ private:
     private:
         LightBar m_LeftLight;
         LightBar m_RightLight;
-        std::vector<cv::Point2f> m_Vertexes;  ///<装甲板的四个顶点，从左上点开始，顺时针排列
-        cv::Point2f m_Center;
+        std::vector<cv::Point2d> m_Vertexes;  ///<装甲板的四个顶点，从左上点开始，顺时针排列
+        cv::Point2d m_Center;
         ArmorType m_ArmorType;
         double m_Score;
         cv::RotatedRect m_MinRect;
@@ -245,59 +249,65 @@ private:
     class PoseSolver
     {
     public:
-        static double offsetZPitch;
-        static double offsetYPitch;
-        static double offsetZYaw;
-        static double offsetX;
+        //x向右 y向下 z向前
+        //mm
+        static double cameraToGimbalX;
+        static double cameraToGimbalY;
+        static double cameraToGimbalZ;
+        static double barrelToGimbalY;
+        static double rotOverlapLen;
+
         static double initV;
         static double initK;
         static double gravity;
 
-        PoseSolver(const cv::Rect2f& bbox, ArmorType armorType) : m_BBox(bbox), m_ArmorType(armorType) {}
-        ~PoseSolver() {}
-        //Yaw: 逆时针正 顺时针负 ; Pitch:下负 上正
-        void Solve(float& yaw, float& pitch, float& dist)
+        PoseSolver(const cv::Rect2d& bbox, ArmorType armorType) : m_BBox(bbox), m_ArmorType(armorType) 
         {
-            PNPSolver();
+            double rotAngle = -atan2((cameraToGimbalY + barrelToGimbalY), rotOverlapLen);
+            m_CamToGblRot << 1,              0,              0,
+                             0,  cos(rotAngle),  sin(rotAngle),
+                             0, -sin(rotAngle),  cos(rotAngle);
 
-			cv::Point3f target_3d(m_tvec);
-
-			//dist = sqrt(m_tvec.at<double>(0, 0) * m_tvec.at<double>(0, 0) + m_tvec.at<double>(0, 1) * m_tvec.at<double>(0, 1) + m_tvec.at<double>(0, 2) * m_tvec.at<double>(0, 2));
-			dist = std::sqrt(target_3d.x * target_3d.x + target_3d.y * target_3d.y + target_3d.z * target_3d.z);
-			//dist = target_3d.z;
-			yaw = -atan2(target_3d.x, target_3d.z);
-			pitch = -atan2(target_3d.y, target_3d.z);
-			//yaw = atan((dist*sin(yaw)) / (dist*cos(yaw) + offsetZ));
-			//pitch = atan((dist*sin(pitch)) / (dist*cos(pitch) + offsetZ));
-			//dist = sqrt(pow(offsetZ + dist * cos(yaw), 2) + pow(dist*sin(yaw), 2));
-			if (dist > 1500)
-				pitch = std::atan((std::sin(pitch) - 0.5 * gravity * dist / std::pow(initV, 2)) / std::cos(pitch));
-			yaw = yaw / CV_PI * 180;
-			pitch = pitch / CV_PI * 180;
+            m_CamToGblTran << cameraToGimbalX, cameraToGimbalY, cameraToGimbalZ;
         }
 
-        //Yaw: 逆时针正 顺时针负 ; Pitch:下正 上负
-        void SolveWithCompensation(float& yaw, float& pitch, float& dist)
+        //Yaw: 逆时针正 顺时针负 ; Pitch:下负 上正
+        void Solve(double& yaw, double& pitch, double& dist, bool EnableGravity=false)
         {
             PNPSolver();
+            Eigen::Vector3d posInGimbal = m_CamToGblRot * m_WorldToCamTran - m_CamToGblTran;
+            dist = posInGimbal(2);
+            yaw = atan2(posInGimbal(0), posInGimbal(2));
 
-            cv::Point3f target_3d(m_tvec);
-			
-            dist = std::sqrt(target_3d.x * target_3d.x + target_3d.y * target_3d.y + target_3d.z * target_3d.z);
-            //dist = target_3d.z;
-            //dist = 10941 * pow(m_BBox.height, -1.066);  //灯条高度与实际距离的函数关系
-            pitch = GetPitch((dist + offsetZPitch) / 1000, -(target_3d.y + offsetYPitch) / 1000, initV); //rad
-            yaw = -static_cast<float>(std::atan2(target_3d.x + offsetX, dist + offsetZYaw)); //rad
+            double alpha = asin(barrelToGimbalY / sqrt(posInGimbal(1) * posInGimbal(1) + posInGimbal(2) * posInGimbal(2)));
+            if (posInGimbal(1) < 0) 
+            {
+                double theta = atan(-posInGimbal(1) / posInGimbal(2));
+                pitch = -(alpha + theta);  
+            }
+            else if (posInGimbal(1) < barrelToGimbalY)
+            {
+                double theta = atan(posInGimbal(1) / posInGimbal(2));
+                pitch = -(alpha - theta);  
+            }
+            else 
+            {
+                double theta = atan(posInGimbal(1)/ posInGimbal(2));
+                pitch = (theta - alpha);   
+            }
 
-            //弧度转角度
-            pitch = pitch * 180 / CV_PI;
-            yaw = yaw * 180 / CV_PI;
+            if (EnableGravity)
+                pitch += GetPitch(dist/1000, posInGimbal(1)/1000, initV);
+                
         }
 
     private:
-        cv::Rect2f m_BBox;
+        cv::Rect2d m_BBox;
         ArmorType m_ArmorType;
         cv::Mat m_tvec;
+        Eigen::Matrix3d m_CamToGblRot;
+        Eigen::Vector3d m_CamToGblTran;
+        Eigen::Vector3d m_WorldToCamTran;
 
        /**
        * @Brief: 考虑水平方向空气阻力，计算子弹实际的y坐标
@@ -306,11 +316,11 @@ private:
        * @Param angle: 子弹发射的俯仰角 单位 rad
        * @Return: 云台坐标系中，子弹实际落点的y坐标 单位 m
        */
-        float BulletModel(float x, float v, float angle)
+        double BulletModel(double x, double v, double angle)
         {
-            float t, y;
-            t = static_cast<float>((std::exp(initK * x) - 1) / (initK * v * std::cos(angle)));
-            y = static_cast<float>(v * std::sin(angle) * t - gravity * t * t / 2);
+            double t, y;
+            t = static_cast<double>((std::exp(initK * x) - 1) / (initK * v * std::cos(angle)));
+            y = static_cast<double>(v * std::sin(angle) * t - gravity * t * t / 2);
             return y;
         }
 
@@ -321,15 +331,15 @@ private:
        * @param v: 子弹发射速度 单位 m/s
        * @return: 云台俯仰角变化量 单位 rad
        */
-        float GetPitch(float x, float y, float v)
+        double GetPitch(double x, double y, double v)
         {
-            float y_temp, y_actual, dy;
-            float a;
+            double y_temp, y_actual, dy;
+            double a;
             y_temp = y;
             // 20次迭代，数值算法
             for (int i = 0; i < 20; ++i)
             {
-                a = (float)std::atan2(y_temp, x);
+                a = std::atan2(y_temp, x);
                 y_actual = BulletModel(x, v, a);
                 dy = y - y_actual;
                 y_temp = y_temp + dy;
@@ -343,23 +353,23 @@ private:
         void PNPSolver()
         {
 			// constants
-            const static float smallArmorWidth = 130.0; // mm
-            const static float smallArmorHeight = 71.0;
-			const static float bigArmorWidth = 210.0;
-			const static float bigArmorHeight = 60.0;
-            const static std::vector<cv::Point3f> smallArmorVertex =
+            const static double smallArmorWidth = 130.0; // mm
+            const static double smallArmorHeight = 71.0;
+			const static double bigArmorWidth = 210.0;
+			const static double bigArmorHeight = 60.0;
+            const static std::vector<cv::Point3d> smallArmorVertex =
             {
-                cv::Point3f(-smallArmorWidth / 2, -smallArmorHeight / 2, 0),	//tl
-                cv::Point3f(smallArmorWidth / 2, -smallArmorHeight / 2, 0),	//tr
-                cv::Point3f(smallArmorWidth / 2,  smallArmorHeight / 2, 0),	//br
-                cv::Point3f(-smallArmorWidth / 2,  smallArmorHeight / 2, 0)		//bl
+                cv::Point3d(-smallArmorWidth / 2, -smallArmorHeight / 2, 0),	//tl
+                cv::Point3d(smallArmorWidth / 2, -smallArmorHeight / 2, 0),	//tr
+                cv::Point3d(smallArmorWidth / 2,  smallArmorHeight / 2, 0),	//br
+                cv::Point3d(-smallArmorWidth / 2,  smallArmorHeight / 2, 0)		//bl
             };
-            const static std::vector<cv::Point3f> bigArmorVertex =
+            const static std::vector<cv::Point3d> bigArmorVertex =
 			{
-				cv::Point3f(-bigArmorWidth / 2, -smallArmorHeight / 2, 0),	//tl
-				cv::Point3f(bigArmorWidth / 2, -smallArmorHeight / 2, 0),	//tr
-				cv::Point3f(bigArmorWidth / 2,  smallArmorHeight / 2, 0),	//br
-				cv::Point3f(-bigArmorWidth / 2,  smallArmorHeight / 2, 0)	//bl
+				cv::Point3d(-bigArmorWidth / 2, -smallArmorHeight / 2, 0),	//tl
+				cv::Point3d(bigArmorWidth / 2, -smallArmorHeight / 2, 0),	//tr
+				cv::Point3d(bigArmorWidth / 2,  smallArmorHeight / 2, 0),	//br
+				cv::Point3d(-bigArmorWidth / 2,  smallArmorHeight / 2, 0)	//bl
 			};
             const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1763.56659425676, 0, 755.6922965695335,
                                           0, 1764.629234433968, 560.6661455507484,
@@ -369,62 +379,17 @@ private:
 			
 			// tmp
 			static cv::Mat rvec;
-            std::vector<cv::Point2f> targetPts = {
+            std::vector<cv::Point2d> targetPts = {
                 m_BBox.tl(),
-                m_BBox.tl() + cv::Point2f(m_BBox.width,0),
+                m_BBox.tl() + cv::Point2d(m_BBox.width,0),
                 m_BBox.br(),
-                m_BBox.tl() + cv::Point2f(0,m_BBox.height) };
+                m_BBox.tl() + cv::Point2d(0,m_BBox.height) };
             if (m_ArmorType == ArmorType::Small)
                 cv::solvePnP(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, m_tvec);
             else
-                cv::solvePnPRansac(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, m_tvec);
+                cv::solvePnP(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, m_tvec);
+            cv::cv2eigen(m_tvec, m_WorldToCamTran);
         }
-    };
-
-    class KalmanFilter
-    {
-    public:
-        KalmanFilter(int stateNum, int measureNum)
-        {
-            m_StateNum = stateNum;
-            m_MeasureNum = measureNum;
-            KF = cv::KalmanFilter(stateNum, measureNum, 0);
-            Init();
-        }
-        ~KalmanFilter() = default;
-        void Init()
-        {     //Mat processNoise(stateNum, 1, CV_32F);
-            measurement = cv::Mat::zeros(m_MeasureNum, 1, CV_32F);
-            KF.transitionMatrix = (cv::Mat_<float>(m_StateNum, m_StateNum) <<  //A 状态转移矩阵
-                                   1, 0, 1 * 10, 0,
-                                   0, 1, 0, 1 * 10,
-                                   0, 0, 1, 0,
-                                   0, 0, 0, 1);
-            //这里没有设置控制矩阵B，默认为零
-            setIdentity(KF.measurementMatrix);								//H=[1,0,0,0;
-                                                                                //	 0,1,0,0] 观测矩阵
-            //setIdentity( KF.processNoiseCov, cv::Scalar::all( 1e-2 ) );			//Q高斯白噪声，单位阵  bigger ---- slower regression
-            //setIdentity( KF.measurementNoiseCov, cv::Scalar::all( 1e-2 ) );		//测量误差R 高斯白噪声，单位阵 smaller --- quicker regression
-            setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-2));			//Q高斯白噪声，单位阵  bigger ---- slower regression
-            setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-2));		//测量误差R 高斯白噪声，单位阵 smaller --- quicker regression
-            setIdentity(KF.errorCovPost, cv::Scalar::all(1));				//P后验误差估计协方差矩阵，初始化为单位阵
-            randn(KF.statePost, cv::Scalar::all(0), cv::Scalar::all(0.1));	//初始化状态为随机值
-        }
-        void PredictAndCorrect(float& gimbalYawPredicted, float& gimbalPitchPredicted, float gimbalYawMeasured, float gimbalPitchMeasured)
-        {
-            cv::Mat prediction = KF.predict();
-            gimbalYawPredicted = prediction.at<float>(0);
-            gimbalPitchPredicted = prediction.at<float>(1);
-
-            measurement.at<float>(0) = gimbalYawMeasured;
-            measurement.at<float>(1) = gimbalPitchMeasured;
-
-            KF.correct(measurement);
-        }
-    private:
-        int m_StateNum, m_MeasureNum;
-        cv::KalmanFilter KF;
-        cv::Mat measurement;
     };
 
     enum class AlgorithmState
@@ -433,7 +398,7 @@ private:
         Tracking
     };
 
-    bool DetectArmor(const cv::UMat& frame,
+    bool DetectArmor(const cv::Mat& frame,
                      Armor& outTarget) noexcept
     {
         using OssianConfig::Configuration;
@@ -444,8 +409,8 @@ private:
         const static cv::Mat element3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
         const static cv::Mat element5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
 
-        cv::UMat grayColor, binaryColor, binary;
-        std::vector<cv::UMat> channels;
+        cv::Mat grayColor, binaryColor, binary;
+        std::vector<cv::Mat> channels;
         cv::split(frame, channels);
 
         cv::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor);
@@ -506,7 +471,7 @@ private:
         return !armors.empty();
     }
 
-    bool FindArmor(const cv::UMat& origFrame, cv::Rect2f& armorBBox, ArmorType& armorType)
+    bool FindArmor(const cv::Mat& origFrame, cv::Rect2f& armorBBox, ArmorType& armorType)
     {
         bool armorFound{ false };
         Armor target;
@@ -536,8 +501,8 @@ private:
         return armorFound;
     }
 
-    float m_Yaw = 0;
-    float m_Pitch = 0;
+    double m_Yaw = 0;
+    double m_Pitch = 0;
     std::mutex m_AngleLock;
 
     std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;

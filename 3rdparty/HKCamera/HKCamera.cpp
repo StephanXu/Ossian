@@ -137,7 +137,7 @@ void HKCamera::SetFrameSize(const int width, const int height)
     m_FrameHeight = height;
 }
 
-bool HKCamera::ReadFrame(cv::UMat &outMat)
+bool HKCamera::ReadFrame(cv::Mat &outMat)
 {
     if (!m_IsValid)
         return false;
@@ -200,16 +200,16 @@ bool HKCamera::IsValid()
     return m_IsValid;
 }
 
-bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned char *DataBuffer, cv::UMat &refDest)
+bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned char *DataBuffer, cv::Mat &refDest)
 {
     //if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8)
     //{
-    //	refDest = cv::UMat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
+    //	refDest = cv::Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
     //}
     //else if (pstImageInfo->enPixelType == PixelType_Gvsp_RGB8_Packed)
     //{
     //	RGB2BGR(DataBuffer, pstImageInfo->nWidth, pstImageInfo->nHeight);
-    //	refDest = cv::UMat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC3, DataBuffer);
+    //	refDest = cv::Mat(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC3, DataBuffer);
     //}
     if (pstImageInfo->enPixelType == PixelType_Gvsp_BayerRG8)
     {

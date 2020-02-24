@@ -42,14 +42,11 @@
     "sightOffsetNormalizedBase": 200.0
   },
   "poseSolver": {
-    "offsetX": 0.0,
-    "offsetZPitch": 131.0,
-    "offsetYPitch": 50.0,
-    "offsetYYaw": -37.0,
-    "offsetZYaw": 213.0,
-
-    "offsetYaw": 0.0,
-    "offsetPitch": 0.55,
+    "cameraToGimbalX": 1,
+    "cameraToGimbalY": 2,
+    "cameraToGimbalZ": 3,
+    "barrelToGimbalY": 4,
+    "rotOverlapLen": 100000,
 
     "initV": 20.0,
     "initK": 0.026,

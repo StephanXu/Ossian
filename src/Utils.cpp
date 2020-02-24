@@ -11,7 +11,7 @@ double PointDistance(const cv::Point2f& pt1, const cv::Point2f& pt2)
     return std::sqrt((pt1.x - pt2.x) * (pt1.x - pt2.x) + (pt1.y - pt2.y) * (pt1.y - pt2.y));
 }
 
-void RegularizeErrAngle(float& angle, char type)
+void RegularizeErrAngle(double& angle, char type)
 {
 	const static double MAX_YAW_DIFF = 5;
 	const static double MAX_PITCH_DIFF = 3;

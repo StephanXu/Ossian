@@ -7,10 +7,6 @@
 #include <Eigen/Dense>
 
 
-constexpr double PI = 3.14159265359; 
-constexpr double MOTOR_ECD_TO_RAD_COEF = 2 * PI / 8192;
-
-
 // 限幅函数
 template<typename T>
 inline T Clamp(T value, const T lowerBnd, const T upperBnd)
@@ -53,6 +49,7 @@ inline double RelativeEcdToRad(uint16_t ecd, const uint16_t ecdMid)
 {
 	static constexpr uint16_t HALF_ECD_RANGE = 4096;
 	static constexpr uint16_t ECD_RANGE = 8191;
+	static constexpr double MOTOR_ECD_TO_RAD_COEF = 2 * M_PI / 8192;
 
 	int relativeEcd = ecd - ecdMid;
 	if (relativeEcd > HALF_ECD_RANGE)
@@ -138,7 +135,7 @@ public:
 		//double error = m_Expectation - feedback;
 		double error = expectation - feedback;
 		if (flagRadLimit)
-			error = ClampLoop(error, -PI, PI);  //角度环，角度误差范围限制
+			error = ClampLoop(error, -M_PI, M_PI);  //角度环，角度误差范围限制
 		double output = 0.0;
 		//积分分离法：如果误差超过 ±m_ThresError1 范围，则积分清零
 		if (fabs(error) >= m_ThresError1)

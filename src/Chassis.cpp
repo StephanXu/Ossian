@@ -106,8 +106,8 @@ void Chassis::ChassisAxisSpeedSet()
 	else if (m_CurChassisMode == FOLLOW_CHASSIS_YAW)
 	{
 		RCToChassisSpeed();
-		m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[CHASSIS_Z_CHANNEL] * CHASSIS_WZ_RC_SEN, -PI, PI);
-		double deltaAngle = ClampLoop(m_AngleSet - m_ChassisSensorValues.gyroZ, -PI, PI);
+		m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[CHASSIS_Z_CHANNEL] * CHASSIS_WZ_RC_SEN, -M_PI, M_PI);
+		double deltaAngle = ClampLoop(m_AngleSet - m_ChassisSensorValues.gyroZ, -M_PI, M_PI);
 		m_WzSet = m_PIDChassisAngle.Calc(deltaAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
 		m_VxSet = Clamp(m_VxSet, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
 		m_VySet = Clamp(m_VySet, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);

@@ -10,6 +10,7 @@
 
 class Gimbal
 {
+	static constexpr double MOTOR_ECD_TO_RAD_COEF = 2 * M_PI / 8192;
 	//云台特殊位置
 	static constexpr uint16_t PITCH_MID_ECD = 100;
 	static constexpr uint16_t YAW_MID_ECD = 200;

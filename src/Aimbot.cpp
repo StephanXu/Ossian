@@ -20,15 +20,16 @@ double Aimbot::Armor::smallArmorRatio = 0.0;
 double Aimbot::Armor::areaNormalizedBase = 0.0;
 double Aimbot::Armor::sightOffsetNormalizedBase = 0.0;
 
-double Aimbot::PoseSolver::offsetZPitch = 0.0;
-double Aimbot::PoseSolver::offsetYPitch = 0.0;
-double Aimbot::PoseSolver::offsetZYaw = 0.0;
-double Aimbot::PoseSolver::offsetX = 0.0;
+double Aimbot::PoseSolver::cameraToGimbalX = 0.0;
+double Aimbot::PoseSolver::cameraToGimbalY = 0.0;
+double Aimbot::PoseSolver::cameraToGimbalZ = 0.0;
+double Aimbot::PoseSolver::barrelToGimbalY = 0.0;
+double Aimbot::PoseSolver::rotOverlapLen = 0.0;
 double Aimbot::PoseSolver::initV = 0.0;
 double Aimbot::PoseSolver::initK = 0.0;
 double Aimbot::PoseSolver::gravity = 0.0;
 
-cv::Point2f Aimbot::Armor::frameCenter(0, 0);
+cv::Point2d Aimbot::Armor::frameCenter(0, 0);
 
 Aimbot::Aimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort)
 	:m_Valid(false)
@@ -53,10 +54,11 @@ Aimbot::Aimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort)
     Aimbot::Armor::areaNormalizedBase = m_Config->Instance<Configuration>()->mutable_aimbot()->areanormalizedbase();
     Aimbot::Armor::sightOffsetNormalizedBase = m_Config->Instance<Configuration>()->mutable_aimbot()->sightoffsetnormalizedbase();
 
-    Aimbot::PoseSolver::offsetZPitch = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetzpitch();
-    Aimbot::PoseSolver::offsetYPitch = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetypitch();
-    Aimbot::PoseSolver::offsetZYaw = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetzyaw();
-    Aimbot::PoseSolver::offsetX = m_Config->Instance<Configuration>()->mutable_posesolver()->offsetx();
+    Aimbot::PoseSolver::cameraToGimbalX = m_Config->Instance<Configuration>()->mutable_posesolver()->cameratogimbalx();
+    Aimbot::PoseSolver::cameraToGimbalY = m_Config->Instance<Configuration>()->mutable_posesolver()->cameratogimbaly();
+    Aimbot::PoseSolver::cameraToGimbalZ = m_Config->Instance<Configuration>()->mutable_posesolver()->cameratogimbalz();
+    Aimbot::PoseSolver::barrelToGimbalY = m_Config->Instance<Configuration>()->mutable_posesolver()->barreltogimbaly();
+    Aimbot::PoseSolver::rotOverlapLen = m_Config->Instance<Configuration>()->mutable_posesolver()->rotoverlaplen();
     Aimbot::PoseSolver::initV = m_Config->Instance<Configuration>()->mutable_posesolver()->initv();
     Aimbot::PoseSolver::initK = m_Config->Instance<Configuration>()->mutable_posesolver()->initk();
     Aimbot::PoseSolver::gravity = m_Config->Instance<Configuration>()->mutable_posesolver()->gravity();
@@ -67,16 +69,10 @@ Aimbot::Aimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort)
 
 void Aimbot::Process(Ioap::BaseInputData* input)
 {
-    const static cv::Point2f redDot(744, 642); //步兵
-    const double maxShootRadius = m_Config->Instance<OssianConfig::Configuration>()->mutable_aimbot()->maxshootradius();
-    const double offsetYaw = m_Config->Instance<OssianConfig::Configuration>()->mutable_posesolver()->offsetyaw();
-    const double offsetPitch = m_Config->Instance<OssianConfig::Configuration>()->mutable_posesolver()->offsetpitch();
-    static KalmanFilter kf(4, 2);
-
     //[注意]：这里是不安全的使用方法，应当优化
     ImageInputData* imageInput = dynamic_cast<ImageInputData*>(input);
 	
-    cv::UMat origFrame = imageInput->m_Image;
+    cv::Mat origFrame = imageInput->m_Image;
     if (origFrame.empty())
     {
         m_Valid = true;
@@ -91,43 +87,24 @@ void Aimbot::Process(Ioap::BaseInputData* input)
     bool shootMode = false;
 
     bool foundArmor = FindArmor(origFrame, armorBBox, armorType);
-    float yaw_measured = 0, pitch_measured = 0, dist = 0;
-    float yaw_predicted = 0, pitch_predicted = 0;
+    double yaw_measured = 0, pitch_measured = 0, dist = 0;  
     if (foundArmor)
     {
         PoseSolver angleSolver(armorBBox, armorType);
-        angleSolver.Solve(yaw_measured, pitch_measured, dist); //degree, mm
+        angleSolver.Solve(yaw_measured, pitch_measured, dist); //rad, mm
 
         Math::RegularizeErrAngle(yaw_measured, 'y');
         Math::RegularizeErrAngle(pitch_measured, 'p');
-
-        kf.PredictAndCorrect(yaw_predicted, pitch_predicted, yaw_measured, pitch_measured);
-        Math::RegularizeErrAngle(yaw_predicted, 'y');
-        Math::RegularizeErrAngle(pitch_predicted, 'p');
-
-        if (Math::PointDistance(redDot, (armorBBox.tl() + armorBBox.br()) / 2) < maxShootRadius)
-            shootMode = true;
-        else
-            shootMode = false;
-    }
-    else
-    {
-        kf.Init();
-        shootMode = false;
     }
 
-    float sendYaw = foundArmor ? yaw_predicted + offsetYaw : 0;
-    float sendPitch = foundArmor ? pitch_predicted + offsetPitch : 0;
-    Math::RegularizeErrAngle(sendYaw, 'y');
-    Math::RegularizeErrAngle(sendPitch, 'p');
-
-	spdlog::info("Aimbot Status: {}\t{}\t{}", sendYaw, sendPitch, dist);
-
+	spdlog::info("Aimbot Status: {}\t{}\t{}", yaw_measured, pitch_measured, dist);
+    
+    //[TODO] “发送”两角度给云台
 	try
 	{
         std::lock_guard<std::mutex> guard{ m_AngleLock };
-        m_Yaw = m_Yaw + sendYaw;
-        m_Pitch = m_Pitch + sendPitch;
+        m_Yaw = m_Yaw + yaw_measured;
+        m_Pitch = m_Pitch + pitch_measured;
 		m_SerialPort->Commit(m_Yaw,
 							 m_Pitch,
 							 dist,

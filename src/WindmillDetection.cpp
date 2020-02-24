@@ -45,7 +45,7 @@ void WindmillDetection::Process(ossian::IOAP::BaseInputData *input)
     //[注意]：这里是不安全的使用方法，应当优化
     ImageInputData *imageInput = dynamic_cast<ImageInputData *>(input);
 
-    cv::UMat image = imageInput->m_Image;
+    cv::Mat image = imageInput->m_Image;
     if (image.empty())
     {
         m_Valid = true;
@@ -56,9 +56,9 @@ void WindmillDetection::Process(ossian::IOAP::BaseInputData *input)
     * Convert color space into hsv for filter the color.
     * Get a mask in binary expressing the windmill.
     */
-    cv::UMat hsv{};
+    cv::Mat hsv{};
     cv::cvtColor(image, hsv, cv::COLOR_BGR2HSV);
-    cv::UMat mask{std::move(m_ColorFilter.Filter(hsv))};
+    cv::Mat mask{std::move(m_ColorFilter.Filter(hsv))};
     cv::erode(mask, mask,
               cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3)),
               cv::Point2f(-1, -1), 1);

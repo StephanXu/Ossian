@@ -42,7 +42,7 @@ void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 		double ecdAngleAdd = angleInput - curEcdAngle;
 		if (m_CurGimbalMode == GYROANGLE)
 		{
-			double errorAngle = ClampLoop(m_GyroPitchAngleSet - m_GimbalSensorValues.gyroY, -PI, PI);
+			double errorAngle = ClampLoop(m_GyroPitchAngleSet - m_GimbalSensorValues.gyroY, -M_PI, M_PI);
 			//判断会不会越过机械限位
 			if (curEcdAngle + errorAngle + ecdAngleAdd > PITCH_MAX_RELATIVE_ANGLE)
 			{
@@ -54,7 +54,7 @@ void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 				if (ecdAngleAdd < 0)
 					ecdAngleAdd = PITCH_MIN_RELATIVE_ANGLE - errorAngle - curEcdAngle;
 			}
-			m_GyroPitchAngleSet = ClampLoop(m_GyroPitchAngleSet + ecdAngleAdd, -PI, PI);
+			m_GyroPitchAngleSet = ClampLoop(m_GyroPitchAngleSet + ecdAngleAdd, -M_PI, M_PI);
 		}
 		else if (m_CurGimbalMode == ECDANGLE)
 		{
@@ -73,7 +73,7 @@ void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 		double ecdAngleAdd = angleInput - curEcdAngle;
 		if (m_CurGimbalMode == GYROANGLE)
 		{
-			double errorAngle = ClampLoop(m_GyroYawAngleSet - m_GimbalSensorValues.gyroZ, -PI, PI);
+			double errorAngle = ClampLoop(m_GyroYawAngleSet - m_GimbalSensorValues.gyroZ, -M_PI, M_PI);
 			//判断会不会越过机械限位
 			if (curEcdAngle + errorAngle + ecdAngleAdd > YAW_MAX_RELATIVE_ANGLE)
 			{
@@ -85,7 +85,7 @@ void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 				if (ecdAngleAdd < 0)
 					ecdAngleAdd = YAW_MIN_RELATIVE_ANGLE - errorAngle - curEcdAngle;
 			}
-			m_GyroYawAngleSet = ClampLoop(m_GyroYawAngleSet + ecdAngleAdd, -PI, PI);
+			m_GyroYawAngleSet = ClampLoop(m_GyroYawAngleSet + ecdAngleAdd, -M_PI, M_PI);
 		}
 		else if (m_CurGimbalMode == ECDANGLE)
 		{
@@ -111,7 +111,7 @@ void Gimbal::CtrlPitch()
 			return;
 		double interval = std::chrono::duration<double, std::milli>(m_Motors[Pitch]->TimeStamp() - m_LastEcdTimeStampPitch).count();  //ms
 		double curEcdAnglePitch = m_Motors[Pitch]->Status().m_Encoding * MOTOR_ECD_TO_RAD_COEF;
-		double angleSpeedEcd = ClampLoop(curEcdAnglePitch - m_LastEcdAnglePitch, -PI, PI) / interval / 1000; //rad/s
+		double angleSpeedEcd = ClampLoop(curEcdAnglePitch - m_LastEcdAnglePitch, -M_PI, M_PI) / interval / 1000; //rad/s
 		double angleSpeedSet = m_PIDPitchAngleEcd.Calc(m_EcdPitchAngleSet, curEcdAnglePitch, std::chrono::high_resolution_clock::now(), true);
 		pitchCurrentSend = m_PIDPitchAngleSpeed.Calc(angleSpeedSet, angleSpeedEcd, std::chrono::high_resolution_clock::now());
 		
@@ -137,7 +137,7 @@ void Gimbal::CtrlYaw()
 			return;
 		double interval = std::chrono::duration<double, std::milli>(m_Motors[Yaw]->TimeStamp() - m_LastEcdTimeStampYaw).count();  //ms
 		double curEcdAngleYaw = m_Motors[Yaw]->Status().m_Encoding * MOTOR_ECD_TO_RAD_COEF;
-		double angleSpeedEcd = ClampLoop(curEcdAngleYaw - m_LastEcdAngleYaw, -PI, PI) / interval / 1000; //rad/s
+		double angleSpeedEcd = ClampLoop(curEcdAngleYaw - m_LastEcdAngleYaw, -M_PI, M_PI) / interval / 1000; //rad/s
 		double angleSpeedSet = m_PIDYawAngleEcd.Calc(m_EcdYawAngleSet, curEcdAngleYaw, std::chrono::high_resolution_clock::now(), true);
 		yawCurrentSend = m_PIDYawAngleSpeed.Calc(angleSpeedSet, angleSpeedEcd, std::chrono::high_resolution_clock::now());
 

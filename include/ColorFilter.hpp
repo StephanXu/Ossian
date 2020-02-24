@@ -26,9 +26,9 @@ public:
      * @brief 过滤操作
      * 
      * @param source 需要过滤的图像
-     * @return cv::UMat 过滤后的图像
+     * @return cv::Mat 过滤后的图像
      */
-    virtual cv::UMat Filter(const cv::UMat &source) const = 0;
+    virtual cv::Mat Filter(const cv::Mat &source) const = 0;
 };
 
 /**
@@ -51,7 +51,7 @@ public:
     ColorFilter(const ColorFilter &colorFilter);
 
 
-    cv::UMat Filter(const cv::UMat &source) const override;
+    cv::Mat Filter(const cv::Mat &source) const override;
 
 private:
     std::vector<std::tuple<cv::Scalar, cv::Scalar>> m_Filters;

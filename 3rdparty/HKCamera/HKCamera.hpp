@@ -89,7 +89,7 @@ public:
 	void SetFrameSize(const int width, const int height);
 
 	/**
-	 * @fn	bool HKCamera::ReadFrame(cv::UMat& outMat);
+	 * @fn	bool HKCamera::ReadFrame(cv::Mat& outMat);
 	 *
 	 * @brief	Reads a frame
 	 *
@@ -97,7 +97,7 @@ public:
 	 *
 	 * @returns	True if it succeeds, false if it fails.
 	 */
-	bool ReadFrame(cv::UMat& outMat);
+	bool ReadFrame(cv::Mat& outMat);
 
 	/**
 	 * @fn	void HKCamera::StartGrabFrame();
@@ -159,7 +159,7 @@ private:
 					   unsigned int height);
 
 	/**
-	 * @fn	static bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* DataBuffer, cv::UMat& refDest)
+	 * @fn	static bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* DataBuffer, cv::Mat& refDest)
 	 *
 	 * @brief	convert data stream in Mat format
 	 *
@@ -173,7 +173,7 @@ private:
 	 */
 	static bool ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo,
 								 unsigned char* DataBuffer,
-								 cv::UMat& refDest);
+								 cv::Mat& refDest);
 };
 
 #endif //HK_CAMERA_HPP
