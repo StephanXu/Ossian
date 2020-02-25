@@ -29,10 +29,11 @@ target_sources(Ossian
             src/Gimbal.cpp
             src/Chassis.cpp
             src/OnlineDebug.cpp
+            src/Remote.cpp
         )
 target_include_directories(Ossian
         PRIVATE
-            include
+            src
         )
 target_link_libraries(Ossian
         PRIVATE
