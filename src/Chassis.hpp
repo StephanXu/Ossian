@@ -85,7 +85,7 @@ public:
 				  const std::string location,
 				  const unsigned int id)
 	{
-		if(position == LF || position == LR || position == RR || position == RF)
+		m_Motors[position] = 
 			m_MotorManager->AddMotor<ossian::DJIMotor>(
 				location,
 				id,
