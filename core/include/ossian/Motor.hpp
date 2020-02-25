@@ -46,7 +46,9 @@ public:
 			callback(motor);
 		};
 		auto dev = m_CANManager->AddDevice(location, id, parseProc);
-		m_Motors.insert(std::make_pair(dev, std::make_shared<MotorType>()));
+		auto motor = std::make_shared<MotorType>();
+		m_Motors.insert(std::make_pair(dev, motor));
+		return motor;
 	}
 	
 private:

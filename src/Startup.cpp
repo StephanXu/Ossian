@@ -11,6 +11,7 @@
 #include "Chassis.hpp"
 #include "Gimbal.hpp"
 #include "OnlineDebug.hpp"
+#include "Remote.hpp"
 
 #include <thread>
 
@@ -39,12 +40,10 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<RoboStatus>();
 	app.AddService<VideoInputSource>().AsInputAdapter();
 	app.AddService<SerialPortIO>();
-	app.AddService<ossian::BaseHardwareManager, ossian::CANManager>(
-		[](ossian::CANManager& mgr)
-		{
-			// mgr.AddBus("can0", true);
-		});
+	app.AddService<ossian::BaseHardwareManager, ossian::CANManager>();
+	app.AddService<ossian::BaseHardwareManager, ossian::UARTManager>();
 	app.AddService<ossian::IOListener>();
+	app.AddService<IRemote, RemoteSt>();
 	//app.AddInputAdapter<CameraInputSource>();
 	//app.AddInputAdapter<FakeInputSource>();
 }

@@ -21,6 +21,15 @@
 
 namespace ossian
 {
+
+class null_mutex
+{
+public:
+    void lock() {}
+    void unlock() noexcept {}
+    bool try_lock() { return true; }
+};
+
 /**
  * @brief 线程安全的队列
  * 该类提供一种多线程安全的队列实现

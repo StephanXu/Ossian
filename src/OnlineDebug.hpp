@@ -1,3 +1,5 @@
+#ifndef OSSIAN_ONLINE_DEBUG_HPP
+#define OSSIAN_ONLINE_DEBUG_HPP
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/base_sink.h>
@@ -109,3 +111,5 @@ public:
 		spdlog::flush_every(std::chrono::seconds(1));
 	}
 };
+
+#endif // OSSIAN_ONLINE_DEBUG_HPP
