@@ -272,7 +272,7 @@ private:
         }
 
         //Yaw: 逆时针正 顺时针负 ; Pitch:下负 上正
-        void Solve(double& yaw, double& pitch, double& dist, bool EnableGravity=false)
+        void Solve(double& yaw, double& pitch, double& dist, bool EnableGravity)
         {
             PNPSolver();
             Eigen::Vector3d posInGimbal = m_CamToGblRot * m_WorldToCamTran - m_CamToGblTran;

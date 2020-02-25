@@ -8,7 +8,7 @@ double Gimbal::PitchCtrlInputProc()
 		m_CtrlMode = MOUSE;
 	else if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_MID)
 		m_CtrlMode = AUTOAIM;
-	if (m_CurGimbalMode == RC)
+	if (m_CtrlMode == RC)
 	{
 		if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_UP) //回中
 			return PITCH_MID_RAD;
@@ -24,7 +24,7 @@ double Gimbal::YawCtrlInputProc()
 		m_CtrlMode = MOUSE;
 	else if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_MID)
 		m_CtrlMode = AUTOAIM;
-	if (m_CurGimbalMode == RC)
+	if (m_CtrlMode == RC)
 	{
 		if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_UP) //回中
 			return YAW_MID_RAD;
@@ -40,7 +40,7 @@ void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 	if (m_CtrlMode == RC)
 	{
 		double ecdAngleAdd = angleInput - curEcdAngle;
-		if (m_CurGimbalMode == GYROANGLE)
+		if (m_CurGimbalAngleMode == GYROANGLE)
 		{
 			double errorAngle = ClampLoop(m_GyroPitchAngleSet - m_GimbalSensorValues.gyroY, -M_PI, M_PI);
 			//判断会不会越过机械限位
@@ -56,7 +56,7 @@ void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 			}
 			m_GyroPitchAngleSet = ClampLoop(m_GyroPitchAngleSet + ecdAngleAdd, -M_PI, M_PI);
 		}
-		else if (m_CurGimbalMode == ECDANGLE)
+		else if (m_CurGimbalAngleMode == ECDANGLE)
 		{
 			m_EcdPitchAngleSet += ecdAngleAdd;
 			m_EcdPitchAngleSet = Clamp(m_EcdPitchAngleSet, PITCH_MIN_RELATIVE_ANGLE, PITCH_MAX_RELATIVE_ANGLE);
@@ -71,7 +71,7 @@ void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 	if (m_CtrlMode == RC)
 	{
 		double ecdAngleAdd = angleInput - curEcdAngle;
-		if (m_CurGimbalMode == GYROANGLE)
+		if (m_CurGimbalAngleMode == GYROANGLE)
 		{
 			double errorAngle = ClampLoop(m_GyroYawAngleSet - m_GimbalSensorValues.gyroZ, -M_PI, M_PI);
 			//判断会不会越过机械限位
@@ -87,7 +87,7 @@ void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 			}
 			m_GyroYawAngleSet = ClampLoop(m_GyroYawAngleSet + ecdAngleAdd, -M_PI, M_PI);
 		}
-		else if (m_CurGimbalMode == ECDANGLE)
+		else if (m_CurGimbalAngleMode == ECDANGLE)
 		{
 			m_EcdYawAngleSet += ecdAngleAdd;
 			m_EcdYawAngleSet = Clamp(m_EcdYawAngleSet, YAW_MIN_RELATIVE_ANGLE, YAW_MAX_RELATIVE_ANGLE);
@@ -98,12 +98,12 @@ void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 void Gimbal::CtrlPitch()
 {
 	double pitchCurrentSend = 0;
-	if (m_CurGimbalMode == GYROANGLE)
+	if (m_CurGimbalAngleMode == GYROANGLE)
 	{
 		double angleSpeedSet = m_PIDPitchAngleGyro.Calc(m_GyroPitchAngleSet, m_GimbalSensorValues.gyroY, std::chrono::high_resolution_clock::now(), true);
 		pitchCurrentSend = m_PIDPitchAngleSpeed.Calc(angleSpeedSet, m_GimbalSensorValues.gyroSpeedY, std::chrono::high_resolution_clock::now());
 	}
-	else if (m_CurGimbalMode == ECDANGLE)
+	else if (m_CurGimbalAngleMode == ECDANGLE)
 	{
 		//[TODO]用电机转速rpm换算出云台角速度
 		//初始时刻，无法通过差分计算出角速度 
@@ -124,12 +124,12 @@ void Gimbal::CtrlPitch()
 void Gimbal::CtrlYaw()
 {
 	double yawCurrentSend = 0;
-	if (m_CurGimbalMode == GYROANGLE)
+	if (m_CurGimbalAngleMode == GYROANGLE)
 	{
 		double angleSpeedSet = m_PIDYawAngleGyro.Calc(m_GyroYawAngleSet, m_GimbalSensorValues.gyroZ, std::chrono::high_resolution_clock::now(), true);
 		yawCurrentSend = m_PIDYawAngleSpeed.Calc(angleSpeedSet, m_GimbalSensorValues.gyroSpeedZ, std::chrono::high_resolution_clock::now());
 	}
-	else if (m_CurGimbalMode == ECDANGLE)
+	else if (m_CurGimbalAngleMode == ECDANGLE)
 	{
 		//[TODO]用电机转速rpm换算出云台角速度
 		//初始时刻，无法通过差分计算出角速度 

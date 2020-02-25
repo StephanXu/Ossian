@@ -91,7 +91,7 @@ void Aimbot::Process(Ioap::BaseInputData* input)
     if (foundArmor)
     {
         PoseSolver angleSolver(armorBBox, armorType);
-        angleSolver.Solve(yaw_measured, pitch_measured, dist); //rad, mm
+        angleSolver.Solve(yaw_measured, pitch_measured, dist, false); //rad, mm
 
         Math::RegularizeErrAngle(yaw_measured, 'y');
         Math::RegularizeErrAngle(pitch_measured, 'p');

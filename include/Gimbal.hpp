@@ -149,7 +149,7 @@ private:
 	std::array<std::shared_ptr<ossian::DJIMotor>, 2> m_Motors;  	
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
 
-	GimbalAngleMode m_CurGimbalMode, m_LastGimbalMode;
+	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
 	GimbalCtrlMode m_CtrlMode;
 	struct GimbalSensorFeedback
 	{
