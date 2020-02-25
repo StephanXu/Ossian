@@ -17,7 +17,6 @@
     "filename": "test.avi"
   },
   "aimbot": {
-    "maxShootRadius": 120.0,
     "enemyColor": "Red",
 
     "brightness": 30,

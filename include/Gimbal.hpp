@@ -50,6 +50,7 @@ public:
 		: m_MotorManager(motorManager)
 	{
 		m_CtrlMode = RC;
+		m_CurGimbalAngleMode = ECDANGLE;
 		m_LastEcdTimeStampPitch = m_LastEcdTimeStampYaw = std::chrono::high_resolution_clock::time_point();
 
 		m_PIDPitchAngleEcd.SetPIDParams(15,0,0);

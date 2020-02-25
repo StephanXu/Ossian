@@ -74,10 +74,11 @@ public:
 
 	enum ChassisMode
 	{
-		DISABLE,             //失能
-		FOLLOW_GIMBAL_YAW,   //跟随云台
-		FOLLOW_CHASSIS_YAW,  //遥控器控制底盘旋转，底盘自身角速度闭环
-		TOP					 //小陀螺
+		DISABLE,				 //失能
+		FOLLOW_GIMBAL_YAW,		 //跟随云台
+		FOLLOW_CHASSIS_YAW,		 //遥控器控制底盘旋转，底盘自身角速度闭环
+		TOP,					 //小陀螺
+		ANGLEOPENLOOP			 //单独调试底盘
 	};
 	
 	auto AddMotor(MotorPosition position,
