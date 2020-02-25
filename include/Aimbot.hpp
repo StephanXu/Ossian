@@ -305,9 +305,10 @@ private:
         cv::Rect2d m_BBox;
         ArmorType m_ArmorType;
         cv::Mat m_tvec;
-        Eigen::Matrix3d m_CamToGblRot;
-        Eigen::Vector3d m_CamToGblTran;
-        Eigen::Vector3d m_WorldToCamTran;
+        
+        static Eigen::Matrix3d m_CamToGblRot;
+        static Eigen::Vector3d m_CamToGblTran;
+        static Eigen::Vector3d m_WorldToCamTran;
 
        /**
        * @Brief: 考虑水平方向空气阻力，计算子弹实际的y坐标
