@@ -10,15 +10,10 @@
 struct RemoteStatus
 {
 	/* rocker channel information */
-	int16_t ch1;
-	int16_t ch2;
-	int16_t ch3;
-	int16_t ch4;
-	int16_t dial;
+	int16_t ch[5];
 
 	/* left and right lever information */
-	uint8_t sw1;
-	uint8_t sw2;
+	uint8_t sw[2];
 };
 
 class IRemote
@@ -56,13 +51,13 @@ public:
 
 				sscanf(reinterpret_cast<const char*>(data.get()),
 					   "CH1:%d,CH2:%d,CH3:%d,CH4:%d,CH5:%d,S1:%d,S2:%d",
-					   &m_Status.ch1,
-					   &m_Status.ch2,
-					   &m_Status.ch3,
-					   &m_Status.ch4,
-					   &m_Status.dial,
-					   &m_Status.sw1,
-					   &m_Status.sw2);
+					   &m_Status.ch[0],
+					   &m_Status.ch[1],
+					   &m_Status.ch[2],
+					   &m_Status.ch[3],
+					   &m_Status.ch[4],
+					   &m_Status.sw[0],
+					   &m_Status.sw[1]);
 			});
 	}
 

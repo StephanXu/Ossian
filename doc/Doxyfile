@@ -791,7 +791,6 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = src \
-                         include \
                          doc \
                          docker \
                          core/include/ossian \
