@@ -21,7 +21,7 @@ public:
 	static constexpr double WHEEL_XN = 175 / 1000;
 	static constexpr double WHEEL_YN = 232.5 / 1000;
 	static constexpr double LIMIT_WHEEL_SPEED = 5;  //单个麦轮的最大速度
-	static constexpr double MOTOR_RPM_TO_WHEEL_SPEED = 1 / 9.5;
+	static constexpr double MOTOR_RPM_TO_WHEEL_SPEED_COEF = 1 / 9.5;
 
 	//底盘功率控制
 	static constexpr double LIMIT_BUFFER_TOTAL_CURRENT = 16000;
@@ -48,6 +48,20 @@ public:
 	static constexpr double CHASSIS_VY_MAX = 1.5; // m/s
 	static constexpr double TOP_WZ = 3;  //底盘陀螺旋转速度 rad/s
 
+	enum MotorPosition
+	{
+		LF, LR, RR, RF
+	};
+
+	enum ChassisMode
+	{
+		DISABLE,				 //失能
+		FOLLOW_GIMBAL_YAW,		 //跟随云台
+		FOLLOW_CHASSIS_YAW,		 //遥控器控制底盘旋转，底盘自身角速度闭环
+		TOP,					 //小陀螺
+		OPENLOOP_Z			 //单独调试底盘
+	};
+
 	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager, IRemote* remote, Gimbal* gimbal))
 		: m_MotorManager(motorManager), m_RC(remote), m_Gimbal(gimbal)
 	{
@@ -56,8 +70,11 @@ public:
 							   1,  1, -coef,
 							   1, -1,  coef,
 							   1,  1,  coef;
-		m_AngleSet = 0;
-		m_MotorMsgCheck.fill(false);
+
+		m_FlagInitChassis = true;
+
+		m_FOFilterVX.SetCoef(0.17);
+		m_FOFilterVY.SetCoef(0.33);
 
 		PIDController pidWheelSpeed(15000, 10, 0);
 		pidWheelSpeed.SetThresOutput(16000);  //max 16384
@@ -69,19 +86,19 @@ public:
 		m_PIDChassisAngle.SetThresIntegral(0.2);
 	}
 
-	enum MotorPosition
+	void InitChassis()
 	{
-		LF,LR,RR,RF
-	};
+		m_AngleSet = 0;
+		m_MotorMsgCheck.fill(false);
 
-	enum ChassisMode
-	{
-		DISABLE,				 //失能
-		FOLLOW_GIMBAL_YAW,		 //跟随云台
-		FOLLOW_CHASSIS_YAW,		 //遥控器控制底盘旋转，底盘自身角速度闭环
-		TOP,					 //小陀螺
-		OPENLOOP_Z			 //单独调试底盘
-	};
+		m_FOFilterVX.Reset();
+		m_FOFilterVY.Reset();
+
+		std::for_each(m_PIDChassisSpeed.begin(), m_PIDChassisSpeed.end(), [](PIDController& x) {x.Reset(); });
+		m_PIDChassisAngle.Reset();
+
+		m_FlagInitChassis = false;
+	}
 	
 	auto AddMotor(MotorPosition position,
 				  const std::string location,
@@ -129,6 +146,9 @@ public:
 		//chassis_task
 		UpdateChassisSensorFeedback();
 
+		if (m_FlagInitChassis)
+			InitChassis();
+
 		ChassisModeSet();
 		//[TODO] 模式切换过渡
 
@@ -145,6 +165,7 @@ private:
 	IRemote* m_RC;  //遥控器
 	Gimbal* m_Gimbal;
 
+	bool m_FlagInitChassis;
 	struct ChassisSensorFeedback 
 	{ 
 		RemoteStatus rc;	 
@@ -162,9 +183,10 @@ private:
 	ChassisMode m_CurChassisMode, m_LastChassisMode;
 	std::array<bool, 4> m_MotorMsgCheck;
 	Eigen::Vector4d m_WheelSpeedSet;
-	static Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
+	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
 	std::array<double, 4> m_CurrentSend;
 
+	FirstOrderFilter m_FOFilterVX, m_FOFilterVY;
 	PIDController m_PIDChassisAngle; //底盘要旋转的角度--->底盘旋转角速度
 	std::array<PIDController, 4> m_PIDChassisSpeed; //麦轮转速--->3508电流
 };

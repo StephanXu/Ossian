@@ -59,8 +59,6 @@ void Chassis::ChassisPowerCtrl()
 
 void Chassis::RCToChassisSpeed()
 {
-	static FirstOrderFilter foFilterVX(0.17), foFilterVY(0.33);
-
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_X_CHANNEL], CHASSIS_RC_DEADBAND) * CHASSIS_VX_RC_SEN;		// m/s
 	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_Y_CHANNEL], CHASSIS_RC_DEADBAND) * (-CHASSIS_VY_RC_SEN);  // m/s
 	if (m_CurChassisMode == OPENLOOP_Z)
@@ -68,8 +66,8 @@ void Chassis::RCToChassisSpeed()
 	//[TODO] 键盘操作
 
 	//一阶低通滤波代替斜坡函数作为底盘速度输入
-	m_VxSet = foFilterVX.Calc(vxChannelSet);
-	m_VySet = foFilterVY.Calc(vyChannelSet);
+	m_VxSet = m_FOFilterVX.Calc(vxChannelSet);
+	m_VySet = m_FOFilterVY.Calc(vyChannelSet);
 }
 
 void Chassis::ChassisModeSet()
@@ -92,7 +90,7 @@ void Chassis::ChassisCtrl()
 {
 	CalcWheelSpeed();
 	for (size_t i = 0; i < 4; ++i)
-		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM * MOTOR_RPM_TO_WHEEL_SPEED, m_Motors[i]->TimeStamp());
+		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM * MOTOR_RPM_TO_WHEEL_SPEED_COEF, m_Motors[i]->TimeStamp());
 	
 	//如果超级电容快没电了
 	if (m_ChassisSensorValues.spCapCurVtg < SPCAP_WARN_VOLTAGE)

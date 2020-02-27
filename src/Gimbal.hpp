@@ -46,13 +46,27 @@ class Gimbal
 	static constexpr double YAW_RC_SEN = -0.000005;
 	static constexpr double PITCH_RC_SEN = -0.000006; //0.005
 
+	enum MotorPosition
+	{
+		Pitch, Yaw
+	};
+
+	enum GimbalAngleMode
+	{
+		GYROANGLE, ECDANGLE
+	};
+
+	enum GimbalCtrlMode
+	{
+		RC, MOUSE, AUTOAIM, DISABLE
+	};
+
 public:
 	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager, IRemote* remote))
 		: m_MotorManager(motorManager), m_RC(remote)
 	{
 		m_CtrlMode = RC;
-		m_CurGimbalAngleMode = ECDANGLE;
-		m_LastEcdTimeStampPitch = m_LastEcdTimeStampYaw = std::chrono::high_resolution_clock::time_point();
+		m_FlagInitPitch = m_FlagInitYaw = true;
 
 		m_PIDPitchAngleEcd.SetPIDParams(15,0,0);
 		m_PIDPitchAngleEcd.SetThresOutput(10);
@@ -74,27 +88,38 @@ public:
 		m_PIDYawAngleSpeed.SetThresIntegral(5000);
 		m_PIDYawAngleSpeed.SetThresOutput(30000);
 
-		UpdateGimbalSensorFeedback();
-		m_GyroPitchAngleSet = m_GimbalSensorValues.gyroY;
-		m_GyroYawAngleSet = m_GimbalSensorValues.gyroZ;
-		m_EcdPitchAngleSet = PITCH_MID_RAD;
-		m_EcdYawAngleSet = YAW_MID_RAD;
+		
 	}
 
-	enum MotorPosition
+	void InitPitch()
 	{
-		Pitch, Yaw
-	};
-	
-	enum GimbalAngleMode
-	{
-		GYROANGLE, ECDANGLE
-	};
+		m_CurGimbalAngleMode = ECDANGLE; //or gyro
+		m_LastEcdTimeStampPitch = std::chrono::high_resolution_clock::time_point();
 
-	enum GimbalCtrlMode
+		m_GyroPitchAngleSet = m_GimbalSensorValues.gyroY;
+		m_EcdPitchAngleSet = PITCH_MID_RAD;
+		
+		m_PIDPitchAngleEcd.Reset();
+		m_PIDPitchAngleGyro.Reset();
+		m_PIDPitchAngleSpeed.Reset();
+		
+		m_FlagInitPitch = false;
+	}
+
+	void InitYaw()
 	{
-		RC, MOUSE, AUTOAIM, DISABLE
-	};
+		m_CurGimbalAngleMode = ECDANGLE; //or gyro
+		m_LastEcdTimeStampYaw = std::chrono::high_resolution_clock::time_point();
+
+		m_GyroYawAngleSet = m_GimbalSensorValues.gyroZ;
+		m_EcdYawAngleSet = YAW_MID_RAD;
+
+		m_PIDYawAngleEcd.Reset();
+		m_PIDYawAngleGyro.Reset();
+		m_PIDYawAngleSpeed.Reset();
+
+		m_FlagInitYaw = false;
+	}
 
 	auto AddMotor(MotorPosition position,
 				  const std::string location,
@@ -144,7 +169,10 @@ public:
 	auto MotorPitchReceiveProc(std::shared_ptr<ossian::DJIMotor> motor)->void
 	{
 		UpdateGimbalSensorFeedback();
+		if (m_FlagInitPitch)
+			InitPitch();
 		GimbalCtrlModeSet();
+		//[TODO] 模式切换过渡
 		SetPitch(PitchCtrlInputProc(), motor->Status().m_Encoding);
 		CtrlPitch();
 	}
@@ -152,7 +180,10 @@ public:
 	auto MotorYawReceiveProc(std::shared_ptr<ossian::DJIMotor> motor)->void
 	{
 		UpdateGimbalSensorFeedback();
+		if (m_FlagInitYaw)
+			InitYaw();
 		GimbalCtrlModeSet();
+		//[TODO] 模式切换过渡
 		m_YawEcd = motor->Status().m_Encoding;
 		SetYaw(YawCtrlInputProc(), motor->Status().m_Encoding);
 		CtrlYaw();
@@ -172,6 +203,8 @@ private:
 		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
 	std::atomic<uint16_t> m_YawEcd;
+
+	bool m_FlagInitPitch, m_FlagInitYaw;
 
 	double m_LastEcdAnglePitch, m_LastEcdAngleYaw;
 	std::chrono::high_resolution_clock::time_point m_LastEcdTimeStampPitch, m_LastEcdTimeStampYaw;

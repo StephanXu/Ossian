@@ -63,13 +63,17 @@ inline double RelativeEcdToRad(uint16_t ecd, const uint16_t ecdMid)
 class FirstOrderFilter   
 {
 public:
-	FirstOrderFilter(double k) : m_Coef(k) { m_LastValue = 0; }  //参数取决于滤波时间和采样周期
+	FirstOrderFilter(double k=1) : m_Coef(k) { m_LastValue = 0; }  //参数取决于滤波时间和采样周期
+	void SetCoef(double k) { m_Coef = k; }
 	double Calc(double curValue)
 	{
 		double result = (1.0 - m_Coef) * m_LastValue + m_Coef * curValue;
 		m_LastValue = result;
 		return result;
 	}
+
+	void Reset() { m_LastValue = 0; }
+
 private:
 	double m_Coef;
 	double m_LastValue;
