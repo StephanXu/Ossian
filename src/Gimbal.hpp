@@ -3,10 +3,11 @@
 
 #include <ossian/Motor.hpp>
 #include "CtrlAlgorithms.hpp"
+#include "Remote.hpp"
 
 #include <chrono>
 #include <memory>
-
+#include <atomic>
 
 class Gimbal
 {
@@ -38,16 +39,16 @@ class Gimbal
 	static constexpr size_t YAW_CHANNEL = 4;
 	static constexpr size_t PITCH_CHANNEL = 3;
 	static constexpr size_t GIMBAL_MODE_CHANNEL = 1; //选择云台状态的开关通道
-	static constexpr uint16_t RC_SW_UP = 1;
-	static constexpr uint16_t RC_SW_MID = 3;
-	static constexpr uint16_t RC_SW_DOWN = 2;
+	static constexpr uint8_t RC_SW_UP = 1;
+	static constexpr uint8_t RC_SW_MID = 3;
+	static constexpr uint8_t RC_SW_DOWN = 2;
 
 	static constexpr double YAW_RC_SEN = -0.000005;
 	static constexpr double PITCH_RC_SEN = -0.000006; //0.005
 
 public:
-	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager))
-		: m_MotorManager(motorManager)
+	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager, IRemote* remote))
+		: m_MotorManager(motorManager), m_RC(remote)
 	{
 		m_CtrlMode = RC;
 		m_CurGimbalAngleMode = ECDANGLE;
@@ -100,24 +101,33 @@ public:
 				  const unsigned int id)
 	{
 		if(position == Pitch)
-			m_MotorManager->AddMotor<ossian::DJIMotor>(
-				location,
-				id,
-				[this](std::shared_ptr<ossian::DJIMotor> motor)
-				{
-					MotorPitchReceiveProc(motor);
-				});
+			m_Motors[position] = 
+				m_MotorManager->AddMotor<ossian::DJIMotor>(
+					location,
+					id,
+					[this](std::shared_ptr<ossian::DJIMotor> motor)
+					{
+						MotorPitchReceiveProc(motor);
+					});
 		else if(position == Yaw)
-			m_MotorManager->AddMotor<ossian::DJIMotor>(
-				location,
-				id,
-				[this](std::shared_ptr<ossian::DJIMotor> motor)
-				{
-					MotorYawReceiveProc(motor);
-				});
+			m_Motors[position] =
+				m_MotorManager->AddMotor<ossian::DJIMotor>(
+					location,
+					id,
+					[this](std::shared_ptr<ossian::DJIMotor> motor)
+					{
+						MotorYawReceiveProc(motor);
+					});
 	}
 
-	void UpdateGimbalSensorFeedback() {}
+	double RelativeAngleToChassis() { return RelativeEcdToRad(m_YawEcd.load(), YAW_MID_ECD); }
+
+	void UpdateGimbalSensorFeedback()
+	{
+		m_GimbalSensorValues.rc = m_RC->Status();
+	}
+
+	void GimbalCtrlModeSet();
 
 	//获得操作手期望的角度
 	double PitchCtrlInputProc();
@@ -134,6 +144,7 @@ public:
 	auto MotorPitchReceiveProc(std::shared_ptr<ossian::DJIMotor> motor)->void
 	{
 		UpdateGimbalSensorFeedback();
+		GimbalCtrlModeSet();
 		SetPitch(PitchCtrlInputProc(), motor->Status().m_Encoding);
 		CtrlPitch();
 	}
@@ -141,6 +152,8 @@ public:
 	auto MotorYawReceiveProc(std::shared_ptr<ossian::DJIMotor> motor)->void
 	{
 		UpdateGimbalSensorFeedback();
+		GimbalCtrlModeSet();
+		m_YawEcd = motor->Status().m_Encoding;
 		SetYaw(YawCtrlInputProc(), motor->Status().m_Encoding);
 		CtrlYaw();
 	}
@@ -149,14 +162,16 @@ private:
 	ossian::MotorManager* m_MotorManager;  	
 	std::array<std::shared_ptr<ossian::DJIMotor>, 2> m_Motors;  	
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
+	IRemote* m_RC;  //遥控器
 
 	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
 	GimbalCtrlMode m_CtrlMode;
 	struct GimbalSensorFeedback
 	{
-		struct RC { int16_t ch[5]; 	char s[2]; } rc;	 //遥控器数据
+		RemoteStatus rc;	 //遥控器数据
 		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
+	std::atomic<uint16_t> m_YawEcd;
 
 	double m_LastEcdAnglePitch, m_LastEcdAngleYaw;
 	std::chrono::high_resolution_clock::time_point m_LastEcdTimeStampPitch, m_LastEcdTimeStampYaw;

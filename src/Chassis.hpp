@@ -3,6 +3,8 @@
 
 #include <ossian/Motor.hpp>
 #include "CtrlAlgorithms.hpp"
+#include "Remote.hpp"
+#include "Gimbal.hpp"
 
 #include <chrono>
 #include <memory>
@@ -32,9 +34,9 @@ public:
 	static constexpr size_t CHASSIS_Z_CHANNEL = 2; //控制底盘 旋转 速度的遥控器通道
 	static constexpr size_t CHASSIS_MODE_CHANNEL = 0; //选择底盘状态的开关通道
 
-	static constexpr uint16_t RC_SW_UP = 1;
-	static constexpr uint16_t RC_SW_MID = 3;
-	static constexpr uint16_t RC_SW_DOWN = 2;
+	static constexpr uint8_t RC_SW_UP = 1;
+	static constexpr uint8_t RC_SW_MID = 3;
+	static constexpr uint8_t RC_SW_DOWN = 2;
 
 	static constexpr int16_t CHASSIS_RC_DEADBAND = 10; //摇杆死区
 	static constexpr double CHASSIS_VX_RC_SEN = 0.006; //遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
@@ -46,8 +48,8 @@ public:
 	static constexpr double CHASSIS_VY_MAX = 1.5; // m/s
 	static constexpr double TOP_WZ = 3;  //底盘陀螺旋转速度 rad/s
 
-	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager))
-		: m_MotorManager(motorManager)
+	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager, IRemote* remote, Gimbal* gimbal))
+		: m_MotorManager(motorManager), m_RC(remote), m_Gimbal(gimbal)
 	{
 		double coef = WHEEL_XN + WHEEL_YN;
 		m_WheelKinematicMat << 1, -1, -coef,
@@ -78,7 +80,7 @@ public:
 		FOLLOW_GIMBAL_YAW,		 //跟随云台
 		FOLLOW_CHASSIS_YAW,		 //遥控器控制底盘旋转，底盘自身角速度闭环
 		TOP,					 //小陀螺
-		ANGLEOPENLOOP			 //单独调试底盘
+		OPENLOOP_Z			 //单独调试底盘
 	};
 	
 	auto AddMotor(MotorPosition position,
@@ -95,7 +97,11 @@ public:
 				});
 	}
 
-	void UpdateChassisSensorFeedback() { /*m_RelativeAngle = yaw_ecd - mid_ecd;*/ }
+	void UpdateChassisSensorFeedback() 
+	{
+		m_ChassisSensorValues.rc = m_RC->Status();
+		m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
+	}
 
 	void CalcWheelSpeed();
 
@@ -136,10 +142,12 @@ private:
 	ossian::MotorManager* m_MotorManager; 	
 	std::array<std::shared_ptr<ossian::DJIMotor>, 4> m_Motors; 	
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
+	IRemote* m_RC;  //遥控器
+	Gimbal* m_Gimbal;
 
 	struct ChassisSensorFeedback 
 	{ 
-		struct RC { int16_t ch[5]; 	char s[2]; } rc;	 //遥控器数据
+		RemoteStatus rc;	 
 		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 		double spCapInputVtg, spCapCurVtg, spCapInputCrt, spCapTargetPwr;    //超级电容数据
 		double refereeCurPwr, refereeCurBuf, refereeMaxPwr, refereeMaxBuf;   //裁判系统数据
@@ -154,7 +162,7 @@ private:
 	ChassisMode m_CurChassisMode, m_LastChassisMode;
 	std::array<bool, 4> m_MotorMsgCheck;
 	Eigen::Vector4d m_WheelSpeedSet;
-	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
+	static Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
 	std::array<double, 4> m_CurrentSend;
 
 	PIDController m_PIDChassisAngle; //底盘要旋转的角度--->底盘旋转角速度

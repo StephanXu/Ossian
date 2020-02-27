@@ -2,34 +2,36 @@
 #include "Gimbal.hpp"
 
 
+void Gimbal::GimbalCtrlModeSet()
+{
+	switch (m_GimbalSensorValues.rc.sw[GIMBAL_MODE_CHANNEL])
+	{
+	case RC_SW_UP:
+		m_CtrlMode = RC; break;
+	case RC_SW_MID:
+		m_CtrlMode = AUTOAIM; break;
+	case RC_SW_DOWN:
+		m_CtrlMode = MOUSE; break;
+	default:
+		m_CtrlMode = DISABLE; break;
+	}
+
+}
+
 double Gimbal::PitchCtrlInputProc()
 {
-	if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_DOWN)
-		m_CtrlMode = MOUSE;
-	else if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_MID)
-		m_CtrlMode = AUTOAIM;
 	if (m_CtrlMode == RC)
 	{
-		if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_UP) //回中
-			return PITCH_MID_RAD;
-		else
-			return DeadbandLimit(m_GimbalSensorValues.rc.ch[PITCH_CHANNEL], GIMBAL_RC_DEADBAND) * PITCH_RC_SEN; //遥控器传来的pitch角度期望rad
+		return DeadbandLimit(m_GimbalSensorValues.rc.ch[PITCH_CHANNEL], GIMBAL_RC_DEADBAND) * PITCH_RC_SEN; //遥控器传来的pitch角度期望rad
 	}
 
 }
 
 double Gimbal::YawCtrlInputProc()
 {
-	if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_DOWN)
-		m_CtrlMode = MOUSE;
-	else if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_MID)
-		m_CtrlMode = AUTOAIM;
 	if (m_CtrlMode == RC)
 	{
-		if (m_GimbalSensorValues.rc.s[GIMBAL_MODE_CHANNEL] == RC_SW_UP) //回中
-			return YAW_MID_RAD;
-		else
-			return DeadbandLimit(m_GimbalSensorValues.rc.ch[YAW_CHANNEL], GIMBAL_RC_DEADBAND) * YAW_RC_SEN; //遥控器传来的yaw角度期望rad
+		return DeadbandLimit(m_GimbalSensorValues.rc.ch[YAW_CHANNEL], GIMBAL_RC_DEADBAND) * YAW_RC_SEN; //遥控器传来的yaw角度期望rad
 	}
 }
 
@@ -65,6 +67,7 @@ void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 	
 }
 
+//遥控器：绝对量控制  [TODO]鼠标：增量控制
 void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 {
 	double curEcdAngle = curEcd * MOTOR_ECD_TO_RAD_COEF;
