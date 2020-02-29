@@ -1,12 +1,11 @@
 ﻿
 #include "Chassis.hpp"
-#include "CtrlAlgorithms.hpp"
 
 
 void Chassis::CalcWheelSpeed()
 {
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);
-	m_WheelSpeedSet = m_WheelKinematicMat * vSet / WHEEL_RADIUS; //[4, 3] * [3, 1] -- > [4, 1]
+	m_WheelSpeedSet = m_WheelKinematicMat * vSet / WHEEL_RADIUS; //[4, 3] * [3, 1] --> [4, 1]
 
 	//限制麦轮最大速度
 	double maxWheelSpeedItem = m_WheelSpeedSet.maxCoeff();
@@ -131,7 +130,7 @@ void Chassis::ChassisAxisSpeedSet()
 		double vy = m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -CHASSIS_VX_MAX, CHASSIS_VX_MAX); 		
 		m_VySet = Clamp(vy, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
-		m_WzSet = m_PIDChassisAngle.Calc(0, m_ChassisSensorValues.relativeAngle, std::chrono::high_resolution_clock::now(), true); //符号为负？
+		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
 	}
 	else if (m_CurChassisMode == OPENLOOP_Z)
 	{

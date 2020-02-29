@@ -56,7 +56,7 @@ class Gimbal
 		GYROANGLE, ECDANGLE
 	};
 
-	enum GimbalCtrlMode
+	enum GimbalInputSrc
 	{
 		RC, MOUSE, AUTOAIM, DISABLE
 	};
@@ -65,7 +65,7 @@ public:
 	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager, IRemote* remote))
 		: m_MotorManager(motorManager), m_RC(remote)
 	{
-		m_CtrlMode = RC;
+		m_GimbalCtrlSrc = RC;
 		m_FlagInitPitch = m_FlagInitYaw = true;
 
 		m_PIDPitchAngleEcd.SetPIDParams(15,0,0);
@@ -151,8 +151,8 @@ public:
 	{
 		m_GimbalSensorValues.rc = m_RC->Status();
 	}
-
-	void GimbalCtrlModeSet();
+	//设置云台角度输入来源
+	void GimbalCtrlSrcSet();
 
 	//获得操作手期望的角度
 	double PitchCtrlInputProc();
@@ -171,7 +171,7 @@ public:
 		UpdateGimbalSensorFeedback();
 		if (m_FlagInitPitch)
 			InitPitch();
-		GimbalCtrlModeSet();
+		GimbalCtrlSrcSet();
 		//[TODO] 模式切换过渡
 		SetPitch(PitchCtrlInputProc(), motor->Status().m_Encoding);
 		CtrlPitch();
@@ -182,7 +182,7 @@ public:
 		UpdateGimbalSensorFeedback();
 		if (m_FlagInitYaw)
 			InitYaw();
-		GimbalCtrlModeSet();
+		GimbalCtrlSrcSet();
 		//[TODO] 模式切换过渡
 		m_YawEcd = motor->Status().m_Encoding;
 		SetYaw(YawCtrlInputProc(), motor->Status().m_Encoding);
@@ -196,7 +196,7 @@ private:
 	IRemote* m_RC;  //遥控器
 
 	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
-	GimbalCtrlMode m_CtrlMode;
+	GimbalInputSrc m_GimbalCtrlSrc;
 	struct GimbalSensorFeedback
 	{
 		RemoteStatus rc;	 //遥控器数据

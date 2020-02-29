@@ -17,10 +17,10 @@ class Chassis
 {	
 public:
 	//麦轮运动
-	static constexpr double WHEEL_RADIUS = 76 / 1000;
-	static constexpr double WHEEL_XN = 175 / 1000;
-	static constexpr double WHEEL_YN = 232.5 / 1000;
-	static constexpr double LIMIT_WHEEL_SPEED = 5;  //单个麦轮的最大速度
+	static constexpr double WHEEL_RADIUS = 76 / 1000;//m
+	static constexpr double WHEEL_XN = 175 / 1000;   //m
+	static constexpr double WHEEL_YN = 232.5 / 1000; //m
+	static constexpr double LIMIT_WHEEL_SPEED = 5;   //单个麦轮的最大速度
 	static constexpr double MOTOR_RPM_TO_WHEEL_SPEED_COEF = 1 / 9.5;
 
 	//底盘功率控制
@@ -59,7 +59,7 @@ public:
 		FOLLOW_GIMBAL_YAW,		 //跟随云台
 		FOLLOW_CHASSIS_YAW,		 //遥控器控制底盘旋转，底盘自身角速度闭环
 		TOP,					 //小陀螺
-		OPENLOOP_Z			 //单独调试底盘
+		OPENLOOP_Z				 //单独调试底盘
 	};
 
 	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager, IRemote* remote, Gimbal* gimbal))
@@ -187,7 +187,7 @@ private:
 	std::array<double, 4> m_CurrentSend;
 
 	FirstOrderFilter m_FOFilterVX, m_FOFilterVY;
-	PIDController m_PIDChassisAngle; //底盘要旋转的角度--->底盘旋转角速度
+	PIDController m_PIDChassisAngle; //底盘要旋转的角度--->底盘旋转角速度  底盘跟随角度环
 	std::array<PIDController, 4> m_PIDChassisSpeed; //麦轮转速--->3508电流
 };
 

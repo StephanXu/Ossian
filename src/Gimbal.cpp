@@ -2,25 +2,25 @@
 #include "Gimbal.hpp"
 
 
-void Gimbal::GimbalCtrlModeSet()
+void Gimbal::GimbalCtrlSrcSet()
 {
 	switch (m_GimbalSensorValues.rc.sw[GIMBAL_MODE_CHANNEL])
 	{
 	case RC_SW_UP:
-		m_CtrlMode = RC; break;
+		m_GimbalCtrlSrc = RC; break;
 	case RC_SW_MID:
-		m_CtrlMode = AUTOAIM; break;
+		m_GimbalCtrlSrc = AUTOAIM; break;
 	case RC_SW_DOWN:
-		m_CtrlMode = MOUSE; break;
+		m_GimbalCtrlSrc = MOUSE; break;
 	default:
-		m_CtrlMode = DISABLE; break;
+		m_GimbalCtrlSrc = DISABLE; break;
 	}
 
 }
 
 double Gimbal::PitchCtrlInputProc()
 {
-	if (m_CtrlMode == RC)
+	if (m_GimbalCtrlSrc == RC)
 	{
 		return DeadbandLimit(m_GimbalSensorValues.rc.ch[PITCH_CHANNEL], GIMBAL_RC_DEADBAND) * PITCH_RC_SEN; //遥控器传来的pitch角度期望rad
 	}
@@ -29,7 +29,7 @@ double Gimbal::PitchCtrlInputProc()
 
 double Gimbal::YawCtrlInputProc()
 {
-	if (m_CtrlMode == RC)
+	if (m_GimbalCtrlSrc == RC)
 	{
 		return DeadbandLimit(m_GimbalSensorValues.rc.ch[YAW_CHANNEL], GIMBAL_RC_DEADBAND) * YAW_RC_SEN; //遥控器传来的yaw角度期望rad
 	}
@@ -39,7 +39,7 @@ double Gimbal::YawCtrlInputProc()
 void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 {
 	double curEcdAngle = curEcd * MOTOR_ECD_TO_RAD_COEF;
-	if (m_CtrlMode == RC)
+	if (m_GimbalCtrlSrc == RC)
 	{
 		double ecdAngleAdd = angleInput - curEcdAngle;
 		if (m_CurGimbalAngleMode == GYROANGLE)
@@ -71,7 +71,7 @@ void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 {
 	double curEcdAngle = curEcd * MOTOR_ECD_TO_RAD_COEF;
-	if (m_CtrlMode == RC)
+	if (m_GimbalCtrlSrc == RC)
 	{
 		double ecdAngleAdd = angleInput - curEcdAngle;
 		if (m_CurGimbalAngleMode == GYROANGLE)
