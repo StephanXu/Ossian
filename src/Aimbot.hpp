@@ -269,6 +269,7 @@ private:
                              0, -sin(rotAngle),  cos(rotAngle);
 
             m_CamToGblTran << cameraToGimbalX, cameraToGimbalY, cameraToGimbalZ;
+            m_ScaleDist = 1.2;
         }
 
         //Yaw: 逆时针正 顺时针负 ; Pitch:下负 上正
@@ -276,7 +277,7 @@ private:
         {
             PNPSolver();
             Eigen::Vector3d posInGimbal = m_CamToGblRot * m_WorldToCamTran - m_CamToGblTran;
-            dist = posInGimbal(2);
+            dist = posInGimbal(2) * m_ScaleDist;
             yaw = atan2(posInGimbal(0), posInGimbal(2));
 
             double alpha = asin(barrelToGimbalY / sqrt(posInGimbal(1) * posInGimbal(1) + posInGimbal(2) * posInGimbal(2)));
@@ -304,8 +305,7 @@ private:
     private:
         cv::Rect2d m_BBox;
         ArmorType m_ArmorType;
-        cv::Mat m_tvec;
-        
+        double m_ScaleDist;
         static Eigen::Matrix3d m_CamToGblRot;
         static Eigen::Vector3d m_CamToGblTran;
         static Eigen::Vector3d m_WorldToCamTran;
@@ -361,15 +361,15 @@ private:
             const static std::vector<cv::Point3d> smallArmorVertex =
             {
                 cv::Point3d(-smallArmorWidth / 2, -smallArmorHeight / 2, 0),	//tl
-                cv::Point3d(smallArmorWidth / 2, -smallArmorHeight / 2, 0),	//tr
-                cv::Point3d(smallArmorWidth / 2,  smallArmorHeight / 2, 0),	//br
+                cv::Point3d(smallArmorWidth  / 2, -smallArmorHeight / 2, 0),	//tr
+                cv::Point3d(smallArmorWidth  / 2,  smallArmorHeight / 2, 0),	//br
                 cv::Point3d(-smallArmorWidth / 2,  smallArmorHeight / 2, 0)		//bl
             };
             const static std::vector<cv::Point3d> bigArmorVertex =
 			{
 				cv::Point3d(-bigArmorWidth / 2, -smallArmorHeight / 2, 0),	//tl
-				cv::Point3d(bigArmorWidth / 2, -smallArmorHeight / 2, 0),	//tr
-				cv::Point3d(bigArmorWidth / 2,  smallArmorHeight / 2, 0),	//br
+				cv::Point3d(bigArmorWidth  / 2, -smallArmorHeight / 2, 0),	//tr
+				cv::Point3d(bigArmorWidth  / 2,  smallArmorHeight / 2, 0),	//br
 				cv::Point3d(-bigArmorWidth / 2,  smallArmorHeight / 2, 0)	//bl
 			};
             const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1763.56659425676, 0, 755.6922965695335,
@@ -379,17 +379,18 @@ private:
                                         -0.0002141029821745741, -0.001124320437987154, -0.4855547217023871);
 			
 			// tmp
-			static cv::Mat rvec;
+			static cv::Mat rvec, tvec;
             std::vector<cv::Point2d> targetPts = {
                 m_BBox.tl(),
                 m_BBox.tl() + cv::Point2d(m_BBox.width,0),
                 m_BBox.br(),
                 m_BBox.tl() + cv::Point2d(0,m_BBox.height) };
             if (m_ArmorType == ArmorType::Small)
-                cv::solvePnP(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, m_tvec);
-            else
-                cv::solvePnP(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, m_tvec);
-            cv::cv2eigen(m_tvec, m_WorldToCamTran);
+                cv::solvePnPRansac(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, tvec, false, 100, 8.0, 0.99, cv::noArray(), cv::SOLVEPNP_IPPE);
+            else if (m_ArmorType == ArmorType::Big)
+                cv::solvePnPRansac(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, tvec, false, 100, 8.0, 0.99, cv::noArray(), cv::SOLVEPNP_IPPE);
+            //[TODO] 解算风车装甲板姿态
+            cv::cv2eigen(tvec, m_WorldToCamTran);
         }
     };
 

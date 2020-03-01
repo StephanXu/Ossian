@@ -183,7 +183,7 @@ private:
 	ChassisMode m_CurChassisMode, m_LastChassisMode;
 	std::array<bool, 4> m_MotorMsgCheck;
 	Eigen::Vector4d m_WheelSpeedSet;
-	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
+	static Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
 	std::array<double, 4> m_CurrentSend;
 
 	FirstOrderFilter m_FOFilterVX, m_FOFilterVY;
