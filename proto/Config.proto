@@ -72,7 +72,24 @@ message PoseSolver {
 	double initV = 6;
 	double initK = 7;
 	double gravity = 8;
+	double scaleDist = 9;
 }
+
+message Chassis {  
+	double PIDWheelSpeed_Kp = 1;
+	double PIDWheelSpeed_Ki = 2;
+	double PIDWheelSpeed_Kd = 3;
+	double PIDWheelSpeed_Th_Out = 4;
+	double PIDWheelSpeed_Th_IOut = 5;
+
+	double PIDChassisAngle_Kp = 6;
+	double PIDChassisAngle_Ki = 7;
+	double PIDChassisAngle_Kd = 8;
+	double PIDChassisAngle_Th_Out = 9;
+	double PIDChassisAngle_Th_IOut = 10;
+
+	double Top_Wz = 11;
+} 
 
 message Configuration {
 	SerialPort serialPort = 1;
@@ -80,4 +97,6 @@ message Configuration {
 	TestVideoSource testVideoSource = 3;
 	Aimbot aimbot = 4;
 	PoseSolver poseSolver = 5;
+	Chassis chassis = 6;
 }
+

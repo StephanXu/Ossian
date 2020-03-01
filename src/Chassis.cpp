@@ -120,7 +120,7 @@ void Chassis::ChassisAxisSpeedSet()
 		double vy = m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
 		m_VySet = Clamp(vy, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
-		m_WzSet = TOP_WZ;
+		m_WzSet = Top_Wz;
 	}
 	else if (m_CurChassisMode == FOLLOW_GIMBAL_YAW)
 	{

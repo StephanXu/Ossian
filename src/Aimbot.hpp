@@ -8,6 +8,7 @@
 #include "Utils.hpp"
 
 #include <atomic>
+#include <tuple>
 #include <cmath>
 #include <Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
@@ -260,8 +261,9 @@ private:
         static double initV;
         static double initK;
         static double gravity;
+        static double scaleDist; //单目测距补偿
 
-        PoseSolver(const cv::Rect2d& bbox, ArmorType armorType) : m_BBox(bbox), m_ArmorType(armorType) 
+        PoseSolver()
         {
             double rotAngle = -atan2((cameraToGimbalY + barrelToGimbalY), rotOverlapLen);
             m_CamToGblRot << 1,              0,              0,
@@ -269,15 +271,15 @@ private:
                              0, -sin(rotAngle),  cos(rotAngle);
 
             m_CamToGblTran << cameraToGimbalX, cameraToGimbalY, cameraToGimbalZ;
-            m_ScaleDist = 1.2;
         }
 
         //Yaw: 逆时针正 顺时针负 ; Pitch:下负 上正
-        void Solve(double& yaw, double& pitch, double& dist, bool EnableGravity)
+        std::tuple<double,double,double> Solve(ArmorType armorType, const cv::Rect2d& bbox,  bool EnableGravity=false)
         {
-            PNPSolver();
+            PNPSolver(bbox, armorType);
+            double yaw = 0, pitch = 0, dist = 0;
             Eigen::Vector3d posInGimbal = m_CamToGblRot * m_WorldToCamTran - m_CamToGblTran;
-            dist = posInGimbal(2) * m_ScaleDist;
+            dist = posInGimbal(2) * scaleDist;
             yaw = atan2(posInGimbal(0), posInGimbal(2));
 
             double alpha = asin(barrelToGimbalY / sqrt(posInGimbal(1) * posInGimbal(1) + posInGimbal(2) * posInGimbal(2)));
@@ -299,16 +301,14 @@ private:
 
             if (EnableGravity)
                 pitch += GetPitch(dist/1000, posInGimbal(1)/1000, initV);
-                
+
+            return std::make_tuple(yaw, pitch, dist);
         }
 
     private:
-        cv::Rect2d m_BBox;
-        ArmorType m_ArmorType;
-        double m_ScaleDist;
         static Eigen::Matrix3d m_CamToGblRot;
         static Eigen::Vector3d m_CamToGblTran;
-        static Eigen::Vector3d m_WorldToCamTran;
+        Eigen::Vector3d m_WorldToCamTran;
 
        /**
        * @Brief: 考虑水平方向空气阻力，计算子弹实际的y坐标
@@ -351,7 +351,7 @@ private:
             return a;
         }
 
-        void PNPSolver()
+        void PNPSolver(const cv::Rect2d& bbox, ArmorType armorType)
         {
 			// constants
             const static double smallArmorWidth = 130.0; // mm
@@ -381,13 +381,13 @@ private:
 			// tmp
 			static cv::Mat rvec, tvec;
             std::vector<cv::Point2d> targetPts = {
-                m_BBox.tl(),
-                m_BBox.tl() + cv::Point2d(m_BBox.width,0),
-                m_BBox.br(),
-                m_BBox.tl() + cv::Point2d(0,m_BBox.height) };
-            if (m_ArmorType == ArmorType::Small)
+                bbox.tl(),
+                bbox.tl() + cv::Point2d(bbox.width,0),
+                bbox.br(),
+                bbox.tl() + cv::Point2d(0,bbox.height) };
+            if (armorType == ArmorType::Small)
                 cv::solvePnPRansac(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, tvec, false, 100, 8.0, 0.99, cv::noArray(), cv::SOLVEPNP_IPPE);
-            else if (m_ArmorType == ArmorType::Big)
+            else if (armorType == ArmorType::Big)
                 cv::solvePnPRansac(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, tvec, false, 100, 8.0, 0.99, cv::noArray(), cv::SOLVEPNP_IPPE);
             //[TODO] 解算风车装甲板姿态
             cv::cv2eigen(tvec, m_WorldToCamTran);
@@ -473,7 +473,7 @@ private:
         return !armors.empty();
     }
 
-    bool FindArmor(const cv::Mat& origFrame, cv::Rect2f& armorBBox, ArmorType& armorType)
+    bool FindArmor(const cv::Mat& origFrame, cv::Rect2d& armorBBox, ArmorType& armorType)
     {
         bool armorFound{ false };
         Armor target;

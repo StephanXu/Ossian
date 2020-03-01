@@ -49,6 +49,22 @@
 
     "initV": 20.0,
     "initK": 0.026,
-    "gravity": 9.8
+    "gravity": 9.8,
+    "scaleDist": 1.2
+  },
+  "chassis": {
+    "PIDWheelSpeed_Kp": 15000,
+    "PIDWheelSpeed_Ki": 10,
+    "PIDWheelSpeed_Kd": 0,
+    "PIDWheelSpeed_Th_Out": 16000,
+    "PIDWheelSpeed_Th_IOut": 2000,
+
+    "PIDChassisAngle_Kp": 40,
+    "PIDChassisAngle_Ki": 0,
+    "PIDChassisAngle_Kd": 0,
+    "PIDChassisAngle_Th_Out": 6,
+    "PIDChassisAngle_Th_IOut": 0.2,
+
+    "TOP_WZ": 3
   }
 }

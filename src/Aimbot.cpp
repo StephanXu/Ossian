@@ -28,6 +28,7 @@ double Aimbot::PoseSolver::rotOverlapLen = 0.0;
 double Aimbot::PoseSolver::initV = 0.0;
 double Aimbot::PoseSolver::initK = 0.0;
 double Aimbot::PoseSolver::gravity = 0.0;
+double Aimbot::PoseSolver::scaleDist = 0.0;
 
 cv::Point2d Aimbot::Armor::frameCenter(0, 0);
 
@@ -62,6 +63,7 @@ Aimbot::Aimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort)
     Aimbot::PoseSolver::initV = m_Config->Instance<Configuration>()->mutable_posesolver()->initv();
     Aimbot::PoseSolver::initK = m_Config->Instance<Configuration>()->mutable_posesolver()->initk();
     Aimbot::PoseSolver::gravity = m_Config->Instance<Configuration>()->mutable_posesolver()->gravity();
+    Aimbot::PoseSolver::scaleDist = m_Config->Instance<Configuration>()->mutable_posesolver()->scaledist();
 
     Aimbot::Armor::frameCenter.x = m_Config->Instance<Configuration>()->mutable_camera()->framewidth();
     Aimbot::Armor::frameCenter.y = m_Config->Instance<Configuration>()->mutable_camera()->frameheight();
@@ -82,25 +84,25 @@ void Aimbot::Process(Ioap::BaseInputData* input)
 	cv::imshow("damn", origFrame);
 	cv::waitKey(1);
 #endif
-    cv::Rect2f armorBBox;
+    cv::Rect2d armorBBox;
     ArmorType armorType;
-    bool shootMode = false;
+    bool shootMode = false;  //[TODO] 删除，将发弹决策放到电控部分
 
     bool foundArmor = FindArmor(origFrame, armorBBox, armorType);
-    double yaw_measured = 0, pitch_measured = 0, dist = 0;  
+    double deltaYaw = 0, deltaPitch = 0, dist = 0;
+    static PoseSolver angleSolver;
     if (foundArmor)
     {
-        PoseSolver angleSolver(armorBBox, armorType);
-        angleSolver.Solve(yaw_measured, pitch_measured, dist, false); //rad, mm
+        std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox); //rad, mm
 
-        Math::RegularizeErrAngle(yaw_measured, 'y');
-        Math::RegularizeErrAngle(pitch_measured, 'p');
+        Math::RegularizeErrAngle(deltaYaw, 'y');
+        Math::RegularizeErrAngle(deltaPitch, 'p');
     }
-
-	spdlog::info("Aimbot Status: {}\t{}\t{}", yaw_measured, pitch_measured, dist);
+    
+	spdlog::info("Aimbot Status: {}\t{}\t{}", deltaYaw, deltaPitch, dist);
     
     //[TODO] “发送”两角度给云台
-	try
+	/*try
 	{
         std::lock_guard<std::mutex> guard{ m_AngleLock };
         m_Yaw = m_Yaw + yaw_measured;
@@ -114,7 +116,7 @@ void Aimbot::Process(Ioap::BaseInputData* input)
     {
         spdlog::error("Send data error: {}", e.what());
         //std::abort();
-    }
+    }*/
 
 #ifdef _DEBUG
     //putText(debugFrame, fmt::format("ms: {:.4f}",ms), cv::Point(30, 50), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(173, 205, 249));

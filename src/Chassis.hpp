@@ -3,6 +3,7 @@
 
 #include <ossian/Motor.hpp>
 #include "CtrlAlgorithms.hpp"
+#include "InputAdapter.hpp"
 #include "Remote.hpp"
 #include "Gimbal.hpp"
 
@@ -46,7 +47,11 @@ public:
 	//底盘运动
 	static constexpr double CHASSIS_VX_MAX = 4.5; // m/s
 	static constexpr double CHASSIS_VY_MAX = 1.5; // m/s
-	static constexpr double TOP_WZ = 3;  //底盘陀螺旋转速度 rad/s
+	static double Top_Wz;  //底盘陀螺旋转速度 rad/s
+
+	//pid参数
+	static double PIDWheelSpeed_Kp, PIDWheelSpeed_Ki, PIDWheelSpeed_Kd, PIDWheelSpeed_Th_Out, PIDWheelSpeed_Th_IOut;
+	static double PIDChassisAngle_Kp, PIDChassisAngle_Ki, PIDChassisAngle_Kd, PIDChassisAngle_Th_Out, PIDChassisAngle_Th_IOut;
 
 	enum MotorPosition
 	{
@@ -62,9 +67,24 @@ public:
 		OPENLOOP_Z				 //单独调试底盘
 	};
 
-	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager, IRemote* remote, Gimbal* gimbal))
-		: m_MotorManager(motorManager), m_RC(remote), m_Gimbal(gimbal)
+	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager, IRemote* remote, Gimbal* gimbal, Utils::ConfigLoader* config))
+		: m_MotorManager(motorManager), m_RC(remote), m_Gimbal(gimbal), m_Config(config)
 	{
+		using OssianConfig::Configuration;
+		PIDWheelSpeed_Kp = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_kp();
+		PIDWheelSpeed_Ki = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_ki();
+		PIDWheelSpeed_Kd = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_kd();
+		PIDWheelSpeed_Th_Out = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_th_out();
+		PIDWheelSpeed_Th_IOut = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_th_iout();
+
+		PIDChassisAngle_Kp = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_kp();
+		PIDChassisAngle_Ki = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_ki();
+		PIDChassisAngle_Kd = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_kd();
+		PIDChassisAngle_Th_Out = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_th_out();
+		PIDChassisAngle_Th_IOut = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_th_iout();
+
+		Top_Wz = m_Config->Instance<Configuration>()->mutable_chassis()->top_wz();
+
 		double coef = WHEEL_XN + WHEEL_YN;
 		m_WheelKinematicMat << 1, -1, -coef,
 							   1,  1, -coef,
@@ -76,14 +96,14 @@ public:
 		m_FOFilterVX.SetCoef(0.17);
 		m_FOFilterVY.SetCoef(0.33);
 
-		PIDController pidWheelSpeed(15000, 10, 0);
-		pidWheelSpeed.SetThresOutput(16000);  //max 16384
-		pidWheelSpeed.SetThresIntegral(2000);
+		PIDController pidWheelSpeed(PIDWheelSpeed_Kp, PIDWheelSpeed_Ki, PIDWheelSpeed_Kd);
+		pidWheelSpeed.SetThresOutput(PIDWheelSpeed_Th_Out);  //max 16384
+		pidWheelSpeed.SetThresIntegral(PIDWheelSpeed_Th_IOut);
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
-		m_PIDChassisAngle.SetPIDParams(40, 0, 0);
-		m_PIDChassisAngle.SetThresOutput(6);
-		m_PIDChassisAngle.SetThresIntegral(0.2);
+		m_PIDChassisAngle.SetPIDParams(PIDChassisAngle_Kp, PIDChassisAngle_Ki, PIDChassisAngle_Kd);
+		m_PIDChassisAngle.SetThresOutput(PIDChassisAngle_Th_Out);
+		m_PIDChassisAngle.SetThresIntegral(PIDChassisAngle_Th_IOut);
 	}
 
 	void InitChassis()
@@ -162,6 +182,7 @@ private:
 	ossian::MotorManager* m_MotorManager; 	
 	std::array<std::shared_ptr<ossian::DJIMotor>, 4> m_Motors; 	
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
+	Utils::ConfigLoader* m_Config;
 	IRemote* m_RC;  //遥控器
 	Gimbal* m_Gimbal;
 
