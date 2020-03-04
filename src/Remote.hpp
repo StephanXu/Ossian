@@ -20,7 +20,7 @@ class IRemote
 {
 public:
 	virtual ~IRemote() = 0;
-	virtual auto Initialize(std::string location)->void = 0;
+	virtual auto AddRemote(std::string location)->void = 0;
 	virtual auto Status()->RemoteStatus = 0;
 	virtual auto StatusRef()->const RemoteStatus & = 0;
 	virtual auto Lock()->void = 0;
@@ -28,7 +28,7 @@ public:
 	virtual auto TryLock()->bool = 0;
 };
 
-template<class Mutex = std::mutex>
+template<typename Mutex = std::mutex>
 class Remote final : public IRemote
 {
 	ossian::UARTManager* m_UARTManager;
@@ -41,11 +41,10 @@ public:
 	}
 
 	virtual ~Remote() = default;
-	
-	auto Initialize(std::string location)->void override
+
+	auto AddRemote(std::string location)->void override
 	{
-		m_UARTManager->AddDevice(
-			location,
+		m_UARTManager->AddDevice(location)->SetCallback(
 			[this](std::shared_ptr<ossian::BaseDevice> device, size_t length, std::shared_ptr<uint8_t[]> data)
 			{
 

@@ -30,6 +30,7 @@ target_sources(Ossian
             src/Chassis.cpp
             src/OnlineDebug.cpp
             src/Remote.cpp
+            src/Capacitor.cpp
         )
 target_include_directories(Ossian
         PRIVATE

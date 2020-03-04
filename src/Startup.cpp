@@ -12,6 +12,7 @@
 #include "Gimbal.hpp"
 #include "OnlineDebug.hpp"
 #include "Remote.hpp"
+#include "Capacitor.hpp"
 
 #include <thread>
 
@@ -28,11 +29,11 @@ void Startup::ConfigServices(AppBuilder& app)
 	spdlog::info("MI_VERSION:{}", mi_version());
 
 	app.AddService<Utils::ConfigLoader>()
-		.LoadFromUrl<OssianConfig::Configuration>("mrxzh.com", 5000, "/config");
+		.LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/config");
 	app.AddService<OnlineDebug>(
 		[](OnlineDebug& option)
 		{
-			option.Connect("http://host.docker.internal:5000/logger");
+			option.Connect("http://ossian.mrxzh.com/logger");
 			option.StartLogging("OnlineLog",
 								"OssianLog",
 								"A piece of log.");
@@ -43,7 +44,16 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<ossian::BaseHardwareManager, ossian::CANManager>();
 	app.AddService<ossian::BaseHardwareManager, ossian::UARTManager>();
 	app.AddService<ossian::IOListener>();
-	app.AddService<IRemote, RemoteSt>();
+	app.AddService<IRemote, RemoteSt>(
+		[](IRemote& option)
+		{
+			option.AddRemote("/dev/ttyS0");
+		});
+	app.AddService<ICapacitor, CapacitorSt>(
+		[](ICapacitor& option)
+		{
+			option.AddCapacitor("/dev/can0", 0x211, 0x210);
+		});
 	//app.AddInputAdapter<CameraInputSource>();
 	//app.AddInputAdapter<FakeInputSource>();
 }
