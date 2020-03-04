@@ -107,7 +107,7 @@ public:
 	std::vector<std::shared_ptr<BaseDevice>> GetDevices() override;
 
 	std::shared_ptr<BaseDevice> AddDevice();
-	void WriteRaw(size_t length, ::std::shared_ptr<unsigned char[]> const& data);
+	void WriteRaw(size_t length, const uint8_t* data);
 
 private:
 	bool m_IsOpened;
@@ -133,7 +133,7 @@ public:
 
 	const std::shared_ptr<BaseHardwareBus> Bus() const override { return std::dynamic_pointer_cast<BaseHardwareBus>(m_Bus); }
 	void Invoke(const size_t length, std::shared_ptr<uint8_t[]> const& data) override { m_Callback(shared_from_this(), length, data); }
-	void WriteRaw(const size_t length, std::shared_ptr<uint8_t[]> const& data) override { m_Bus->WriteRaw(length, data); }
+	void WriteRaw(const size_t length, const uint8_t* data) override { m_Bus->WriteRaw(length, data); }
 	void SetCallback(std::function<ReceiveCallback> const& callback) override { m_Callback = callback; }
 
 private:
@@ -148,7 +148,7 @@ public:
 	UARTManager(const UARTManager&) = delete;
 	IOType Type() const noexcept override { return IOType::UART; }
 
-	void WriteTo(std::shared_ptr<BaseDevice> const& device, size_t length, std::shared_ptr<uint8_t[]> const& data) override;
+	void WriteTo(std::shared_ptr<BaseDevice> const& device, const size_t length, const uint8_t* data) override;
 
 	const std::shared_ptr<BaseDevice> AddDevice(std::shared_ptr<UARTBus> const& bus);
 	const std::shared_ptr<BaseDevice> AddDevice(std::string const& location);

@@ -147,7 +147,7 @@ void UARTBus::Read()
 	}
 }
 
-void UARTBus::WriteRaw(size_t length, std::shared_ptr<uint8_t[]> const& data)
+void UARTBus::WriteRaw(size_t length, const uint8_t* data)
 {
 	if (true == m_IsOpened)
 	{
@@ -156,7 +156,7 @@ void UARTBus::WriteRaw(size_t length, std::shared_ptr<uint8_t[]> const& data)
 			std::lock_guard<std::mutex> writeLock(writeMutex);
 			while (1)
 			{
-				const int bytes = write(m_FD, data.get(), sizeof(uint8_t) * length);
+				const int bytes = write(m_FD, data, sizeof(uint8_t) * length);
 				if ((bytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待处理
 				{
 					continue;//继续接收数据
@@ -217,7 +217,7 @@ bool UARTManager::DelBus(std::string const& location)
 	return m_BusMap.erase(location);
 }
 
-void UARTManager::WriteTo(std::shared_ptr<BaseDevice> const& device, size_t length, ::std::shared_ptr<unsigned char[]> const& data)
+void UARTManager::WriteTo(std::shared_ptr<BaseDevice> const& device, const size_t length, const uint8_t* data)
 {
 	device->WriteRaw(length, data);
 }

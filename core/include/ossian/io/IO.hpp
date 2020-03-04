@@ -105,7 +105,7 @@ public:
 	 * @param 	  	length	数据长度.
 	 * @param [in]	data  	原始数据.
 	 */
-	virtual void WriteRaw(const size_t length, std::shared_ptr<uint8_t[]> const& data) = 0;
+	virtual void WriteRaw(const size_t length, const uint8_t* data) = 0;
 
 
 	/**
@@ -290,7 +290,7 @@ public:
 	 * @param 	data  	数据指针.
 	 */
 	virtual void WriteTo(std::shared_ptr<BaseDevice> const& device, const size_t length,
-		std::shared_ptr<uint8_t[]> const& data) = 0;
+	                     const uint8_t* data) = 0;
 
 
 	/**

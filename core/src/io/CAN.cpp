@@ -123,14 +123,14 @@ void CANBus::Read()
 	}
 }
 
-void CANBus::WriteRaw(unsigned int id, size_t length, std::shared_ptr<uint8_t[]> data)
+void CANBus::WriteRaw(const unsigned id, const size_t length, const uint8_t* data)
 {
 	if (true == m_IsOpened)
 	{
 		struct can_frame rawFrame {};
 		rawFrame.can_id = id;
 		rawFrame.can_dlc = length;
-		memcpy(rawFrame.data, data.get(), length);
+		memcpy(rawFrame.data, data, length);
 		static std::mutex writeMutex;
 		{
 			std::lock_guard<std::mutex> writeLock(writeMutex);
@@ -204,7 +204,7 @@ bool CANManager::DelBus(std::string const& location)
 	return m_BusMap.erase(location);
 }
 
-void CANManager::WriteTo(std::shared_ptr<BaseDevice> const& device, size_t length, ::std::shared_ptr<unsigned char[]> const& data)
+void CANManager::WriteTo(std::shared_ptr<BaseDevice> const& device, const size_t length, const uint8_t* data)
 {
 	device->WriteRaw(length, data);
 }
