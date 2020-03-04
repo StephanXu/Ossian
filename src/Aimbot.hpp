@@ -432,7 +432,7 @@ private:
         std::vector<cv::Vec4i> hierarchy;
         std::vector<LightBar> lightBars;
 
-        cv::findContours(binary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        cv::findContours(binary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
 
         for (size_t i = 0; i < contours.size(); ++i)
         {

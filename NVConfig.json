@@ -10,8 +10,8 @@
   },
   "camera": {
     "deviceIndex": 0,
-    "frameWidth": 1280,
-    "frameHeight": 720
+    "frameWidth": 1440,
+    "frameHeight": 1080
   },
   "testVideoSource": {
     "filename": "test.avi"
