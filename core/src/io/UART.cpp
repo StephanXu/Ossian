@@ -116,15 +116,11 @@ bool UARTBus::Close()
 	return true;
 }
 
-std::shared_ptr<BaseDevice> UARTBus::AddDevice(std::function<ReceiveCallback> callback)
+std::shared_ptr<BaseDevice> UARTBus::AddDevice()
 {
 	if (nullptr == m_Device)
 	{
-		m_Device = std::make_shared<UARTDevice>(shared_from_this(), callback);
-	}
-	else
-	{
-		m_Device->SetCallback(callback);
+		m_Device = std::make_shared<UARTDevice>(shared_from_this());
 	}
 	return std::dynamic_pointer_cast<BaseDevice>(m_Device);
 }
@@ -135,7 +131,7 @@ void UARTBus::Read()
 	{
 		int	nbytes;
 		char buf[MAX_LENGTH];
-		while (1)
+		while (true)
 		{
 			nbytes = read(m_FD, &buf, sizeof(buf));
 			if ((nbytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待接收
@@ -180,8 +176,11 @@ std::vector<std::shared_ptr<BaseDevice>> UARTBus::GetDevices()
 
 // UARTDevice
 
-UARTDevice::UARTDevice(std::shared_ptr<UARTBus> bus, std::function<ReceiveCallback> callback) noexcept
-	:m_Bus(bus), m_Callback(callback)
+UARTDevice::UARTDevice(std::shared_ptr<UARTBus> bus) noexcept
+	:m_Bus(bus), m_Callback([](std::shared_ptr<BaseDevice>,
+							size_t,
+							std::shared_ptr<uint8_t[]>)
+							{})
 {}
 
 // UARTManager
@@ -223,21 +222,19 @@ void UARTManager::WriteTo(std::shared_ptr<BaseDevice> const& device, size_t leng
 	device->WriteRaw(length, data);
 }
 
-const std::shared_ptr<BaseDevice> UARTManager::AddDevice(std::shared_ptr<UARTBus> const& bus,
-														 std::function<ReceiveCallback> const& callback)
+const std::shared_ptr<BaseDevice> UARTManager::AddDevice(std::shared_ptr<UARTBus> const& bus)
 {
-	return bus->AddDevice(callback);
+	return bus->AddDevice();
 }
 
-const std::shared_ptr<BaseDevice> UARTManager::AddDevice(std::string const& location,
-														 const std::function<ReceiveCallback> callback)
+const std::shared_ptr<BaseDevice> UARTManager::AddDevice(std::string const& location)
 {
 	auto bus = Bus(location);
 	if (nullptr == bus)
 	{
 		bus = AddBus(location);
 	}
-	return std::dynamic_pointer_cast<UARTBus>(bus)->AddDevice(callback);
+	return std::dynamic_pointer_cast<UARTBus>(bus)->AddDevice();
 }
 
 const std::shared_ptr<BaseHardwareBus> UARTManager::Bus(std::string const& location) const

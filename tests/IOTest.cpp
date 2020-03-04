@@ -18,7 +18,7 @@ void func(std::shared_ptr<BaseDevice> device,
 int main()
 {
 	auto mgr = std::make_shared<CANManager>();
-	mgr->AddDevice("can0",0x100, func);
+	mgr->AddDevice("can0",0x100);
 	std::vector<BaseHardwareManager*> managers = { mgr.get() };
 	IOListener listener(&managers);
 	while (true)

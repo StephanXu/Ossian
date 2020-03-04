@@ -78,20 +78,19 @@ bool CANBus::Close()
 	return true;
 }
 
-std::shared_ptr<BaseDevice> CANBus::AddDevice(unsigned int id, std::function<ReceiveCallback> callback)
+std::shared_ptr<BaseDevice> CANBus::AddDevice(unsigned int id)
 {
 	const auto it = m_DeviceMap.find(id);
 	std::shared_ptr<CANDevice> device;
 	if (it == m_DeviceMap.end())
 	{
-		device = std::make_shared<CANDevice>(shared_from_this(), id, callback);
+		device = std::make_shared<CANDevice>(shared_from_this(), id);
 		m_DeviceMap.insert(std::make_pair(id, device));
 		UpdateFilter();
 	}
 	else
 	{
 		device = it->second;
-		device->SetCallback(callback);
 	}
 	return std::dynamic_pointer_cast<BaseDevice>(device);
 }
@@ -101,7 +100,7 @@ void CANBus::Read()
 	if (true == m_IsOpened)
 	{
 		struct can_frame rawFrame {};
-		while (1)
+		while (true)
 		{
 			const auto bytes = read(m_FD, &rawFrame, sizeof(rawFrame));
 			if ((bytes < 0) && ((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINTR))) //这几种错误码都说明还有数据待接收
@@ -174,8 +173,11 @@ void CANBus::UpdateFilter()
 
 // CANDevice
 
-CANDevice::CANDevice(std::shared_ptr<CANBus> bus, unsigned int id, std::function<ReceiveCallback> callback) noexcept
-	: m_Id(id), m_Bus(bus), m_Callback(callback)
+CANDevice::CANDevice(std::shared_ptr<CANBus> bus, const unsigned int id) noexcept
+	: m_Id(id), m_Bus(bus), m_Callback([](std::shared_ptr<BaseDevice>,
+									   size_t,
+									   std::shared_ptr<uint8_t[]>)
+									   {})
 {}
 
 // CANManager
@@ -208,22 +210,20 @@ void CANManager::WriteTo(std::shared_ptr<BaseDevice> const& device, size_t lengt
 }
 
 const std::shared_ptr<BaseDevice> CANManager::AddDevice(std::shared_ptr<CANBus> const& bus,
-														const unsigned id,
-														std::function<ReceiveCallback> const& callback)
+                                                        const unsigned id)
 {
-	return bus->AddDevice(id, callback);
+	return bus->AddDevice(id);
 }
 
 const std::shared_ptr<BaseDevice> CANManager::AddDevice(std::string const& location,
-														const unsigned int id,
-														const std::function<ReceiveCallback> callback)
+                                                        const unsigned int id)
 {
 	auto bus = Bus(location);
 	if (nullptr == bus)
 	{
 		bus = AddBus(location);
 	}
-	return std::dynamic_pointer_cast<CANBus>(bus)->AddDevice(id, callback);
+	return std::dynamic_pointer_cast<CANBus>(bus)->AddDevice(id);
 }
 
 const std::shared_ptr<BaseHardwareBus> CANManager::Bus(std::string const& location) const

@@ -106,8 +106,7 @@ public:
 	void Read() override;
 	std::vector<std::shared_ptr<BaseDevice>> GetDevices() override;
 
-	std::shared_ptr<BaseDevice> AddDevice(
-		std::function<ReceiveCallback> callback);
+	std::shared_ptr<BaseDevice> AddDevice();
 	void WriteRaw(size_t length, ::std::shared_ptr<unsigned char[]> const& data);
 
 private:
@@ -129,8 +128,7 @@ class UARTDevice : public BaseDevice, public std::enable_shared_from_this<UARTDe
 {
 public:
 	UARTDevice() = delete;
-	explicit UARTDevice(std::shared_ptr<UARTBus> bus,
-						std::function<ReceiveCallback> callback) noexcept;
+	explicit UARTDevice(std::shared_ptr<UARTBus> bus) noexcept;
 	UARTDevice(const UARTDevice&) = delete;
 
 	const std::shared_ptr<BaseHardwareBus> Bus() const override { return std::dynamic_pointer_cast<BaseHardwareBus>(m_Bus); }
@@ -152,10 +150,8 @@ public:
 
 	void WriteTo(std::shared_ptr<BaseDevice> const& device, size_t length, std::shared_ptr<uint8_t[]> const& data) override;
 
-	const std::shared_ptr<BaseDevice> AddDevice(std::shared_ptr<UARTBus> const& bus,
-	                                            std::function<ReceiveCallback> const& callback);
-	const std::shared_ptr<BaseDevice> AddDevice(std::string const& location,
-	                                            const std::function<ReceiveCallback> callback);
+	const std::shared_ptr<BaseDevice> AddDevice(std::shared_ptr<UARTBus> const& bus);
+	const std::shared_ptr<BaseDevice> AddDevice(std::string const& location);
 
 	const std::shared_ptr<BaseHardwareBus> Bus(std::string const& location) const override;
 
@@ -165,8 +161,12 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<BaseHardwareBus>> m_BusMap;
 
 	const std::shared_ptr<BaseHardwareBus> AddBus(std::string const& location);
-	const std::shared_ptr<BaseHardwareBus> AddBus(std::string const& location, const UARTProperties::Baudrate baudrate, const UARTProperties::FlowControl flowctrl, const
-	                                              UARTProperties::DataBits databits, const UARTProperties::StopBits stopbits, const UARTProperties::Parity parity);
+	const std::shared_ptr<BaseHardwareBus> AddBus(std::string const& location,
+												  const UARTProperties::Baudrate baudrate,
+												  const UARTProperties::FlowControl flowctrl,
+												  const	UARTProperties::DataBits databits,
+												  const UARTProperties::StopBits stopbits,
+												  const UARTProperties::Parity parity);
 
 	bool DelBus(std::shared_ptr<BaseHardwareBus> bus);
 	bool DelBus(std::string const& location);
