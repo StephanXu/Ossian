@@ -29,6 +29,7 @@ double Aimbot::PoseSolver::initV = 0.0;
 double Aimbot::PoseSolver::initK = 0.0;
 double Aimbot::PoseSolver::gravity = 0.0;
 double Aimbot::PoseSolver::scaleDist = 0.0;
+Eigen::Vector3d Aimbot::PoseSolver::m_WorldToCamTran;
 
 cv::Point2d Aimbot::Armor::frameCenter(0, 0);
 

@@ -2,6 +2,10 @@
 #include "Chassis.hpp"
 
 
+double Chassis::Top_Wz = 0;
+Eigen::Matrix<double, 4, 3> Chassis::m_WheelKinematicMat;
+
+
 void Chassis::CalcWheelSpeed()
 {
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);
@@ -92,9 +96,10 @@ void Chassis::ChassisCtrl()
 		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM * MOTOR_RPM_TO_WHEEL_SPEED_COEF, m_Motors[i]->TimeStamp());
 	
 	//如果超级电容快没电了
-	if (m_ChassisSensorValues.spCapCurVtg < SPCAP_WARN_VOLTAGE)
+	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < SPCAP_WARN_VOLTAGE)
 		ChassisPowerCtrl();
 
+	m_SpCap->SetPower(m_ChassisSensorValues.refereeMaxPwr);
 	//SendCurrentToMotor();
 }
 

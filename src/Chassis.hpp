@@ -6,6 +6,7 @@
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
 #include "Gimbal.hpp"
+#include "Capacitor.hpp"
 
 #include <chrono>
 #include <memory>
@@ -27,12 +28,12 @@ public:
 	//底盘功率控制
 	static constexpr double LIMIT_BUFFER_TOTAL_CURRENT = 16000;
 	static constexpr double LIMIT_POWER_TOTAL_CURRENT = 20000;
-	static constexpr double SPCAP_WARN_VOLTAGE = 1;
+	static constexpr double SPCAP_WARN_VOLTAGE = 12;
 
 	//遥控器解析
-	static constexpr size_t CHASSIS_X_CHANNEL = 1; //控制底盘 前后 速度的遥控器通道
-	static constexpr size_t CHASSIS_Y_CHANNEL = 0; //控制底盘 左右 速度的遥控器通道
-	static constexpr size_t CHASSIS_Z_CHANNEL = 2; //控制底盘 旋转 速度的遥控器通道
+	static constexpr size_t CHASSIS_X_CHANNEL = 1;    //控制底盘 前后 速度的遥控器通道
+	static constexpr size_t CHASSIS_Y_CHANNEL = 0;    //控制底盘 左右 速度的遥控器通道
+	static constexpr size_t CHASSIS_Z_CHANNEL = 2;    //控制底盘 旋转 速度的遥控器通道
 	static constexpr size_t CHASSIS_MODE_CHANNEL = 0; //选择底盘状态的开关通道
 
 	static constexpr uint8_t RC_SW_UP = 1;
@@ -67,8 +68,8 @@ public:
 		OPENLOOP_Z				 //单独调试底盘
 	};
 
-	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager, IRemote* remote, Gimbal* gimbal, Utils::ConfigLoader* config))
-		: m_MotorManager(motorManager), m_RC(remote), m_Gimbal(gimbal), m_Config(config)
+	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager, IRemote* remote, ICapacitor* capacitor, Gimbal* gimbal, Utils::ConfigLoader* config))
+		: m_MotorManager(motorManager), m_RC(remote), m_SpCap(capacitor), m_Gimbal(gimbal), m_Config(config)
 	{
 		using OssianConfig::Configuration;
 		PIDWheelSpeed_Kp = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_kp();
@@ -137,6 +138,7 @@ public:
 	void UpdateChassisSensorFeedback() 
 	{
 		m_ChassisSensorValues.rc = m_RC->Status();
+		m_ChassisSensorValues.spCap = m_SpCap->Status();
 		m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 	}
 
@@ -184,6 +186,7 @@ private:
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	IRemote* m_RC;  //遥控器
+	ICapacitor* m_SpCap;
 	Gimbal* m_Gimbal;
 
 	bool m_FlagInitChassis;
@@ -191,7 +194,7 @@ private:
 	{ 
 		RemoteStatus rc;	 
 		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
-		double spCapInputVtg, spCapCurVtg, spCapInputCrt, spCapTargetPwr;    //超级电容数据
+		CapacitorStatus spCap;    //超级电容数据
 		double refereeCurPwr, refereeCurBuf, refereeMaxPwr, refereeMaxBuf;   //裁判系统数据
 		double relativeAngle; //底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
 		//double gimbalEcdYaw;

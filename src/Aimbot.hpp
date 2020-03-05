@@ -306,9 +306,9 @@ private:
         }
 
     private:
-        static Eigen::Matrix3d m_CamToGblRot;
-        static Eigen::Vector3d m_CamToGblTran;
-        Eigen::Vector3d m_WorldToCamTran;
+        Eigen::Matrix3d m_CamToGblRot;
+        Eigen::Vector3d m_CamToGblTran;
+        static Eigen::Vector3d m_WorldToCamTran;
 
        /**
        * @Brief: 考虑水平方向空气阻力，计算子弹实际的y坐标
@@ -393,7 +393,7 @@ private:
             cv::cv2eigen(tvec, m_WorldToCamTran);
         }
     };
-
+   
     enum class AlgorithmState
     {
         Detecting,
