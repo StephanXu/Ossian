@@ -19,7 +19,7 @@ struct RemoteStatus
 class IRemote
 {
 public:
-	virtual ~IRemote() = 0;
+	virtual ~IRemote() = default;
 	virtual auto AddRemote(std::string location)->void = 0;
 	virtual auto Status()->RemoteStatus = 0;
 	virtual auto StatusRef()->const RemoteStatus & = 0;
