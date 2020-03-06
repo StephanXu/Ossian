@@ -145,7 +145,7 @@ public:
 					});
 	}
 
-	double RelativeAngleToChassis() { return RelativeEcdToRad(m_YawEcd.load(), YAW_MID_ECD); }
+	double RelativeAngleToChassis() { return RelativeEcdToRad(m_YawEcd.load(), YAW_MID_ECD); } //[TODO]负号？
 
 	void UpdateGimbalSensorFeedback()
 	{
@@ -200,7 +200,7 @@ private:
 	struct GimbalSensorFeedback
 	{
 		RemoteStatus rc;	 //遥控器数据
-		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
+		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
 	std::atomic<uint16_t> m_YawEcd;
 

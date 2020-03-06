@@ -197,7 +197,6 @@ private:
 		CapacitorStatus spCap;    //超级电容数据
 		double refereeCurPwr, refereeCurBuf, refereeMaxPwr, refereeMaxBuf;   //裁判系统数据
 		double relativeAngle; //底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
-		//double gimbalEcdYaw;
 	} m_ChassisSensorValues;
 
 	double m_VxSet, m_VySet, m_WzSet; //三轴速度期望
