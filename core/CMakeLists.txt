@@ -5,6 +5,7 @@ target_sources(OssianCore
 			src/Dispatcher.cpp
 			src/Pipeline.cpp
 			src/SerialPort.cpp
+			src/IOListener.cpp
 			src/io/CAN.cpp
 			src/io/UART.cpp
 		)

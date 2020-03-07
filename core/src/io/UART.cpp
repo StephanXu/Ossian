@@ -13,13 +13,14 @@ namespace ossian
 {
 // UARTBus
 
-UARTBus::UARTBus(std::shared_ptr<UARTManager> manager, std::string location,
+UARTBus::UARTBus(UARTManager* manager,
+				 std::string const& location,
 				 const UARTProperties::Baudrate baudrate,
 				 const UARTProperties::FlowControl flowctrl,
 				 const UARTProperties::DataBits databits,
 				 const UARTProperties::StopBits stopbits,
-				 const UARTProperties::Parity parity) :
-	m_IsOpened(false), m_FD(-1), m_Location(std::move(location)),
+				 const UARTProperties::Parity parity)
+	: m_IsOpened(false), m_FD(-1), m_Location(std::move(location)),
 	m_Baudrate(baudrate), m_FlowCtrl(flowctrl), m_DataBits(databits), m_StopBits(stopbits), m_Parity(parity),
 	m_Manager(manager)
 {
@@ -41,11 +42,10 @@ UARTBus::~UARTBus()
 bool UARTBus::Open()
 {
 	FileDescriptor fd;
-	std::string devLocation = "/dev/" + m_Location;
 	struct termios opt;
 	auto SetFlag = [](tcflag_t& t, tcflag_t bit) { return t |= bit; };
 	auto ClearFlag = [](tcflag_t& t, tcflag_t bit) { return t &= ~bit; };
-	fd = open(devLocation.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
+	fd = open(m_Location.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
 	if (fd < 0)
 	{
 		throw std::runtime_error("Device open failed!");
@@ -116,16 +116,16 @@ bool UARTBus::Close()
 	return true;
 }
 
-std::shared_ptr<BaseDevice> UARTBus::AddDevice()
+UARTDevice* UARTBus::AddDevice()
 {
 	if (nullptr == m_Device)
 	{
-		m_Device = std::make_shared<UARTDevice>(shared_from_this());
+		m_Device = std::make_shared<UARTDevice>(this);
 	}
-	return std::dynamic_pointer_cast<BaseDevice>(m_Device);
+	return m_Device.get();
 }
 
-void UARTBus::Read()
+void UARTBus::Read() const
 {
 	if (true == m_IsOpened)
 	{
@@ -143,11 +143,11 @@ void UARTBus::Read()
 		size_t length = nbytes;
 		std::shared_ptr<uint8_t[]> buffer(new uint8_t[length]());
 		memcpy(buffer.get(), buf, length);
-		m_Device->Invoke(length, buffer);
+		m_Device->Invoke(length, buffer.get());
 	}
 }
 
-void UARTBus::WriteRaw(size_t length, const uint8_t* data)
+void UARTBus::WriteRaw(size_t length, const uint8_t* data) const
 {
 	if (true == m_IsOpened)
 	{
@@ -167,49 +167,41 @@ void UARTBus::WriteRaw(size_t length, const uint8_t* data)
 	}
 }
 
-std::vector<std::shared_ptr<BaseDevice>> UARTBus::GetDevices()
+std::vector<UARTDevice*> UARTBus::GetDevices() const
 {
-	std::vector<std::shared_ptr<BaseDevice>> devices;
-	devices.push_back(m_Device);
+	std::vector<UARTDevice*> devices;
+	devices.push_back(m_Device.get());
 	return devices;
 }
 
 // UARTDevice
 
-UARTDevice::UARTDevice(std::shared_ptr<UARTBus> bus) noexcept
-	:m_Bus(bus), m_Callback([](std::shared_ptr<BaseDevice>,
-							size_t,
-							std::shared_ptr<uint8_t[]>)
-							{})
+UARTDevice::UARTDevice(UARTBus* bus) noexcept
+	:m_Bus(bus), m_Callback([](const BaseDevice*, const size_t, const uint8_t*) {})
 {}
 
 // UARTManager
 
-const std::shared_ptr<BaseHardwareBus> UARTManager::AddBus(std::string const& location)
+UARTBus* UARTManager::AddBus(std::string const& location)
 {
 	return AddBus(location,
-				  UARTProperties::Baudrate::R115200,
-				  UARTProperties::FlowControl::FlowControlNone,
-				  UARTProperties::DataBits::DataBits8,
-				  UARTProperties::StopBits::StopBits1,
-				  UARTProperties::Parity::ParityNone);
+	              UARTProperties::Baudrate::R115200,
+	              UARTProperties::FlowControl::FlowControlNone,
+	              UARTProperties::DataBits::DataBits8,
+	              UARTProperties::StopBits::StopBits1,
+	              UARTProperties::Parity::ParityNone);
 }
 
-const std::shared_ptr<BaseHardwareBus> UARTManager::AddBus(std::string const& location,
-														   const UARTProperties::Baudrate baudrate,
-														   const UARTProperties::FlowControl flowctrl,
-														   const UARTProperties::DataBits databits,
-														   const UARTProperties::StopBits stopbits,
-														   const UARTProperties::Parity parity)
+UARTBus* UARTManager::AddBus(std::string const& location,
+                             const UARTProperties::Baudrate baudrate,
+                             const UARTProperties::FlowControl flowctrl,
+                             const UARTProperties::DataBits databits,
+                             const UARTProperties::StopBits stopbits,
+                             const UARTProperties::Parity parity)
 {
-	auto bus = std::make_shared<UARTBus>(shared_from_this(), location, baudrate, flowctrl, databits, stopbits, parity);
+	auto bus = std::make_shared<UARTBus>(this, location, baudrate, flowctrl, databits, stopbits, parity);
 	m_BusMap.insert(std::make_pair(location, bus));
-	return bus;
-}
-
-bool UARTManager::DelBus(std::shared_ptr<BaseHardwareBus> bus)
-{
-	return m_BusMap.erase(bus->Location());
+	return bus.get();
 }
 
 bool UARTManager::DelBus(std::string const& location)
@@ -217,42 +209,37 @@ bool UARTManager::DelBus(std::string const& location)
 	return m_BusMap.erase(location);
 }
 
-void UARTManager::WriteTo(std::shared_ptr<BaseDevice> const& device, const size_t length, const uint8_t* data)
+void UARTManager::WriteTo(const UARTDevice* device, const size_t length, const uint8_t* data)
 {
 	device->WriteRaw(length, data);
 }
 
-const std::shared_ptr<BaseDevice> UARTManager::AddDevice(std::shared_ptr<UARTBus> const& bus)
-{
-	return bus->AddDevice();
-}
-
-const std::shared_ptr<BaseDevice> UARTManager::AddDevice(std::string const& location)
+UARTDevice* UARTManager::AddDevice(std::string const& location)
 {
 	auto bus = Bus(location);
 	if (nullptr == bus)
 	{
 		bus = AddBus(location);
 	}
-	return std::dynamic_pointer_cast<UARTBus>(bus)->AddDevice();
+	return bus->AddDevice();
 }
 
-const std::shared_ptr<BaseHardwareBus> UARTManager::Bus(std::string const& location) const
+UARTBus* UARTManager::Bus(std::string const& location) const
 {
 	const auto it = m_BusMap.find(location);
 	if (it == m_BusMap.end())
 	{
 		return nullptr;
 	}
-	return it->second;
+	return it->second.get();
 }
 
-const std::vector<std::shared_ptr<BaseHardwareBus>> UARTManager::GetBuses() const
+std::vector<UARTBus*> UARTManager::GetBuses() const
 {
-	std::vector<std::shared_ptr<BaseHardwareBus>> buses;
+	std::vector<UARTBus*> buses;
 	for (auto& it : m_BusMap)
 	{
-		buses.push_back(it.second);
+		buses.push_back(it.second.get());
 	}
 	return buses;
 }

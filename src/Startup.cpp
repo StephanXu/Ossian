@@ -52,7 +52,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<ICapacitor, CapacitorSt>(
 		[](ICapacitor& option)
 		{
-			option.AddCapacitor("/dev/can0", 0x211, 0x210);
+			option.AddCapacitor("can0", 0x211, 0x210);
 		});
 	//app.AddInputAdapter<CameraInputSource>();
 	//app.AddInputAdapter<FakeInputSource>();

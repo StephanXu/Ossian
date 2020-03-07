@@ -16,16 +16,15 @@
 #include <exception>
 
 #include "ossian/io/IO.hpp"
-#include "ossian/io/IOError.hpp"
 
 #ifdef __linux__
 namespace ossian
 {
 // CANBus
 
-CANBus::CANBus(std::shared_ptr<CANManager> manager, std::string location, bool isLoopback) :
+CANBus::CANBus(CANManager* manager, std::string const& location, bool isLoopback) :
 	m_IsOpened(false), m_IsLoopback(isLoopback),
-	m_FD(-1), m_Location(std::move(location)), m_Manager(manager)
+	m_FD(-1), m_Location(location), m_Manager(manager)
 {
 	CANBus::Open();
 }
@@ -78,13 +77,13 @@ bool CANBus::Close()
 	return true;
 }
 
-std::shared_ptr<BaseDevice> CANBus::AddDevice(unsigned int id)
+CANDevice* CANBus::AddDevice(unsigned int id)
 {
 	const auto it = m_DeviceMap.find(id);
 	std::shared_ptr<CANDevice> device;
 	if (it == m_DeviceMap.end())
 	{
-		device = std::make_shared<CANDevice>(shared_from_this(), id);
+		device = std::make_shared<CANDevice>(this, id);
 		m_DeviceMap.insert(std::make_pair(id, device));
 		UpdateFilter();
 	}
@@ -92,10 +91,10 @@ std::shared_ptr<BaseDevice> CANBus::AddDevice(unsigned int id)
 	{
 		device = it->second;
 	}
-	return std::dynamic_pointer_cast<BaseDevice>(device);
+	return device.get();
 }
 
-void CANBus::Read()
+void CANBus::Read() const
 {
 	if (true == m_IsOpened)
 	{
@@ -118,12 +117,12 @@ void CANBus::Read()
 		auto it = m_DeviceMap.find(id);
 		if (it != m_DeviceMap.end())
 		{
-			it->second->Invoke(length, buffer);
+			it->second->Invoke(length, buffer.get());
 		}
 	}
 }
 
-void CANBus::WriteRaw(const unsigned id, const size_t length, const uint8_t* data)
+void CANBus::WriteRaw(const unsigned id, const size_t length, const uint8_t* data) const
 {
 	if (true == m_IsOpened)
 	{
@@ -147,12 +146,12 @@ void CANBus::WriteRaw(const unsigned id, const size_t length, const uint8_t* dat
 	}
 }
 
-std::vector<std::shared_ptr<BaseDevice>> CANBus::GetDevices()
+const std::vector<CANDevice*> CANBus::GetDevices()
 {
-	std::vector<std::shared_ptr<BaseDevice>> devices;
+	std::vector<CANDevice*> devices;
 	for (auto& it : m_DeviceMap)
 	{
-		devices.push_back(it.second);
+		devices.push_back(it.second.get());
 	}
 	return devices;
 }
@@ -173,30 +172,17 @@ void CANBus::UpdateFilter()
 
 // CANDevice
 
-CANDevice::CANDevice(std::shared_ptr<CANBus> bus, const unsigned int id) noexcept
-	: m_Id(id), m_Bus(bus), m_Callback([](std::shared_ptr<BaseDevice>,
-									   size_t,
-									   std::shared_ptr<uint8_t[]>)
-									   {})
+CANDevice::CANDevice(CANBus* bus, const unsigned int id) noexcept
+	: m_Id(id), m_Bus(bus), m_Callback([](const BaseDevice*, const size_t, const uint8_t*) {})
 {}
 
 // CANManager
 
-const std::shared_ptr<BaseHardwareBus> CANManager::AddBus(std::string const& location)
+CANBus* CANManager::AddBus(std::string const& location, bool isLoopback)
 {
-	return AddBus(location, false);
-}
-
-const std::shared_ptr<BaseHardwareBus> CANManager::AddBus(std::string const& location, bool isLoopback)
-{
-	auto bus = std::make_shared<CANBus>(shared_from_this(), location, isLoopback);
+	auto bus = std::make_shared<CANBus>(this, location, isLoopback);
 	m_BusMap.insert(std::make_pair(location, bus));
-	return bus;
-}
-
-bool CANManager::DelBus(std::shared_ptr<BaseHardwareBus> bus)
-{
-	return m_BusMap.erase(bus->Location());
+	return bus.get();
 }
 
 bool CANManager::DelBus(std::string const& location)
@@ -204,44 +190,38 @@ bool CANManager::DelBus(std::string const& location)
 	return m_BusMap.erase(location);
 }
 
-void CANManager::WriteTo(std::shared_ptr<BaseDevice> const& device, const size_t length, const uint8_t* data)
+void CANManager::WriteTo(const BaseDevice* device, const size_t length, const uint8_t* data)
 {
 	device->WriteRaw(length, data);
 }
 
-const std::shared_ptr<BaseDevice> CANManager::AddDevice(std::shared_ptr<CANBus> const& bus,
-                                                        const unsigned id)
-{
-	return bus->AddDevice(id);
-}
-
-const std::shared_ptr<BaseDevice> CANManager::AddDevice(std::string const& location,
-                                                        const unsigned int id)
+CANDevice* CANManager::AddDevice(std::string const& location,
+                                 const unsigned int id)
 {
 	auto bus = Bus(location);
 	if (nullptr == bus)
 	{
 		bus = AddBus(location);
 	}
-	return std::dynamic_pointer_cast<CANBus>(bus)->AddDevice(id);
+	return bus->AddDevice(id);
 }
 
-const std::shared_ptr<BaseHardwareBus> CANManager::Bus(std::string const& location) const
+CANBus* CANManager::Bus(std::string const& location) const
 {
 	const auto it = m_BusMap.find(location);
 	if (it == m_BusMap.end())
 	{
 		return nullptr;
 	}
-	return it->second;
+	return it->second.get();
 }
 
-const std::vector<std::shared_ptr<BaseHardwareBus>> CANManager::GetBuses() const
+std::vector<CANBus*> CANManager::GetBuses() const
 {
-	std::vector<std::shared_ptr<BaseHardwareBus>> buses;
+	std::vector<CANBus*> buses;
 	for (auto& it : m_BusMap)
 	{
-		buses.push_back(it.second);
+		buses.push_back(it.second.get());
 	}
 	return buses;
 }

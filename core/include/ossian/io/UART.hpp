@@ -84,30 +84,30 @@ class UARTBus;
 class UARTDevice;
 class UARTManager;
 
-class UARTBus : public BaseHardwareBus, public std::enable_shared_from_this<UARTBus>
+class UARTBus : public IListenable
 {
 public:
 	UARTBus() = delete;
-	explicit UARTBus(std::shared_ptr<UARTManager> manager,
-					 std::string location,
-					 UARTProperties::Baudrate baudrate,
-					 UARTProperties::FlowControl flowctrl,
-					 UARTProperties::DataBits databits,
-					 UARTProperties::StopBits stopbits,
-					 UARTProperties::Parity parity);
-	UARTBus(const UARTBus&) = delete;
+	explicit UARTBus(UARTManager* manager,
+					 std::string const& location,
+					 const UARTProperties::Baudrate baudrate,
+					 const UARTProperties::FlowControl flowctrl,
+					 const UARTProperties::DataBits databits,
+					 const UARTProperties::StopBits stopbits,
+					 const UARTProperties::Parity parity);
+	UARTBus(const UARTBus& other) = delete;
 	~UARTBus();
-	const std::shared_ptr<BaseHardwareManager> Manager() override { return std::static_pointer_cast<BaseHardwareManager>(m_Manager); }
+	UARTManager* Manager() const { return m_Manager; }
 	FileDescriptor FD() const noexcept override { return m_FD; }
-	const std::string Location() const noexcept override { return m_Location; }
-	bool IsOpened() const noexcept override { return m_IsOpened; }
-	bool Open() override;
-	bool Close() override;
-	void Read() override;
-	std::vector<std::shared_ptr<BaseDevice>> GetDevices() override;
+	std::string Location() const noexcept { return m_Location; }
+	bool IsOpened() const noexcept { return m_IsOpened; }
+	bool Open();
+	bool Close();
+	void Read() const;
+	std::vector<UARTDevice*> GetDevices() const;
 
-	std::shared_ptr<BaseDevice> AddDevice();
-	void WriteRaw(size_t length, const uint8_t* data);
+	UARTDevice* AddDevice();
+	void WriteRaw(size_t length, const uint8_t* data) const;
 
 private:
 	bool m_IsOpened;
@@ -121,54 +121,52 @@ private:
 	UARTProperties::Parity m_Parity;
 
 	std::shared_ptr<UARTDevice> m_Device;
-	std::shared_ptr<UARTManager> m_Manager;
+	UARTManager* m_Manager;
 };
 
-class UARTDevice : public BaseDevice, public std::enable_shared_from_this<UARTDevice>
+class UARTDevice : public BaseDevice
 {
 public:
 	UARTDevice() = delete;
-	explicit UARTDevice(std::shared_ptr<UARTBus> bus) noexcept;
-	UARTDevice(const UARTDevice&) = delete;
+	explicit UARTDevice(UARTBus* bus) noexcept;
+	UARTDevice(const UARTDevice& other) = delete;
 
-	const std::shared_ptr<BaseHardwareBus> Bus() const override { return std::dynamic_pointer_cast<BaseHardwareBus>(m_Bus); }
-	void Invoke(const size_t length, std::shared_ptr<uint8_t[]> const& data) override { m_Callback(shared_from_this(), length, data); }
-	void WriteRaw(const size_t length, const uint8_t* data) override { m_Bus->WriteRaw(length, data); }
-	void SetCallback(std::function<ReceiveCallback> const& callback) override { m_Callback = callback; }
+	UARTBus* Bus() const { return m_Bus; }
+	void Invoke(const size_t length, const uint8_t* data) const override { m_Callback(this, length, data); }
+	void WriteRaw(const size_t length, const uint8_t* data) const override { m_Bus->WriteRaw(length, data); }
+	BaseDevice* SetCallback(std::function<ReceiveCallback> const& callback) override
+	{
+		m_Callback = callback;
+		return this;
+	}
 
 private:
-	std::shared_ptr<UARTBus> m_Bus;
+	UARTBus* m_Bus;
 	std::function<ReceiveCallback> m_Callback;
 };
 
-class UARTManager : public BaseHardwareManager, public std::enable_shared_from_this<UARTManager>
+class UARTManager
 {
 public:
 	OSSIAN_SERVICE_SETUP(UARTManager()) = default;
-	UARTManager(const UARTManager&) = delete;
-	IOType Type() const noexcept override { return IOType::UART; }
+	UARTManager(const UARTManager& other) = delete;
 
-	void WriteTo(std::shared_ptr<BaseDevice> const& device, const size_t length, const uint8_t* data) override;
-
-	const std::shared_ptr<BaseDevice> AddDevice(std::shared_ptr<UARTBus> const& bus);
-	const std::shared_ptr<BaseDevice> AddDevice(std::string const& location);
-
-	const std::shared_ptr<BaseHardwareBus> Bus(std::string const& location) const override;
-
-	const std::vector<std::shared_ptr<BaseHardwareBus>> GetBuses() const override;
+	void WriteTo(const UARTDevice* device, const size_t length, const uint8_t* data);
+	UARTDevice* AddDevice(std::string const& location);
+	UARTBus* Bus(std::string const& location) const;
+	std::vector<UARTBus*> GetBuses() const;
 
 private:
-	std::unordered_map<std::string, std::shared_ptr<BaseHardwareBus>> m_BusMap;
+	std::unordered_map<std::string, std::shared_ptr<UARTBus>> m_BusMap;
 
-	const std::shared_ptr<BaseHardwareBus> AddBus(std::string const& location);
-	const std::shared_ptr<BaseHardwareBus> AddBus(std::string const& location,
-												  const UARTProperties::Baudrate baudrate,
-												  const UARTProperties::FlowControl flowctrl,
-												  const	UARTProperties::DataBits databits,
-												  const UARTProperties::StopBits stopbits,
-												  const UARTProperties::Parity parity);
+	UARTBus* AddBus(std::string const& location);
+	UARTBus* AddBus(std::string const& location,
+	                const UARTProperties::Baudrate baudrate,
+	                const UARTProperties::FlowControl flowctrl,
+	                const UARTProperties::DataBits databits,
+	                const UARTProperties::StopBits stopbits,
+	                const UARTProperties::Parity parity);
 
-	bool DelBus(std::shared_ptr<BaseHardwareBus> bus);
 	bool DelBus(std::string const& location);
 };
 const size_t MAX_LENGTH = 2048;
