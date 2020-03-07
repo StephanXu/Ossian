@@ -6,7 +6,7 @@ double Chassis::Top_Wz = 0;
 Eigen::Matrix<double, 4, 3> Chassis::m_WheelKinematicMat;
 
 
-void Chassis::CalcWheelSpeed()
+void Chassis::CalcWheelSpeedTarget()
 {
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);
 	m_WheelSpeedSet = m_WheelKinematicMat * vSet / WHEEL_RADIUS; //[4, 3] * [3, 1] --> [4, 1]
@@ -20,7 +20,7 @@ void Chassis::CalcWheelSpeed()
 	}
 }
 
-void Chassis::ChassisPowerCtrl()
+void Chassis::ChassisPowerCtrlByCurrent()
 {
 	//double curPwr, curBuf, maxPwr, maxBuf; //这四个量从裁判系统获取
 	double warnBuf = m_ChassisSensorValues.refereeMaxBuf * 0.9;
@@ -89,17 +89,53 @@ void Chassis::ChassisModeSet()
 	
 }
 
-void Chassis::ChassisCtrl()
+/*void Chassis::ChassisCtrl()
 {
-	CalcWheelSpeed();
+	CalcWheelSpeedTarget();
 	for (size_t i = 0; i < 4; ++i)
 		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM * MOTOR_RPM_TO_WHEEL_SPEED_COEF, m_Motors[i]->TimeStamp());
 	
 	//如果超级电容快没电了
 	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < SPCAP_WARN_VOLTAGE)
-		ChassisPowerCtrl();
+		ChassisPowerCtrlByCurrent();
 
-	m_SpCap->SetPower(m_ChassisSensorValues.refereeMaxPwr);
+	//SendCurrentToMotor();
+}*/
+
+//功率控制：通过减小底盘电机的期望速度来实现
+void Chassis::ChassisCtrl()
+{
+	CalcWheelSpeedTarget();
+	
+	auto CalcCurrent = [this]()->void
+	{
+		for (size_t i = 0; i < 4; ++i)
+			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
+				m_WheelSpeedSet(i) * WHEEL_SPEED_TO_MOTOR_RPM_COEF,
+				m_Motors[i]->Status().m_RPM,
+				m_Motors[i]->TimeStamp());
+	};
+	
+	//如果超级电容快没电了
+	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < SPCAP_WARN_VOLTAGE)
+	{
+		for (int cnt = 0; ; ++cnt)
+		{
+			m_WheelSpeedSet *= 0.9;
+			CalcCurrent();
+			double totalCurrent = 0;
+			std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [&totalCurrent](double x) {totalCurrent += fabs(x); });
+			if (totalCurrent * m_ChassisSensorValues.spCap.m_InputVoltage < m_ChassisSensorValues.refereeMaxPwr)
+				break;
+			if (cnt >= 10)
+			{
+				std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this, totalCurrent](double& x) {x = x / totalCurrent * m_ChassisSensorValues.refereeMaxPwr / m_ChassisSensorValues.spCap.m_InputVoltage; });
+				break;
+			}
+		}
+	}
+	else
+		CalcCurrent();
 	//SendCurrentToMotor();
 }
 

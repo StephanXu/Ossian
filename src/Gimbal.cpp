@@ -77,7 +77,7 @@ void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 		if (m_CurGimbalAngleMode == GYROANGLE)
 		{
 			double errorAngle = ClampLoop(m_GyroYawAngleSet - m_GimbalSensorValues.gyroZ, -M_PI, M_PI);
-			//判断会不会越过机械限位
+			//判断会不会越过程序限位
 			if (curEcdAngle + errorAngle + ecdAngleAdd > YAW_MAX_RELATIVE_ANGLE)
 			{
 				if (ecdAngleAdd > 0)

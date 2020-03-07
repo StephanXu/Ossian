@@ -23,7 +23,7 @@ public:
 	static constexpr double WHEEL_XN = 175 / 1000;   //m
 	static constexpr double WHEEL_YN = 232.5 / 1000; //m
 	static constexpr double LIMIT_WHEEL_SPEED = 5;   //单个麦轮的最大速度
-	static constexpr double MOTOR_RPM_TO_WHEEL_SPEED_COEF = 1 / 9.5;
+	static constexpr double WHEEL_SPEED_TO_MOTOR_RPM_COEF = 11.875;
 
 	//底盘功率控制
 	static constexpr double LIMIT_BUFFER_TOTAL_CURRENT = 16000;
@@ -63,7 +63,7 @@ public:
 	{
 		DISABLE,				 //失能
 		FOLLOW_GIMBAL_YAW,		 //跟随云台
-		FOLLOW_CHASSIS_YAW,		 //遥控器控制底盘旋转，底盘自身角速度闭环
+		FOLLOW_CHASSIS_YAW,		 //遥控器控制底盘旋转，底盘角速度闭环。工程采用。
 		TOP,					 //小陀螺
 		OPENLOOP_Z				 //单独调试底盘
 	};
@@ -142,10 +142,10 @@ public:
 		m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 	}
 
-	void CalcWheelSpeed();
+	void CalcWheelSpeedTarget();
 
-	//通过控制底盘电机的电流来实现
-	void ChassisPowerCtrl();
+	//功率控制：通过减小底盘电机的电流来实现
+	void ChassisPowerCtrlByCurrent();
 
 	//将遥控器杆量转为底盘三轴运动期望
 	void RCToChassisSpeed();
@@ -177,6 +177,7 @@ public:
 		ChassisAxisSpeedSet();
 		
 		ChassisCtrl();
+		m_SpCap->SetPower(m_ChassisSensorValues.refereeMaxPwr);
 		m_MotorMsgCheck.fill(false);
 	}
 
