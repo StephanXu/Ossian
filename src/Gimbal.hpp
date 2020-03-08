@@ -58,7 +58,7 @@ class Gimbal
 
 	enum GimbalInputSrc
 	{
-		RC, MOUSE, AUTOAIM, DISABLE
+		DISABLE, RC, MOUSE, AUTOAIM
 	};
 
 public:

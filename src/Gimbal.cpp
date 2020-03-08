@@ -11,7 +11,7 @@ void Gimbal::GimbalCtrlSrcSet()
 	case RC_SW_MID:
 		m_GimbalCtrlSrc = AUTOAIM; break;
 	case RC_SW_DOWN:
-		m_GimbalCtrlSrc = MOUSE; break;
+		m_GimbalCtrlSrc = DISABLE; break;  //MOUSE
 	default:
 		m_GimbalCtrlSrc = DISABLE; break;
 	}
@@ -39,6 +39,8 @@ double Gimbal::YawCtrlInputProc()
 void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 {
 	double curEcdAngle = curEcd * MOTOR_ECD_TO_RAD_COEF;
+	if (m_GimbalCtrlSrc == DISABLE)
+		return;
 	if (m_GimbalCtrlSrc == RC)
 	{
 		double ecdAngleAdd = angleInput - curEcdAngle;
@@ -71,7 +73,9 @@ void Gimbal::SetPitch(double angleInput, uint16_t curEcd)
 void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 {
 	double curEcdAngle = curEcd * MOTOR_ECD_TO_RAD_COEF;
-	if (m_GimbalCtrlSrc == RC)
+	if (m_GimbalCtrlSrc == DISABLE)
+		return;
+	else if (m_GimbalCtrlSrc == RC)
 	{
 		double ecdAngleAdd = angleInput - curEcdAngle;
 		if (m_CurGimbalAngleMode == GYROANGLE)
@@ -101,51 +105,63 @@ void Gimbal::SetYaw(double angleInput, uint16_t curEcd)
 void Gimbal::CtrlPitch()
 {
 	double pitchCurrentSend = 0;
-	if (m_CurGimbalAngleMode == GYROANGLE)
+	if (m_GimbalCtrlSrc == DISABLE)
+		pitchCurrentSend = 0;
+	else if (m_GimbalCtrlSrc == RC)
 	{
-		double angleSpeedSet = m_PIDPitchAngleGyro.Calc(m_GyroPitchAngleSet, m_GimbalSensorValues.gyroY, std::chrono::high_resolution_clock::now(), true);
-		pitchCurrentSend = m_PIDPitchAngleSpeed.Calc(angleSpeedSet, m_GimbalSensorValues.gyroSpeedY, std::chrono::high_resolution_clock::now());
+		if (m_CurGimbalAngleMode == GYROANGLE)
+		{
+			double angleSpeedSet = m_PIDPitchAngleGyro.Calc(m_GyroPitchAngleSet, m_GimbalSensorValues.gyroY, std::chrono::high_resolution_clock::now(), true);
+			pitchCurrentSend = m_PIDPitchAngleSpeed.Calc(angleSpeedSet, m_GimbalSensorValues.gyroSpeedY, std::chrono::high_resolution_clock::now());
+		}
+		else if (m_CurGimbalAngleMode == ECDANGLE)
+		{
+			//[TODO]用电机转速rpm换算出云台角速度
+			//初始时刻，无法通过差分计算出角速度 
+			if (m_LastEcdTimeStampPitch.time_since_epoch().count() == 0)
+				return;
+			double interval = std::chrono::duration<double, std::milli>(m_Motors[Pitch]->TimeStamp() - m_LastEcdTimeStampPitch).count();  //ms
+			double curEcdAnglePitch = m_Motors[Pitch]->Status().m_Encoding * MOTOR_ECD_TO_RAD_COEF;
+			double angleSpeedEcd = ClampLoop(curEcdAnglePitch - m_LastEcdAnglePitch, -M_PI, M_PI) / interval / 1000; //rad/s
+			double angleSpeedSet = m_PIDPitchAngleEcd.Calc(m_EcdPitchAngleSet, curEcdAnglePitch, std::chrono::high_resolution_clock::now(), true);
+			pitchCurrentSend = m_PIDPitchAngleSpeed.Calc(angleSpeedSet, angleSpeedEcd, std::chrono::high_resolution_clock::now());
+
+			m_LastEcdTimeStampPitch = m_Motors[Pitch]->TimeStamp();
+			m_LastEcdAnglePitch = curEcdAnglePitch;
+		}
 	}
-	else if (m_CurGimbalAngleMode == ECDANGLE)
-	{
-		//[TODO]用电机转速rpm换算出云台角速度
-		//初始时刻，无法通过差分计算出角速度 
-		if (m_LastEcdTimeStampPitch.time_since_epoch().count() == 0)  
-			return;
-		double interval = std::chrono::duration<double, std::milli>(m_Motors[Pitch]->TimeStamp() - m_LastEcdTimeStampPitch).count();  //ms
-		double curEcdAnglePitch = m_Motors[Pitch]->Status().m_Encoding * MOTOR_ECD_TO_RAD_COEF;
-		double angleSpeedEcd = ClampLoop(curEcdAnglePitch - m_LastEcdAnglePitch, -M_PI, M_PI) / interval / 1000; //rad/s
-		double angleSpeedSet = m_PIDPitchAngleEcd.Calc(m_EcdPitchAngleSet, curEcdAnglePitch, std::chrono::high_resolution_clock::now(), true);
-		pitchCurrentSend = m_PIDPitchAngleSpeed.Calc(angleSpeedSet, angleSpeedEcd, std::chrono::high_resolution_clock::now());
-		
-		m_LastEcdTimeStampPitch = m_Motors[Pitch]->TimeStamp();
-		m_LastEcdAnglePitch = curEcdAnglePitch;
-	}
+	
 	//SendCurrentToMotorPitch(pitchCurrentSend);
 }
 
 void Gimbal::CtrlYaw()
 {
 	double yawCurrentSend = 0;
-	if (m_CurGimbalAngleMode == GYROANGLE)
+	if (m_GimbalCtrlSrc == DISABLE)
+		yawCurrentSend = 0;
+	else if (m_GimbalCtrlSrc == RC)
 	{
-		double angleSpeedSet = m_PIDYawAngleGyro.Calc(m_GyroYawAngleSet, m_GimbalSensorValues.gyroZ, std::chrono::high_resolution_clock::now(), true);
-		yawCurrentSend = m_PIDYawAngleSpeed.Calc(angleSpeedSet, m_GimbalSensorValues.gyroSpeedZ, std::chrono::high_resolution_clock::now());
-	}
-	else if (m_CurGimbalAngleMode == ECDANGLE)
-	{
-		//[TODO]用电机转速rpm换算出云台角速度
-		//初始时刻，无法通过差分计算出角速度 
-		if (m_LastEcdTimeStampYaw.time_since_epoch().count() == 0)
-			return;
-		double interval = std::chrono::duration<double, std::milli>(m_Motors[Yaw]->TimeStamp() - m_LastEcdTimeStampYaw).count();  //ms
-		double curEcdAngleYaw = m_Motors[Yaw]->Status().m_Encoding * MOTOR_ECD_TO_RAD_COEF;
-		double angleSpeedEcd = ClampLoop(curEcdAngleYaw - m_LastEcdAngleYaw, -M_PI, M_PI) / interval / 1000; //rad/s
-		double angleSpeedSet = m_PIDYawAngleEcd.Calc(m_EcdYawAngleSet, curEcdAngleYaw, std::chrono::high_resolution_clock::now(), true);
-		yawCurrentSend = m_PIDYawAngleSpeed.Calc(angleSpeedSet, angleSpeedEcd, std::chrono::high_resolution_clock::now());
+		if (m_CurGimbalAngleMode == GYROANGLE)
+		{
+			double angleSpeedSet = m_PIDYawAngleGyro.Calc(m_GyroYawAngleSet, m_GimbalSensorValues.gyroZ, std::chrono::high_resolution_clock::now(), true);
+			yawCurrentSend = m_PIDYawAngleSpeed.Calc(angleSpeedSet, m_GimbalSensorValues.gyroSpeedZ, std::chrono::high_resolution_clock::now());
+		}
+		else if (m_CurGimbalAngleMode == ECDANGLE)
+		{
+			//[TODO]用电机转速rpm换算出云台角速度
+			//初始时刻，无法通过差分计算出角速度 
+			if (m_LastEcdTimeStampYaw.time_since_epoch().count() == 0)
+				return;
+			double interval = std::chrono::duration<double, std::milli>(m_Motors[Yaw]->TimeStamp() - m_LastEcdTimeStampYaw).count();  //ms
+			double curEcdAngleYaw = m_Motors[Yaw]->Status().m_Encoding * MOTOR_ECD_TO_RAD_COEF;
+			double angleSpeedEcd = ClampLoop(curEcdAngleYaw - m_LastEcdAngleYaw, -M_PI, M_PI) / interval / 1000; //rad/s
+			double angleSpeedSet = m_PIDYawAngleEcd.Calc(m_EcdYawAngleSet, curEcdAngleYaw, std::chrono::high_resolution_clock::now(), true);
+			yawCurrentSend = m_PIDYawAngleSpeed.Calc(angleSpeedSet, angleSpeedEcd, std::chrono::high_resolution_clock::now());
 
-		m_LastEcdTimeStampYaw = m_Motors[Yaw]->TimeStamp();
-		m_LastEcdAngleYaw = curEcdAngleYaw;
+			m_LastEcdTimeStampYaw = m_Motors[Yaw]->TimeStamp();
+			m_LastEcdAngleYaw = curEcdAngleYaw;
+		}
 	}
+	
 	//SendCurrentToMotorYaw(yawCurrentSend);
 }
