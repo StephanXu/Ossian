@@ -46,11 +46,6 @@ class Gimbal
 	static constexpr double YAW_RC_SEN = -0.000005;
 	static constexpr double PITCH_RC_SEN = -0.000006; //0.005
 
-	enum MotorPosition
-	{
-		Pitch, Yaw
-	};
-
 	enum GimbalAngleMode
 	{
 		GYROANGLE, ECDANGLE
@@ -62,6 +57,11 @@ class Gimbal
 	};
 
 public:
+	enum MotorPosition
+	{
+		Pitch, Yaw
+	};
+	
 	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager, IRemote* remote))
 		: m_MotorManager(motorManager), m_RC(remote)
 	{
@@ -123,26 +123,33 @@ public:
 
 	auto AddMotor(MotorPosition position,
 				  const std::string location,
-				  const unsigned int id)
+				  const unsigned int id,
+				  const unsigned int writerCanId)
 	{
-		if(position == Pitch)
-			m_Motors[position] = 
-				m_MotorManager->AddMotor<ossian::DJIMotor>(
-					location,
-					id,
-					[this](std::shared_ptr<ossian::DJIMotor> motor)
-					{
-						MotorPitchReceiveProc(motor);
-					});
-		else if(position == Yaw)
+		if (position == Pitch)
+		{
 			m_Motors[position] =
 				m_MotorManager->AddMotor<ossian::DJIMotor>(
 					location,
-					id,
-					[this](std::shared_ptr<ossian::DJIMotor> motor)
+					m_MotorManager->GetOrAddWriter<ossian::DJIMotorWriter>(location, writerCanId),
+					[this](const std::shared_ptr<ossian::DJIMotor>& motor)
+					{
+						MotorPitchReceiveProc(motor);
+					},
+					id);
+		}
+		else if (position == Yaw)
+		{
+			m_Motors[position] =
+				m_MotorManager->AddMotor<ossian::DJIMotor>(
+					location,
+					m_MotorManager->GetOrAddWriter<ossian::DJIMotorWriter>(location, writerCanId),
+					[this](const std::shared_ptr<ossian::DJIMotor>& motor)
 					{
 						MotorYawReceiveProc(motor);
-					});
+					},
+					id);
+		}
 	}
 
 	double RelativeAngleToChassis() { return RelativeEcdToRad(m_YawEcd.load(), YAW_MID_ECD); } //[TODO]负号？
@@ -166,7 +173,7 @@ public:
 	void CtrlPitch();
 	void CtrlYaw();
 
-	auto MotorPitchReceiveProc(std::shared_ptr<ossian::DJIMotor> motor)->void
+	auto MotorPitchReceiveProc(const std::shared_ptr<ossian::DJIMotor>& motor)->void
 	{
 		UpdateGimbalSensorFeedback();
 		if (m_FlagInitPitch)
@@ -177,7 +184,7 @@ public:
 		CtrlPitch();
 	}
 
-	auto MotorYawReceiveProc(std::shared_ptr<ossian::DJIMotor> motor)->void
+	auto MotorYawReceiveProc(const std::shared_ptr<ossian::DJIMotor>& motor)->void
 	{
 		UpdateGimbalSensorFeedback();
 		if (m_FlagInitYaw)

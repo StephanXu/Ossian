@@ -57,7 +57,7 @@ class Capacitor : public ICapacitor
 	Mutex m_Mutex;
 	CapacitorStatus m_Status{};
 	ossian::CANManager* m_CANManager;
-	std::shared_ptr<ossian::BaseDevice> m_WriterDevice{};
+	std::shared_ptr<ossian::CANDevice> m_WriterDevice{};
 
 public:
 	OSSIAN_SERVICE_SETUP(Capacitor(ossian::CANManager* canManager))
@@ -74,12 +74,12 @@ public:
 			throw std::runtime_error("CANManager is null");
 		}
 		m_CANManager->AddDevice(location, readerId)->SetCallback(
-			[this](std::shared_ptr<ossian::BaseDevice> device,
-				   size_t length,
-				   std::shared_ptr<uint8_t[]> data)
+			[this](const std::shared_ptr<ossian::BaseDevice>& device,
+				   const size_t length,
+				   const uint8_t* data)
 			{
 				std::lock_guard<Mutex> guard{ m_Mutex };
-				StatusModel* model = reinterpret_cast<StatusModel*>(data.get());
+				auto model = reinterpret_cast<const StatusModel*>(data);
 				m_Status.m_InputVoltage = model->m_InputVoltage / 100.f;
 				m_Status.m_CapacitorVoltage = model->m_CapacitorVoltage / 100.f;
 				m_Status.m_TestCurrent = model->m_TestCurrent / 100.f;

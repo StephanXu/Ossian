@@ -45,10 +45,9 @@ public:
 	auto AddRemote(std::string location)->void override
 	{
 		m_UARTManager->AddDevice(location)->SetCallback(
-			[this](std::shared_ptr<ossian::BaseDevice> device, size_t length, std::shared_ptr<uint8_t[]> data)
+			[this](const std::shared_ptr<ossian::BaseDevice>& device, const size_t length, const uint8_t* data)
 			{
-
-				sscanf(reinterpret_cast<const char*>(data.get()),
+				sscanf(reinterpret_cast<const char*>(data),
 					   "CH1:%d,CH2:%d,CH3:%d,CH4:%d,CH5:%d,S1:%d,S2:%d",
 					   &m_Status.ch[0],
 					   &m_Status.ch[1],

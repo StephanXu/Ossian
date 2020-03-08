@@ -16,13 +16,13 @@
 
 
 class Chassis
-{	
+{
 public:
 	//麦轮运动
-	static constexpr double WHEEL_RADIUS = 76 / 1000;//m
-	static constexpr double WHEEL_XN = 175 / 1000;   //m
-	static constexpr double WHEEL_YN = 232.5 / 1000; //m
-	static constexpr double LIMIT_WHEEL_SPEED = 5;   //单个麦轮的最大速度
+	static constexpr double WHEEL_RADIUS = 76 / 1000; ///< m
+	static constexpr double WHEEL_XN = 175 / 1000;    ///< m
+	static constexpr double WHEEL_YN = 232.5 / 1000;  ///< m
+	static constexpr double LIMIT_WHEEL_SPEED = 5;    ///< 单个麦轮的最大速度
 	static constexpr double WHEEL_SPEED_TO_MOTOR_RPM_COEF = 11.875;
 
 	//底盘功率控制
@@ -31,24 +31,24 @@ public:
 	static constexpr double SPCAP_WARN_VOLTAGE = 12;
 
 	//遥控器解析
-	static constexpr size_t CHASSIS_X_CHANNEL = 1;    //控制底盘 前后 速度的遥控器通道
-	static constexpr size_t CHASSIS_Y_CHANNEL = 0;    //控制底盘 左右 速度的遥控器通道
-	static constexpr size_t CHASSIS_Z_CHANNEL = 2;    //控制底盘 旋转 速度的遥控器通道
-	static constexpr size_t CHASSIS_MODE_CHANNEL = 0; //选择底盘状态的开关通道
+	static constexpr size_t CHASSIS_X_CHANNEL = 1;    ///< 控制底盘 前后 速度的遥控器通道
+	static constexpr size_t CHASSIS_Y_CHANNEL = 0;    ///< 控制底盘 左右 速度的遥控器通道
+	static constexpr size_t CHASSIS_Z_CHANNEL = 2;    ///< 控制底盘 旋转 速度的遥控器通道
+	static constexpr size_t CHASSIS_MODE_CHANNEL = 0; ///< 选择底盘状态的开关通道
 
 	static constexpr uint8_t RC_SW_UP = 1;
 	static constexpr uint8_t RC_SW_MID = 3;
 	static constexpr uint8_t RC_SW_DOWN = 2;
 
-	static constexpr int16_t CHASSIS_RC_DEADBAND = 10; //摇杆死区
-	static constexpr double CHASSIS_VX_RC_SEN = 0.006; //遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
-	static constexpr double CHASSIS_VY_RC_SEN = 0.005; //遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
-	static constexpr double CHASSIS_WZ_RC_SEN = 0.01;  //不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+	static constexpr int16_t CHASSIS_RC_DEADBAND = 10; ///< 摇杆死区
+	static constexpr double CHASSIS_VX_RC_SEN = 0.006; ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
+	static constexpr double CHASSIS_VY_RC_SEN = 0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
+	static constexpr double CHASSIS_WZ_RC_SEN = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 
 	//底盘运动
-	static constexpr double CHASSIS_VX_MAX = 4.5; // m/s
-	static constexpr double CHASSIS_VY_MAX = 1.5; // m/s
-	static double Top_Wz;  //底盘陀螺旋转速度 rad/s
+	static constexpr double CHASSIS_VX_MAX = 4.5; ///< m/s
+	static constexpr double CHASSIS_VY_MAX = 1.5; ///< m/s
+	static double Top_Wz;  ///< 底盘陀螺旋转速度 rad/s
 
 	//pid参数
 	static double PIDWheelSpeed_Kp, PIDWheelSpeed_Ki, PIDWheelSpeed_Kd, PIDWheelSpeed_Th_Out, PIDWheelSpeed_Th_IOut;
@@ -58,18 +58,26 @@ public:
 	{
 		LF, LR, RR, RF
 	};
-
+	
 	enum ChassisMode
 	{
-		DISABLE,				 //失能
-		FOLLOW_GIMBAL_YAW,		 //跟随云台
-		FOLLOW_CHASSIS_YAW,		 //遥控器控制底盘旋转，底盘角速度闭环。工程采用。
-		TOP,					 //小陀螺
-		OPENLOOP_Z				 //单独调试底盘
+		DISABLE,				 ///< 失能
+		FOLLOW_GIMBAL_YAW,		 ///< 跟随云台
+		FOLLOW_CHASSIS_YAW,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
+		TOP,					 ///< 小陀螺
+		OPENLOOP_Z				 ///< 单独调试底盘
 	};
 
-	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager, IRemote* remote, ICapacitor* capacitor, Gimbal* gimbal, Utils::ConfigLoader* config))
-		: m_MotorManager(motorManager), m_RC(remote), m_SpCap(capacitor), m_Gimbal(gimbal), m_Config(config)
+	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager,
+								 IRemote* remote,
+								 ICapacitor* capacitor,
+								 Gimbal* gimbal,
+								 Utils::ConfigLoader* config))
+		: m_MotorManager(motorManager)
+		, m_RC(remote)
+		, m_SpCap(capacitor)
+		, m_Gimbal(gimbal)
+		, m_Config(config)
 	{
 		using OssianConfig::Configuration;
 		PIDWheelSpeed_Kp = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_kp();
@@ -88,9 +96,9 @@ public:
 
 		double coef = WHEEL_XN + WHEEL_YN;
 		m_WheelKinematicMat << 1, -1, -coef,
-							   1,  1, -coef,
-							   1, -1,  coef,
-							   1,  1,  coef;
+			1, 1, -coef,
+			1, -1, coef,
+			1, 1, coef;
 
 		m_FlagInitChassis = true;
 
@@ -120,22 +128,25 @@ public:
 
 		m_FlagInitChassis = false;
 	}
-	
-	auto AddMotor(MotorPosition position,
+
+	auto AddMotor(const MotorPosition position,
 				  const std::string location,
-				  const unsigned int id)
+				  const unsigned int motorId,
+				  const unsigned int writerCanId)->void
 	{
-		m_Motors[position] = 
+		m_Motors[position] =
 			m_MotorManager->AddMotor<ossian::DJIMotor>(
 				location,
-				id,
-				[this,position](std::shared_ptr<ossian::DJIMotor> motor)
+				m_MotorManager->GetOrAddWriter<ossian::DJIMotorWriter>(location, writerCanId),
+				[this, position](const std::shared_ptr<ossian::DJIMotor>& motor)
 				{
 					MotorReceiveProc(motor, position);
-				});
+				},
+				motorId);
+		
 	}
 
-	void UpdateChassisSensorFeedback() 
+	void UpdateChassisSensorFeedback()
 	{
 		m_ChassisSensorValues.rc = m_RC->Status();
 		m_ChassisSensorValues.spCap = m_SpCap->Status();
@@ -159,7 +170,8 @@ public:
 	//根据当前模式，计算底盘三轴速度
 	void ChassisAxisSpeedSet();
 
-	auto MotorReceiveProc(std::shared_ptr<ossian::DJIMotor> motor, MotorPosition position)->void
+	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor>& motor,
+						  MotorPosition position)->void
 	{
 		m_MotorMsgCheck[position] = true;
 		if (!(m_MotorMsgCheck[0] && m_MotorMsgCheck[1] && m_MotorMsgCheck[2] && m_MotorMsgCheck[3]))  //俯视，左前，左后，右后，右前，逆时针
@@ -175,15 +187,15 @@ public:
 		//[TODO] 模式切换过渡
 
 		ChassisAxisSpeedSet();
-		
+
 		ChassisCtrl();
 		m_SpCap->SetPower(m_ChassisSensorValues.refereeMaxPwr);
 		m_MotorMsgCheck.fill(false);
 	}
 
 private:
-	ossian::MotorManager* m_MotorManager; 	
-	std::array<std::shared_ptr<ossian::DJIMotor>, 4> m_Motors; 	
+	ossian::MotorManager* m_MotorManager;
+	std::array<std::shared_ptr<ossian::DJIMotor>, 4> m_Motors;
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	IRemote* m_RC;  //遥控器
@@ -191,18 +203,18 @@ private:
 	Gimbal* m_Gimbal;
 
 	bool m_FlagInitChassis;
-	struct ChassisSensorFeedback 
-	{ 
-		RemoteStatus rc;	 
-		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
-		CapacitorStatus spCap;    //超级电容数据
-		double refereeCurPwr, refereeCurBuf, refereeMaxPwr, refereeMaxBuf;   //裁判系统数据
-		double relativeAngle; //底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
+	struct ChassisSensorFeedback
+	{
+		RemoteStatus rc;
+		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	///< 底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
+		CapacitorStatus spCap;												///< 超级电容数据
+		double refereeCurPwr, refereeCurBuf, refereeMaxPwr, refereeMaxBuf;  ///< 裁判系统数据
+		double relativeAngle;												///< 底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
 	} m_ChassisSensorValues;
 
 	double m_VxSet, m_VySet, m_WzSet; //三轴速度期望
 	double m_AngleSet;  //底盘角度目标值
-	
+
 
 	ChassisMode m_CurChassisMode, m_LastChassisMode;
 	std::array<bool, 4> m_MotorMsgCheck;
@@ -211,8 +223,8 @@ private:
 	std::array<double, 4> m_CurrentSend;
 
 	FirstOrderFilter m_FOFilterVX, m_FOFilterVY;
-	PIDController m_PIDChassisAngle; //底盘要旋转的角度--->底盘旋转角速度  底盘跟随角度环
-	std::array<PIDController, 4> m_PIDChassisSpeed; //麦轮转速--->3508电流
+	PIDController m_PIDChassisAngle; ///< 底盘要旋转的角度--->底盘旋转角速度  底盘跟随角度环
+	std::array<PIDController, 4> m_PIDChassisSpeed; ///< 麦轮转速--->3508电流
 };
 
 #endif // OSSIAN_CHASSIS_HPP
