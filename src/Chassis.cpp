@@ -107,7 +107,7 @@ void Chassis::ChassisCtrl()
 {
 	CalcWheelSpeedTarget();
 	
-	auto CalcCurrent = [this]()->void
+	static auto CalcCurrent = [this]()->void
 	{
 		for (size_t i = 0; i < 4; ++i)
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
