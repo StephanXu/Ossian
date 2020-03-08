@@ -39,7 +39,8 @@ void Gimbal::GimbalExpSet(uint16_t curEcd, MotorPosition position)
 		double ecdAngleAdd = m_AngleInput[position] - curEcdAngle;
 		if (m_CurGimbalAngleMode == Gyro)
 		{
-			double errorAngle = ClampLoop(m_GyroAngleSet[position] - m_GimbalSensorValues.gyroY, -M_PI, M_PI);
+			double gyro = (position == Pitch ? m_GimbalSensorValues.gyroY : m_GimbalSensorValues.gyroZ);
+			double errorAngle = ClampLoop(m_GyroAngleSet[position] - gyro, -M_PI, M_PI);
 			//判断会不会越过限位
 			if (curEcdAngle + errorAngle + ecdAngleAdd > MAX_RELATIVE_ANGLE[position])
 			{
