@@ -8,9 +8,7 @@
 using namespace ossian;
 using namespace std;
 
-void func(const BaseDevice* device,
-	const size_t length,
-	const uint8_t* data)
+void func(shared_ptr<CANDevice> const& device, const size_t length, const uint8_t* data)
 {
 	cout << length << endl;
 }
@@ -18,7 +16,7 @@ void func(const BaseDevice* device,
 int main()
 {
 	auto mgr = std::make_shared<CANManager>();
-	mgr->AddDevice("can0",0x100)->SetCallback(func);
+	mgr->AddDevice("can0", 0x100)->SetCallback(func);
 	auto buses = mgr->GetBuses();
 	std::vector<IListenable*> lis;
 	for (auto bus : buses)

@@ -77,7 +77,7 @@ bool CANBus::Close()
 	return true;
 }
 
-CANDevice* CANBus::AddDevice(unsigned int id)
+std::shared_ptr<CANDevice> CANBus::AddDevice(unsigned int id)
 {
 	const auto it = m_DeviceMap.find(id);
 	std::shared_ptr<CANDevice> device;
@@ -91,7 +91,7 @@ CANDevice* CANBus::AddDevice(unsigned int id)
 	{
 		device = it->second;
 	}
-	return device.get();
+	return device;
 }
 
 void CANBus::Read() const
@@ -170,12 +170,6 @@ void CANBus::UpdateFilter()
 	setsockopt(m_FD, SOL_CAN_RAW, CAN_RAW_FILTER, filters.data(), sizeof(struct can_filter) * size); // 设置过滤规则
 }
 
-// CANDevice
-
-CANDevice::CANDevice(CANBus* bus, const unsigned int id) noexcept
-	: m_Id(id), m_Bus(bus), m_Callback([](const BaseDevice*, const size_t, const uint8_t*) {})
-{}
-
 // CANManager
 
 CANBus* CANManager::AddBus(std::string const& location, bool isLoopback)
@@ -195,8 +189,8 @@ void CANManager::WriteTo(const BaseDevice* device, const size_t length, const ui
 	device->WriteRaw(length, data);
 }
 
-CANDevice* CANManager::AddDevice(std::string const& location,
-                                 const unsigned int id)
+std::shared_ptr<CANDevice> CANManager::AddDevice(std::string const& location,
+                                                 const unsigned int id)
 {
 	auto bus = Bus(location);
 	if (nullptr == bus)

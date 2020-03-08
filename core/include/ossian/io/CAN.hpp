@@ -54,7 +54,7 @@ public:
 	void Read() const override;
 	const std::vector<CANDevice*> GetDevices();
 
-	CANDevice* AddDevice(unsigned int id);
+	std::shared_ptr<CANDevice> AddDevice(unsigned int id);
 	void WriteRaw(const unsigned id, const size_t length, const uint8_t* data) const;
 
 private:
@@ -67,27 +67,30 @@ private:
 	void UpdateFilter();
 };
 
-class CANDevice : public BaseDevice
+class CANDevice : public BaseDevice, public std::enable_shared_from_this<CANDevice>
 {
 public:
 	CANDevice() = delete;
 	CANDevice(const CANDevice& other) = delete;
-	explicit CANDevice(CANBus* bus, const unsigned int id) noexcept;
+	explicit CANDevice(CANBus* bus, const unsigned int id) noexcept : m_Id(id), m_Bus(bus), m_Callback(DefaultCallback)
+	{};
 
 	CANBus* Bus() const { return m_Bus; }
-	void Invoke(const size_t length, const uint8_t* data) const override { m_Callback(this, length, data); }
+	void Invoke(const size_t length, const uint8_t* data) override { m_Callback(shared_from_this(), length, data); }
 	void WriteRaw(const size_t length, const uint8_t* data) const override { m_Bus->WriteRaw(m_Id, length, data); }
 
-	BaseDevice* SetCallback(std::function<ReceiveCallback> const& callback) override
+	std::shared_ptr<CANDevice> SetCallback(std::function<ReceiveCallback<CANDevice>> const& callback)
 	{
 		m_Callback = callback;
-		return this;
+		return shared_from_this();
 	}
 
 private:
 	const unsigned int m_Id;
 	CANBus* m_Bus;
-	std::function<ReceiveCallback> m_Callback;
+	std::function<ReceiveCallback<CANDevice>> m_Callback;
+	static void DefaultCallback(std::shared_ptr<CANDevice> const&, const size_t, const uint8_t*)
+	{}
 };
 
 class CANManager
@@ -97,7 +100,7 @@ public:
 	CANManager(const CANManager& other) = delete;
 
 	void WriteTo(const BaseDevice* device, const size_t length, const uint8_t* data);
-	CANDevice* AddDevice(std::string const& location, const unsigned int id);
+	std::shared_ptr<CANDevice> AddDevice(std::string const& location, const unsigned int id);
 	CANBus* Bus(std::string const& location) const;
 	std::vector<CANBus*> GetBuses() const;
 

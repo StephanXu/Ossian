@@ -103,10 +103,10 @@ public:
 	bool IsOpened() const noexcept { return m_IsOpened; }
 	bool Open();
 	bool Close();
-	void Read() const;
+	void Read() const override;
 	std::vector<UARTDevice*> GetDevices() const;
 
-	UARTDevice* AddDevice();
+	std::shared_ptr<UARTDevice> const& AddDevice();
 	void WriteRaw(size_t length, const uint8_t* data) const;
 
 private:
@@ -124,25 +124,28 @@ private:
 	UARTManager* m_Manager;
 };
 
-class UARTDevice : public BaseDevice
+class UARTDevice : public BaseDevice, public std::enable_shared_from_this<UARTDevice>
 {
 public:
 	UARTDevice() = delete;
-	explicit UARTDevice(UARTBus* bus) noexcept;
+	explicit UARTDevice(UARTBus* bus) noexcept :m_Bus(bus), m_Callback(DefaultCallback) {};
 	UARTDevice(const UARTDevice& other) = delete;
 
 	UARTBus* Bus() const { return m_Bus; }
-	void Invoke(const size_t length, const uint8_t* data) const override { m_Callback(this, length, data); }
+	void Invoke(const size_t length, const uint8_t* data) override { m_Callback(shared_from_this(), length, data); }
 	void WriteRaw(const size_t length, const uint8_t* data) const override { m_Bus->WriteRaw(length, data); }
-	BaseDevice* SetCallback(std::function<ReceiveCallback> const& callback) override
+
+	std::shared_ptr<BaseDevice> SetCallback(std::function<ReceiveCallback<UARTDevice>> const& callback)
 	{
 		m_Callback = callback;
-		return this;
+		return shared_from_this();
 	}
 
 private:
 	UARTBus* m_Bus;
-	std::function<ReceiveCallback> m_Callback;
+	std::function<ReceiveCallback<UARTDevice>> m_Callback;
+	static void DefaultCallback(std::shared_ptr<UARTDevice> const&, const size_t, const uint8_t*)
+	{}
 };
 
 class UARTManager
@@ -152,7 +155,7 @@ public:
 	UARTManager(const UARTManager& other) = delete;
 
 	void WriteTo(const UARTDevice* device, const size_t length, const uint8_t* data);
-	UARTDevice* AddDevice(std::string const& location);
+	std::shared_ptr<UARTDevice> AddDevice(std::string const& location);
 	UARTBus* Bus(std::string const& location) const;
 	std::vector<UARTBus*> GetBuses() const;
 
@@ -161,11 +164,11 @@ private:
 
 	UARTBus* AddBus(std::string const& location);
 	UARTBus* AddBus(std::string const& location,
-	                const UARTProperties::Baudrate baudrate,
-	                const UARTProperties::FlowControl flowctrl,
-	                const UARTProperties::DataBits databits,
-	                const UARTProperties::StopBits stopbits,
-	                const UARTProperties::Parity parity);
+					const UARTProperties::Baudrate baudrate,
+					const UARTProperties::FlowControl flowctrl,
+					const UARTProperties::DataBits databits,
+					const UARTProperties::StopBits stopbits,
+					const UARTProperties::Parity parity);
 
 	bool DelBus(std::string const& location);
 };

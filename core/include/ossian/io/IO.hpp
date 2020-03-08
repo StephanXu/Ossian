@@ -8,7 +8,6 @@
 #define OSSIAN_CORE_IO_INTERFACES
 
 #ifdef __linux__
-#include <vector>
 #include <string>
 #include <tuple>
 #include <memory>
@@ -25,29 +24,14 @@ namespace ossian
 class BaseDevice;
 
 /** @brief	The receive callback */
+template<typename DeviceType>
 using ReceiveCallback = void(
-	const BaseDevice * device,
+	std::shared_ptr<DeviceType> const& device,
 	const size_t length,
 	const uint8_t * data);
 
 /** @brief	Information describing the file */
 using FileDescriptor = int;
-/** @brief	Information describing the frame */
-using FrameData = std::tuple<size_t, std::shared_ptr<uint8_t[]>>;
-
-
-/**
- * @enum	IOType
- *
- * @brief	Values that represent I/O types
- */
-enum class IOType
-{
-	Undefined,
-	UART,
-	CAN
-};
-
 
 /**
  * @class	BaseDevice
@@ -88,17 +72,7 @@ public:
 	 * @param 	length	The length.
 	 * @param 	data  	If non-null, the data.
 	 */
-	virtual void Invoke(const size_t length, const uint8_t* data) const = 0;
-
-
-	/**
-	 * @fn	virtual void BaseDevice::SetCallback(std::function<ReceiveCallback> const& callback) = 0;
-	 * @brief	设置设备回调
-	 * @author	Mlekow
-	 * @date	2020/2/2
-	 * @param 	callback	The callback.
-	 */
-	virtual BaseDevice* SetCallback(std::function<ReceiveCallback> const& callback) = 0;
+	virtual void Invoke(const size_t length, const uint8_t* data) = 0;
 };
 
 inline BaseDevice::~BaseDevice() = default;

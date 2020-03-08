@@ -116,13 +116,13 @@ bool UARTBus::Close()
 	return true;
 }
 
-UARTDevice* UARTBus::AddDevice()
+std::shared_ptr<UARTDevice> const& UARTBus::AddDevice()
 {
 	if (nullptr == m_Device)
 	{
 		m_Device = std::make_shared<UARTDevice>(this);
 	}
-	return m_Device.get();
+	return m_Device;
 }
 
 void UARTBus::Read() const
@@ -174,12 +174,6 @@ std::vector<UARTDevice*> UARTBus::GetDevices() const
 	return devices;
 }
 
-// UARTDevice
-
-UARTDevice::UARTDevice(UARTBus* bus) noexcept
-	:m_Bus(bus), m_Callback([](const BaseDevice*, const size_t, const uint8_t*) {})
-{}
-
 // UARTManager
 
 UARTBus* UARTManager::AddBus(std::string const& location)
@@ -214,7 +208,7 @@ void UARTManager::WriteTo(const UARTDevice* device, const size_t length, const u
 	device->WriteRaw(length, data);
 }
 
-UARTDevice* UARTManager::AddDevice(std::string const& location)
+std::shared_ptr<UARTDevice> UARTManager::AddDevice(std::string const& location)
 {
 	auto bus = Bus(location);
 	if (nullptr == bus)
