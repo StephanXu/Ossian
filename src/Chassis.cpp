@@ -3,6 +3,17 @@
 
 
 double Chassis::Top_Wz = 0;
+double Chassis::PIDWheelSpeed_Kp = 0; 
+double Chassis::PIDWheelSpeed_Ki = 0; 
+double Chassis::PIDWheelSpeed_Kd = 0;
+double Chassis::PIDWheelSpeed_Th_Out = 0;
+double Chassis::PIDWheelSpeed_Th_IOut = 0;
+double Chassis::PIDChassisAngle_Kp = 0;
+double Chassis::PIDChassisAngle_Ki = 0;
+double Chassis::PIDChassisAngle_Kd = 0;
+double Chassis::PIDChassisAngle_Th_Out = 0;
+double Chassis::PIDChassisAngle_Th_IOut = 0;
+
 Eigen::Matrix<double, 4, 3> Chassis::m_WheelKinematicMat;
 
 
@@ -64,7 +75,7 @@ void Chassis::RCToChassisSpeed()
 {
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_X_CHANNEL], CHASSIS_RC_DEADBAND) * CHASSIS_VX_RC_SEN;		// m/s
 	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_Y_CHANNEL], CHASSIS_RC_DEADBAND) * (-CHASSIS_VY_RC_SEN);  // m/s
-	if (m_CurChassisMode == OPENLOOP_Z)
+	if (m_CurChassisMode == Openloop_Z)
 		m_WzSet = m_ChassisSensorValues.rc.ch[CHASSIS_Z_CHANNEL] * (-CHASSIS_WZ_RC_SEN);
 	//[TODO] 键盘操作
 
@@ -78,13 +89,13 @@ void Chassis::ChassisModeSet()
 	switch (m_ChassisSensorValues.rc.sw[CHASSIS_MODE_CHANNEL])
 	{
 	case RC_SW_UP:
-		m_CurChassisMode = FOLLOW_GIMBAL_YAW; break;
+		m_CurChassisMode = Follow_Gimbal_Yaw; break;
 	case RC_SW_MID:
-		m_CurChassisMode = TOP; break;
+		m_CurChassisMode = Top; break;
 	case RC_SW_DOWN:
-		m_CurChassisMode = OPENLOOP_Z; break;
+		m_CurChassisMode = Openloop_Z; break;
 	default:
-		m_CurChassisMode = DISABLE; break;
+		m_CurChassisMode = Disable; break;
 	}
 	
 }
@@ -136,15 +147,27 @@ void Chassis::ChassisCtrl()
 	}
 	else
 		CalcCurrent();
-	//SendCurrentToMotor();
+
+	std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this](double x, size_t ix = 0) {m_Motors[ix++]->SetVoltage(x); });
+	m_Motors[LR]->Writer()->PackAndSend();
 }
 
 void Chassis::ChassisAxisSpeedSet()
 {
 	//[TODO] 检验三角函数的符号
-	if (m_CurChassisMode == DISABLE)
+	if (m_CurChassisMode == Disable)
 		m_VxSet = m_VySet = m_WzSet = 0;
-	else if (m_CurChassisMode == FOLLOW_CHASSIS_YAW)
+	else if (m_CurChassisMode == Follow_Gimbal_Yaw)
+	{
+		RCToChassisSpeed();
+		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);
+		double vx = m_VxSet * cosine - m_VySet * sine;
+		double vy = m_VxSet * sine + m_VySet * cosine;
+		m_VxSet = Clamp(vx, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
+		m_VySet = Clamp(vy, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
+		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
+	}
+	else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{
 		RCToChassisSpeed();
 		m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[CHASSIS_Z_CHANNEL] * CHASSIS_WZ_RC_SEN, -M_PI, M_PI);
@@ -153,7 +176,7 @@ void Chassis::ChassisAxisSpeedSet()
 		m_VxSet = Clamp(m_VxSet, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
 		m_VySet = Clamp(m_VySet, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
 	}
-	else if (m_CurChassisMode == TOP)
+	else if (m_CurChassisMode == Top)
 	{
 		RCToChassisSpeed();
 		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);
@@ -163,17 +186,7 @@ void Chassis::ChassisAxisSpeedSet()
 		m_VySet = Clamp(vy, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
 		m_WzSet = Top_Wz;
 	}
-	else if (m_CurChassisMode == FOLLOW_GIMBAL_YAW)
-	{
-		RCToChassisSpeed();
-		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);
-		double vx = m_VxSet * cosine - m_VySet * sine;
-		double vy = m_VxSet * sine + m_VySet * cosine;
-		m_VxSet = Clamp(vx, -CHASSIS_VX_MAX, CHASSIS_VX_MAX); 		
-		m_VySet = Clamp(vy, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
-		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
-	}
-	else if (m_CurChassisMode == OPENLOOP_Z)
+	else if (m_CurChassisMode == Openloop_Z)
 	{
 		RCToChassisSpeed();
 		m_VxSet = Clamp(m_VxSet, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);

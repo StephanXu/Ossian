@@ -61,11 +61,11 @@ public:
 	
 	enum ChassisMode
 	{
-		DISABLE,				 ///< 失能
-		FOLLOW_GIMBAL_YAW,		 ///< 跟随云台
-		FOLLOW_CHASSIS_YAW,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
-		TOP,					 ///< 小陀螺
-		OPENLOOP_Z				 ///< 单独调试底盘
+		Disable,				 ///< 失能
+		Follow_Gimbal_Yaw,		 ///< 跟随云台
+		Follow_Chassis_Yaw,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
+		Top,					 ///< 小陀螺
+		Openloop_Z				 ///< 单独调试底盘
 	};
 
 	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager,
@@ -174,7 +174,7 @@ public:
 						  MotorPosition position)->void
 	{
 		m_MotorMsgCheck[position] = true;
-		if (!(m_MotorMsgCheck[0] && m_MotorMsgCheck[1] && m_MotorMsgCheck[2] && m_MotorMsgCheck[3]))  //俯视，左前，左后，右后，右前，逆时针
+		if (!(m_MotorMsgCheck[LF] && m_MotorMsgCheck[LR] && m_MotorMsgCheck[RR] && m_MotorMsgCheck[RF]))  //俯视，左前，左后，右后，右前，逆时针
 			return;
 
 		//chassis_task
