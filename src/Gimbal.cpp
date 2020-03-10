@@ -9,7 +9,7 @@ void Gimbal::GimbalCtrlSrcSet()
 	case RC_SW_UP:
 		m_GimbalCtrlSrc = RC; break;
 	case RC_SW_MID:
-		m_GimbalCtrlSrc = AutoAim; break;
+		m_GimbalCtrlSrc = Aimbot; break;
 	case RC_SW_DOWN:
 		m_GimbalCtrlSrc = Disable; break;  //MOUSE
 	default:
@@ -29,9 +29,9 @@ void Gimbal::GimbalCtrlInputProc()
 
 
 //遥控器：绝对量控制  [TODO]鼠标：增量控制
-void Gimbal::GimbalExpSet(uint16_t curEcd, MotorPosition position)
+void Gimbal::GimbalExpAngleSet(MotorPosition position)
 {
-	double curEcdAngle = curEcd * MOTOR_ECD_TO_RAD_COEF;
+	double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Status().m_Encoding, position == Pitch ? PITCH_MID_ECD : YAW_MID_ECD);
 	if (m_GimbalCtrlSrc == Disable)
 		return;
 	if (m_GimbalCtrlSrc == RC)
@@ -83,7 +83,7 @@ void Gimbal::GimbalCtrlCalc(MotorPosition position)
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
 				return;
 			double interval = std::chrono::duration<double, std::milli>(m_Motors[position]->TimeStamp() - m_LastEcdTimeStamp[position]).count();  //ms
-			double curEcdAngle = m_Motors[position]->Status().m_Encoding * MOTOR_ECD_TO_RAD_COEF;
+			double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Status().m_Encoding, position == Pitch ? PITCH_MID_ECD : YAW_MID_ECD);
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval / 1000; //rad/s
 			double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, std::chrono::high_resolution_clock::now(), true);
 			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, angleSpeedEcd, std::chrono::high_resolution_clock::now());

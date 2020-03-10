@@ -56,7 +56,7 @@
     "PIDWheelSpeed_Kp": 15000,
     "PIDWheelSpeed_Ki": 10,
     "PIDWheelSpeed_Kd": 0,
-    "PIDWheelSpeed_Th_Out": 16000,
+    "PIDWheelSpeed_Th_Out": 16384,
     "PIDWheelSpeed_Th_IOut": 2000,
 
     "PIDChassisAngle_Kp": 40,

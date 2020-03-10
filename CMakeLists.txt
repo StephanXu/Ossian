@@ -31,6 +31,7 @@ target_sources(Ossian
             src/OnlineDebug.cpp
             src/Remote.cpp
             src/Capacitor.cpp
+            src/Gun.cpp
         )
 target_include_directories(Ossian
         PRIVATE

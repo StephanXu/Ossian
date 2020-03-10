@@ -12,6 +12,7 @@
 
 class Gimbal
 {
+public:
 	static constexpr double MOTOR_ECD_TO_RAD_COEF = 2 * M_PI / 8192;
 	//云台特殊位置
 	static constexpr uint16_t PITCH_MID_ECD = 100;
@@ -52,10 +53,9 @@ class Gimbal
 
 	enum GimbalInputSrc
 	{
-		Disable, RC, Mouse, AutoAim
+		Disable, RC, Mouse, Aimbot, Windmill
 	};
 
-public:
 	enum MotorPosition
 	{
 		Pitch, Yaw
@@ -94,7 +94,7 @@ public:
 	{
 		m_CurGimbalAngleMode = Encoding; //or gyro
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
-
+		m_MotorMsgCheck.fill(false);
 		m_AngleInput.fill(0);
 
 		m_GyroAngleSet[Pitch] = m_GimbalSensorValues.gyroY;
@@ -116,8 +116,8 @@ public:
 
 	auto AddMotor(MotorPosition position,
 				  const std::string location,
-				  const unsigned int id,
-				  const unsigned int writerCanId)
+				  const unsigned int motorId,
+				  const unsigned int writerCanId)->void
 	{
 		m_Motors[position] =
 			m_MotorManager->AddMotor<ossian::DJIMotor>(
@@ -127,10 +127,12 @@ public:
 				{
 					MotorReceiveProc(motor, position);
 				},
-				id);
+				motorId);
 	}
 
 	double RelativeAngleToChassis() { return RelativeEcdToRad(m_YawEcd.load(), YAW_MID_ECD); } //[TODO]负号？
+
+	GimbalInputSrc GimbalCtrlSrc() { return m_GimbalCtrlSrc.load(); }
 
 	void UpdateGimbalSensorFeedback()
 	{
@@ -143,7 +145,7 @@ public:
 	void GimbalCtrlInputProc();
 
 	//根据遥控数据，设置角度期望值rad
-	void GimbalExpSet(uint16_t curEcd, MotorPosition position);
+	void GimbalExpAngleSet(MotorPosition position);
 
 	//双环pid计算 
 	void GimbalCtrlCalc(MotorPosition position);
@@ -161,8 +163,8 @@ public:
 		GimbalCtrlInputProc();
 		//[TODO] 模式切换过渡
 
-		GimbalExpSet(m_Motors[Pitch]->Status().m_Encoding, Pitch);
-		GimbalExpSet(m_Motors[Yaw]->Status().m_Encoding, Yaw);
+		GimbalExpAngleSet(Pitch);
+		GimbalExpAngleSet(Yaw);
 
 		GimbalCtrlCalc(Pitch);
 		GimbalCtrlCalc(Yaw);
@@ -181,7 +183,7 @@ private:
 	IRemote* m_RC;  //遥控器
 
 	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
-	GimbalInputSrc m_GimbalCtrlSrc;
+	std::atomic<GimbalInputSrc> m_GimbalCtrlSrc;
 	std::array<bool, 2> m_MotorMsgCheck;
 	struct GimbalSensorFeedback
 	{

@@ -74,7 +74,7 @@ void Chassis::ChassisPowerCtrlByCurrent()
 void Chassis::RCToChassisSpeed()
 {
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_X_CHANNEL], CHASSIS_RC_DEADBAND) * CHASSIS_VX_RC_SEN;		// m/s
-	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_Y_CHANNEL], CHASSIS_RC_DEADBAND) * (-CHASSIS_VY_RC_SEN);  // m/s
+	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_Y_CHANNEL], CHASSIS_RC_DEADBAND) * (-CHASSIS_VY_RC_SEN);    // m/s
 	if (m_CurChassisMode == Openloop_Z)
 		m_WzSet = m_ChassisSensorValues.rc.ch[CHASSIS_Z_CHANNEL] * (-CHASSIS_WZ_RC_SEN);
 	//[TODO] 键盘操作
@@ -91,9 +91,9 @@ void Chassis::ChassisModeSet()
 	case RC_SW_UP:
 		m_CurChassisMode = Follow_Gimbal_Yaw; break;
 	case RC_SW_MID:
-		m_CurChassisMode = Top; break;
+		m_CurChassisMode = Openloop_Z; break; //Top
 	case RC_SW_DOWN:
-		m_CurChassisMode = Openloop_Z; break;
+		m_CurChassisMode = Disable; break; 
 	default:
 		m_CurChassisMode = Disable; break;
 	}
@@ -123,8 +123,8 @@ void Chassis::ChassisCtrl()
 		for (size_t i = 0; i < 4; ++i)
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 				m_WheelSpeedSet(i) * WHEEL_SPEED_TO_MOTOR_RPM_COEF,
-				m_Motors[i]->Status().m_RPM,
-				m_Motors[i]->TimeStamp());
+				m_Motors[i]->Status().m_RPM / 60,
+				std::chrono::high_resolution_clock::now());
 	};
 	
 	//如果超级电容快没电了
@@ -152,7 +152,7 @@ void Chassis::ChassisCtrl()
 	m_Motors[LR]->Writer()->PackAndSend();
 }
 
-void Chassis::ChassisAxisSpeedSet()
+void Chassis::ChassisExpAxisSpeedSet()
 {
 	//[TODO] 检验三角函数的符号
 	if (m_CurChassisMode == Disable)
@@ -167,7 +167,7 @@ void Chassis::ChassisAxisSpeedSet()
 		m_VySet = Clamp(vy, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
 		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
 	}
-	else if (m_CurChassisMode == Follow_Chassis_Yaw)
+	/*else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{
 		RCToChassisSpeed();
 		m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[CHASSIS_Z_CHANNEL] * CHASSIS_WZ_RC_SEN, -M_PI, M_PI);
@@ -175,7 +175,7 @@ void Chassis::ChassisAxisSpeedSet()
 		m_WzSet = m_PIDChassisAngle.Calc(deltaAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
 		m_VxSet = Clamp(m_VxSet, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
 		m_VySet = Clamp(m_VySet, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
-	}
+	}*/
 	else if (m_CurChassisMode == Top)
 	{
 		RCToChassisSpeed();

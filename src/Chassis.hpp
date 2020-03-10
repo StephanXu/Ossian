@@ -63,7 +63,7 @@ public:
 	{
 		Disable,				 ///< 失能
 		Follow_Gimbal_Yaw,		 ///< 跟随云台
-		Follow_Chassis_Yaw,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
+		//Follow_Chassis_Yaw,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
 		Top,					 ///< 小陀螺
 		Openloop_Z				 ///< 单独调试底盘
 	};
@@ -168,7 +168,7 @@ public:
 	void ChassisCtrl();
 
 	//根据当前模式，计算底盘三轴速度
-	void ChassisAxisSpeedSet();
+	void ChassisExpAxisSpeedSet();
 
 	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor>& motor,
 						  MotorPosition position)->void
@@ -186,7 +186,7 @@ public:
 		ChassisModeSet();
 		//[TODO] 模式切换过渡
 
-		ChassisAxisSpeedSet();
+		ChassisExpAxisSpeedSet();
 
 		ChassisCtrl();
 		m_SpCap->SetPower(m_ChassisSensorValues.refereeMaxPwr);
