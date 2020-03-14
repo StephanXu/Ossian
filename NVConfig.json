@@ -53,18 +53,92 @@
     "scaleDist": 1.2
   },
   "chassis": {
-    "PIDWheelSpeed_Kp": 15000,
-    "PIDWheelSpeed_Ki": 10,
-    "PIDWheelSpeed_Kd": 0,
-    "PIDWheelSpeed_Th_Out": 16384,
-    "PIDWheelSpeed_Th_IOut": 2000,
+    "kTopWz": 3
 
-    "PIDChassisAngle_Kp": 40,
-    "PIDChassisAngle_Ki": 0,
-    "PIDChassisAngle_Kd": 0,
-    "PIDChassisAngle_Th_Out": 6,
-    "PIDChassisAngle_Th_IOut": 0.2,
+  },
+  "gimbal": {
 
-    "TOP_WZ": 3
+  },
+  "gun": {
+    "kFricSpeed12": 600,
+    "kFricSpeed15": 800,
+    "kFricSpeed18": 1000,
+    "kFricSpeed30": 1200,
+
+    "kFeedNormalRPM": 10,
+    "kFeedSemiRPM": 10,
+    "kFeedBurstRPM": 30,
+    "kFeedAutoRPM": 20
+
+  },
+  "pidWheelSpeed": {
+    "kP": 15000,
+    "kI": 10,
+    "kD": 0,
+    "thOut": 16384,
+    "thIOut": 2000
+  },
+  "pidChassisAngle": {
+    "kP": 40,
+    "kI": 0,
+    "kD": 0,
+    "thOut": 6,
+    "thIOut": 0.2
+  },
+  "pidAngleEcdPitch": {
+    "kP": 15,
+    "kI": 0,
+    "kD": 0,
+    "thOut": 10,
+    "thIOut": -1
+  },
+  "pidAngleGyroPitch": {
+    "kP": 15,
+    "kI": 0,
+    "kD": 0,
+    "thOut": 10,
+    "thIOut": -1
+  },
+  "pidAngleSpeedPitch": {
+    "kP": 2900,
+    "kI": 60,
+    "kD": 0,
+    "thOut": 30000,
+    "thIOut": 10000
+  },
+  "pidAngleEcdYaw": {
+    "kP": 8,
+    "kI": 0,
+    "kD": 0,
+    "thOut": 10,
+    "thIOut": -1
+  },
+  "pidAngleGyroYaw": {
+    "kP": 26,
+    "kI": 0,
+    "kD": 0.3,
+    "thOut": 10,
+    "thIOut": -1
+  },
+  "pidAngleSpeedYaw": {
+    "kP": 3600,
+    "kI": 20,
+    "kD": 0,
+    "thOut": 30000,
+    "thIOut": 5000
+  },
+  "pidFricSpeed": {
+    "kP": 15000,
+    "kI": 10,
+    "kD": 0,
+    "thOut": 16384,
+    "thIOut": 2000
+  },
+  "pidFeedSpeed": {
+    "kP": 800,
+    "kI": 0.5,
+    "kD": 0,
+    "thOut": 10000,
+    "thIOut": 9000
   }
 }

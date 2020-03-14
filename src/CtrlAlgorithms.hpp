@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <chrono>
+#include <array>
 #include <Eigen/Dense>
 
 
@@ -47,16 +48,16 @@ inline T ClampLoop(T value, const T lowerBnd, const T upperBnd)
 //计算当前编码值与中值之间的相对角度rad
 inline double RelativeEcdToRad(uint16_t ecd, const uint16_t ecdMid)
 {
-	static constexpr uint16_t HALF_ECD_RANGE = 4096;
-	static constexpr uint16_t ECD_RANGE = 8191;
-	static constexpr double MOTOR_ECD_TO_RAD_COEF = 2 * M_PI / 8192;
+	static constexpr uint16_t kHalfEcdRange = 4096;
+	static constexpr uint16_t kEcdRange = 8191;
+	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 
 	int relativeEcd = ecd - ecdMid;
-	if (relativeEcd > HALF_ECD_RANGE)
-		relativeEcd -= ECD_RANGE;
-	else if (relativeEcd < -HALF_ECD_RANGE)
-		relativeEcd += ECD_RANGE;
-	return relativeEcd * MOTOR_ECD_TO_RAD_COEF;
+	if (relativeEcd > kHalfEcdRange)
+		relativeEcd -= kEcdRange;
+	else if (relativeEcd < -kHalfEcdRange)
+		relativeEcd += kEcdRange;
+	return relativeEcd * kMotorEcdToRadCoef;
 }
 
 // 一阶低通滤波器
@@ -91,34 +92,23 @@ public:
 		m_ThresIntegral = m_ThresOutput = DOUBLE_MAX;
 		m_DeadValue = 0.0;
 	}
-	//设置PID三参数
-	void SetPIDParams(double kp, double ki, double kd)
-	{
-		m_Kp = kp;
-		m_Ki = ki;
-		m_Kd = kd;
-	}
 
-	//设置控制期望值
-	/*void SetExpectation(double expectation)
+	//设置PID五参数
+	void SetParams(const std::array<double, 5>& params)
 	{
-		m_Expectation = expectation;
-	}*/
+		m_Kp = params[0];
+		m_Ki = params[1];
+		m_Kd = params[2];
+		m_ThresOutput = params[3];
+		//若设置负数，则代表不设积分限制
+		if (params[4] >= 0)
+			m_ThresIntegral = params[4];
+	}
 
 	void SetThresError(double th1, double th2)
 	{
 		m_ThresError1 = th1;
 		m_ThresError2 = th2;
-	}
-
-	void SetThresIntegral(double th)
-	{
-		m_ThresIntegral = th;
-	}
-
-	void SetThresOutput(double th)
-	{
-		m_ThresOutput = th;
 	}
 
 	void Reset()

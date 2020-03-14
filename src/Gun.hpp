@@ -15,31 +15,33 @@ class Gun
 public:
 
 	//摩擦轮转速期望rpm [TODO]实验得出不同等级下的射击初速度上限所对应的摩擦轮转速期望
-	static double Fric_Speed_12;
-	static double Fric_Speed_15;
-	static double Fric_Speed_18; 
-	static double Fric_Speed_30; 
+	static int16_t kFricSpeed12;
+	static int16_t kFricSpeed15;
+	static int16_t kFricSpeed18;
+	static int16_t kFricSpeed30;
 
 	//遥控器解析
-	static constexpr size_t SHOOT_MODE_CHANNEL = 1;
+	static constexpr size_t kShootModeChannel = 1;
 
-	static constexpr uint8_t RC_SW_UP = 1;
-	static constexpr uint8_t RC_SW_MID = 3;
-	static constexpr uint8_t RC_SW_DOWN = 2;
+	static constexpr uint8_t kRCSwUp = 1;
+	static constexpr uint8_t kRCSwMid = 3;
+	static constexpr uint8_t kRCSwDown = 2;
 
 	//枪口热量机制
-	static constexpr int HEAT_PER_BULLET = 10;
+	static constexpr int kHeatPerBullet = 10;
 
 	//拨弹轮
-	static constexpr int BURST_BULLET_NUM = 3; //点射的子弹发射数量
-	static constexpr int FEED_JAM_RPM = 5;     //判断卡弹的拨弹轮转速阈值
+	static constexpr int kBurstBulletNum = 3; //点射的子弹发射数量
+	static constexpr int16_t kFeedJamRPM = 5;     //判断卡弹的拨弹轮转速阈值
 
-	static constexpr int FEED_NORMAL_RPM = 10; //自动补弹上膛或反转时，拨弹轮供弹的转速
-	static constexpr int FEED_SEMI_RPM = 10;   //单发时，拨弹轮供弹的转速
-	static constexpr int FEED_BURST_RPM = 30;  //点射时，拨弹轮供弹的转速
-	static constexpr int FEED_AUTO_RPM = 20;   //连发时，拨弹轮供弹的转速   点射>连发>单发
+	static int16_t kFeedNormalRPM; //自动补弹上膛或反转时，拨弹轮供弹的转速
+	static int16_t kFeedSemiRPM;   //单发时，拨弹轮供弹的转速
+	static int16_t kFeedBurstRPM;  //点射时，拨弹轮供弹的转速
+	static int16_t kFeedAutoRPM;   //连发时，拨弹轮供弹的转速   点射>连发>单发
 	
-
+	//pid参数
+	static std::array<double, 5> PIDFricSpeedParams;
+	static std::array<double, 5> PIDFeedSpeedParams;
 
 	enum MotorPosition
 	{
@@ -56,19 +58,40 @@ public:
 		Stop, Reload, Reverse, Semi, Burst, Auto
 	};
 
-	OSSIAN_SERVICE_SETUP(Gun(ossian::MotorManager* motorManager, IRemote* remote, Gimbal* gimbal))
-		: m_MotorManager(motorManager), m_RC(remote), m_Gimbal(gimbal)
+	OSSIAN_SERVICE_SETUP(Gun(ossian::MotorManager* motorManager, IRemote* remote, Gimbal* gimbal, Utils::ConfigLoader* config))
+		: m_MotorManager(motorManager), m_RC(remote), m_Gimbal(gimbal), m_Config(config)
 	{
+		using OssianConfig::Configuration;
+		PIDFricSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->kp();
+		PIDFricSpeedParams[1] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->ki();
+		PIDFricSpeedParams[2] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->kd();
+		PIDFricSpeedParams[3] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->thout();
+		PIDFricSpeedParams[4] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->thiout();
+
+		PIDFeedSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->kp();
+		PIDFeedSpeedParams[1] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->ki();
+		PIDFeedSpeedParams[2] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->kd();
+		PIDFeedSpeedParams[3] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->thout();
+		PIDFeedSpeedParams[4] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->thiout();
+
+		kFricSpeed12 = m_Config->Instance<Configuration>()->mutable_gun()->kfricspeed12();
+		kFricSpeed15 = m_Config->Instance<Configuration>()->mutable_gun()->kfricspeed15();
+		kFricSpeed18 = m_Config->Instance<Configuration>()->mutable_gun()->kfricspeed18();
+		kFricSpeed30 = m_Config->Instance<Configuration>()->mutable_gun()->kfricspeed30();
+
+		kFeedNormalRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeednormalrpm();
+		kFeedSemiRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedsemirpm();
+		kFeedBurstRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedburstrpm();
+		kFeedAutoRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedautorpm();
+
+
 		m_FlagInitFric = m_FlagInitFeed = true;
 
-		PIDController pidFricSpeed(15000, 10, 0);
-		pidFricSpeed.SetThresOutput(16384);
-		pidFricSpeed.SetThresIntegral(2000);
+		PIDController pidFricSpeed;
+		pidFricSpeed.SetParams(PIDFricSpeedParams);
 		m_PIDFricSpeed.fill(pidFricSpeed);
 
-		m_PIDFeedSpeed.SetPIDParams(800, 0.5, 0);
-		m_PIDFeedSpeed.SetThresOutput(10000);
-		m_PIDFeedSpeed.SetThresIntegral(9000);
+		m_PIDFeedSpeed.SetParams(PIDFeedSpeedParams);
 
 	}
 
@@ -176,6 +199,7 @@ private:
 	ossian::MotorManager* m_MotorManager;
 	std::array<std::shared_ptr<ossian::DJIMotor>, 3> m_Motors;
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
+	Utils::ConfigLoader* m_Config;
 	IRemote* m_RC;  //遥控器
 	Gimbal* m_Gimbal;
 
@@ -194,7 +218,7 @@ private:
 	FeedMode m_FeedMode;
 
 	int m_CurBulletShotNum; //在热量持续上升的过程中，累积打出的子弹数
-	double m_FricSpeedSet;
+	int16_t m_FricSpeedSet;
 	std::array<PIDController, 2> m_PIDFricSpeed;
 	PIDController m_PIDFeedSpeed;
 };

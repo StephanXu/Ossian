@@ -19,40 +19,40 @@ class Chassis
 {
 public:
 	//麦轮运动
-	static constexpr double WHEEL_RADIUS = 76 / 1000; ///< m
-	static constexpr double WHEEL_XN = 175 / 1000;    ///< m
-	static constexpr double WHEEL_YN = 232.5 / 1000;  ///< m
-	static constexpr double LIMIT_WHEEL_SPEED = 5;    ///< 单个麦轮的最大速度
-	static constexpr double WHEEL_SPEED_TO_MOTOR_RPM_COEF = 11.875;
+	static constexpr double kWheelRadius = 76 / 1000; ///< m
+	static constexpr double kWheelXn = 175 / 1000;    ///< m
+	static constexpr double kWheelYn = 232.5 / 1000;  ///< m
+	static constexpr double kWheelSpeedLimit = 5;    ///< 单个麦轮的最大速度
+	static constexpr double kWheelSpeedToMotorRPMCoef = 11.875;
 
 	//底盘功率控制
-	static constexpr double LIMIT_BUFFER_TOTAL_CURRENT = 16000;
-	static constexpr double LIMIT_POWER_TOTAL_CURRENT = 20000;
-	static constexpr double SPCAP_WARN_VOLTAGE = 12;
+	static constexpr double kBufferTotalCurrentLimit = 16000;
+	static constexpr double kPowerTotalCurrentLimit = 20000;
+	static constexpr double kSpCapWarnVoltage = 12;
 
 	//遥控器解析
-	static constexpr size_t CHASSIS_X_CHANNEL = 1;    ///< 控制底盘 前后 速度的遥控器通道
-	static constexpr size_t CHASSIS_Y_CHANNEL = 0;    ///< 控制底盘 左右 速度的遥控器通道
-	static constexpr size_t CHASSIS_Z_CHANNEL = 2;    ///< 控制底盘 旋转 速度的遥控器通道
-	static constexpr size_t CHASSIS_MODE_CHANNEL = 0; ///< 选择底盘状态的开关通道
+	static constexpr size_t kChassisXChannel = 1;    ///< 控制底盘 前后 速度的遥控器通道
+	static constexpr size_t kChassisYChannel = 0;    ///< 控制底盘 左右 速度的遥控器通道
+	static constexpr size_t kChassisZChannel = 2;    ///< 控制底盘 旋转 速度的遥控器通道
+	static constexpr size_t kChassisModeChannel = 0; ///< 选择底盘状态的开关通道
 
-	static constexpr uint8_t RC_SW_UP = 1;
-	static constexpr uint8_t RC_SW_MID = 3;
-	static constexpr uint8_t RC_SW_DOWN = 2;
+	static constexpr uint8_t kRCSwUp = 1;
+	static constexpr uint8_t kRCSwMid = 3;
+	static constexpr uint8_t kRCSwDown = 2;
 
-	static constexpr int16_t CHASSIS_RC_DEADBAND = 10; ///< 摇杆死区
-	static constexpr double CHASSIS_VX_RC_SEN = 0.006; ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
-	static constexpr double CHASSIS_VY_RC_SEN = 0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
-	static constexpr double CHASSIS_WZ_RC_SEN = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+	static constexpr int16_t kChassisRCDeadband = 10; ///< 摇杆死区
+	static constexpr double kChassisVxRCSen = 0.006; ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
+	static constexpr double kChassisVyRCSen = 0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
+	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 
 	//底盘运动
-	static constexpr double CHASSIS_VX_MAX = 4.5; ///< m/s
-	static constexpr double CHASSIS_VY_MAX = 1.5; ///< m/s
-	static double Top_Wz;  ///< 底盘陀螺旋转速度 rad/s
+	static constexpr double kChassisVxLimit = 4.5; ///< m/s
+	static constexpr double kChassisVyLimit = 1.5; ///< m/s
+	static double kTopWz;  ///< 底盘陀螺旋转速度 rad/s
 
-	//pid参数
-	static double PIDWheelSpeed_Kp, PIDWheelSpeed_Ki, PIDWheelSpeed_Kd, PIDWheelSpeed_Th_Out, PIDWheelSpeed_Th_IOut;
-	static double PIDChassisAngle_Kp, PIDChassisAngle_Ki, PIDChassisAngle_Kd, PIDChassisAngle_Th_Out, PIDChassisAngle_Th_IOut;
+	//pid参数 [TODO]底盘旋转角速度闭环
+	static std::array<double, 5> PIDWheelSpeedParams;
+	static std::array<double, 5> PIDChassisAngleParams;
 
 	enum MotorPosition
 	{
@@ -80,21 +80,21 @@ public:
 		, m_Config(config)
 	{
 		using OssianConfig::Configuration;
-		PIDWheelSpeed_Kp = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_kp();
-		PIDWheelSpeed_Ki = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_ki();
-		PIDWheelSpeed_Kd = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_kd();
-		PIDWheelSpeed_Th_Out = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_th_out();
-		PIDWheelSpeed_Th_IOut = m_Config->Instance<Configuration>()->mutable_chassis()->pidwheelspeed_th_iout();
+		PIDWheelSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->kp();
+		PIDWheelSpeedParams[1] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->ki();
+		PIDWheelSpeedParams[2] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->kd();
+		PIDWheelSpeedParams[3] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->thout();
+		PIDWheelSpeedParams[4] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->thiout();
 
-		PIDChassisAngle_Kp = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_kp();
-		PIDChassisAngle_Ki = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_ki();
-		PIDChassisAngle_Kd = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_kd();
-		PIDChassisAngle_Th_Out = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_th_out();
-		PIDChassisAngle_Th_IOut = m_Config->Instance<Configuration>()->mutable_chassis()->pidchassisangle_th_iout();
+		PIDChassisAngleParams[0] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->kp();
+		PIDChassisAngleParams[1] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->ki();
+		PIDChassisAngleParams[2] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->kd();
+		PIDChassisAngleParams[3] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->thout();
+		PIDChassisAngleParams[4] = m_Config->Instance<Configuration>()-> mutable_pidchassisangle()->thiout();
 
-		Top_Wz = m_Config->Instance<Configuration>()->mutable_chassis()->top_wz();
+		kTopWz = m_Config->Instance<Configuration>()->mutable_chassis()->ktopwz();
 
-		double coef = WHEEL_XN + WHEEL_YN;
+		double coef = kWheelXn + kWheelYn;
 		m_WheelKinematicMat << 1, -1, -coef,
 			1, 1, -coef,
 			1, -1, coef,
@@ -105,14 +105,11 @@ public:
 		m_FOFilterVX.SetCoef(0.17);
 		m_FOFilterVY.SetCoef(0.33);
 
-		PIDController pidWheelSpeed(PIDWheelSpeed_Kp, PIDWheelSpeed_Ki, PIDWheelSpeed_Kd);
-		pidWheelSpeed.SetThresOutput(PIDWheelSpeed_Th_Out);  //max 16384
-		pidWheelSpeed.SetThresIntegral(PIDWheelSpeed_Th_IOut);
+		PIDController pidWheelSpeed;
+		pidWheelSpeed.SetParams(PIDWheelSpeedParams);
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
-		m_PIDChassisAngle.SetPIDParams(PIDChassisAngle_Kp, PIDChassisAngle_Ki, PIDChassisAngle_Kd);
-		m_PIDChassisAngle.SetThresOutput(PIDChassisAngle_Th_Out);
-		m_PIDChassisAngle.SetThresIntegral(PIDChassisAngle_Th_IOut);
+		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
 	}
 
 	void InitChassis()

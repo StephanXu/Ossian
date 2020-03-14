@@ -76,20 +76,104 @@ message PoseSolver {
 }
 
 message Chassis {  
-	double PIDWheelSpeed_Kp = 1;
-	double PIDWheelSpeed_Ki = 2;
-	double PIDWheelSpeed_Kd = 3;
-	double PIDWheelSpeed_Th_Out = 4;
-	double PIDWheelSpeed_Th_IOut = 5;
-
-	double PIDChassisAngle_Kp = 6;
-	double PIDChassisAngle_Ki = 7;
-	double PIDChassisAngle_Kd = 8;
-	double PIDChassisAngle_Th_Out = 9;
-	double PIDChassisAngle_Th_IOut = 10;
-
-	double Top_Wz = 11;
+	double kTopWz = 1;
 } 
+
+message Gimbal {
+
+}
+
+message Gun {
+	int32 kFricSpeed12 = 1;
+	int32 kFricSpeed15 = 2;
+	int32 kFricSpeed18 = 3;
+	int32 kFricSpeed30 = 4;
+
+	int32 kFeedNormalRPM = 5;
+	int32 kFeedSemiRPM = 6;
+	int32 kFeedBurstRPM = 7;
+	int32 kFeedAutoRPM = 8;
+}
+
+message PIDWheelSpeed {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
+
+message PIDChassisAngle {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
+
+message PIDAngleEcdPitch {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
+
+message PIDAngleEcdYaw  {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
+
+message PIDAngleGyroPitch {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
+
+message PIDAngleGyroYaw {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
+
+message PIDAngleSpeedPitch {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
+
+message PIDAngleSpeedYaw {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
+
+message PIDFricSpeed {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
+
+message PIDFeedSpeed {
+	double kP = 1;
+	double kI = 2;
+	double kD = 3;
+	double thOut = 4;
+	double thIOut = 5;
+}
 
 message Configuration {
 	SerialPort serialPort = 1;
@@ -98,5 +182,17 @@ message Configuration {
 	Aimbot aimbot = 4;
 	PoseSolver poseSolver = 5;
 	Chassis chassis = 6;
+	Gimbal gimbal = 7;
+	Gun gun = 8;
+	PIDWheelSpeed pidWheelSpeed = 9;
+	PIDChassisAngle pidChassisAngle = 10;
+	PIDAngleEcdPitch pidAngleEcdPitch = 11;
+	PIDAngleGyroPitch pidAngleGyroPitch = 12;
+	PIDAngleSpeedPitch pidAngleSpeedPitch = 13;
+	PIDAngleEcdYaw pidAngleEcdYaw = 14;
+	PIDAngleGyroYaw pidAngleGyroYaw = 15;
+	PIDAngleSpeedYaw pidAngleSpeedYaw = 16;
+	PIDFricSpeed pidFricSpeed = 17;
+	PIDFeedSpeed pidFeedSpeed = 18;
 }
 

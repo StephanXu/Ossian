@@ -2,17 +2,9 @@
 #include "Chassis.hpp"
 
 
-double Chassis::Top_Wz = 0;
-double Chassis::PIDWheelSpeed_Kp = 0; 
-double Chassis::PIDWheelSpeed_Ki = 0; 
-double Chassis::PIDWheelSpeed_Kd = 0;
-double Chassis::PIDWheelSpeed_Th_Out = 0;
-double Chassis::PIDWheelSpeed_Th_IOut = 0;
-double Chassis::PIDChassisAngle_Kp = 0;
-double Chassis::PIDChassisAngle_Ki = 0;
-double Chassis::PIDChassisAngle_Kd = 0;
-double Chassis::PIDChassisAngle_Th_Out = 0;
-double Chassis::PIDChassisAngle_Th_IOut = 0;
+double Chassis::kTopWz = 0;
+std::array<double, 5> Chassis::PIDWheelSpeedParams;
+std::array<double, 5> Chassis::PIDChassisAngleParams;
 
 Eigen::Matrix<double, 4, 3> Chassis::m_WheelKinematicMat;
 
@@ -20,13 +12,13 @@ Eigen::Matrix<double, 4, 3> Chassis::m_WheelKinematicMat;
 void Chassis::CalcWheelSpeedTarget()
 {
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);
-	m_WheelSpeedSet = m_WheelKinematicMat * vSet / WHEEL_RADIUS; //[4, 3] * [3, 1] --> [4, 1]
+	m_WheelSpeedSet = m_WheelKinematicMat * vSet / kWheelRadius; //[4, 3] * [3, 1] --> [4, 1]
 
 	//限制麦轮最大速度
 	double maxWheelSpeedItem = m_WheelSpeedSet.maxCoeff();
-	if (maxWheelSpeedItem > LIMIT_WHEEL_SPEED)
+	if (maxWheelSpeedItem > kWheelSpeedLimit)
 	{
-		double scaleWheelSpeed = LIMIT_WHEEL_SPEED / maxWheelSpeedItem;
+		double scaleWheelSpeed = kWheelSpeedLimit / maxWheelSpeedItem;
 		m_WheelSpeedSet *= scaleWheelSpeed;
 	}
 }
@@ -46,7 +38,7 @@ void Chassis::ChassisPowerCtrlByCurrent()
 			scalePwr = m_ChassisSensorValues.refereeCurBuf / warnBuf;
 		else
 			scalePwr = 0.1;
-		limitCurrent = LIMIT_BUFFER_TOTAL_CURRENT * scalePwr;
+		limitCurrent = kBufferTotalCurrentLimit * scalePwr;
 	}
 	else
 	{
@@ -59,7 +51,7 @@ void Chassis::ChassisPowerCtrlByCurrent()
 		}
 		else
 			scalePwr = 1;
-		limitCurrent = LIMIT_BUFFER_TOTAL_CURRENT + LIMIT_POWER_TOTAL_CURRENT * scalePwr;
+		limitCurrent = kBufferTotalCurrentLimit + kPowerTotalCurrentLimit * scalePwr;
 	}
 
 	double totalCurrent = 0;
@@ -73,10 +65,10 @@ void Chassis::ChassisPowerCtrlByCurrent()
 
 void Chassis::RCToChassisSpeed()
 {
-	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_X_CHANNEL], CHASSIS_RC_DEADBAND) * CHASSIS_VX_RC_SEN;		// m/s
-	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[CHASSIS_Y_CHANNEL], CHASSIS_RC_DEADBAND) * (-CHASSIS_VY_RC_SEN);    // m/s
+	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;		// m/s
+	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * (-kChassisVyRCSen);    // m/s
 	if (m_CurChassisMode == Openloop_Z)
-		m_WzSet = m_ChassisSensorValues.rc.ch[CHASSIS_Z_CHANNEL] * (-CHASSIS_WZ_RC_SEN);
+		m_WzSet = m_ChassisSensorValues.rc.ch[kChassisZChannel] * (-kChassisWzRCSen);
 	//[TODO] 键盘操作
 
 	//一阶低通滤波代替斜坡函数作为底盘速度输入
@@ -86,13 +78,13 @@ void Chassis::RCToChassisSpeed()
 
 void Chassis::ChassisModeSet()
 {
-	switch (m_ChassisSensorValues.rc.sw[CHASSIS_MODE_CHANNEL])
+	switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
 	{
-	case RC_SW_UP:
+	case kRCSwUp:
 		m_CurChassisMode = Follow_Gimbal_Yaw; break;
-	case RC_SW_MID:
+	case kRCSwMid:
 		m_CurChassisMode = Openloop_Z; break; //Top
-	case RC_SW_DOWN:
+	case kRCSwDown:
 		m_CurChassisMode = Disable; break; 
 	default:
 		m_CurChassisMode = Disable; break;
@@ -107,7 +99,7 @@ void Chassis::ChassisModeSet()
 		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM * MOTOR_RPM_TO_WHEEL_SPEED_COEF, m_Motors[i]->TimeStamp());
 	
 	//如果超级电容快没电了
-	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < SPCAP_WARN_VOLTAGE)
+	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		ChassisPowerCtrlByCurrent();
 
 	//SendCurrentToMotor();
@@ -122,13 +114,13 @@ void Chassis::ChassisCtrl()
 	{
 		for (size_t i = 0; i < 4; ++i)
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
-				m_WheelSpeedSet(i) * WHEEL_SPEED_TO_MOTOR_RPM_COEF,
+				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 				m_Motors[i]->Status().m_RPM / 60,
 				std::chrono::high_resolution_clock::now());
 	};
 	
 	//如果超级电容快没电了
-	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < SPCAP_WARN_VOLTAGE)
+	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 	{
 		for (int cnt = 0; ; ++cnt)
 		{
@@ -163,18 +155,18 @@ void Chassis::ChassisExpAxisSpeedSet()
 		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);
 		double vx = m_VxSet * cosine - m_VySet * sine;
 		double vy = m_VxSet * sine + m_VySet * cosine;
-		m_VxSet = Clamp(vx, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
-		m_VySet = Clamp(vy, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
+		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
+		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
 		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
 	}
 	/*else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{
 		RCToChassisSpeed();
-		m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[CHASSIS_Z_CHANNEL] * CHASSIS_WZ_RC_SEN, -M_PI, M_PI);
+		m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[kChassisZChannel] * kChassisWzRCSen, -M_PI, M_PI);
 		double deltaAngle = ClampLoop(m_AngleSet - m_ChassisSensorValues.gyroZ, -M_PI, M_PI);
 		m_WzSet = m_PIDChassisAngle.Calc(deltaAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
-		m_VxSet = Clamp(m_VxSet, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
-		m_VySet = Clamp(m_VySet, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
+		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
+		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 	}*/
 	else if (m_CurChassisMode == Top)
 	{
@@ -182,14 +174,14 @@ void Chassis::ChassisExpAxisSpeedSet()
 		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);
 		double vx = m_VxSet * cosine - m_VySet * sine;
 		double vy = m_VxSet * sine + m_VySet * cosine;
-		m_VxSet = Clamp(vx, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
-		m_VySet = Clamp(vy, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
-		m_WzSet = Top_Wz;
+		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
+		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
+		m_WzSet = kTopWz;
 	}
 	else if (m_CurChassisMode == Openloop_Z)
 	{
 		RCToChassisSpeed();
-		m_VxSet = Clamp(m_VxSet, -CHASSIS_VX_MAX, CHASSIS_VX_MAX);
-		m_VySet = Clamp(m_VxSet, -CHASSIS_VY_MAX, CHASSIS_VY_MAX);
+		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
+		m_VySet = Clamp(m_VxSet, -kChassisVyLimit, kChassisVyLimit);
 	}
 }

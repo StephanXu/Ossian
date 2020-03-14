@@ -3,6 +3,7 @@
 
 #include <ossian/Motor.hpp>
 #include "CtrlAlgorithms.hpp"
+#include "InputAdapter.hpp"
 #include "Remote.hpp"
 
 #include <chrono>
@@ -13,39 +14,49 @@
 class Gimbal
 {
 public:
-	static constexpr double MOTOR_ECD_TO_RAD_COEF = 2 * M_PI / 8192;
-	//云台特殊位置
-	static constexpr uint16_t PITCH_MID_ECD = 100;
-	static constexpr uint16_t YAW_MID_ECD = 200;
-	static constexpr uint16_t PITCH_MAX_ECD = 300;
-	static constexpr uint16_t YAW_MAX_ECD = 600;
-	static constexpr uint16_t PITCH_MIN_ECD = 50;
-	static constexpr uint16_t YAW_MIN_ECD = 10;
-	static constexpr double   PITCH_MID_RAD = PITCH_MID_ECD * MOTOR_ECD_TO_RAD_COEF;
-	static constexpr double   YAW_MID_RAD = YAW_MID_ECD * MOTOR_ECD_TO_RAD_COEF;
+	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
+	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
+	static constexpr uint16_t kPitchMinEcd = 50;
+	static constexpr uint16_t kPitchMaxEcd = 300;
+	static constexpr uint16_t kPitchMidEcd = 100;
+	
+	static constexpr uint16_t kYawMinEcd = 10;
+	static constexpr uint16_t kYawMaxEcd = 600;
+	static constexpr uint16_t kYawMidEcd = 200;
+
+	static constexpr double   kPitchMidRad = kPitchMidEcd * kMotorEcdToRadCoef;
+	static constexpr double   kYawMidRad = kYawMidEcd * kMotorEcdToRadCoef;
 
 	//最大最小的 相对（中值的）角度
-	const std::array<double, 2> MAX_RELATIVE_ANGLE = { RelativeEcdToRad(PITCH_MAX_ECD, PITCH_MID_ECD),RelativeEcdToRad(YAW_MAX_ECD, YAW_MID_ECD) };
-	const std::array<double, 2> MIN_RELATIVE_ANGLE = { RelativeEcdToRad(PITCH_MIN_ECD, PITCH_MID_ECD),RelativeEcdToRad(YAW_MIN_ECD, YAW_MID_ECD) };
+	const std::array<double, 2> kMaxRelativeAngle = { RelativeEcdToRad(kPitchMaxEcd, kPitchMidEcd),RelativeEcdToRad(kYawMaxEcd, kYawMidEcd) };
+	const std::array<double, 2> kMinRelativeAngle = { RelativeEcdToRad(kPitchMinEcd, kPitchMidEcd),RelativeEcdToRad(kYawMinEcd, kYawMidEcd) };
 	/*
-	static constexpr double   PITCH_MAX_RAD = PITCH_MAX_ECD * MOTOR_ECD_TO_RAD_COEF;
-	static constexpr double   PITCH_MIN_RAD = PITCH_MIN_ECD * MOTOR_ECD_TO_RAD_COEF;
-	static constexpr double   YAW_MAX_RAD   = YAW_MAX_ECD   * MOTOR_ECD_TO_RAD_COEF;
-	static constexpr double   YAW_MIN_RAD   = YAW_MIN_ECD   * MOTOR_ECD_TO_RAD_COEF;
+	static constexpr double   PITCH_MAX_RAD = kPitchMaxEcd * kMotorEcdToRadCoef;
+	static constexpr double   PITCH_MIN_RAD = kPitchMinEcd * kMotorEcdToRadCoef;
+	static constexpr double   YAW_MAX_RAD   = kYawMaxEcd   * kMotorEcdToRadCoef;
+	static constexpr double   YAW_MIN_RAD   = kYawMinEcd   * kMotorEcdToRadCoef;
 	*/
 
 	//遥控器解析
-	static constexpr int16_t GIMBAL_RC_DEADBAND = 10; //摇杆死区
-	static constexpr size_t YAW_CHANNEL = 4;
-	static constexpr size_t PITCH_CHANNEL = 3;
-	static constexpr size_t GIMBAL_MODE_CHANNEL = 1; //选择云台状态的开关通道
-	static constexpr uint8_t RC_SW_UP = 1;
-	static constexpr uint8_t RC_SW_MID = 3;
-	static constexpr uint8_t RC_SW_DOWN = 2;
+	static constexpr int16_t kGimbalRCDeadband = 10; //摇杆死区
+	static constexpr size_t kYawChannel = 4;
+	static constexpr size_t kPitchChannel = 3;
+	static constexpr size_t kGimbalModeChannel = 1; //选择云台状态的开关通道
+	static constexpr uint8_t kRCSwUp = 1;
+	static constexpr uint8_t kRCSwMid = 3;
+	static constexpr uint8_t kRCSwDown = 2;
 
-	static constexpr double YAW_RC_SEN = -0.000005;
-	static constexpr double PITCH_RC_SEN = -0.000006; //0.005
+	static constexpr double kYawRCSen= -0.000005;
+	static constexpr double kPitchRCSen = -0.000006; //0.005
 
+	//pid参数
+	static std::array<double, 5> PIDAngleEcdPitchParams;
+	static std::array<double, 5> PIDAngleGyroPitchParams;
+	static std::array<double, 5> PIDAngleSpeedPitchParams;
+	static std::array<double, 5> PIDAngleEcdYawParams;
+	static std::array<double, 5> PIDAngleGyroYawParams;
+	static std::array<double, 5> PIDAngleSpeedYawParams;
+	
 	enum GimbalAngleMode
 	{
 		Gyro, Encoding
@@ -61,33 +72,56 @@ public:
 		Pitch, Yaw
 	};
 	
-	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager, IRemote* remote))
-		: m_MotorManager(motorManager), m_RC(remote)
+	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager, IRemote* remote, Utils::ConfigLoader* config))
+		: m_MotorManager(motorManager), m_RC(remote), m_Config(config)
 	{
+		using OssianConfig::Configuration;
+		PIDAngleEcdPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->kp();
+		PIDAngleEcdPitchParams[1] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->ki();
+		PIDAngleEcdPitchParams[2] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->kd();
+		PIDAngleEcdPitchParams[3] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->thout();
+		PIDAngleEcdPitchParams[4] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->thiout();
+
+		PIDAngleGyroPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->kp();
+		PIDAngleGyroPitchParams[1] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->ki();
+		PIDAngleGyroPitchParams[2] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->kd();
+		PIDAngleGyroPitchParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->thout();
+		PIDAngleGyroPitchParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->thiout();
+
+		PIDAngleSpeedPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->kp();
+		PIDAngleSpeedPitchParams[1] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->ki();
+		PIDAngleSpeedPitchParams[2] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->kd();
+		PIDAngleSpeedPitchParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->thout();
+		PIDAngleSpeedPitchParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->thiout();
+
+		PIDAngleEcdYawParams[0] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->kp();
+		PIDAngleEcdYawParams[1] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->ki();
+		PIDAngleEcdYawParams[2] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->kd();
+		PIDAngleEcdYawParams[3] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->thout();
+		PIDAngleEcdYawParams[4] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->thiout();
+
+		PIDAngleGyroYawParams[0] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->kp();
+		PIDAngleGyroYawParams[1] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->ki();
+		PIDAngleGyroYawParams[2] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->kd();
+		PIDAngleGyroYawParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->thout();
+		PIDAngleGyroYawParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->thiout();
+
+		PIDAngleSpeedYawParams[0] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->kp();
+		PIDAngleSpeedYawParams[1] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->ki();
+		PIDAngleSpeedYawParams[2] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->kd();
+		PIDAngleSpeedYawParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->thout();
+		PIDAngleSpeedYawParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->thiout();
+
 		m_GimbalCtrlSrc = RC;
 		m_FlagInitGimbal = true;
 
-		m_PIDAngleEcd[Pitch].SetPIDParams(15,0,0);
-		m_PIDAngleEcd[Pitch].SetThresOutput(10);
+		m_PIDAngleEcd[Pitch].SetParams(PIDAngleEcdPitchParams);
+		m_PIDAngleGyro[Pitch].SetParams(PIDAngleGyroPitchParams);
+		m_PIDAngleSpeed[Pitch].SetParams(PIDAngleSpeedPitchParams);
+		m_PIDAngleEcd[Yaw].SetParams(PIDAngleEcdYawParams);
+		m_PIDAngleGyro[Yaw].SetParams(PIDAngleGyroYawParams);
+		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
 
-		m_PIDAngleGyro[Pitch].SetPIDParams(15, 0, 0);
-		m_PIDAngleGyro[Pitch].SetThresOutput(10);
-
-		m_PIDAngleSpeed[Pitch].SetPIDParams(2900, 60, 0);
-		m_PIDAngleSpeed[Pitch].SetThresIntegral(10000);
-		m_PIDAngleSpeed[Pitch].SetThresOutput(30000);
-
-		m_PIDAngleEcd[Yaw].SetPIDParams(8, 0, 0);
-		m_PIDAngleEcd[Yaw].SetThresOutput(10);
-
-		m_PIDAngleGyro[Yaw].SetPIDParams(26, 0, 0.3);
-		m_PIDAngleGyro[Yaw].SetThresOutput(10);
-
-		m_PIDAngleSpeed[Yaw].SetPIDParams(3600, 20, 0);
-		m_PIDAngleSpeed[Yaw].SetThresIntegral(5000);
-		m_PIDAngleSpeed[Yaw].SetThresOutput(30000);
-
-		
 	}
 
 	void InitGimbal()
@@ -100,8 +134,8 @@ public:
 		m_GyroAngleSet[Pitch] = m_GimbalSensorValues.gyroY;
 		m_GyroAngleSet[Yaw] = m_GimbalSensorValues.gyroZ;
 
-		m_EcdAngleSet[Pitch] = PITCH_MID_RAD;
-		m_EcdAngleSet[Yaw] = YAW_MID_RAD;
+		m_EcdAngleSet[Pitch] = kPitchMidRad;
+		m_EcdAngleSet[Yaw] = kYawMidRad;
 
 		m_PIDAngleEcd[Pitch].Reset();
 		m_PIDAngleGyro[Pitch].Reset();
@@ -130,7 +164,7 @@ public:
 				motorId);
 	}
 
-	double RelativeAngleToChassis() { return RelativeEcdToRad(m_YawEcd.load(), YAW_MID_ECD); } //[TODO]负号？
+	double RelativeAngleToChassis() { return RelativeEcdToRad(m_YawEcd.load(), kYawMidEcd); } //[TODO]负号？
 
 	GimbalInputSrc GimbalCtrlSrc() { return m_GimbalCtrlSrc.load(); }
 
@@ -180,6 +214,7 @@ private:
 	ossian::MotorManager* m_MotorManager;  	
 	std::array<std::shared_ptr<ossian::DJIMotor>, 2> m_Motors;  	
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
+	Utils::ConfigLoader* m_Config;
 	IRemote* m_RC;  //遥控器
 
 	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
@@ -204,7 +239,7 @@ private:
 	std::array<double, 2> m_EcdAngleSet; //累加 编码器模式
 
 	std::array<PIDController,2> m_PIDAngleEcd, m_PIDAngleGyro, m_PIDAngleSpeed; //设定角度--->旋转角速度  旋转角速度-->6020控制电压
-	std::array<double, 4> m_CurrentSend;
+	std::array<double, 2> m_CurrentSend;
 };
 
 #endif // OSSIAN_GIMBAL_HPP
