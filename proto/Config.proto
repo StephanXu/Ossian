@@ -95,79 +95,7 @@ message Gun {
 	int32 kFeedAutoRPM = 8;
 }
 
-message PIDWheelSpeed {
-	double kP = 1;
-	double kI = 2;
-	double kD = 3;
-	double thOut = 4;
-	double thIOut = 5;
-}
-
-message PIDChassisAngle {
-	double kP = 1;
-	double kI = 2;
-	double kD = 3;
-	double thOut = 4;
-	double thIOut = 5;
-}
-
-message PIDAngleEcdPitch {
-	double kP = 1;
-	double kI = 2;
-	double kD = 3;
-	double thOut = 4;
-	double thIOut = 5;
-}
-
-message PIDAngleEcdYaw  {
-	double kP = 1;
-	double kI = 2;
-	double kD = 3;
-	double thOut = 4;
-	double thIOut = 5;
-}
-
-message PIDAngleGyroPitch {
-	double kP = 1;
-	double kI = 2;
-	double kD = 3;
-	double thOut = 4;
-	double thIOut = 5;
-}
-
-message PIDAngleGyroYaw {
-	double kP = 1;
-	double kI = 2;
-	double kD = 3;
-	double thOut = 4;
-	double thIOut = 5;
-}
-
-message PIDAngleSpeedPitch {
-	double kP = 1;
-	double kI = 2;
-	double kD = 3;
-	double thOut = 4;
-	double thIOut = 5;
-}
-
-message PIDAngleSpeedYaw {
-	double kP = 1;
-	double kI = 2;
-	double kD = 3;
-	double thOut = 4;
-	double thIOut = 5;
-}
-
-message PIDFricSpeed {
-	double kP = 1;
-	double kI = 2;
-	double kD = 3;
-	double thOut = 4;
-	double thIOut = 5;
-}
-
-message PIDFeedSpeed {
+message PIDParams {
 	double kP = 1;
 	double kI = 2;
 	double kD = 3;
@@ -184,15 +112,15 @@ message Configuration {
 	Chassis chassis = 6;
 	Gimbal gimbal = 7;
 	Gun gun = 8;
-	PIDWheelSpeed pidWheelSpeed = 9;
-	PIDChassisAngle pidChassisAngle = 10;
-	PIDAngleEcdPitch pidAngleEcdPitch = 11;
-	PIDAngleGyroPitch pidAngleGyroPitch = 12;
-	PIDAngleSpeedPitch pidAngleSpeedPitch = 13;
-	PIDAngleEcdYaw pidAngleEcdYaw = 14;
-	PIDAngleGyroYaw pidAngleGyroYaw = 15;
-	PIDAngleSpeedYaw pidAngleSpeedYaw = 16;
-	PIDFricSpeed pidFricSpeed = 17;
-	PIDFeedSpeed pidFeedSpeed = 18;
+	PIDParams pidWheelSpeed = 9;
+	PIDParams pidChassisAngle = 10;
+	PIDParams pidAngleEcdPitch = 11;
+	PIDParams pidAngleGyroPitch = 12;
+	PIDParams pidAngleSpeedPitch = 13;
+	PIDParams pidAngleEcdYaw = 14;
+	PIDParams pidAngleGyroYaw = 15;
+	PIDParams pidAngleSpeedYaw = 16;
+	PIDParams pidFricSpeed = 17;
+	PIDParams pidFeedSpeed = 18;
 }
 

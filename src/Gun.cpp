@@ -1,16 +1,18 @@
 
 #include "Gun.hpp"
 
-int16_t Gun::kFricSpeed12 = 600;
-int16_t Gun::kFricSpeed15 = 800;
-int16_t Gun::kFricSpeed18 = 1000;
-int16_t Gun::kFricSpeed30 = 1200;
+int16_t Gun::kFricSpeed12 = 0;
+int16_t Gun::kFricSpeed15 = 0;
+int16_t Gun::kFricSpeed18 = 0;
+int16_t Gun::kFricSpeed30 = 0;
 
 int16_t Gun::kFeedNormalRPM = 0;
 int16_t Gun::kFeedSemiRPM = 0;
 int16_t Gun::kFeedBurstRPM = 0;
 int16_t Gun::kFeedAutoRPM = 0;
 
+std::array<double, 5> Gun::PIDFricSpeedParams;
+std::array<double, 5> Gun::PIDFeedSpeedParams;
 
 void Gun::FricModeSet()
 {
