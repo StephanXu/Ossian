@@ -15,11 +15,11 @@ void Gimbal::GimbalCtrlSrcSet()
 	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
 	{
 	case kRCSwUp:
-		m_GimbalCtrlSrc = RC; break;
+		m_GimbalCtrlSrc = RC; break;  
 	case kRCSwMid:
-		m_GimbalCtrlSrc = Aimbot; break;
+		m_GimbalCtrlSrc = RC; break; //Aimbot
 	case kRCSwDown:
-		m_GimbalCtrlSrc = Disable; break;  //MOUSE
+		m_GimbalCtrlSrc = Disable; break;  //Mouse
 	default:
 		m_GimbalCtrlSrc = Disable; break;
 	}

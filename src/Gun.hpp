@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <array>
+#include <thread>
 
 class Gun
 {
@@ -21,7 +22,8 @@ public:
 	static int16_t kFricSpeed30;
 
 	//Ò£¿ØÆ÷½âÎö
-	static constexpr size_t kShootModeChannel = 1;
+	static constexpr int16_t kGunRCDeadband = 50; //²¦ÂÖËÀÇø
+	static constexpr size_t kShootModeChannel = 4;
 
 	static constexpr uint8_t kRCSwUp = 1;
 	static constexpr uint8_t kRCSwMid = 3;

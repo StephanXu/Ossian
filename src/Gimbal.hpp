@@ -39,9 +39,10 @@ public:
 
 	//遥控器解析
 	static constexpr int16_t kGimbalRCDeadband = 10; //摇杆死区
-	static constexpr size_t kYawChannel = 4;
+	static constexpr size_t kYawChannel = 2;
 	static constexpr size_t kPitchChannel = 3;
 	static constexpr size_t kGimbalModeChannel = 1; //选择云台状态的开关通道
+
 	static constexpr uint8_t kRCSwUp = 1;
 	static constexpr uint8_t kRCSwMid = 3;
 	static constexpr uint8_t kRCSwDown = 2;

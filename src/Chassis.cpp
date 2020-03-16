@@ -81,11 +81,11 @@ void Chassis::ChassisModeSet()
 	switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
 	{
 	case kRCSwUp:
-		m_CurChassisMode = Follow_Gimbal_Yaw; break;
+		m_CurChassisMode = Openloop_Z; break;  //Follow_Gimbal_Yaw
 	case kRCSwMid:
-		m_CurChassisMode = Openloop_Z; break; //Top
-	case kRCSwDown:
 		m_CurChassisMode = Disable; break; 
+	case kRCSwDown:
+		m_CurChassisMode = Top; break; 
 	default:
 		m_CurChassisMode = Disable; break;
 	}

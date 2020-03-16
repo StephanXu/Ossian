@@ -33,7 +33,7 @@ public:
 	//遥控器解析
 	static constexpr size_t kChassisXChannel = 1;    ///< 控制底盘 前后 速度的遥控器通道
 	static constexpr size_t kChassisYChannel = 0;    ///< 控制底盘 左右 速度的遥控器通道
-	static constexpr size_t kChassisZChannel = 2;    ///< 控制底盘 旋转 速度的遥控器通道
+	static constexpr size_t kChassisZChannel = 2;    ///< 控制底盘 旋转 速度的遥控器通道 仅当使用Openloop_Z模式时可用
 	static constexpr size_t kChassisModeChannel = 0; ///< 选择底盘状态的开关通道
 
 	static constexpr uint8_t kRCSwUp = 1;
@@ -213,7 +213,7 @@ private:
 	double m_AngleSet;  //底盘角度目标值
 
 
-	ChassisMode m_CurChassisMode, m_LastChassisMode;
+	ChassisMode m_CurChassisMode;
 	std::array<bool, 4> m_MotorMsgCheck;
 	Eigen::Vector4d m_WheelSpeedSet;
 	static Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;

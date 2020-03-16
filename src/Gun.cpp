@@ -83,31 +83,23 @@ void Gun::FricCtrl()
 //[TODO] 鼠标键盘射击逻辑
 void Gun::FeedModeSet()
 {
-	static std::chrono::high_resolution_clock::time_point swDownTimestamp = std::chrono::high_resolution_clock::now();
-
 	//若超热量则拨弹轮停转
 	bool overheat = m_CurBulletShotNum >= (m_GunSensorValues.refereeHeatLimit - m_GunSensorValues.refereeCurHeat) / kHeatPerBullet;
-	if (overheat)
+	
+	if (m_FricMode == FricMode::Disable)
+		m_FeedMode = FeedMode::Stop;
+	else if (overheat)
 		m_FeedMode = FeedMode::Stop;
 	else
 	{
-		//遥控器右侧开关从中向下拨动，并快速拨回中，单发
-		//遥控器右侧开关从中向下拨动,并停留在下，连发
-		if (m_GunSensorValues.rc.sw[kShootModeChannel] == kRCSwDown)
-		{
-			long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::high_resolution_clock::now() - swDownTimestamp).count();
-			if (interval >= 2000)
-				m_FeedMode = FeedMode::Auto;
-			else
-				m_FeedMode = FeedMode::Semi;
-		}
-		else
-		{
-			swDownTimestamp = std::chrono::high_resolution_clock::now();
+		//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
+		int16_t thumbWheelValue = DeadbandLimit(m_GunSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
+		if (thumbWheelValue < 0)
+			m_FeedMode = FeedMode::Semi;
+		else if (thumbWheelValue == 0)
 			m_FeedMode = FeedMode::Reload;
-		}
-			
+		else
+			m_FeedMode = FeedMode::Auto;
 	}
 	
 	//若卡弹则拨弹轮反转
@@ -161,11 +153,15 @@ void Gun::FeedCtrl()
 	else if (m_FeedMode == FeedMode::Reverse)
 		FeedRotateCtrl(false, kFeedNormalRPM, true);
 	else if (m_FeedMode == FeedMode::Semi)
+	{
 		SingleShotCtrl(kFeedSemiRPM);
+		std::this_thread::sleep_for(std::chrono::seconds(1));   // 单发间隔1s
+	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
 		for (int cnt = 0; cnt < kBurstBulletNum; ++cnt)
 			SingleShotCtrl(kFeedBurstRPM);
+		std::this_thread::sleep_for(std::chrono::seconds(1));    // 三连发间隔1s
 	}
 	else if (m_FeedMode == FeedMode::Auto)
 		SingleShotCtrl(kFeedAutoRPM);
