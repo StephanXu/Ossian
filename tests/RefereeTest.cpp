@@ -9,13 +9,12 @@
 
 int main()
 {
-	fmt::print("{:x}\n", 0x12);
-
 	OnlineDebug onlineDbg;
 	onlineDbg.Connect("http://ossian.mrxzh.com/logger");
 	onlineDbg.StartLogging("OnlineLog",
 						   "Referee",
 						   "Log of referee test.");
+	spdlog::info("Start testing...");
 	auto mgr = std::make_shared<ossian::UARTManager>();
 	mgr->AddDevice("/dev/ttyS0")->SetCallback(
 		[](std::shared_ptr<ossian::UARTDevice> const& device, const size_t length, const uint8_t* data)
@@ -26,7 +25,7 @@ int main()
 				ss << std::hex << data[length];
 				ss << " ";
 			}
-			spdlog::trace("[{}]: {}", length, ss.str());
+			spdlog::info("[{}]: {}", length, ss.str());
 		});
 	auto buses = mgr->GetBuses();
 	std::vector<ossian::IListenable*> lis;

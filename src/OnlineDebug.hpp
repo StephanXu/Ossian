@@ -75,7 +75,7 @@ public:
 	{
 		m_Hub.reset(new OnlineDebugHub{ std::move(
 			signalr::hub_connection_builder::create(url)
-			   .with_logging(std::make_shared<SignalRLogger>(), signalr::trace_level::all)
+			   .with_logging(std::make_shared<SignalRLogger>(), signalr::trace_level::errors)
 			   .build())
 			});
 		m_Valid = true;
