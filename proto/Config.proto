@@ -1,38 +1,37 @@
-
 syntax = "proto3";
 //option optimize_for = LITE_RUNTIME;
 
 package OssianConfig;
 
 message SerialPort {
-	required string portName = 1;
-	required int32 baudrate = 2;
+	string portName = 1;
+	int32 baudrate = 2;
 	enum Parity {
 		NoParity = 0; // 无校验
 		OddParity = 1; // 奇校验
 		EvenParity = 2; // 偶校验
 		MarkParity = 3; // 标记校验
 	}
-	required Parity parity = 3;
-	required int32 dataBit = 4;
+	Parity parity = 3;
+	int32 dataBit = 4;
 	enum StopBit {
 		OneStopBit = 0; // 1位停止位
 		One5StopBits = 1; // 1.5位停止位
 		TwoStopBits = 2; // 2位停止位
 	}
-	required StopBit stopBit = 5;
-	required bool synchronize = 6;
-	required int32 syncInterval = 7;
+	StopBit stopBit = 5;
+	bool synchronize = 6;
+	int32 syncInterval = 7;
 }
 
 message Camera {
-	required int32 deviceIndex = 1;
-	required int32 frameWidth = 2;
-	required int32 frameHeight = 3;
+	 int32 deviceIndex = 1;
+	 int32 frameWidth = 2;
+	 int32 frameHeight = 3;
 }
 
 message TestVideoSource {
-	required string filename = 1;
+	 string filename = 1;
 }
 
 message Aimbot {
@@ -40,43 +39,43 @@ message Aimbot {
 		Red = 0; // 红色敌人
 		Blue = 2; // 蓝色敌人
 	}
-	required EnemyColor enemyColor = 1;
+	EnemyColor enemyColor = 1;
 
-	required int32 brightness = 2;
-	required int32 thresColor = 3;
+	int32 brightness = 2;
+	int32 thresColor = 3;
 
-	required double lightBarMinArea = 4;
-	required double lightBarContourMinSolidity = 5;
-	required double lightBarEllipseMinAspectRatio = 6;
+	double lightBarMinArea = 4;
+	double lightBarContourMinSolidity = 5;
+	double lightBarEllipseMinAspectRatio = 6;
 
-	required double armorMaxAngleDiff = 7;
-	required double armorMaxHeightDiffRatio = 8;
-	required double armorMaxYDiffRatio = 9;
-	required double armorMinXDiffRatio = 10;
-	required double armorBigArmorRatio = 11;
-	required double armorSmallArmorRatio = 12;
-	required double armorMinAspectRatio = 13;
-	required double armorMaxAspectRatio = 14;
+	double armorMaxAngleDiff = 7;
+	double armorMaxHeightDiffRatio = 8;
+	double armorMaxYDiffRatio = 9;
+	double armorMinXDiffRatio = 10;
+	double armorBigArmorRatio = 11;
+	double armorSmallArmorRatio = 12;
+	double armorMinAspectRatio = 13;
+	double armorMaxAspectRatio = 14;
 
-	required double areaNormalizedBase = 15;
-	required double sightOffsetNormalizedBase = 16;
+	double areaNormalizedBase = 15;
+	double sightOffsetNormalizedBase = 16;
 }
 
 message PoseSolver {
-	required double cameraToGimbalX = 1;
-	required double cameraToGimbalY = 2;
-	required double cameraToGimbalZ = 3;
-	required double barrelToGimbalY = 4;
-	required double rotOverlapLen = 5;
+	 double cameraToGimbalX = 1;
+	 double cameraToGimbalY = 2;
+	 double cameraToGimbalZ = 3;
+	 double barrelToGimbalY = 4;
+	 double rotOverlapLen = 5;
 
-	required double initV = 6;
-	required double initK = 7;
-	required double gravity = 8;
-	required double scaleDist = 9;
+	 double initV = 6;
+	 double initK = 7;
+	 double gravity = 8;
+	 double scaleDist = 9;
 }
 
 message Chassis {  
-	required double kTopWz = 1;
+	 double kTopWz = 1;
 } 
 
 message Gimbal {
@@ -84,43 +83,42 @@ message Gimbal {
 }
 
 message Gun {
-	required int32 kFricSpeed12 = 1;
-	required int32 kFricSpeed15 = 2;
-	required int32 kFricSpeed18 = 3;
-	required int32 kFricSpeed30 = 4;
+	 int32 kFricSpeed12 = 1;
+	 int32 kFricSpeed15 = 2;
+	 int32 kFricSpeed18 = 3;
+	 int32 kFricSpeed30 = 4;
 
-	required int32 kFeedNormalRPM = 5;
-	required int32 kFeedSemiRPM = 6;
-	required int32 kFeedBurstRPM = 7;
-	required int32 kFeedAutoRPM = 8;
+	 int32 kFeedNormalRPM = 5;
+	 int32 kFeedSemiRPM = 6;
+	 int32 kFeedBurstRPM = 7;
+	 int32 kFeedAutoRPM = 8;
 }
 
 message PIDParams {
-	required double kP = 1;
-	required double kI = 2;
-	required double kD = 3;
-	required double thOut = 4;
-	required double thIOut = 5;
+	 double kP = 1;
+	 double kI = 2;
+	 double kD = 3;
+	 double thOut = 4;
+	 double thIOut = 5;
 }
 
 message Configuration {
-	required SerialPort serialPort = 1;
-	required Camera camera = 2;
-	required TestVideoSource testVideoSource = 3;
-	required Aimbot aimbot = 4;
-	required PoseSolver poseSolver = 5;
-	required Chassis chassis = 6;
-	required Gimbal gimbal = 7;
-	required Gun gun = 8;
-	required PIDParams pidWheelSpeed = 9;
-	required PIDParams pidChassisAngle = 10;
-	required PIDParams pidAngleEcdPitch = 11;
-	required PIDParams pidAngleGyroPitch = 12;
-	required PIDParams pidAngleSpeedPitch = 13;
-	required PIDParams pidAngleEcdYaw = 14;
-	required PIDParams pidAngleGyroYaw = 15;
-	required PIDParams pidAngleSpeedYaw = 16;
-	required PIDParams pidFricSpeed = 17;
-	required PIDParams pidFeedSpeed = 18;
+	 SerialPort serialPort = 1;
+	 Camera camera = 2;
+	 TestVideoSource testVideoSource = 3;
+	 Aimbot aimbot = 4;
+	 PoseSolver poseSolver = 5;
+	 Chassis chassis = 6;
+	 Gimbal gimbal = 7;
+	 Gun gun = 8;
+	 PIDParams pidWheelSpeed = 9;
+	 PIDParams pidChassisAngle = 10;
+	 PIDParams pidAngleEcdPitch = 11;
+	 PIDParams pidAngleGyroPitch = 12;
+	 PIDParams pidAngleSpeedPitch = 13;
+	 PIDParams pidAngleEcdYaw = 14;
+	 PIDParams pidAngleGyroYaw = 15;
+	 PIDParams pidAngleSpeedYaw = 16;
+	 PIDParams pidFricSpeed = 17;
+	 PIDParams pidFeedSpeed = 18;
 }
-

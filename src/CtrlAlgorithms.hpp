@@ -120,8 +120,8 @@ public:
 
 	double Calc(double expectation, double feedback, std::chrono::high_resolution_clock::time_point curTimestamp, bool flagRadLimit=false)
 	{
-		double interval = m_LastTimestamp.time_since_epoch().count() == 0 ?
-			1 : std::chrono::duration<double, std::milli>(curTimestamp - m_LastTimestamp).count();   // ms
+		double interval = (m_LastTimestamp.time_since_epoch().count() == 0 ?
+			1 : std::chrono::duration<double, std::milli>(curTimestamp - m_LastTimestamp).count());   // ms
 		m_LastTimestamp = curTimestamp;
 		double ki = m_Ki * interval;
 		double kd = m_Kd / interval;

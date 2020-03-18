@@ -146,6 +146,10 @@ void Gun::SingleShotCtrl(int rpmSet)
 
 void Gun::FeedCtrl()
 {
+	static std::chrono::high_resolution_clock::time_point lastShootTimestamp;
+	long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::high_resolution_clock::now() - lastShootTimestamp).count();
+	
 	if (m_FeedMode == FeedMode::Stop)
 		FeedRotateCtrl(true);
 	else if (m_FeedMode == FeedMode::Reload)
@@ -154,14 +158,20 @@ void Gun::FeedCtrl()
 		FeedRotateCtrl(false, kFeedNormalRPM, true);
 	else if (m_FeedMode == FeedMode::Semi)
 	{
-		SingleShotCtrl(kFeedSemiRPM);
-		std::this_thread::sleep_for(std::chrono::seconds(1));   // 单发间隔1s
+		if (interval >= 1000)  //单发间隔1s
+		{
+			SingleShotCtrl(kFeedSemiRPM);
+			lastShootTimestamp = std::chrono::high_resolution_clock::now();
+		}
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		for (int cnt = 0; cnt < kBurstBulletNum; ++cnt)
-			SingleShotCtrl(kFeedBurstRPM);
-		std::this_thread::sleep_for(std::chrono::seconds(1));    // 三连发间隔1s
+		if (interval >= 1000) // 三连发间隔1s
+		{
+			for (int cnt = 0; cnt < kBurstBulletNum; ++cnt)
+				SingleShotCtrl(kFeedBurstRPM);
+			lastShootTimestamp = std::chrono::high_resolution_clock::now();
+		}
 	}
 	else if (m_FeedMode == FeedMode::Auto)
 		SingleShotCtrl(kFeedAutoRPM);

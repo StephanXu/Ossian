@@ -127,7 +127,7 @@ public:
 
 	void InitGimbal()
 	{
-		m_CurGimbalAngleMode = Encoding; //or gyro
+		m_CurGimbalAngleMode = Gyro; //or gyro
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_MotorMsgCheck.fill(false);
 		m_AngleInput.fill(0);
