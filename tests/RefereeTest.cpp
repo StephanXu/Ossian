@@ -1,5 +1,4 @@
-
-#include <ossian/io/UART.hpp>
+﻿#include <ossian/io/UART.hpp>
 #include <ossian/IOListener.hpp>
 #include <spdlog/spdlog.h>
 
@@ -12,17 +11,17 @@ int main()
 	OnlineDebug onlineDbg;
 	onlineDbg.Connect("http://ossian.mrxzh.com/logger");
 	onlineDbg.StartLogging("OnlineLog",
-						   "Referee",
-						   "Log of referee test.");
+	                       "Referee",
+	                       "Log of referee test.");
 	spdlog::info("Start testing...");
 	auto mgr = std::make_shared<ossian::UARTManager>();
-	mgr->AddDevice("/dev/ttyS0")->SetCallback(
+	mgr->AddDevice("/dev/ttyTHS2")->SetCallback(
 		[](std::shared_ptr<ossian::UARTDevice> const& device, const size_t length, const uint8_t* data)
 		{
 			std::stringstream ss;
 			for (size_t i{}; i < length; ++i)
 			{
-				ss << std::hex << data[length];
+				ss << fmt::format("{:02x}", data[i]);
 				ss << " ";
 			}
 			spdlog::info("[{}]: {}", length, ss.str());

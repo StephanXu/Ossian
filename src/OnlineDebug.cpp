@@ -1,4 +1,4 @@
-
+﻿
 #include "OnlineDebug.hpp"
 
 OnlineDebugHub::OnlineDebugHub(signalr::hub_connection&& connection)
