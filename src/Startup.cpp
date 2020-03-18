@@ -13,6 +13,7 @@
 #include "OnlineDebug.hpp"
 #include "Remote.hpp"
 #include "Capacitor.hpp"
+#include "Referee.hpp"
 
 #include <thread>
 
@@ -47,6 +48,11 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<ossian::IOListener>();
 	app.AddService<ossian::MotorManager>();
 
+	app.AddService<IReferee, Referee>(
+		[](IReferee& option)
+		{
+			option.AddReferee("/dev/ttyS1");
+		});
 	app.AddService<IRemote, RemoteSt>(
 		[](IRemote& option)
 		{

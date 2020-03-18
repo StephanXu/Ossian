@@ -32,6 +32,7 @@ target_sources(Ossian
             src/Remote.cpp
             src/Capacitor.cpp
             src/Gun.cpp
+            src/Referee.cpp
         )
 target_include_directories(Ossian
         PRIVATE
