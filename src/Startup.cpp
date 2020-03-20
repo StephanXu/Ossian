@@ -1,4 +1,3 @@
-
 #include <ossian/ossian.hpp>
 #include <mimalloc.h>
 #include "Config.pb.h"
@@ -20,7 +19,9 @@
 class RoboStatus : public ossian::IOAP::BaseStatus
 {
 public:
-	OSSIAN_SERVICE_SETUP(RoboStatus()) {}
+	OSSIAN_SERVICE_SETUP(RoboStatus())
+	{
+	}
 };
 
 void Startup::ConfigServices(AppBuilder& app)
@@ -30,14 +31,14 @@ void Startup::ConfigServices(AppBuilder& app)
 	spdlog::info("MI_VERSION:{}", mi_version());
 
 	app.AddService<Utils::ConfigLoader>()
-		.LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/config");
+	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/config");
 	app.AddService<OnlineDebug>(
 		[](OnlineDebug& option)
 		{
 			option.Connect("http://ossian.mrxzh.com/logger");
 			option.StartLogging("OnlineLog",
-								"OssianLog",
-								"A piece of log.");
+			                    "OssianLog",
+			                    "A piece of log.");
 		});
 	app.AddService<RoboStatus>();
 	app.AddService<VideoInputSource>().AsInputAdapter();
@@ -48,10 +49,10 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<ossian::IOListener>();
 	app.AddService<ossian::MotorManager>();
 
-	app.AddService<IReferee, Referee>(
-		[](IReferee& option)
+	app.AddService<IReferee, RefereeAllMessagesSt>(
+		[](RefereeAllMessagesSt& option)
 		{
-			option.AddReferee("/dev/ttyS1");
+			option.AddReferee("/dev/ttyTHS2");
 		});
 	app.AddService<IRemote, RemoteSt>(
 		[](IRemote& option)
@@ -88,7 +89,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	//	SerialReport>();
 
 	app.RegisterPipeline<RoboStatus, ImageInputData,
-		WindmillDetection>();
+	                     WindmillDetection>();
 	app.Add<WindmillDetection>(WindmillDetection::CreateWindmillDetection);
 
 	//app.Register(Aimbot::CreateAimbot);

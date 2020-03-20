@@ -3,6 +3,12 @@
 
 #include <ossian/Factory.hpp>
 #include <ossian/io/UART.hpp>
+#include <ossian/MultiThread.hpp>
+#include <ossian/ApplicationBuilder.hpp>
+#include <spdlog/spdlog.h>
+
+#include <mutex>
+#include <typeindex>
 
 #pragma pack(push,1)
 struct FrameHeaderWithCmd
@@ -25,7 +31,7 @@ struct FrameTail
 struct MatchStatus
 {
 	static constexpr uint16_t cmdId = 0x0001;
-	static constexpr size_t length = 3;
+	static constexpr size_t length  = 3;
 
 	uint8_t m_GameType : 4;     ///< 比赛类型：1:机甲大师赛 2:单项赛 3:人工智能挑战赛
 	uint8_t m_GameProgress : 4; ///< 当前比赛阶段：0:未开始比赛 1:准备阶段 2:自检阶段 3:5s倒计时 4:对战中 5:比赛结算中
@@ -38,7 +44,7 @@ struct MatchStatus
 struct MatchResult
 {
 	static constexpr uint16_t cmdId = 0x0002;
-	static constexpr size_t length = 1;
+	static constexpr size_t length  = 1;
 
 	uint8_t m_Winner; ///< 比赛结果：0:平局 1:红方胜利 2:蓝方胜利
 };
@@ -49,7 +55,7 @@ struct MatchResult
 struct RobotHP
 {
 	static constexpr uint16_t cmdId = 0x0003;
-	static constexpr size_t length = 28;
+	static constexpr size_t length  = 28;
 
 	uint16_t m_Red1HP;     ///< 红1英雄
 	uint16_t m_Red2HP;     ///< 红2工程
@@ -73,7 +79,7 @@ struct RobotHP
 struct VenueEvent
 {
 	static constexpr uint16_t cmdId = 0x0101;
-	static constexpr size_t length = 4;
+	static constexpr size_t length  = 4;
 
 	uint8_t m_TarmacOccupation : 2; ///< 己方停机坪占领状态：0 为无机器人占领；1 为空中机器人已占领但未停桨；2 为空中机器人已占领并停桨
 
@@ -103,7 +109,7 @@ struct VenueEvent
 struct SupplyStation
 {
 	static constexpr uint16_t cmdId = 0x0102;
-	static constexpr size_t length = 3;
+	static constexpr size_t length  = 3;
 
 	uint8_t m_SupplyProjectileId; ///< 补给站口ID：1:1号补给口 2:2号补给口
 
@@ -130,7 +136,7 @@ struct SupplyStation
 struct SupplyStationQuery
 {
 	static constexpr uint16_t cmdId = 0x0103;
-	static constexpr size_t length = 2;
+	static constexpr size_t length  = 2;
 
 	uint8_t m_SupplyProjectileId; ///< 补给站补弹口ID：1:1号补给口
 
@@ -154,7 +160,7 @@ struct SupplyStationQuery
 struct RefereeWarning
 {
 	static constexpr uint16_t cmdId = 0x0104;
-	static constexpr size_t length = 2;
+	static constexpr size_t length  = 2;
 
 	uint8_t m_Level;       ///< 警告等级
 	uint8_t m_FoulRobotId; ///< 犯规机器人ID：1级以及5级警告时，机器人ID为0，二三四级警告时，机器人ID为犯规机器人ID
@@ -166,7 +172,7 @@ struct RefereeWarning
 struct RobotStatus
 {
 	static constexpr uint16_t cmdId = 0x0201;
-	static constexpr size_t length = 15;
+	static constexpr size_t length  = 15;
 
 	/**
 	 * @brief 机器人 ID：
@@ -201,7 +207,7 @@ struct RobotStatus
 struct PowerHeatData
 {
 	static constexpr uint16_t cmdId = 0x0202;
-	static constexpr size_t length = 14;
+	static constexpr size_t length  = 14;
 
 	uint16_t m_ChassisVolt;        ///< 底盘输出电压 单位 毫伏 
 	uint16_t m_ChassisCurrent;     ///< 底盘输出电流 单位 毫安 
@@ -217,7 +223,7 @@ struct PowerHeatData
 struct RobotPosition
 {
 	static constexpr uint16_t cmdId = 0x0203;
-	static constexpr size_t length = 16;
+	static constexpr size_t length  = 16;
 
 	float m_X;   ///< （四字节）位置 x 坐标，单位 m 
 	float m_Y;   ///< （四字节）位置 y 坐标，单位 m 
@@ -231,7 +237,7 @@ struct RobotPosition
 struct RobotRuneBuff
 {
 	static constexpr uint16_t cmdId = 0x0204;
-	static constexpr size_t length = 1;
+	static constexpr size_t length  = 1;
 
 	bool m_HealingStatus : 1;             ///< 机器人血量补血状态
 	bool m_BarrelCoolingAcceleration : 1; ///< 枪口热量冷却加速
@@ -246,7 +252,7 @@ struct RobotRuneBuff
 struct AerialRobotStatus
 {
 	static constexpr uint16_t cmdId = 0x0205;
-	static constexpr size_t length = 3;
+	static constexpr size_t length  = 3;
 
 	uint8_t m_EnergyPoint; ///< 积累的能量点
 	uint8_t m_AttackTime;  ///< 可攻击时间 单位 s。30s 递减至 0
@@ -258,7 +264,7 @@ struct AerialRobotStatus
 struct DamageStatus
 {
 	static constexpr uint16_t cmdId = 0x0206;
-	static constexpr size_t length = 1;
+	static constexpr size_t length  = 1;
 
 	/**
 	 * @brief 装甲ID
@@ -285,7 +291,7 @@ struct DamageStatus
 struct ShootData
 {
 	static constexpr uint16_t cmdId = 0x0207;
-	static constexpr size_t length = 6;
+	static constexpr size_t length  = 6;
 
 	uint8_t m_BulletType; ///< 弹丸类型: 1：17mm 弹丸 2：42mm 弹丸 
 	uint8_t m_BulletFreq; ///< 弹丸射频 单位 Hz
@@ -298,7 +304,7 @@ struct ShootData
 struct BulletRemain
 {
 	static constexpr uint16_t cmdId = 0x0208;
-	static constexpr size_t length = 2;
+	static constexpr size_t length  = 2;
 
 	uint16_t m_BulletRemainingNum; ///< 弹丸剩余发射数目
 };
@@ -318,7 +324,7 @@ struct RefereeMessage
 template <typename T>
 struct IsValidModel
 {
-	static constexpr bool value = { sizeof(T) == T::length };
+	static constexpr bool value = {sizeof(T) == T::length};
 };
 
 template <int N, typename... Ts>
@@ -330,51 +336,64 @@ public:
 	virtual auto AddReferee(std::string location) -> void = 0;
 };
 
+template <typename MessageType, typename Mutex = std::mutex>
+class RefereeListener
+{
+public:
+	OSSIAN_SERVICE_SETUP(RefereeListener()) = default;
+
+	auto Set(const MessageType& value) noexcept -> void
+	{
+		std::lock_guard<Mutex>{m_Mutex};
+		m_Payload = value;
+	}
+
+	auto Get() const noexcept -> MessageType
+	{
+		std::lock_guard<Mutex>{m_Mutex};
+		return m_Payload;
+	}
+
+	auto GetRef() const noexcept -> const MessageType&
+	{
+		return m_Payload;
+	}
+
+	auto Lock() -> void
+	{
+		m_Mutex.lock();
+	}
+
+	auto UnLock() -> void
+	{
+		m_Mutex.unlock();
+	}
+
+	auto TryLock() -> bool
+	{
+		return m_Mutex.try_lock();
+	}
+
+	auto TypeIndex() -> std::type_index { return std::type_index(typeid(MessageType)); }
+
+private:
+	MessageType m_Payload;
+	Mutex m_Mutex;
+};
+
+template <typename Mutex = std::mutex, typename ...MessageTypes>
 class Referee : public IReferee
 {
 public:
-	OSSIAN_SERVICE_SETUP(Referee(ossian::UARTManager* uartManager))
+	OSSIAN_SERVICE_SETUP(Referee(ossian::UARTManager* uartManager,
+		RefereeListener<MessageTypes, Mutex>*...listeners))
 		: m_UARTManager(uartManager)
+		  , m_Container(std::make_tuple(listeners...))
 	{
 	}
 
 	virtual ~Referee() = default;
-	
-	template <typename MessageType>
-	auto ReadData(const uint8_t* data) -> size_t
-	{
-		const auto cmdId{ reinterpret_cast<const FrameHeaderWithCmd*>(data)->m_CmdId };
-		if (MessageType::cmdId != cmdId)
-		{
-			return 0;
-		}
-		//[TODO]:Here we matched the message type
-		std::cout << "Matched message: " << std::hex << MessageType::cmdId
-			<< "\t Message Length: " << std::dec << RefereeMessage<MessageType>::length << std::endl;
-		return RefereeMessage<MessageType>::length;
-	}
 
-	template <typename... MessageTypes, size_t ...Index>
-	auto ReadPack(const uint8_t* data, std::index_sequence<Index...>)
-	{
-		//[TODO]: Handle with data length
-		return (ReadData<NThTypeOf<Index, MessageTypes...>>(data) + ...);
-	}
-
-	template <typename...MessageTypes>
-	auto ListenReferee(const uint8_t* data, const size_t length)
-	{
-		static_assert((IsValidModel<MessageTypes>::value || ...), "There is a invalid model");
-		const auto cmdIds = std::index_sequence<MessageTypes::cmdId...>();
-		size_t remainLength = length;
-		while (remainLength > 0)
-		{
-			auto readLength = ReadPack<MessageTypes...>(data + (length - remainLength),
-														std::index_sequence_for<MessageTypes...>());
-			remainLength -= readLength > 0 ? readLength : remainLength; ///< 避免因无法匹配进入死循环
-		}
-	}
-	
 	auto AddReferee(std::string location) -> void override
 	{
 		m_UARTManager->AddDevice(location)->SetCallback(
@@ -382,11 +401,183 @@ public:
 			       const size_t length,
 			       const uint8_t* data)
 			{
+				ParseReferee(data, length);
 			});
 	}
 
 private:
+	template <typename T>
+	struct IsValidModel
+	{
+		static constexpr bool value = {sizeof(T) == T::length};
+	};
+
+	template <int N, typename... Ts>
+	using NThTypeOf = typename std::tuple_element<N, std::tuple<Ts...>>::type;
+
+	template <typename T, typename Tuple>
+	struct IndexOf
+	{
+		static_assert(!std::is_same<Tuple, std::tuple<>>::value, "Could not find T in given Tuple");
+	};
+
+	template <typename T, typename... Types>
+	struct IndexOf<T, std::tuple<T, Types...>>
+	{
+		static constexpr std::size_t value = 0;
+	};
+
+	template <typename T, typename U, typename... Types>
+	struct IndexOf<T, std::tuple<U, Types...>>
+	{
+		static constexpr std::size_t value = 1 + IndexOf<T, std::tuple<Types...>>::value;
+	};
+
+	template <typename T, typename Tuple>
+	struct CountOf
+	{
+	};
+
+	template <typename T>
+	struct CountOf<T, std::tuple<>>
+	{
+		static constexpr std::size_t value = 0;
+	};
+
+	template <typename T, typename ...Types>
+	struct CountOf<T, std::tuple<T, Types...>>
+	{
+		static constexpr std::size_t value = 1 + CountOf<T, std::tuple<Types...>>::value;
+	};
+
+	template <typename T, typename U, typename ...Types>
+	struct CountOf<T, std::tuple<U, Types...>>
+	{
+		static constexpr std::size_t value = 0 + CountOf<T, std::tuple<Types...>>::value;
+	};
+
+	using Container = std::tuple<RefereeListener<MessageTypes>*...>;
+	static_assert((IsValidModel<MessageTypes>::value || ...), "There is a invalid model");
+	static_assert(((CountOf<MessageTypes, std::tuple<MessageTypes>>::value == 1) && ...),
+		"Redefined message in MessageTypes");
+
+	template <typename MessageType, size_t Index>
+	auto ReadData(const uint8_t* data, const size_t length) -> size_t
+	{
+		const auto cmdId{reinterpret_cast<const FrameHeaderWithCmd*>(data)->m_CmdId};
+		if (MessageType::cmdId != cmdId)
+		{
+			return 0;
+		}
+		if (length < RefereeMessage<MessageType>::length)
+		{
+			throw std::runtime_error("Buffer is incomplete");
+		}
+		{
+			//[TODO]: Check the thread safe rule for the separate lock design
+			//std::lock_guard<Mutex> guard{std::get<Index>(m_Mutexes)};
+			std::get<Index>(m_Container)->Set(reinterpret_cast<const RefereeMessage<MessageType>*>(data)->m_Payload);
+		}
+		spdlog::trace("Matched message: {:x}\t Message Length: {}\t Matched: {}",
+		              MessageType::cmdId, RefereeMessage<MessageType>::length, Index);
+		return RefereeMessage<MessageType>::length;
+	}
+
+	template <size_t ...Index>
+	auto ReadPack(const uint8_t* data, const size_t length, std::index_sequence<Index...>) -> size_t
+	{
+		try
+		{
+			auto readLength{(ReadData<NThTypeOf<Index, MessageTypes...>, Index>(data, length) + ...)};
+			if (0 == readLength && length > sizeof(FrameHeaderWithCmd))
+			{
+				readLength = reinterpret_cast<const FrameHeaderWithCmd*>(data)->m_DataLength;
+			}
+			return readLength;
+		}
+		catch (std::runtime_error& err)
+		{
+			spdlog::warn("{}", err.what());
+			return 0;
+		}
+	}
+
+	auto ParseReferee(const uint8_t* data, const size_t length)
+	{
+		size_t remainLength = length;
+		while (remainLength > 0)
+		{
+			auto currentPos{data + (length - remainLength)};
+			if (currentPos[0] != 0xA5)
+			{
+				--remainLength;
+				continue;
+			}
+			//[TODO]: Make sure remainLength won't be a minus value
+			auto readLength = ReadPack(currentPos,
+			                           remainLength,
+			                           std::index_sequence_for<MessageTypes...>());
+			remainLength -= readLength > 0 ? readLength : remainLength; ///< 避免因无法匹配进入死循环
+		}
+	}
+
 	ossian::UARTManager* m_UARTManager;
+	Container m_Container;
 };
+
+template <typename ...MessageTypes>
+using RefereeMt = Referee<std::mutex, MessageTypes...>;
+
+template <typename ...MessageTypes>
+using RefereeSt = Referee<ossian::null_mutex, MessageTypes...>;
+
+using RefereeAllMessagesMt = RefereeMt<BulletRemain,
+                                       ShootData,
+                                       DamageStatus,
+                                       AerialRobotStatus,
+                                       RobotRuneBuff,
+                                       RobotPosition,
+                                       PowerHeatData,
+                                       RobotStatus,
+                                       RefereeWarning,
+                                       SupplyStationQuery,
+                                       SupplyStation,
+                                       VenueEvent,
+                                       RobotHP,
+                                       MatchStatus,
+                                       MatchResult>;
+
+using RefereeAllMessagesSt = RefereeMt<BulletRemain,
+                                       ShootData,
+                                       DamageStatus,
+                                       AerialRobotStatus,
+                                       RobotRuneBuff,
+                                       RobotPosition,
+                                       PowerHeatData,
+                                       RobotStatus,
+                                       RefereeWarning,
+                                       SupplyStationQuery,
+                                       SupplyStation,
+                                       VenueEvent,
+                                       RobotHP,
+                                       MatchStatus,
+                                       MatchResult>;
+
+namespace ossian
+{
+template <typename ...MessageTypes>
+class ServiceBuilder<Referee<MessageTypes...>> : BaseServiceBuilder<Referee<MessageTypes...>>
+{
+	using RefereeType = Referee<MessageTypes...>;
+	using Super = BaseServiceBuilder<Referee<MessageTypes...>>;
+public:
+	ServiceBuilder(ApplicationBuilder& appBuilder,
+	               std::function<void(RefereeType&)> configureProc)
+		: BaseServiceBuilder<RefereeType>(appBuilder, configureProc)
+	{
+		std::make_tuple((Super::m_AppBuilder.template AddService<RefereeListener<MessageTypes>>())...);
+	}
+};
+} // ossian
 
 #endif // OSSIAN_REFEREE_HPP
