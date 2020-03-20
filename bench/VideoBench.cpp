@@ -3,6 +3,7 @@
 #include "Config.pb.h"
 #include <cmath>
 #include <unordered_map>
+#include <typeindex>
 
 static void BMPow(benchmark::State& state)
 {
@@ -88,6 +89,18 @@ static void BMSharedPtrHashMap(benchmark::State& state)
 	for (auto _ : state)
 	{
 		float res = map.find(ptr3)->second + 10;
+	}
+}
+
+static void BMTypeIndexPtrHashMap(benchmark::State& state)
+{
+	std::unordered_map<std::type_index, int> map;
+	map.insert(std::make_pair(std::type_index(typeid(int)), 2));
+	map.insert(std::make_pair(std::type_index(typeid(double)), 3));
+	map.insert(std::make_pair(std::type_index(typeid(float)), 4));
+	for (auto _ : state)
+	{
+		float res = map.find(std::type_index(typeid(double)))->second + 10;
 	}
 }
 
@@ -187,6 +200,7 @@ BENCHMARK(BMNativeTime)->Arg(8);
 BENCHMARK(BMIntHashMap);
 BENCHMARK(BMStringHashMap);
 BENCHMARK(BMSharedPtrHashMap);
+BENCHMARK(BMTypeIndexPtrHashMap);
 
 BENCHMARK(BMVirtualFunctionCall);
 BENCHMARK(BMTemplateCall);
