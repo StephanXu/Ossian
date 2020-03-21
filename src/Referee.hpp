@@ -344,8 +344,11 @@ public:
 
 	auto Set(const MessageType& value) noexcept -> void
 	{
-		std::lock_guard<Mutex>{m_Mutex};
-		m_Payload = value;
+		{
+			std::lock_guard<Mutex>{m_Mutex};
+			m_Payload = value;
+		}
+		m_OnChange(value);
 	}
 
 	auto Get() const noexcept -> MessageType
@@ -374,11 +377,24 @@ public:
 		return m_Mutex.try_lock();
 	}
 
-	auto TypeIndex() -> std::type_index { return std::type_index(typeid(MessageType)); }
+	auto TypeIndex() -> std::type_index
+	{
+		return std::type_index(typeid(MessageType));
+	}
+
+	auto AddOnChange(std::function<void(const MessageType& value)> callback) -> void
+	{
+		m_OnChange = [callback, onChange = m_OnChange](const MessageType& value)
+		{
+			onChange(value);
+			callback(value);
+		};
+	}
 
 private:
 	MessageType m_Payload;
 	Mutex m_Mutex;
+	std::function<void(const MessageType& value)> m_OnChange = [](const MessageType& value){};
 };
 
 template <typename Mutex = std::mutex, typename ...MessageTypes>
