@@ -5,6 +5,7 @@
 #include <ossian/io/UART.hpp>
 #include <ossian/MultiThread.hpp>
 #include <ossian/ApplicationBuilder.hpp>
+#include <ossian/IOData.hpp>
 #include <spdlog/spdlog.h>
 
 #include <mutex>
@@ -336,73 +337,12 @@ public:
 	virtual auto AddReferee(std::string location) -> void = 0;
 };
 
-template <typename MessageType, typename Mutex = std::mutex>
-class RefereeListener
-{
-public:
-	OSSIAN_SERVICE_SETUP(RefereeListener()) = default;
-
-	auto Set(const MessageType& value) noexcept -> void
-	{
-		{
-			std::lock_guard<Mutex>{m_Mutex};
-			m_Payload = value;
-		}
-		m_OnChange(value);
-	}
-
-	auto Get() noexcept -> MessageType
-	{
-		std::lock_guard<Mutex>{m_Mutex};
-		return m_Payload;
-	}
-
-	auto GetRef() const noexcept -> const MessageType&
-	{
-		return m_Payload;
-	}
-
-	auto Lock() -> void
-	{
-		m_Mutex.lock();
-	}
-
-	auto UnLock() -> void
-	{
-		m_Mutex.unlock();
-	}
-
-	auto TryLock() -> bool
-	{
-		return m_Mutex.try_lock();
-	}
-
-	auto TypeIndex() -> std::type_index
-	{
-		return std::type_index(typeid(MessageType));
-	}
-
-	auto AddOnChange(std::function<void(const MessageType& value)> callback) -> void
-	{
-		m_OnChange = [callback, onChange = m_OnChange](const MessageType& value)
-		{
-			onChange(value);
-			callback(value);
-		};
-	}
-
-private:
-	MessageType m_Payload;
-	Mutex m_Mutex;
-	std::function<void(const MessageType& value)> m_OnChange = [](const MessageType& value){};
-};
-
 template <typename Mutex = std::mutex, typename ...MessageTypes>
 class Referee : public IReferee
 {
 public:
 	OSSIAN_SERVICE_SETUP(Referee(ossian::UARTManager* uartManager,
-		RefereeListener<MessageTypes, Mutex>*...listeners))
+		ossian::IOData<MessageTypes, Mutex>*...listeners))
 		: m_UARTManager(uartManager)
 		  , m_Container(std::make_tuple(listeners...))
 	{
@@ -472,7 +412,7 @@ private:
 		static constexpr std::size_t value = 0 + CountOf<T, std::tuple<Types...>>::value;
 	};
 
-	using Container = std::tuple<RefereeListener<MessageTypes>*...>;
+	using Container = std::tuple<ossian::IOData<MessageTypes>*...>;
 	static_assert((IsValidModel<MessageTypes>::value || ...), "There is a invalid model");
 	static_assert(((CountOf<MessageTypes, std::tuple<MessageTypes>>::value == 1) && ...),
 		"Redefined message in MessageTypes");
@@ -579,8 +519,8 @@ using RefereeAllMessagesSt = RefereeMt<BulletRemain,
 
 namespace ossian
 {
-template <typename ...MessageTypes>
-class ServiceBuilder<Referee<MessageTypes...>> : BaseServiceBuilder<Referee<MessageTypes...>>
+template <typename Mutex, typename ...MessageTypes>
+class ServiceBuilder<Referee<Mutex, MessageTypes...>> : BaseServiceBuilder<Referee<Mutex, MessageTypes...>>
 {
 	using RefereeType = Referee<MessageTypes...>;
 	using Super = BaseServiceBuilder<Referee<MessageTypes...>>;
@@ -589,7 +529,7 @@ public:
 	               std::function<void(RefereeType&)> configureProc)
 		: BaseServiceBuilder<RefereeType>(appBuilder, configureProc)
 	{
-		std::make_tuple((Super::m_AppBuilder.template AddService<RefereeListener<MessageTypes>>())...);
+		std::make_tuple((Super::m_AppBuilder.template AddService<IOData<MessageTypes>>())...);
 	}
 };
 } // ossian

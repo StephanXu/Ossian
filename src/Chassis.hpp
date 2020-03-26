@@ -2,6 +2,8 @@
 #define OSSIAN_CHASSIS_HPP
 
 #include <ossian/Motor.hpp>
+#include <ossian/IOData.hpp>
+
 #include "CtrlAlgorithms.hpp"
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
@@ -74,7 +76,7 @@ public:
 								 ICapacitor* capacitor,
 								 Gimbal* gimbal,
 								 Utils::ConfigLoader* config,
-								 RefereeListener<PowerHeatData>* powerHeatDataListener))
+								 ossian::IOData<PowerHeatData>* powerHeatDataListener))
 		: m_MotorManager(motorManager)
 		, m_RC(remote)
 		, m_SpCap(capacitor)
@@ -210,7 +212,7 @@ private:
 	IRemote* m_RC;  //遥控器
 	ICapacitor* m_SpCap;
 	Gimbal* m_Gimbal;
-	RefereeListener<PowerHeatData>* m_RefereePowerHeatDataListener;
+	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 
 	bool m_FlagInitChassis;
 	struct ChassisSensorFeedback

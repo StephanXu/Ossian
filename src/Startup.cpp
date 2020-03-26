@@ -13,6 +13,7 @@
 #include "Remote.hpp"
 #include "Capacitor.hpp"
 #include "Referee.hpp"
+#include "Gyro.hpp"
 
 #include <thread>
 
@@ -64,7 +65,12 @@ void Startup::ConfigServices(AppBuilder& app)
 		{
 			option.AddCapacitor("can0", 0x211, 0x210);
 		});
-
+	app.AddService<IGyro, Gyro>(
+		[](IGyro& option)
+		{
+			option.AddGyro("can0", 0x000);
+		});
+	
 	app.AddService<Chassis>(
 		[](Chassis& option)
 		{

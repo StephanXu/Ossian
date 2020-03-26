@@ -33,7 +33,7 @@ target_sources(Ossian
             src/Capacitor.cpp
             src/Gun.cpp
             src/Referee.cpp
-        )
+            src/Gyro.cpp)
 target_include_directories(Ossian
         PRIVATE
             src

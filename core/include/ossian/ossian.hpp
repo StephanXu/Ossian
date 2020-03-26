@@ -21,6 +21,7 @@
 #include "ossian/Factory.hpp"
 #include "ossian/Configuration.hpp"
 #include "ossian/Motor.hpp"
+#include "ossian/IOData.hpp"
 
 // IO
 #include "ossian/IOListener.hpp"

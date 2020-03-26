@@ -2,6 +2,8 @@
 #define OSSIAN_GUN_HPP
 
 #include <ossian/Motor.hpp>
+#include <ossian/IOData.hpp>
+
 #include "CtrlAlgorithms.hpp"
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
@@ -65,9 +67,9 @@ public:
 							 IRemote* remote, 
 							 Gimbal* gimbal, 
 							 Utils::ConfigLoader* config, 
-							 RefereeListener<PowerHeatData>* powerHeatDataListener,
-							 RefereeListener<RobotStatus>* robotStatusListener,
-							 RefereeListener<ShootData>* shootDataListener))
+							 ossian::IOData<PowerHeatData>* powerHeatDataListener,
+							 ossian::IOData<RobotStatus>* robotStatusListener,
+							 ossian::IOData<ShootData>* shootDataListener))
 		: m_MotorManager(motorManager)
 		, m_RC(remote)
 		, m_Gimbal(gimbal)
@@ -230,9 +232,9 @@ private:
 	Utils::ConfigLoader* m_Config;
 	IRemote* m_RC;  //Ò£¿ØÆ÷
 	Gimbal* m_Gimbal;
-	RefereeListener<PowerHeatData>* m_RefereePowerHeatDataListener;
-	RefereeListener<RobotStatus>* m_RefereeRobotStatusListener;
-	RefereeListener<ShootData>* m_RefereeShootDataListener;
+	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
+	ossian::IOData<RobotStatus>* m_RefereeRobotStatusListener;
+	ossian::IOData<ShootData>* m_RefereeShootDataListener;
 
 	struct GunSensorFeedback
 	{
