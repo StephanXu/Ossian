@@ -351,7 +351,7 @@ public:
 		m_OnChange(value);
 	}
 
-	auto Get() const noexcept -> MessageType
+	auto Get() noexcept -> MessageType
 	{
 		std::lock_guard<Mutex>{m_Mutex};
 		return m_Payload;
