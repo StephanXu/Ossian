@@ -2,6 +2,8 @@
 
 #include "HKCamera.hpp"
 
+#include <cstring>
+
 HKCamera::HKCamera(const int camIndex, const int frameWidth, const int frameHeight) noexcept
 {
     try
@@ -118,6 +120,14 @@ void HKCamera::SetDevice(const int camIndex)
     /*
     if (MV_OK != MV_CC_SetFloatValue(m_Handle, "Gamma", 0.4))
         throw std::runtime_error("Set Gamma fail");*/
+}
+
+void HKCamera::SetReceiveImageCallback(std::function<ImageCallBackType> callback)
+{
+    m_ImageCallback = callback;
+    auto nRet = MV_CC_RegisterImageCallBackEx(m_Handle, ImageCallBack, this);
+    if (MV_OK != nRet)
+        throw std::runtime_error(fmt::format("RegisterImageCallBack fail {}", nRet));
 }
 
 void HKCamera::SetFrameSize(const int width, const int height)

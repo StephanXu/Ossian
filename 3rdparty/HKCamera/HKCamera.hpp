@@ -27,7 +27,9 @@
 class HKCamera
 {
 public:
-
+	
+	using ImageCallBackType = void(unsigned char* data, MV_FRAME_OUT_INFO_EX* pFrameInfo);
+	
 	/**
 	 * @fn	HKCamera::HKCamera(const int camIndex, const int frameWidth, const int frameHeight) noexcept;
 	 *
@@ -78,6 +80,8 @@ public:
 	 */
 	void SetDevice(const int camIndex);
 
+	void SetReceiveImageCallback(std::function<ImageCallBackType> callback);
+	
 	/**
 	 * @fn	void HKCamera::SetFrameSize(const int width, const int height);
 	 *
@@ -128,13 +132,13 @@ public:
 
 private:
 	// Basic settings and status
-	bool m_IsValid = false;
-	bool m_IsGrabbing = false;
-	bool m_IsOpenedDevice = false;
-	int m_FrameWidth = 0;
-	int m_FrameHeight = 0;
-	unsigned int m_PayloadSize = 0;
-	void* m_Handle = nullptr;
+	bool m_IsValid{ false };
+	bool m_IsGrabbing{ false };
+	bool m_IsOpenedDevice{ false };
+	int m_FrameWidth{ 0 };
+	int m_FrameHeight{ 0 };
+	unsigned int m_PayloadSize{ 0 };
+	void* m_Handle{ nullptr };
 
 	// Enum device
 	MV_FRAME_OUT_INFO_EX stImageInfo = { 0 };
@@ -142,6 +146,8 @@ private:
 
 	// Image data
 	std::unique_ptr<unsigned char[]> m_Data{ nullptr };
+	
+	std::function<ImageCallBackType> m_ImageCallback{};
 
 	/**
 	 * @fn	static int HKCamera::RGB2BGR(unsigned char* pRgbData, unsigned int width, unsigned int height)
@@ -174,6 +180,11 @@ private:
 	static bool ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo,
 								 unsigned char* DataBuffer,
 								 cv::Mat& refDest);
+
+	static void __stdcall ImageCallBack(unsigned char* pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser)
+	{
+		reinterpret_cast<HKCamera*>(pUser)->m_ImageCallback(pData, pFrameInfo);
+	}
 };
 
 #endif //HK_CAMERA_HPP

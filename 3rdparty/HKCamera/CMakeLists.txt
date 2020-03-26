@@ -26,7 +26,6 @@ target_include_directories(HKCamera PUBLIC ./)
 target_link_libraries(HKCamera
         PUBLIC
             HKCameraLibrary
-        PRIVATE
             spdlog::spdlog
             fmt::fmt
             opencv_core
