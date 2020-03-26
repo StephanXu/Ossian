@@ -7,6 +7,7 @@
 #include "Remote.hpp"
 #include "Gimbal.hpp"
 #include "Capacitor.hpp"
+#include "Referee.hpp"
 
 #include <chrono>
 #include <memory>
@@ -72,12 +73,14 @@ public:
 								 IRemote* remote,
 								 ICapacitor* capacitor,
 								 Gimbal* gimbal,
-								 Utils::ConfigLoader* config))
+								 Utils::ConfigLoader* config,
+								 RefereeListener<PowerHeatData>* powerHeatDataListener))
 		: m_MotorManager(motorManager)
 		, m_RC(remote)
 		, m_SpCap(capacitor)
 		, m_Gimbal(gimbal)
 		, m_Config(config)
+		, m_RefereePowerHeatDataListener(powerHeatDataListener)
 	{
 		using OssianConfig::Configuration;
 		PIDWheelSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->kp();
@@ -148,6 +151,8 @@ public:
 		m_ChassisSensorValues.rc = m_RC->Status();
 		m_ChassisSensorValues.spCap = m_SpCap->Status();
 		m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
+
+		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 	}
 
 	void CalcWheelSpeedTarget();
@@ -176,7 +181,6 @@ public:
 
 		//chassis_task
 		UpdateChassisSensorFeedback();
-
 		if (m_FlagInitChassis)
 			InitChassis();
 
@@ -184,10 +188,18 @@ public:
 		//[TODO] 模式切换过渡
 
 		ChassisExpAxisSpeedSet();
-
 		ChassisCtrl();
-		m_SpCap->SetPower(m_ChassisSensorValues.refereeMaxPwr);
+
 		m_MotorMsgCheck.fill(false);
+
+		static std::chrono::high_resolution_clock::time_point lastSendSpCapTimestamp;
+		long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::high_resolution_clock::now() - lastSendSpCapTimestamp).count();
+		if (interval > 100)   //不推荐以太高的频率发送功率数据，推荐10Hz
+		{
+			m_SpCap->SetPower(m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower);
+			lastSendSpCapTimestamp = std::chrono::high_resolution_clock::now();
+		}
 	}
 
 private:
@@ -198,6 +210,7 @@ private:
 	IRemote* m_RC;  //遥控器
 	ICapacitor* m_SpCap;
 	Gimbal* m_Gimbal;
+	RefereeListener<PowerHeatData>* m_RefereePowerHeatDataListener;
 
 	bool m_FlagInitChassis;
 	struct ChassisSensorFeedback
@@ -205,7 +218,8 @@ private:
 		RemoteStatus rc;
 		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	///< 底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 		CapacitorStatus spCap;												///< 超级电容数据
-		double refereeCurPwr, refereeCurBuf, refereeMaxPwr, refereeMaxBuf;  ///< 裁判系统数据
+		PowerHeatData refereePowerHeatData;									///< 裁判系统数据
+		double refereeMaxPwr=80, refereeMaxBuf=60;  
 		double relativeAngle;												///< 底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
 	} m_ChassisSensorValues;
 

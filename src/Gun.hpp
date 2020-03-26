@@ -6,6 +6,7 @@
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
 #include "Gimbal.hpp"
+#include "Referee.hpp"
 
 #include <chrono>
 #include <array>
@@ -60,8 +61,20 @@ public:
 		Stop, Reload, Reverse, Semi, Burst, Auto
 	};
 
-	OSSIAN_SERVICE_SETUP(Gun(ossian::MotorManager* motorManager, IRemote* remote, Gimbal* gimbal, Utils::ConfigLoader* config))
-		: m_MotorManager(motorManager), m_RC(remote), m_Gimbal(gimbal), m_Config(config)
+	OSSIAN_SERVICE_SETUP(Gun(ossian::MotorManager* motorManager, 
+							 IRemote* remote, 
+							 Gimbal* gimbal, 
+							 Utils::ConfigLoader* config, 
+							 RefereeListener<PowerHeatData>* powerHeatDataListener,
+							 RefereeListener<RobotStatus>* robotStatusListener,
+							 RefereeListener<ShootData>* shootDataListener))
+		: m_MotorManager(motorManager)
+		, m_RC(remote)
+		, m_Gimbal(gimbal)
+		, m_Config(config)
+		, m_RefereePowerHeatDataListener(powerHeatDataListener)
+		, m_RefereeRobotStatusListener(robotStatusListener)
+		, m_RefereeShootDataListener(shootDataListener)
 	{
 		using OssianConfig::Configuration;
 		PIDFricSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->kp();
@@ -86,6 +99,11 @@ public:
 		kFeedBurstRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedburstrpm();
 		kFeedAutoRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedautorpm();
 
+		//如果射击数据（0x0207）有更新，则累加已发射的子弹数
+		m_RefereeShootDataListener->AddOnChange([this](const ShootData& value)
+		{
+			++m_CurBulletShotNum;
+		});
 
 		m_FlagInitFric = m_FlagInitFeed = true;
 
@@ -110,8 +128,8 @@ public:
 	void InitFeed()
 	{
 		m_FeedMode = FeedMode::Stop;
-
 		m_PIDFeedSpeed.Reset();
+		m_CurBulletShotNum = 0;
 
 		m_FlagInitFeed = false;
 	}
@@ -145,12 +163,20 @@ public:
 
 	void UpdateGunSensorFeedback()
 	{
+		static uint16_t lastHeat = 0;      //上次读取的热量值
+
 		m_GunSensorValues.rc = m_RC->Status();
 		m_GunSensorValues.gimbalInputSrc = m_Gimbal->GimbalCtrlSrc();  //[TODO] 增加对自瞄模式射击的处理
 
-		//[TODO] 比对时间戳，如果射击数据（0x0207）有更新，则累加已发射的子弹数
-		//[TODO] 如果当前获取的热量低于历史热量，则将已发射的子弹数清零
+		m_GunSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
+		m_GunSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();
+
+		//如果当前获取的热量低于历史热量，则将已发射的子弹数清零
+		if (m_GunSensorValues.refereePowerHeatData.m_Shooter17Heat < lastHeat)
+			m_CurBulletShotNum = 0;
+		lastHeat = m_GunSensorValues.refereePowerHeatData.m_Shooter17Heat;		
 	}
+
 	bool MicroSwitchStatus() { return false; } //获取枪口微动开关 or 光电对管的状态
 
 	void FricModeSet();
@@ -204,14 +230,19 @@ private:
 	Utils::ConfigLoader* m_Config;
 	IRemote* m_RC;  //遥控器
 	Gimbal* m_Gimbal;
+	RefereeListener<PowerHeatData>* m_RefereePowerHeatDataListener;
+	RefereeListener<RobotStatus>* m_RefereeRobotStatusListener;
+	RefereeListener<ShootData>* m_RefereeShootDataListener;
 
 	struct GunSensorFeedback
 	{
 		RemoteStatus rc;	 //遥控器数据
 		Gimbal::GimbalInputSrc gimbalInputSrc;
-		double refereeCurHeat, refereeHeatLimit;
-		int shooter_heat0_speed_limit;
-		std::chrono::high_resolution_clock::time_point refereeTimeStamp;
+		PowerHeatData refereePowerHeatData;
+		RobotStatus refereeRobotStatus;
+		//double refereeCurHeat, refereeHeatLimit;
+		uint8_t shooter_heat0_speed_limit=30;
+		
 	} m_GunSensorValues;
 	
 	bool m_FlagInitFric, m_FlagInitFeed;

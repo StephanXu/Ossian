@@ -84,7 +84,8 @@ void Gun::FricCtrl()
 void Gun::FeedModeSet()
 {
 	//若超热量则拨弹轮停转
-	bool overheat = m_CurBulletShotNum >= (m_GunSensorValues.refereeHeatLimit - m_GunSensorValues.refereeCurHeat) / kHeatPerBullet;
+	bool overheat = m_CurBulletShotNum >= (m_GunSensorValues.refereeRobotStatus.m_Shooter17HeatLimit
+		- m_GunSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet;
 	
 	if (m_FricMode == FricMode::Disable)
 		m_FeedMode = FeedMode::Stop;

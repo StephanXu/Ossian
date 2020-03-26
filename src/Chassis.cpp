@@ -26,26 +26,31 @@ void Chassis::CalcWheelSpeedTarget()
 void Chassis::ChassisPowerCtrlByCurrent()
 {
 	//double curPwr, curBuf, maxPwr, maxBuf; //这四个量从裁判系统获取
-	double warnBuf = m_ChassisSensorValues.refereeMaxBuf * 0.9;
-	double warnPwr = m_ChassisSensorValues.refereeMaxPwr * 0.9;
+
+	double curBuf  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer;
+	double curPwr  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower;
+	double maxBuf = m_ChassisSensorValues.refereeMaxBuf;
+	double maxPwr = m_ChassisSensorValues.refereeMaxPwr;   //[TODO] 根据2020裁判系统串口协议修改
+	double warnBuf = maxBuf * 0.9;
+	double warnPwr = maxPwr * 0.9;
 	
 	double scalePwr;  //功率缩小系数
 	double limitCurrent; //底盘电机总电流上限
 	//缓冲能量小于预警值则说明功率超限
-	if (m_ChassisSensorValues.refereeCurBuf < m_ChassisSensorValues.refereeMaxBuf)
+	if (curBuf < maxBuf)
 	{
-		if (m_ChassisSensorValues.refereeCurBuf > warnBuf * 0.1)
-			scalePwr = m_ChassisSensorValues.refereeCurBuf / warnBuf;
+		if (curBuf > warnBuf * 0.1)
+			scalePwr = curBuf / warnBuf;
 		else
 			scalePwr = 0.1;
 		limitCurrent = kBufferTotalCurrentLimit * scalePwr;
 	}
 	else
 	{
-		if (m_ChassisSensorValues.refereeCurPwr > warnPwr)
+		if (curPwr > warnPwr)
 		{
-			if (m_ChassisSensorValues.refereeCurPwr < m_ChassisSensorValues.refereeMaxPwr)
-				scalePwr = (m_ChassisSensorValues.refereeMaxPwr - m_ChassisSensorValues.refereeCurPwr) / (m_ChassisSensorValues.refereeMaxPwr - warnPwr);
+			if (curPwr < maxPwr)
+				scalePwr = (maxPwr - curPwr) / (maxPwr - warnPwr);
 			else
 				scalePwr = 0;
 		}
