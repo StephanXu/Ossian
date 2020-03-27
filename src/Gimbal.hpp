@@ -5,6 +5,7 @@
 #include "CtrlAlgorithms.hpp"
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
+#include "Gyro.hpp"
 
 #include <chrono>
 #include <array>
@@ -73,8 +74,14 @@ public:
 		Pitch, Yaw
 	};
 	
-	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager, IRemote* remote, Utils::ConfigLoader* config))
-		: m_MotorManager(motorManager), m_RC(remote), m_Config(config)
+	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager, 
+								IRemote* remote, 
+								Utils::ConfigLoader* config,
+								ossian::IOData<GyroModel>* gyroListener))
+		: m_MotorManager(motorManager)
+		, m_RC(remote)
+		, m_Config(config)
+		, m_GyroListener(gyroListener)
 	{
 		using OssianConfig::Configuration;
 		PIDAngleEcdPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->kp();
@@ -132,8 +139,8 @@ public:
 		m_MotorMsgCheck.fill(false);
 		m_AngleInput.fill(0);
 
-		m_GyroAngleSet[Pitch] = m_GimbalSensorValues.gyroY;
-		m_GyroAngleSet[Yaw] = m_GimbalSensorValues.gyroZ;
+		m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
+		m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
 
 		m_EcdAngleSet[Pitch] = kPitchMidRad;
 		m_EcdAngleSet[Yaw] = kYawMidRad;
@@ -165,13 +172,17 @@ public:
 				motorId);
 	}
 
-	double RelativeAngleToChassis() { return RelativeEcdToRad(m_YawEcd.load(), kYawMidEcd); } //[TODO]负号？
+	double RelativeAngleToChassis() { return -RelativeEcdToRad(m_YawEcd.load(), kYawMidEcd); } //[TODO]负号？
 
 	GimbalInputSrc GimbalCtrlSrc() { return m_GimbalCtrlSrc.load(); }
 
 	void UpdateGimbalSensorFeedback()
 	{
 		m_GimbalSensorValues.rc = m_RC->Status();
+		m_GimbalSensorValues.imu = m_GyroListener->Get();
+		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wz 
+			- sin(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wx;
+		//gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	}
 	//设置云台角度输入来源
 	void GimbalCtrlSrcSet();
@@ -217,6 +228,7 @@ private:
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	IRemote* m_RC;  //遥控器
+	ossian::IOData<GyroModel>* m_GyroListener;
 
 	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
 	std::atomic<GimbalInputSrc> m_GimbalCtrlSrc;
@@ -224,7 +236,8 @@ private:
 	struct GimbalSensorFeedback
 	{
 		RemoteStatus rc;	 //遥控器数据
-		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
+		GyroModel imu;
+		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
 	std::atomic<uint16_t> m_YawEcd;
 

@@ -54,14 +54,14 @@ public:
 					model.m_Az = ((data[7] << 8) | data[6]) / 32768 * 16 * g;
 					break;
 				case 0x52: ///< 角速度
-					model.m_Wx = ((data[3] << 8) | data[2]) / 32768 * 2000;
-					model.m_Wy = ((data[5] << 8) | data[4]) / 32768 * 2000;
-					model.m_Wz = ((data[7] << 8) | data[6]) / 32768 * 2000;
+					model.m_Wx = ((data[3] << 8) | data[2]) / 32768 * 2000 / 180 * M_PI;
+					model.m_Wy = ((data[5] << 8) | data[4]) / 32768 * 2000 / 180 * M_PI;
+					model.m_Wz = ((data[7] << 8) | data[6]) / 32768 * 2000 / 180 * M_PI;
 					break;
 				case 0x53: ///< 角度
-					model.m_Roll = ((data[3] << 8) | data[2]) / 32768 * 180;
-					model.m_Pitch = ((data[5] << 8) | data[4]) / 32768 * 180;
-					model.m_Yaw   = ((data[7] << 8) | data[6]) / 32768 * 180;
+					model.m_Roll  =  ((data[3] << 8) | data[2]) / 32768 * M_PI;
+					model.m_Pitch =  ((data[5] << 8) | data[4]) / 32768 * M_PI;
+					model.m_Yaw   =  ((data[7] << 8) | data[6]) / 32768 * M_PI;
 					break;
 				case 0x54: ///< 磁场
 					model.m_Hx = ((data[3] << 8) | data[2]);

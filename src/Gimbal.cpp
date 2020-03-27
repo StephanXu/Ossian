@@ -42,13 +42,13 @@ void Gimbal::GimbalExpAngleSet(MotorPosition position)
 	double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Status().m_Encoding, position == Pitch ? kPitchMidEcd : kYawMidEcd);
 	if (m_GimbalCtrlSrc == Disable)
 		return;
-	if (m_GimbalCtrlSrc == RC)
+	else if (m_GimbalCtrlSrc == RC)
 	{
-		double ecdAngleAdd = m_AngleInput[position] - curEcdAngle;
+		double ecdAngleAdd = m_AngleInput[position]; 
 		if (m_CurGimbalAngleMode == Gyro)
 		{
-			double gyro = (position == Pitch ? m_GimbalSensorValues.gyroY : m_GimbalSensorValues.gyroZ);
-			double errorAngle = ClampLoop(m_GyroAngleSet[position] - gyro, -M_PI, M_PI);
+			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw); 
+			double errorAngle = ClampLoop(m_GyroAngleSet[position] - gyro, -M_PI, M_PI); 
 			//判断会不会越过限位
 			if (curEcdAngle + errorAngle + ecdAngleAdd > kMaxRelativeAngle[position])
 			{
@@ -79,8 +79,8 @@ void Gimbal::GimbalCtrlCalc(MotorPosition position)
 	{
 		if (m_CurGimbalAngleMode == Gyro)
 		{
-			double gyro = (position == Pitch ? m_GimbalSensorValues.gyroY : m_GimbalSensorValues.gyroZ);
-			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.gyroSpeedY : m_GimbalSensorValues.gyroSpeedZ);
+			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw);
+			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_Wy : m_GimbalSensorValues.imu.m_Wz);
 			double angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro, std::chrono::high_resolution_clock::now(), true);
 			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed, std::chrono::high_resolution_clock::now());
 		}

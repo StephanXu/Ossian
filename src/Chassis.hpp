@@ -221,7 +221,7 @@ private:
 		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	///< 底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 		CapacitorStatus spCap;												///< 超级电容数据
 		PowerHeatData refereePowerHeatData;									///< 裁判系统数据
-		double refereeMaxPwr=80, refereeMaxBuf=60;  
+		int refereeMaxPwr=80, refereeMaxBuf=60;  
 		double relativeAngle;												///< 底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
 	} m_ChassisSensorValues;
 
