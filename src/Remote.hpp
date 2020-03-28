@@ -27,12 +27,13 @@ public:
 template <typename Mutex = std::mutex>
 class Remote final : public IRemote, ossian::IODataBuilder<Mutex, RemoteStatus>
 {
-	ossian::IOData<RemoteStatus>* m_IOData;
+	ossian::IOData<RemoteStatus, Mutex>* m_IOData;
 	ossian::UARTManager* m_UARTManager;
 	RemoteStatus m_Status;
 	Mutex m_Mutex;
 public:
-	OSSIAN_SERVICE_SETUP(Remote(ossian::UARTManager* uartManager,ossian::IOData<RemoteStatus>* ioData))
+	OSSIAN_SERVICE_SETUP(Remote(ossian::UARTManager* uartManager,
+								ossian::IOData<RemoteStatus, Mutex>* ioData))
 		: m_UARTManager(uartManager), m_IOData(ioData)
 	{
 	}
