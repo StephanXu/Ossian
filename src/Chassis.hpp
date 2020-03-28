@@ -72,7 +72,7 @@ public:
 	};
 
 	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager,
-								 IRemote* remote,
+								 ossian::IOData<RemoteStatus>* remote,
 								 ICapacitor* capacitor,
 								 Gimbal* gimbal,
 								 Utils::ConfigLoader* config,
@@ -150,7 +150,7 @@ public:
 
 	void UpdateChassisSensorFeedback()
 	{
-		m_ChassisSensorValues.rc = m_RC->Status();
+		m_ChassisSensorValues.rc = m_RC->Get();
 		m_ChassisSensorValues.spCap = m_SpCap->Status();
 		m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 
@@ -209,7 +209,7 @@ private:
 	std::array<std::shared_ptr<ossian::DJIMotor>, 4> m_Motors;
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
-	IRemote* m_RC;  //遥控器
+	ossian::IOData<RemoteStatus>* m_RC;  //遥控器
 	ICapacitor* m_SpCap;
 	Gimbal* m_Gimbal;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;

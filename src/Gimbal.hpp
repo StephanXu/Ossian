@@ -75,7 +75,7 @@ public:
 	};
 	
 	OSSIAN_SERVICE_SETUP(Gimbal(ossian::MotorManager* motorManager, 
-								IRemote* remote, 
+								ossian::IOData<RemoteStatus>* remote, 
 								Utils::ConfigLoader* config,
 								ossian::IOData<GyroModel>* gyroListener))
 		: m_MotorManager(motorManager)
@@ -178,7 +178,7 @@ public:
 
 	void UpdateGimbalSensorFeedback()
 	{
-		m_GimbalSensorValues.rc = m_RC->Status();
+		m_GimbalSensorValues.rc = m_RC->Get();
 		m_GimbalSensorValues.imu = m_GyroListener->Get();
 		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wz 
 			- sin(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wx;
@@ -227,7 +227,7 @@ private:
 	std::array<std::shared_ptr<ossian::DJIMotor>, 2> m_Motors;  	
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
-	IRemote* m_RC;  //遥控器
+	ossian::IOData<RemoteStatus>* m_RC;  //遥控器
 	ossian::IOData<GyroModel>* m_GyroListener;
 
 	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;

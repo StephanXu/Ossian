@@ -1,4 +1,3 @@
-
 #ifndef OSSIAN_CORE_CONFIGURATION
 #define OSSIAN_CORE_CONFIGURATION
 
@@ -17,9 +16,10 @@
 
 namespace ossian
 {
-
 namespace Utils
 {
+
+class ConfigServiceBuilder;
 
 /**
  * @class	Configuration
@@ -29,18 +29,18 @@ namespace Utils
  * @author	Xu Zihan
  * @date	2019/11/21
  */
-class ConfigLoader
+class ConfigLoader : public CustomBuilder<ConfigServiceBuilder>
 {
 public:
-    OSSIAN_SERVICE_SETUP(ConfigLoader())
-    {
-    }
+	OSSIAN_SERVICE_SETUP(ConfigLoader())
+	{
+	}
 
-    template<typename ConfigType>
-    void LoadConfig(std::string text)
-    {
-        m_Config.reset(new ConfigType);
-        google::protobuf::util::JsonStringToMessage(text, m_Config.get());
+	template <typename ConfigType>
+	void LoadConfig(std::string text)
+	{
+		m_Config.reset(new ConfigType);
+		google::protobuf::util::JsonStringToMessage(text, m_Config.get());
 #ifdef _DEBUG
         {
             std::string str;
@@ -51,84 +51,83 @@ public:
             spdlog::info("{}", str);
         }
 #endif
-        m_Valid = true;
-    }
+		m_Valid = true;
+	}
 
-    template<typename ConfigType>
-    ConfigType* Instance()
-    {
-        if (m_Valid)
-            return google::protobuf::DynamicCastToGenerated<ConfigType>(m_Config.get());
-        return nullptr;
-    }
+	template <typename ConfigType>
+	ConfigType* Instance()
+	{
+		if (m_Valid)
+			return google::protobuf::DynamicCastToGenerated<ConfigType>(m_Config.get());
+		return nullptr;
+	}
 
-    template<typename ConfigType>
-    void LoadConfigFromFile(std::string configFilename)
-    {
-        std::ifstream f(configFilename);
-        std::string text{ std::istreambuf_iterator<char>{ f }, std::istreambuf_iterator<char>{}};
-        spdlog::info("Load configuration from file: {}", configFilename);
-        LoadConfig<ConfigType>(text);
-    }
+	template <typename ConfigType>
+	void LoadConfigFromFile(std::string configFilename)
+	{
+		std::ifstream f(configFilename);
+		std::string text{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
+		spdlog::info("Load configuration from file: {}", configFilename);
+		LoadConfig<ConfigType>(text);
+	}
 
-    template<typename ConfigType>
-    void LoadConfigFromUrl(std::string host, int port, std::string path)
-    {
-        httplib::Client cli(host, port);
-        auto res = cli.Get(path.c_str());
-        if (!res || res->status != 200)
-        {
-            throw std::runtime_error(fmt::format("Can't get configuration from url: {}", res->status));
-        }
-        spdlog::info("Load configuration from {}", host);
-        LoadConfig<ConfigType>(res->body);
-    }
+	template <typename ConfigType>
+	void LoadConfigFromUrl(std::string host, int port, std::string path)
+	{
+		httplib::Client cli(host, port);
+		auto res = cli.Get(path.c_str());
+		if (!res || res->status != 200)
+		{
+			throw std::runtime_error(fmt::format("Can't get configuration from url: {}", res->status));
+		}
+		spdlog::info("Load configuration from {}", host);
+		LoadConfig<ConfigType>(res->body);
+	}
 
-    bool Valid() const noexcept
-    {
-        return m_Valid;
-    }
+	bool Valid() const noexcept
+	{
+		return m_Valid;
+	}
 
 private:
-    bool m_Valid;
-    std::shared_ptr<google::protobuf::Message> m_Config;
+	bool m_Valid;
+	std::shared_ptr<google::protobuf::Message> m_Config;
+};
+
+class ConfigServiceBuilder
+{
+	using BaseBuilder = BaseServiceBuilder<ConfigLoader>;
+	ApplicationBuilder& m_AppBuilder;
+	BaseBuilder& m_BaseBuilder;
+public:
+	ConfigServiceBuilder(ApplicationBuilder& appBuilder, BaseBuilder& config)
+		: m_AppBuilder(appBuilder), m_BaseBuilder(config)
+	{
+	}
+
+	template <typename ConfigType>
+	auto LoadFromUrl(std::string host, int port, std::string path) -> ConfigServiceBuilder&
+	{
+		m_BaseBuilder.AddConfig([host, port, path](Utils::ConfigLoader& option)
+								{
+									option.LoadConfigFromUrl<ConfigType>(host, port, path);
+								});
+		return *this;
+	}
+
+	template <typename ConfigType>
+	auto LoadFromFile(std::string filename) -> ConfigServiceBuilder&
+	{
+		m_BaseBuilder.AddConfig([filename](Utils::ConfigLoader& option)
+								{
+									option.LoadConfigFromFile<ConfigType>(filename);
+								});
+		return *this;
+	}
 };
 
 } //Utils
-
-template<>
-class ServiceBuilder<Utils::ConfigLoader> : BaseServiceBuilder<Utils::ConfigLoader>
-{
-public:
-    ServiceBuilder(ApplicationBuilder& appBuilder,
-                   std::function<void(Utils::ConfigLoader&)> configureProc)
-        : BaseServiceBuilder<Utils::ConfigLoader>(appBuilder, configureProc)
-    {
-    }
-
-    template<typename ConfigType>
-    auto LoadFromUrl(std::string host, int port, std::string path) -> ServiceBuilder<Utils::ConfigLoader>&
-    {
-        this->AddConfig([host, port, path](Utils::ConfigLoader& option)
-                        {
-                            option.LoadConfigFromUrl<ConfigType>(host, port, path);
-                        });
-        return *this;
-    }
-
-    template<typename ConfigType>
-    auto LoadFromFile(std::string filename) -> ServiceBuilder<Utils::ConfigLoader>&
-    {
-        this->AddConfig([filename](Utils::ConfigLoader& option)
-                        {
-                            option.LoadConfigFromFile<ConfigType>(filename);
-                        });
-        return *this;
-    }
-};
-
 } //ossian
-
 
 
 #endif // OSSIAN_CORE_CONFIGURATION

@@ -2,6 +2,7 @@
 #define OSSIAN_CORE_IODATA
 
 #include "Factory.hpp"
+#include "ApplicationBuilder.hpp"
 
 #include <mutex>
 #include <typeindex>
@@ -103,6 +104,20 @@ private:
 	{
 	};
 };
+
+template <typename Mutex, typename ...DataModelTypes>
+class IODataServiceBuilder
+{
+public:
+	IODataServiceBuilder(ApplicationBuilder& appBuilder)
+	{
+		std::make_tuple((appBuilder.template AddService<IOData<DataModelTypes>>())...);
+	}
+};
+
+
+template <typename Mutex, typename ...DataModelTypes>
+using IODataBuilder = CustomBuilder<IODataServiceBuilder<Mutex, DataModelTypes...>>;
 } // ossian
 
 #endif // OSSIAN_CORE_IODATA

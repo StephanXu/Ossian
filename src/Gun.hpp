@@ -1,4 +1,4 @@
-#ifndef OSSIAN_GUN_HPP
+ï»¿#ifndef OSSIAN_GUN_HPP
 #define OSSIAN_GUN_HPP
 
 #include <ossian/Motor.hpp>
@@ -18,33 +18,33 @@ class Gun
 {
 public:
 
-	//Ä¦²ÁÂÖ×ªËÙÆÚÍûrpm [TODO]ÊµÑéµÃ³ö²»Í¬µÈ¼¶ÏÂµÄÉä»÷³õËÙ¶ÈÉÏÏŞËù¶ÔÓ¦µÄÄ¦²ÁÂÖ×ªËÙÆÚÍû
+	//æ‘©æ“¦è½®è½¬é€ŸæœŸæœ›rpm [TODO]å®éªŒå¾—å‡ºä¸åŒç­‰çº§ä¸‹çš„å°„å‡»åˆé€Ÿåº¦ä¸Šé™æ‰€å¯¹åº”çš„æ‘©æ“¦è½®è½¬é€ŸæœŸæœ›
 	static int16_t kFricSpeed12;
 	static int16_t kFricSpeed15;
 	static int16_t kFricSpeed18;
 	static int16_t kFricSpeed30;
 
-	//Ò£¿ØÆ÷½âÎö
-	static constexpr int16_t kGunRCDeadband = 50; //²¦ÂÖËÀÇø
+	//é¥æ§å™¨è§£æ
+	static constexpr int16_t kGunRCDeadband = 50; //æ‹¨è½®æ­»åŒº
 	static constexpr size_t kShootModeChannel = 4;
 
 	static constexpr uint8_t kRCSwUp = 1;
 	static constexpr uint8_t kRCSwMid = 3;
 	static constexpr uint8_t kRCSwDown = 2;
 
-	//Ç¹¿ÚÈÈÁ¿»úÖÆ
+	//æªå£çƒ­é‡æœºåˆ¶
 	static constexpr int kHeatPerBullet = 10;
 
-	//²¦µ¯ÂÖ
-	static constexpr int kBurstBulletNum = 3; //µãÉäµÄ×Óµ¯·¢ÉäÊıÁ¿
-	static constexpr int16_t kFeedJamRPM = 5;     //ÅĞ¶Ï¿¨µ¯µÄ²¦µ¯ÂÖ×ªËÙãĞÖµ
+	//æ‹¨å¼¹è½®
+	static constexpr int kBurstBulletNum = 3; //ç‚¹å°„çš„å­å¼¹å‘å°„æ•°é‡
+	static constexpr int16_t kFeedJamRPM = 5;     //åˆ¤æ–­å¡å¼¹çš„æ‹¨å¼¹è½®è½¬é€Ÿé˜ˆå€¼
 
-	static int16_t kFeedNormalRPM; //×Ô¶¯²¹µ¯ÉÏÌÅ»ò·´×ªÊ±£¬²¦µ¯ÂÖ¹©µ¯µÄ×ªËÙ
-	static int16_t kFeedSemiRPM;   //µ¥·¢Ê±£¬²¦µ¯ÂÖ¹©µ¯µÄ×ªËÙ
-	static int16_t kFeedBurstRPM;  //µãÉäÊ±£¬²¦µ¯ÂÖ¹©µ¯µÄ×ªËÙ
-	static int16_t kFeedAutoRPM;   //Á¬·¢Ê±£¬²¦µ¯ÂÖ¹©µ¯µÄ×ªËÙ   µãÉä>Á¬·¢>µ¥·¢
+	static int16_t kFeedNormalRPM; //è‡ªåŠ¨è¡¥å¼¹ä¸Šè†›æˆ–åè½¬æ—¶ï¼Œæ‹¨å¼¹è½®ä¾›å¼¹çš„è½¬é€Ÿ
+	static int16_t kFeedSemiRPM;   //å•å‘æ—¶ï¼Œæ‹¨å¼¹è½®ä¾›å¼¹çš„è½¬é€Ÿ
+	static int16_t kFeedBurstRPM;  //ç‚¹å°„æ—¶ï¼Œæ‹¨å¼¹è½®ä¾›å¼¹çš„è½¬é€Ÿ
+	static int16_t kFeedAutoRPM;   //è¿å‘æ—¶ï¼Œæ‹¨å¼¹è½®ä¾›å¼¹çš„è½¬é€Ÿ   ç‚¹å°„>è¿å‘>å•å‘
 	
-	//pid²ÎÊı
+	//pidå‚æ•°
 	static std::array<double, 5> PIDFricSpeedParams;
 	static std::array<double, 5> PIDFeedSpeedParams;
 
@@ -64,7 +64,7 @@ public:
 	};
 
 	OSSIAN_SERVICE_SETUP(Gun(ossian::MotorManager* motorManager, 
-							 IRemote* remote, 
+							 ossian::IOData<RemoteStatus>* remote, 
 							 Gimbal* gimbal, 
 							 Utils::ConfigLoader* config, 
 							 ossian::IOData<PowerHeatData>* powerHeatDataListener,
@@ -101,7 +101,7 @@ public:
 		kFeedBurstRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedburstrpm();
 		kFeedAutoRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedautorpm();
 
-		//Èç¹ûÉä»÷Êı¾İ£¨0x0207£©ÓĞ¸üĞÂ£¬ÔòÀÛ¼ÓÒÑ·¢ÉäµÄ×Óµ¯Êı
+		//å¦‚æœå°„å‡»æ•°æ®ï¼ˆ0x0207ï¼‰æœ‰æ›´æ–°ï¼Œåˆ™ç´¯åŠ å·²å‘å°„çš„å­å¼¹æ•°
 		m_RefereeShootDataListener->AddOnChange([this](const ShootData& value)
 		{
 			++m_CurBulletShotNum;
@@ -165,21 +165,21 @@ public:
 
 	void UpdateGunSensorFeedback()
 	{
-		static uint16_t lastHeat = 0;      //ÉÏ´Î¶ÁÈ¡µÄÈÈÁ¿Öµ
+		static uint16_t lastHeat = 0;      //ä¸Šæ¬¡è¯»å–çš„çƒ­é‡å€¼
 
-		m_GunSensorValues.rc = m_RC->Status();
-		m_GunSensorValues.gimbalInputSrc = m_Gimbal->GimbalCtrlSrc();  //[TODO] Ôö¼Ó¶Ô×ÔÃéÄ£Ê½Éä»÷µÄ´¦Àí
+		m_GunSensorValues.rc = m_RC->Get();
+		m_GunSensorValues.gimbalInputSrc = m_Gimbal->GimbalCtrlSrc();  //[TODO] å¢åŠ å¯¹è‡ªç„æ¨¡å¼å°„å‡»çš„å¤„ç†
 
 		m_GunSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_GunSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();
 
-		//Èç¹ûµ±Ç°»ñÈ¡µÄÈÈÁ¿µÍÓÚÀúÊ·ÈÈÁ¿£¬Ôò½«ÒÑ·¢ÉäµÄ×Óµ¯ÊıÇåÁã
+		//å¦‚æœå½“å‰è·å–çš„çƒ­é‡ä½äºå†å²çƒ­é‡ï¼Œåˆ™å°†å·²å‘å°„çš„å­å¼¹æ•°æ¸…é›¶
 		if (m_GunSensorValues.refereePowerHeatData.m_Shooter17Heat < lastHeat)
 			m_CurBulletShotNum = 0;
 		lastHeat = m_GunSensorValues.refereePowerHeatData.m_Shooter17Heat;		
 	}
 
-	bool MicroSwitchStatus() { return false; } //»ñÈ¡Ç¹¿ÚÎ¢¶¯¿ª¹Ø or ¹âµç¶Ô¹ÜµÄ×´Ì¬
+	bool MicroSwitchStatus() { return false; } //è·å–æªå£å¾®åŠ¨å¼€å…³ or å…‰ç”µå¯¹ç®¡çš„çŠ¶æ€
 
 	void FricModeSet();
 
@@ -189,7 +189,7 @@ public:
 
 	void FeedModeSet();
 
-	//·¢ËÍµçÁ÷¸ø2006
+	//å‘é€ç”µæµç»™2006
 	void FeedRotateCtrl(bool stop=false, int rpmSet=0, bool reverse=false);
 
 	void AutoReloadCtrl();
@@ -230,7 +230,7 @@ private:
 	std::array<std::shared_ptr<ossian::DJIMotor>, 3> m_Motors;
 	std::chrono::high_resolution_clock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
-	IRemote* m_RC;  //Ò£¿ØÆ÷
+	ossian::IOData<RemoteStatus>* m_RC;  //é¥æ§å™¨
 	Gimbal* m_Gimbal;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 	ossian::IOData<RobotStatus>* m_RefereeRobotStatusListener;
@@ -238,7 +238,7 @@ private:
 
 	struct GunSensorFeedback
 	{
-		RemoteStatus rc;	 //Ò£¿ØÆ÷Êı¾İ
+		RemoteStatus rc;	 //é¥æ§å™¨æ•°æ®
 		Gimbal::GimbalInputSrc gimbalInputSrc;
 		PowerHeatData refereePowerHeatData;
 		RobotStatus refereeRobotStatus;
@@ -252,7 +252,7 @@ private:
 	FricMode m_FricMode;
 	FeedMode m_FeedMode;
 
-	int m_CurBulletShotNum; //ÔÚÈÈÁ¿³ÖĞøÉÏÉıµÄ¹ı³ÌÖĞ£¬ÀÛ»ı´ò³öµÄ×Óµ¯Êı
+	int m_CurBulletShotNum; //åœ¨çƒ­é‡æŒç»­ä¸Šå‡çš„è¿‡ç¨‹ä¸­ï¼Œç´¯ç§¯æ‰“å‡ºçš„å­å¼¹æ•°
 	int16_t m_FricSpeedSet;
 	std::array<PIDController, 2> m_PIDFricSpeed;
 	PIDController m_PIDFeedSpeed;

@@ -4,7 +4,6 @@
 #include <ossian/Factory.hpp>
 #include <ossian/io/UART.hpp>
 #include <ossian/MultiThread.hpp>
-#include <ossian/ApplicationBuilder.hpp>
 #include <ossian/IOData.hpp>
 #include <spdlog/spdlog.h>
 
@@ -338,7 +337,7 @@ public:
 };
 
 template <typename Mutex = std::mutex, typename ...MessageTypes>
-class Referee : public IReferee
+class Referee : public IReferee, public ossian::IODataBuilder<Mutex,MessageTypes...>
 {
 public:
 	OSSIAN_SERVICE_SETUP(Referee(ossian::UARTManager* uartManager,
@@ -516,22 +515,5 @@ using RefereeAllMessagesSt = RefereeMt<BulletRemain,
                                        RobotHP,
                                        MatchStatus,
                                        MatchResult>;
-
-namespace ossian
-{
-template <typename Mutex, typename ...MessageTypes>
-class ServiceBuilder<Referee<Mutex, MessageTypes...>> : BaseServiceBuilder<Referee<Mutex, MessageTypes...>>
-{
-	using RefereeType = Referee<MessageTypes...>;
-	using Super = BaseServiceBuilder<Referee<MessageTypes...>>;
-public:
-	ServiceBuilder(ApplicationBuilder& appBuilder,
-	               std::function<void(RefereeType&)> configureProc)
-		: BaseServiceBuilder<RefereeType>(appBuilder, configureProc)
-	{
-		std::make_tuple((Super::m_AppBuilder.template AddService<IOData<MessageTypes>>())...);
-	}
-};
-} // ossian
 
 #endif // OSSIAN_REFEREE_HPP

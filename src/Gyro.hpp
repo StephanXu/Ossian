@@ -1,4 +1,4 @@
-#ifndef OSSIAN_GYRO_HPP
+ï»¿#ifndef OSSIAN_GYRO_HPP
 #define OSSIAN_GYRO_HPP
 
 #include <ossian/Factory.hpp>
@@ -23,11 +23,12 @@ public:
 	virtual auto AddGyro(const std::string location, const unsigned int id) -> void = 0;
 };
 
-class Gyro : public IGyro
+template <typename Mutex = std::mutex>
+class Gyro : public IGyro, ossian::IODataBuilder<Mutex, GyroModel>
 {
 public:
 	OSSIAN_SERVICE_SETUP(Gyro(ossian::CANManager* canManager,
-		ossian::IOData<GyroModel>* dataListener))
+		ossian::IOData<GyroModel, Mutex>* dataListener))
 		: m_CANManager(canManager)
 		  , m_DataListener(dataListener)
 	{
@@ -48,22 +49,22 @@ public:
 				auto model = m_DataListener->Get();
 				switch (data[1])
 				{
-				case 0x51: ///< ¼ÓËÙ¶È
+				case 0x51: ///< åŠ é€Ÿåº¦
 					model.m_Ax = ((data[3] << 8) | data[2]) / 32768 * 16 * g;
 					model.m_Ay = ((data[5] << 8) | data[4]) / 32768 * 16 * g;
 					model.m_Az = ((data[7] << 8) | data[6]) / 32768 * 16 * g;
 					break;
-				case 0x52: ///< ½ÇËÙ¶È
+				case 0x52: ///< è§’é€Ÿåº¦
 					model.m_Wx = ((data[3] << 8) | data[2]) / 32768 * 2000 / 180 * M_PI;
 					model.m_Wy = ((data[5] << 8) | data[4]) / 32768 * 2000 / 180 * M_PI;
 					model.m_Wz = ((data[7] << 8) | data[6]) / 32768 * 2000 / 180 * M_PI;
 					break;
-				case 0x53: ///< ½Ç¶È
-					model.m_Roll  =  ((data[3] << 8) | data[2]) / 32768 * M_PI;
-					model.m_Pitch =  ((data[5] << 8) | data[4]) / 32768 * M_PI;
-					model.m_Yaw   =  ((data[7] << 8) | data[6]) / 32768 * M_PI;
+				case 0x53: ///< è§’åº¦
+					model.m_Roll = ((data[3] << 8) | data[2]) / 32768 * M_PI;
+					model.m_Pitch = ((data[5] << 8) | data[4]) / 32768 * M_PI;
+					model.m_Yaw   = ((data[7] << 8) | data[6]) / 32768 * M_PI;
 					break;
-				case 0x54: ///< ´Å³¡
+				case 0x54: ///< ç£åœº
 					model.m_Hx = ((data[3] << 8) | data[2]);
 					model.m_Hy = ((data[5] << 8) | data[4]);
 					model.m_Hz = ((data[7] << 8) | data[6]);
@@ -75,24 +76,10 @@ public:
 
 private:
 	ossian::CANManager* m_CANManager;
-	ossian::IOData<GyroModel>* m_DataListener;
+	ossian::IOData<GyroModel, Mutex>* m_DataListener;
 };
 
-namespace ossian
-{
-template <>
-class ServiceBuilder<Gyro> : BaseServiceBuilder<Gyro>
-{
-	using ServiceType = Gyro;
-	using Super = BaseServiceBuilder<ServiceType>;
-public:
-	ServiceBuilder(ApplicationBuilder& appBuilder,
-	               std::function<void(ServiceType&)> configureProc)
-		: BaseServiceBuilder<ServiceType>(appBuilder, configureProc)
-	{
-		Super::m_AppBuilder.template AddService<IOData<GyroModel>>();
-	}
-};
-} // ossian
+using GyroMt = Gyro<std::mutex>;
+using GyroSt = Gyro<ossian::null_mutex>;
 
 #endif // OSSIAN_GYRO_HPP

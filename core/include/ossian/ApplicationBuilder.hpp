@@ -22,22 +22,36 @@
 
 namespace ossian
 {
-
 class ApplicationBuilder;
 
-template<
-	class InterfaceType,
-	class ServiceType = InterfaceType
->
+template <typename BuilderType>
+class CustomBuilder
+{
+public:
+	using OssianServiceBuilderType = BuilderType;
+};
+
+class DefaultServiceBuilder
+{
+public:
+	DefaultServiceBuilder(ApplicationBuilder& DIConfig)
+	{
+	}
+};
+
+using DefaultBuilder = CustomBuilder<DefaultServiceBuilder>;
+
+template <class InterfaceType,
+          class ServiceType = InterfaceType>
 class BaseServiceBuilder
 {
 public:
 	BaseServiceBuilder(ApplicationBuilder& appBuilder,
-					   std::function<void(ServiceType&)> configureProc) : m_AppBuilder(appBuilder),
-		m_ConfigureProc(configureProc)
+	                   std::function<void(ServiceType&)> configureProc) : m_AppBuilder(appBuilder),
+	                                                                      m_ConfigureProc(configureProc)
 	{
 		static_assert(std::is_base_of<InterfaceType, ServiceType>::value,
-					  "ServiceType has to be derived from InterfaceType");
+			"ServiceType has to be derived from InterfaceType");
 	}
 
 	virtual ~BaseServiceBuilder()
@@ -62,37 +76,83 @@ protected:
 	std::function<void(ServiceType&)> m_ConfigureProc;
 };
 
-template<
-	class InterfaceType,
-	class ServiceType = InterfaceType,
-	typename CollectionFlag = std::true_type
->
+template <class InterfaceType,
+          class ServiceType = InterfaceType,
+          typename Enabled = void>
 class ServiceBuilder : BaseServiceBuilder<InterfaceType, ServiceType>
 {
 public:
 	ServiceBuilder(ApplicationBuilder& DIConfig,
-				   std::function<void(ServiceType&)> configureProc)
+	               std::function<void(ServiceType&)> configureProc)
 		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
 	{
 	}
 };
 
-template<
-	class InterfaceType,
-	class ServiceType
->
-class ServiceBuilder<InterfaceType, ServiceType, typename std::is_base_of<IOAP::BaseInputAdapter, ServiceType>::type>
+
+template <class InterfaceType, class ServiceType>
+using IsNeedBaseServiceBuilder = std::is_constructible<typename ServiceType::OssianServiceBuilderType,
+                                                       ApplicationBuilder&,
+                                                       BaseServiceBuilder<InterfaceType, ServiceType>&>;
+
+template <class ServiceType>
+using IsValidCustomServiceBuilder = std::is_base_of<
+	CustomBuilder<typename ServiceType::OssianServiceBuilderType>, ServiceType>;
+
+/**
+ * Custom builder without BaseServiceBuilder
+ */
+template <class InterfaceType,
+          class ServiceType>
+class ServiceBuilder<InterfaceType,
+                     ServiceType,
+                     std::enable_if_t<IsValidCustomServiceBuilder<ServiceType>::value &&
+                                      !IsNeedBaseServiceBuilder<InterfaceType, ServiceType>::value>>
+	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::OssianServiceBuilderType
+{
+public:
+	ServiceBuilder(ApplicationBuilder& DIConfig,
+	               std::function<void(ServiceType&)> configureProc)
+		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
+		  , ServiceType::OssianServiceBuilderType(DIConfig)
+	{
+	}
+};
+
+/**
+ * Custom builder with BaseServiceBuilder
+ */
+template <class InterfaceType,
+          class ServiceType>
+class ServiceBuilder<InterfaceType,
+                     ServiceType,
+                     std::enable_if_t<IsValidCustomServiceBuilder<ServiceType>::value &&
+                                      IsNeedBaseServiceBuilder<InterfaceType, ServiceType>::value>>
+	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::OssianServiceBuilderType
+{
+public:
+	ServiceBuilder(ApplicationBuilder& DIConfig,
+	               std::function<void(ServiceType&)> configureProc)
+		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
+		  , ServiceType::OssianServiceBuilderType(DIConfig, *this)
+	{
+	}
+};
+
+template <class InterfaceType,
+          class ServiceType>
+class ServiceBuilder<InterfaceType, ServiceType,
+                     std::enable_if_t<std::is_base_of<IOAP::BaseInputAdapter, ServiceType>::value>>
 	: BaseServiceBuilder<InterfaceType, ServiceType>
 {
 public:
 	ServiceBuilder(ApplicationBuilder& appBuilder,
-				   std::function<void(ServiceType&)> configureProc)
+	               std::function<void(ServiceType&)> configureProc)
 		: BaseServiceBuilder<InterfaceType, ServiceType>(appBuilder, configureProc)
 	{
 	}
 
-	auto AsInputAdapter() -> ServiceBuilder<InterfaceType, ServiceType,
-		typename std::is_base_of<IOAP::BaseInputAdapter, ServiceType>::type>&
+	auto AsInputAdapter() -> decltype(*this)&
 	{
 		this->m_AppBuilder.template SetServiceAsInputAdapter<ServiceType>();
 		return *this;
@@ -106,15 +166,15 @@ public:
 class ApplicationBuilder
 {
 public:
-	ApplicationBuilder() = default;
-	ApplicationBuilder(const ApplicationBuilder& dispatcher) = delete;
+	ApplicationBuilder()                                      = default;
+	ApplicationBuilder(const ApplicationBuilder& dispatcher)  = delete;
 	ApplicationBuilder(const ApplicationBuilder&& dispatcher) = delete;
 
 	/**
 	 * @brief 注册一项输入服务
 	 * @tparam InputAdapterType 服务类型
 	 */
-	template<typename InputAdapterType>
+	template <typename InputAdapterType>
 	ApplicationBuilder& AddInputAdapter()
 	{
 		AddService<InputAdapterType>();
@@ -122,7 +182,7 @@ public:
 		return *this;
 	}
 
-	template<typename ServiceType>
+	template <typename ServiceType>
 	ApplicationBuilder& SetServiceAsInputAdapter()
 	{
 		m_InputAdapterRealizer.emplace_back(
@@ -137,15 +197,15 @@ public:
 	 * @tparam InputType 输入类型
 	 * @tparam ActionTypes 动作类型
 	 */
-	template<typename StatusType, typename InputType, typename... ActionTypes>
+	template <typename StatusType, typename InputType, typename... ActionTypes>
 	ApplicationBuilder& RegisterPipeline()
 	{
 		m_DIConfig.Add<IOAP::Pipeline>(IOAP::CreatePipeline<StatusType, ActionTypes...>);
 		m_PipelineRealizer.emplace_back([](DI::Injector& injector)
-										{
-											return std::make_tuple(std::type_index(typeid(InputType)),
-																   injector.GetInstance<IOAP::Pipeline>());
-										});
+		{
+			return std::make_tuple(std::type_index(typeid(InputType)),
+			                       injector.GetInstance<IOAP::Pipeline>());
+		});
 		return *this;
 	}
 
@@ -153,16 +213,20 @@ public:
 	 * @brief 注册一项服务
 	 * @tparam ServiceType 服务类型
 	 */
-	template<typename InterfaceType, typename ServiceType>
-	auto AddService(std::function<void(ServiceType&)> configProc = [](ServiceType&) {})
-		-> ServiceBuilder<InterfaceType, ServiceType>
+	template <typename InterfaceType, typename ServiceType>
+	auto AddService(std::function<void(ServiceType&)> configProc = [](ServiceType&)
+	{
+	})
+	-> ServiceBuilder<InterfaceType, ServiceType>
 	{
 		return ServiceBuilder<InterfaceType, ServiceType>(*this, configProc);
 	}
 
-	template<typename ServiceType>
-	auto AddService(std::function<void(ServiceType&)> configProc = [](ServiceType&) {})
-		-> ServiceBuilder<ServiceType, ServiceType>
+	template <typename ServiceType>
+	auto AddService(std::function<void(ServiceType&)> configProc = [](ServiceType&)
+	{
+	})
+	-> ServiceBuilder<ServiceType, ServiceType>
 	{
 		return AddService<ServiceType, ServiceType>(configProc);
 	}
@@ -175,7 +239,7 @@ public:
 	 * @tparam Deps
 	 * @param instanceFactory
 	 */
-	template<class InterfaceType, class InstanceType, class Deleter, class... Deps>
+	template <class InterfaceType, class InstanceType, class Deleter, class... Deps>
 	ApplicationBuilder& Add(DI::InstanceFactoryNativeFunction<InstanceType, Deleter, Deps...> instanceFactory)
 	{
 		m_DIConfig.Add<InterfaceType>(instanceFactory);
@@ -190,7 +254,7 @@ public:
 	 * @param instanceFactory 构造函数
 	 * @return
 	 */
-	template<class InterfaceType, class InstanceType, class Deleter, class... Deps>
+	template <class InterfaceType, class InstanceType, class Deleter, class... Deps>
 	ApplicationBuilder& Add(DI::InstanceFactoryFunction<InstanceType, Deleter, Deps...> instanceFactory)
 	{
 		m_DIConfig.Add<InterfaceType>(instanceFactory);
@@ -226,13 +290,12 @@ private:
 	DI::DIConfiguration m_DIConfig;
 
 	// 用于获得实例化后的Pipeline，但此处框架仅支持一个Pipeline，使用vector是为了之后支持多Pipeline做准备
-	std::vector<IOAP::Realizer < std::tuple<std::type_index, IOAP::Pipeline*>>>
-		m_PipelineRealizer;
+	std::vector<IOAP::Realizer<std::tuple<std::type_index, IOAP::Pipeline*>>>
+	m_PipelineRealizer;
 
 	// 用于获得实例化后的InputAdapter
-	std::vector<IOAP::Realizer < IOAP::BaseInputAdapter* >> m_InputAdapterRealizer;
+	std::vector<IOAP::Realizer<IOAP::BaseInputAdapter*>> m_InputAdapterRealizer;
 };
-
 } // namespace ossian
 
 #endif // OSSIAN_CORE_CONFIG
