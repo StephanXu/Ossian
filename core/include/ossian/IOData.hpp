@@ -9,35 +9,41 @@
 
 namespace ossian
 {
-class IIOData
+template <typename DataType>
+class IOData
 {
+	using OnReceiveProcType = void(const DataType& value);
 public:
-	virtual ~IIOData() = default;
+	virtual ~IOData() = default;
+	virtual auto Set(const DataType& value) noexcept -> void = 0;
+	virtual auto Get() noexcept -> DataType = 0;
+	virtual auto GetRef() const noexcept -> const DataType& = 0;
 	virtual auto Lock() -> void = 0;
 	virtual auto UnLock() -> void = 0;
 	virtual auto TryLock() noexcept -> bool = 0;
 	virtual auto TypeIndex() noexcept -> std::type_index = 0;
+	virtual auto AddOnChange(std::function<OnReceiveProcType> callback) -> void = 0;
 };
 
 template <typename DataType, typename Mutex = std::mutex>
-class IOData : public IIOData
+class IODataImpl : public IOData<DataType>
 {
 public:
 	using Type = DataType;
 	using OnReceiveProcType = void(const DataType& value);
+	
+	OSSIAN_SERVICE_SETUP(IODataImpl()) = default;
+	~IODataImpl()                      = default;
+	IODataImpl(const IODataImpl&)      = delete;
 
-	OSSIAN_SERVICE_SETUP(IOData()) = default;
-	~IOData()                      = default;
-	IOData(const IOData&)          = delete;
-
-	IOData(IOData&& listener) noexcept
+	IODataImpl(IODataImpl&& listener) noexcept
 	{
 		*this = std::move(listener);
 	}
 
-	auto operator=(const IOData&) -> IOData& = delete;
+	auto operator=(const IODataImpl&) -> IODataImpl& = delete;
 
-	auto operator=(IOData&& listener) noexcept -> IOData&
+	auto operator=(IODataImpl&& listener) noexcept -> IODataImpl&
 	{
 		{
 			std::lock_guard<Mutex> guard{m_Mutex};
@@ -48,7 +54,7 @@ public:
 		return *this;
 	}
 
-	auto Set(const DataType& value) noexcept -> void
+	auto Set(const DataType& value) noexcept -> void override
 	{
 		{
 			std::lock_guard<Mutex>{m_Mutex};
@@ -57,13 +63,13 @@ public:
 		m_OnChange(value);
 	}
 
-	auto Get() noexcept -> DataType
+	auto Get() noexcept -> DataType override
 	{
 		std::lock_guard<Mutex>{m_Mutex};
 		return m_Payload;
 	}
 
-	auto GetRef() const noexcept -> const DataType&
+	auto GetRef() const noexcept -> const DataType& override
 	{
 		return m_Payload;
 	}
@@ -111,7 +117,8 @@ class IODataServiceBuilder
 public:
 	IODataServiceBuilder(ApplicationBuilder& appBuilder)
 	{
-		std::make_tuple((appBuilder.template AddService<IOData<DataModelTypes>>())...);
+		std::make_tuple((appBuilder.template AddService<IOData<DataModelTypes>,
+		                                                IODataImpl<DataModelTypes, Mutex>>())...);
 	}
 };
 

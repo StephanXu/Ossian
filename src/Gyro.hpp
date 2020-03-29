@@ -28,7 +28,7 @@ class Gyro : public IGyro, ossian::IODataBuilder<Mutex, GyroModel>
 {
 public:
 	OSSIAN_SERVICE_SETUP(Gyro(ossian::CANManager* canManager,
-		ossian::IOData<GyroModel, Mutex>* dataListener))
+		ossian::IOData<GyroModel>* dataListener))
 		: m_CANManager(canManager)
 		  , m_DataListener(dataListener)
 	{
@@ -76,7 +76,7 @@ public:
 
 private:
 	ossian::CANManager* m_CANManager;
-	ossian::IOData<GyroModel, Mutex>* m_DataListener;
+	ossian::IOData<GyroModel>* m_DataListener;
 };
 
 using GyroMt = Gyro<std::mutex>;

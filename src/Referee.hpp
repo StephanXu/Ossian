@@ -341,7 +341,7 @@ class Referee : public IReferee, public ossian::IODataBuilder<Mutex,MessageTypes
 {
 public:
 	OSSIAN_SERVICE_SETUP(Referee(ossian::UARTManager* uartManager,
-		ossian::IOData<MessageTypes, Mutex>*...listeners))
+		ossian::IOData<MessageTypes>*...listeners))
 		: m_UARTManager(uartManager)
 		  , m_Container(std::make_tuple(listeners...))
 	{
