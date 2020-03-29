@@ -12,7 +12,7 @@
 
 #include <chrono>
 #include <array>
-#include <thread>
+#include <atomic>
 
 class Gun
 {
@@ -252,7 +252,7 @@ private:
 	FricMode m_FricMode;
 	FeedMode m_FeedMode;
 
-	int m_CurBulletShotNum; //在热量持续上升的过程中，累积打出的子弹数
+	std::atomic<int> m_CurBulletShotNum; //在热量持续上升的过程中，累积打出的子弹数
 	int16_t m_FricSpeedSet;
 	std::array<PIDController, 2> m_PIDFricSpeed;
 	PIDController m_PIDFeedSpeed;
