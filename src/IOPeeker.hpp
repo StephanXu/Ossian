@@ -11,8 +11,8 @@
 class IOPeeker : public ossian::IExecutable
 {
 public:
-	OSSIAN_SERVICE_SETUP(IOPeeker())
-		: m_Listener()
+	OSSIAN_SERVICE_SETUP(IOPeeker(ossian::IOListener* listener))
+		: m_Listener(listener)
 	{
 	};
 
@@ -20,9 +20,7 @@ public:
 	{
 		while (true)
 		{
-			spdlog::info("hello");
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			//m_Listener->Listen(1000);
+			m_Listener->Listen(1000);
 		}
 	}
 
