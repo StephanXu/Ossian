@@ -6,6 +6,8 @@
 #ifndef OSSIAN_CORE_IO_CAN
 #define OSSIAN_CORE_IO_CAN
 
+#include <spdlog/spdlog.h>
+
 #ifdef __linux__
 #include <termios.h>
 #include <fcntl.h> 
@@ -78,7 +80,11 @@ public:
 	{};
 
 	CANBus* Bus() const { return m_Bus; }
-	void Invoke(const size_t length, const uint8_t* data) override { m_Callback(shared_from_this(), length, data); }
+	void Invoke(const size_t length, const uint8_t* data) override
+	{
+		spdlog::trace("CANDevice Receive: {}", length);
+		m_Callback(shared_from_this(), length, data);
+	}
 	void WriteRaw(const size_t length, const uint8_t* data) const override { m_Bus->WriteRaw(m_Id, length, data); }
 
 	std::shared_ptr<CANDevice> SetCallback(std::function<ReceiveCallback<CANDevice>> const& callback)

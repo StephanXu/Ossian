@@ -33,7 +33,7 @@ class Remote final : public IRemote, public ossian::IODataBuilder<Mutex, RemoteS
 	Mutex m_Mutex;
 public:
 	OSSIAN_SERVICE_SETUP(Remote(ossian::UARTManager* uartManager,
-								ossian::IOData<RemoteStatus>* ioData))
+		ossian::IOData<RemoteStatus>* ioData))
 		: m_UARTManager(uartManager), m_IOData(ioData)
 	{
 	}
@@ -42,21 +42,28 @@ public:
 
 	auto AddRemote(std::string location) -> void override
 	{
-		m_UARTManager->AddDevice(location)->SetCallback(
-			[this](const std::shared_ptr<ossian::BaseDevice>& device, const size_t length,
-			       const uint8_t* data)
-			{
-				sscanf(reinterpret_cast<const char*>(data),
-				       "CH1:%hu,CH2:%hu,CH3:%hu,CH4:%hu,CH5:%hu,S1:%hhu,S2:%hhu",
-				       &m_Status.ch[0],
-				       &m_Status.ch[1],
-				       &m_Status.ch[2],
-				       &m_Status.ch[3],
-				       &m_Status.ch[4],
-				       &m_Status.sw[0],
-				       &m_Status.sw[1]);
-				m_IOData->Set(m_Status);
-			});
+		using namespace ossian::UARTProperties;
+		m_UARTManager->AddDevice(location,
+		                         R115200,
+		                         FlowControlNone,
+		                         DataBits8,
+		                         StopBits1,
+		                         ParityNone)
+		             ->SetCallback(
+			             [this](const std::shared_ptr<ossian::BaseDevice>& device, const size_t length,
+			                    const uint8_t* data)
+			             {
+				             sscanf(reinterpret_cast<const char*>(data),
+				                    "CH1:%hu,CH2:%hu,CH3:%hu,CH4:%hu,CH5:%hu,S1:%hhu,S2:%hhu",
+				                    &m_Status.ch[0],
+				                    &m_Status.ch[1],
+				                    &m_Status.ch[2],
+				                    &m_Status.ch[3],
+				                    &m_Status.ch[4],
+				                    &m_Status.sw[0],
+				                    &m_Status.sw[1]);
+				             m_IOData->Set(m_Status);
+			             });
 	}
 };
 

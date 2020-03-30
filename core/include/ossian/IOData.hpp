@@ -124,7 +124,6 @@ class IODataServiceBuilder
 public:
 	IODataServiceBuilder(ApplicationBuilder& appBuilder): m_AppBuilder(appBuilder)
 	{
-		spdlog::info("DataModelTypes: {}", (std::string(typeid(DataModelTypes).name()) + ...));
 		std::make_tuple(std::move((appBuilder.template AddService<IOData<DataModelTypes>,
 		                                                          IODataImpl<DataModelTypes, Mutex>>()))...);
 	}

@@ -58,7 +58,7 @@ public:
 
 	virtual ~BaseServiceBuilder()
 	{
-		spdlog::info("Register DI: {}\t{}", typeid(InterfaceType).name(), typeid(ServiceType).name());
+		spdlog::trace("Register DI: {}\t{}", typeid(InterfaceType).name(), typeid(ServiceType).name());
 		m_AppBuilder.template Add<InterfaceType>(
 			InstanceFactory<typename ServiceType::_OssianServiceInjectorType>::Value(m_ConfigureProc));
 	}
@@ -213,7 +213,7 @@ public:
 		const auto console = spdlog::stderr_color_mt("console");
 		spdlog::set_default_logger(console);
 		spdlog::set_pattern("[%T.%e] [%-5t] %^[%l]%$  %v");
-		spdlog::set_level(spdlog::level::info);
+		spdlog::set_level(spdlog::level::trace);
 		return *this;
 	}
 

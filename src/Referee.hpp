@@ -337,7 +337,7 @@ public:
 };
 
 template <typename Mutex = std::mutex, typename ...MessageTypes>
-class Referee : public IReferee, public ossian::IODataBuilder<Mutex,MessageTypes...>
+class Referee : public IReferee, public ossian::IODataBuilder<Mutex, MessageTypes...>
 {
 public:
 	OSSIAN_SERVICE_SETUP(Referee(ossian::UARTManager* uartManager,
@@ -351,13 +351,20 @@ public:
 
 	auto AddReferee(std::string location) -> void override
 	{
-		m_UARTManager->AddDevice(location)->SetCallback(
-			[this](const std::shared_ptr<ossian::BaseDevice>& device,
-			       const size_t length,
-			       const uint8_t* data)
-			{
-				ParseReferee(data, length);
-			});
+		using namespace ossian::UARTProperties;
+		m_UARTManager->AddDevice(location,
+		                         Baudrate::R115200,
+		                         FlowControl::FlowControlNone,
+		                         DataBits::DataBits8,
+		                         StopBits::StopBits1,
+		                         Parity::ParityNone)
+		             ->SetCallback(
+			             [this](const std::shared_ptr<ossian::BaseDevice>& device,
+			                    const size_t length,
+			                    const uint8_t* data)
+			             {
+				             ParseReferee(data, length);
+			             });
 	}
 
 private:

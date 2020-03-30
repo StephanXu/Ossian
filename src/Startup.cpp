@@ -36,7 +36,7 @@ void Startup::ConfigServices(AppBuilder& app)
 
 	app.AddService<ossian::CANManager>();
 	app.AddService<ossian::UARTManager>();
-	//app.AddService<ossian::IOListener>();
+	app.AddService<ossian::IOListener>();
 	app.AddService<ossian::MotorManager>();
 
 	app.AddService<IReferee, RefereeAllMessagesSt>(

@@ -14,25 +14,26 @@ int main()
 	                       "Referee",
 	                       "Log of referee test.");
 	spdlog::info("Start testing...");
-	auto mgr = std::make_shared<ossian::UARTManager>();
-	mgr->AddDevice("/dev/ttyTHS2")->SetCallback(
-		[](std::shared_ptr<ossian::UARTDevice> const& device, const size_t length, const uint8_t* data)
-		{
-			std::stringstream ss;
-			for (size_t i{}; i < length; ++i)
-			{
-				ss << fmt::format("{:02x}", data[i]);
-				ss << " ";
-			}
-			spdlog::info("[{}]: {}", length, ss.str());
-		});
-	auto buses = mgr->GetBuses();
-	std::vector<ossian::IListenable*> lis;
-	for (auto bus : buses)
-	{
-		lis.push_back(bus);
-	}
-	ossian::IOListener listener(&lis);
+	ossian::IOListener listener;
+	auto mgr = std::make_shared<ossian::UARTManager>(&listener);
+	using namespace ossian::UARTProperties;
+	mgr->AddDevice("/dev/ttyTHS2",
+	               Baudrate::R115200,
+	               FlowControl::FlowControlNone,
+	               DataBits::DataBits8,
+	               StopBits::StopBits1,
+	               Parity::ParityNone)
+	   ->SetCallback(
+		   [](std::shared_ptr<ossian::UARTDevice> const& device, const size_t length, const uint8_t* data)
+		   {
+			   std::stringstream ss;
+			   for (size_t i{}; i < length; ++i)
+			   {
+				   ss << fmt::format("{:02x}", data[i]);
+				   ss << " ";
+			   }
+			   spdlog::info("[{}]: {}", length, ss.str());
+		   });	
 	while (true)
 	{
 		listener.Listen(1000);
