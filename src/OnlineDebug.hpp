@@ -97,15 +97,16 @@ public:
 				{
 					waitLogId.set_value(std::string{ id });
 				});
-		auto distSink = std::make_shared<spdlog::sinks::dist_sink_st>();
-		auto stdSink = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
-		auto onlineSink = std::make_shared<online_logger_sink_st>(*m_Hub, waitLogId.get_future().get());
+		auto distSink = std::make_shared<spdlog::sinks::dist_sink_mt>();
+		auto stdSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+		auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, waitLogId.get_future().get());
 
 		distSink->add_sink(stdSink);
 		distSink->add_sink(onlineSink);
 
 		auto logger = std::make_shared<spdlog::logger>(loggerName, distSink);
 		logger->set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
+		logger->set_level(spdlog::level::level_enum::trace);
 		spdlog::register_logger(logger);
 		spdlog::set_default_logger(logger);
 		spdlog::flush_every(std::chrono::seconds(1));

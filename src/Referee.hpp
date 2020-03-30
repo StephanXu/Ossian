@@ -363,6 +363,7 @@ public:
 			                    const size_t length,
 			                    const uint8_t* data)
 			             {
+							 spdlog::trace("Referee Receive: {}", length);
 				             ParseReferee(data, length);
 			             });
 	}

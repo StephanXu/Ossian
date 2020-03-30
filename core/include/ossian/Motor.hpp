@@ -74,10 +74,11 @@ public:
 		};
 		auto motor = std::make_shared<MotorType>(std::forward<Args>(args)...);
 		auto dev = m_CANManager->AddDevice(location, motor->CANId())->SetCallback(parseProc);
+		writer->AddDevice(motor);
 		motor->SetWriter(writer.get());
 		m_Motors.insert(std::make_pair(dev, motor));
-
-		spdlog::trace("Add new motor: location: {}, motorId: {}, CANId: {},",
+		
+		spdlog::trace("Add new motor: location: {}, motorId: {}, CANId: {:#x},",
 					  location,
 					  motor->MotorId(),
 					  motor->CANId());
@@ -100,7 +101,7 @@ public:
 		writer->SetDevice(dev);
 		m_Writers.insert(std::make_pair(dev, writer));
 
-		spdlog::trace("Add new motor writer: location: {}, CANId: {}", location, writer->CANId());
+		spdlog::trace("Add new motor writer: location: {}, CANId: {:#x}", location, writer->CANId());
 
 		return std::dynamic_pointer_cast<IMotorWriter>(writer);
 	}
@@ -136,7 +137,7 @@ public:
 		const size_t index{ motor->MotorId() - (0x1ff == m_CANId ? 1 : 5) };
 		if (index > m_Motors.size()) { throw std::runtime_error("Invalid motor id"); }
 		m_Motors[index] = motor;
-		spdlog::trace("MotorWriter add device: writerCANId: {}, motorId: {}", m_CANId, motor->MotorId());
+		spdlog::trace("MotorWriter add device: writerCANId: {:#x}, motorId: {}", m_CANId, motor->MotorId());
 	}
 
 	auto Pack(PackModel& outModel) const noexcept -> void
@@ -192,7 +193,7 @@ class DJIMotor : public IMotor
 {
 	friend class MotorManager;
 	using DefaultWriter = DJIMotorWriter;
-	const unsigned int CANIdBase = 0x204;
+	const unsigned int CANIdBase = 0x200;
 public:
 	DJIMotor(unsigned int motorId)
 		:m_MotorId(motorId)

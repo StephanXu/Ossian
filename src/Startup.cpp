@@ -42,12 +42,12 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IReferee, RefereeAllMessagesSt>(
 		[](RefereeAllMessagesSt& option)
 		{
-			option.AddReferee("/dev/ttyTHS2");
+			option.AddReferee("/dev/ttyS0");
 		});
 	app.AddService<IRemote, RemoteSt>(
 		[](IRemote& option)
 		{
-			option.AddRemote("/dev/ttyS0");
+			option.AddRemote("/dev/ttyTHS2");
 		});
 	app.AddService<ICapacitor, CapacitorSt>(
 		[](ICapacitor& option)
@@ -72,7 +72,7 @@ void Startup::ConfigServices(AppBuilder& app)
 		[](Gimbal& option)
 		{
 			option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 1, 0x1ff);
-			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 1, 0x1ff);
+			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 2, 0x1ff);
 		});
 }
 

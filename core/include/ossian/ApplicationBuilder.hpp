@@ -212,7 +212,7 @@ public:
 	{
 		const auto console = spdlog::stderr_color_mt("console");
 		spdlog::set_default_logger(console);
-		spdlog::set_pattern("[%T.%e] [%-5t] %^[%l]%$  %v");
+		spdlog::set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
 		spdlog::set_level(spdlog::level::trace);
 		return *this;
 	}

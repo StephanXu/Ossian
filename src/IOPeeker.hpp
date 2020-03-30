@@ -16,13 +16,7 @@ public:
 	{
 	};
 
-	auto ExecuteProc() -> void override
-	{
-		while (true)
-		{
-			m_Listener->Listen(1000);
-		}
-	}
+	auto ExecuteProc() -> void override;
 
 private:
 	ossian::IOListener* m_Listener;
