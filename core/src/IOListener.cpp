@@ -5,10 +5,9 @@
 
 namespace ossian
 {
-IOListener::IOListener(std::vector<IListenable*>* ioBuses)
+IOListener::IOListener()
 {
 	m_EpollFD = epoll_create(MAX_EVENTS); //创建一个Epoll
-	for (auto item : *ioBuses) { AddBus(item); }
 }
 
 void IOListener::Listen(const long timeout) const

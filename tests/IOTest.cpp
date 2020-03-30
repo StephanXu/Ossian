@@ -15,15 +15,10 @@ void func(shared_ptr<CANDevice> const& device, const size_t length, const uint8_
 
 int main()
 {
-	auto mgr = std::make_shared<CANManager>();
+	IOListener listener;
+	auto mgr = std::make_shared<CANManager>(&listener);
 	mgr->AddDevice("can0", 0x100)->SetCallback(func);
-	auto buses = mgr->GetBuses();
-	std::vector<IListenable*> lis;
-	for (auto bus : buses)
-	{
-		lis.push_back(bus);
-	}
-	IOListener listener(&lis);
+	
 	while (true)
 	{
 		listener.Listen(1000);
