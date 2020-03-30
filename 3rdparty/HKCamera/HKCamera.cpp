@@ -59,7 +59,7 @@ HKCamera &HKCamera::operator=(HKCamera &&camera) noexcept
 bool HKCamera::Initialize()
 {
     m_IsValid = false;
-    memset(&m_DeviceList, NULL, sizeof(MV_CC_DEVICE_INFO_LIST));
+    memset(&m_DeviceList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
     if (MV_OK != MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &m_DeviceList))
         throw std::runtime_error("Enum devices fail");
     m_IsValid = true;
@@ -106,7 +106,7 @@ void HKCamera::SetDevice(const int camIndex)
 
     // Get payload size
     MVCC_INTVALUE stParam;
-    memset(&stParam, NULL, sizeof(MVCC_INTVALUE));
+    memset(&stParam, 0, sizeof(MVCC_INTVALUE));
     if (MV_OK != MV_CC_GetIntValue(m_Handle, "PayloadSize", &stParam))
         throw std::runtime_error("Get PayloadSize fail");
     m_PayloadSize = stParam.nCurValue;
