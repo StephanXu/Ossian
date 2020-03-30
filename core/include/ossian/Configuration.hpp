@@ -18,8 +18,15 @@ namespace ossian
 {
 namespace Utils
 {
-
 class ConfigServiceBuilder;
+
+class ConfigParseError : public std::runtime_error
+{
+public:
+	ConfigParseError(std::string message): std::runtime_error(message)
+	{
+	}
+};
 
 /**
  * @class	Configuration
@@ -40,16 +47,20 @@ public:
 	void LoadConfig(std::string text)
 	{
 		m_Config.reset(new ConfigType);
-		google::protobuf::util::JsonStringToMessage(text, m_Config.get());
+		const auto convertStatus = google::protobuf::util::JsonStringToMessage(text, m_Config.get());
+		if (!convertStatus.ok())
+		{
+			throw ConfigParseError{convertStatus.ToString()};
+		}
 #ifdef _DEBUG
-        {
-            std::string str;
-            google::protobuf::util::JsonOptions opt;
-            opt.always_print_primitive_fields = true;
-            opt.add_whitespace = true;
-            google::protobuf::util::MessageToJsonString(*m_Config, &str, opt);
-            spdlog::info("{}", str);
-        }
+		{
+			std::string str;
+			google::protobuf::util::JsonOptions opt;
+			opt.always_print_primitive_fields = true;
+			opt.add_whitespace                = true;
+			google::protobuf::util::MessageToJsonString(*m_Config, &str, opt);
+			spdlog::info("{}", str);
+		}
 #endif
 		m_Valid = true;
 	}
@@ -67,8 +78,16 @@ public:
 	{
 		std::ifstream f(configFilename);
 		std::string text{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
-		spdlog::info("Load configuration from file: {}", configFilename);
-		LoadConfig<ConfigType>(text);
+		try
+		{
+			LoadConfig<ConfigType>(text);
+		}
+		catch (ConfigParseError& err)
+		{
+			spdlog::error("Parse configuration from file {} failed: {}", configFilename, err.what());
+			std::abort();
+		}
+		spdlog::trace("Load configuration from file: {}", configFilename);
 	}
 
 	template <typename ConfigType>
@@ -78,10 +97,18 @@ public:
 		auto res = cli.Get(path.c_str());
 		if (!res || res->status != 200)
 		{
-			throw std::runtime_error(fmt::format("Can't get configuration from url: {}", res->status));
+			throw std::runtime_error(fmt::format("Fetch configuration from url failed: {}", res->status));
 		}
-		spdlog::info("Load configuration from {}", host);
-		LoadConfig<ConfigType>(res->body);
+		try
+		{
+			LoadConfig<ConfigType>(res->body);
+		}
+		catch (ConfigParseError& err)
+		{
+			spdlog::error("Parse configuration from {} failed: {}", host, err.what());
+			std::abort();
+		}
+		spdlog::trace("Load configuration from {}", host);
 	}
 
 	bool Valid() const noexcept
@@ -109,9 +136,9 @@ public:
 	auto LoadFromUrl(std::string host, int port, std::string path) -> ConfigServiceBuilder&
 	{
 		m_BaseBuilder.AddConfig([host, port, path](Utils::ConfigLoader& option)
-								{
-									option.LoadConfigFromUrl<ConfigType>(host, port, path);
-								});
+		{
+			option.LoadConfigFromUrl<ConfigType>(host, port, path);
+		});
 		return *this;
 	}
 
@@ -119,13 +146,12 @@ public:
 	auto LoadFromFile(std::string filename) -> ConfigServiceBuilder&
 	{
 		m_BaseBuilder.AddConfig([filename](Utils::ConfigLoader& option)
-								{
-									option.LoadConfigFromFile<ConfigType>(filename);
-								});
+		{
+			option.LoadConfigFromFile<ConfigType>(filename);
+		});
 		return *this;
 	}
 };
-
 } //Utils
 } //ossian
 
