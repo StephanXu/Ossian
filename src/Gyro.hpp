@@ -24,7 +24,7 @@ public:
 };
 
 template <typename Mutex = std::mutex>
-class Gyro : public IGyro, ossian::IODataBuilder<Mutex, GyroModel>
+class Gyro : public IGyro, public ossian::IODataBuilder<Mutex, GyroModel>
 {
 public:
 	OSSIAN_SERVICE_SETUP(Gyro(ossian::CANManager* canManager,

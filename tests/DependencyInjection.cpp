@@ -45,4 +45,6 @@ int main()
 	app->AddService<IPrinter, WorldPrinter>();
 	app->AddService<ResultGenerator>();
 	app->AddService<ResultPeeker>();
+
+	app->Realization();
 }

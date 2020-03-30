@@ -14,3 +14,8 @@ add_executable(CameraTest)
 target_compile_features(CameraTest PRIVATE cxx_std_17)
 target_link_libraries(CameraTest PRIVATE OssianCore HKCamera spdlog::spdlog signalrclient mimalloc)
 target_sources(CameraTest PRIVATE CameraTest.cpp ../src/OnlineDebug.cpp)
+
+add_executable(DITest)
+target_compile_features(DITest PRIVATE cxx_std_17)
+target_link_libraries(DITest PRIVATE OssianCore HKCamera spdlog::spdlog signalrclient mimalloc)
+target_sources(DITest PRIVATE DependencyInjection.cpp)

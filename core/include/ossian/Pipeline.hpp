@@ -11,15 +11,11 @@
 #ifndef OSSIAN_CORE_PIPELINE
 #define OSSIAN_CORE_PIPELINE
 
-#include "IOTypes.hpp"
-#include "Service.hpp"
-
 #include <vector>
 
 namespace ossian
 {
-namespace IOAP
-{
+
 /**
  * @brief 执行体
  * 执行体定义了可执行的实例，可以被执行，并且提供一个可跳过的判断方法
@@ -27,53 +23,9 @@ namespace IOAP
 class IExecutable
 {
 public:
-    virtual void Process(BaseInputData *refInput) = 0;
-    virtual bool IsSkip(const BaseStatus &refStatus) = 0;
+	virtual void ExecuteProc() = 0;
 };
 
-/**
- * @brief 管道实现
- * 管道是被调度器周期性调用的，接受特定输入的集合。其下包含若干个动作，以顺序的方式进行。
- */
-class Pipeline
-{
-public:
-    /**
-     * @brief 创建一个管道实例
-     * 
-     * @param status 状态对象
-     * @param actions 动作实例（有序）
-     */
-    Pipeline(BaseStatus &status, std::vector<IExecutable *> &&actions);
-    ~Pipeline() = default;
-
-    /**
-     * @brief 运行管道
-     * @param inputData 输入数据，输入数据格式应当在注册时指定，不能为空
-     */
-    void ProcessTask(std::shared_ptr<BaseInputData> inputData);
-
-private:
-    std::vector<IExecutable *> m_Actions;
-    BaseStatus &m_Status;
-};
-
-/**
- * @brief Create a Pipeline object
- * 生成一个管道实例
- * @tparam StatusType 状态类型
- * @tparam Args 动作类型
- * @param status 状态
- * @param actions 所有动作
- * @return std::unique_ptr<Pipeline> 管道实例
- */
-template <typename StatusType, typename... Args>
-std::unique_ptr<Pipeline> CreatePipeline(StatusType *status, Args *... actions)
-{
-    static_assert(std::is_base_of<BaseStatus, StatusType>::value, "StatusType should derived from BaseStatus");
-    return std::make_unique<Pipeline>(*status, std::vector<IExecutable *>{actions...});
-}
-} // namespace IOAP
 } // namespace ossian
 
 #endif //OSSIAN_CORE_PIPELINE

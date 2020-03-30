@@ -16,7 +16,6 @@
 #include "ossian/Pipeline.hpp"
 #include "ossian/Dispatcher.hpp"
 #include "ossian/MultiThread.hpp"
-#include "ossian/Service.hpp"
 #include "ossian/ApplicationBuilder.hpp"
 #include "ossian/Factory.hpp"
 #include "ossian/Configuration.hpp"

@@ -6,7 +6,6 @@
 #include "InputAdapter.hpp"
 #include "WindmillDetection.hpp"
 #include "Aimbot.hpp"
-#include "SerialReport.hpp"
 #include "Chassis.hpp"
 #include "Gimbal.hpp"
 #include "OnlineDebug.hpp"
@@ -14,16 +13,9 @@
 #include "Capacitor.hpp"
 #include "Referee.hpp"
 #include "Gyro.hpp"
+#include "IOPeeker.hpp"
 
 #include <thread>
-
-class RoboStatus : public ossian::IOAP::BaseStatus
-{
-public:
-	OSSIAN_SERVICE_SETUP(RoboStatus())
-	{
-	}
-};
 
 void Startup::ConfigServices(AppBuilder& app)
 {
@@ -41,13 +33,10 @@ void Startup::ConfigServices(AppBuilder& app)
 			                    "OssianLog",
 			                    "A piece of log.");
 		});
-	app.AddService<RoboStatus>();
-	app.AddService<VideoInputSource>().AsInputAdapter();
-	app.AddService<SerialPortIO>();
 
 	app.AddService<ossian::CANManager>();
 	app.AddService<ossian::UARTManager>();
-	app.AddService<ossian::IOListener>();
+	//app.AddService<ossian::IOListener>();
 	app.AddService<ossian::MotorManager>();
 
 	app.AddService<IReferee, RefereeAllMessagesSt>(
@@ -85,19 +74,9 @@ void Startup::ConfigServices(AppBuilder& app)
 			option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 1, 0x1ff);
 			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 1, 0x1ff);
 		});
-	//app.AddInputAdapter<CameraInputSource>();
-	//app.AddInputAdapter<FakeInputSource>();
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)
 {
-	//app.RegisterPipeline<RoboStatus, FakeData,
-	//	SerialReport>();
-
-	app.RegisterPipeline<RoboStatus, ImageInputData,
-	                     WindmillDetection>();
-	app.Add<WindmillDetection>(WindmillDetection::CreateWindmillDetection);
-
-	//app.Register(Aimbot::CreateAimbot);
-	//app.Register(SerialReport::CreateSerialReport);
+	app.AddService<ossian::IExecutable, IOPeeker>();
 }

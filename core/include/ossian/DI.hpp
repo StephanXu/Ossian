@@ -5,6 +5,8 @@
 #ifndef OSSIAN_CORE_DI
 #define OSSIAN_CORE_DI
 
+#include <spdlog/spdlog.h>
+
 #include <memory>
 #include <atomic>
 #include <unordered_map>
@@ -19,8 +21,9 @@ namespace ossian
 {
 namespace DI
 {
-
-class DuplicateRegistration : std::exception {};
+class DuplicateRegistration : std::exception
+{
+};
 
 //------------------------------------------------------------------------------
 // 类型封装
@@ -117,7 +120,7 @@ class DIConfiguration;
  * 每个接口将同时生成一个Collection服务，用于接口的多实现
  * @tparam T
  */
-template<class T>
+template <class T>
 class ServiceCollection
 {
 	using iterator = typename std::vector<T*>::iterator;
@@ -125,15 +128,21 @@ class ServiceCollection
 	using reverse_iterator = typename std::vector<T*>::reverse_iterator;
 	using const_reverse_iterator = typename std::vector<T*>::const_reverse_iterator;
 	friend class DIConfiguration;
-	ServiceCollection(std::vector<T*> servicesTypeIndex) :m_Services(servicesTypeIndex) {}
+
+	ServiceCollection(std::vector<T*> servicesTypeIndex) : m_Services(servicesTypeIndex)
+	{
+	}
+
 	void AddServiceInstance(void* servicePointer)
 	{
 		m_Services.push_back(static_cast<T*>(servicePointer));
 	}
+
 	T* GetLastOne()
 	{
 		return *m_Services.rbegin();
 	}
+
 	std::vector<T*> m_Services;
 
 public:
@@ -168,10 +177,10 @@ public:
  * @tparam Deps 实例的依赖
  */
 template <class InstanceType, class Deleter, class... Deps>
-using InstanceFactoryFunction = std::function<std::unique_ptr<InstanceType, Deleter>(Deps *...)>;
+using InstanceFactoryFunction = std::function<std::unique_ptr<InstanceType, Deleter>(Deps*...)>;
 
 template <class InstanceType, class Deleter, class... Deps>
-using InstanceFactoryNativeFunction = std::unique_ptr<InstanceType, Deleter>(*)(Deps *...);
+using InstanceFactoryNativeFunction = std::unique_ptr<InstanceType, Deleter>(*)(Deps*...);
 
 /**
  * @brief 注入器
@@ -184,6 +193,7 @@ class Injector
 
 public:
 	Injector(Injector&& other) noexcept { *this = std::move(other); }
+
 	Injector& operator=(Injector&& other) noexcept
 	{
 		m_InstanceMap = std::move(other.m_InstanceMap);
@@ -203,8 +213,8 @@ public:
 		if (it == m_InstanceMap.end())
 		{
 			throw std::runtime_error(std::string(typeid(T).name()) +
-									 ": unsatisfied dependency of " +
-									 std::string(typeid(Dependee).name()));
+			                         ": unsatisfied dependency of " +
+			                         std::string(typeid(Dependee).name()));
 		}
 		return static_cast<T*>(it->second->Get());
 	}
@@ -212,10 +222,10 @@ public:
 private:
 	template <class InstanceType, class Deleter, class... Deps>
 	std::unique_ptr<InstanceType, Deleter>
-		Inject(InstanceFactoryFunction<InstanceType, Deleter, Deps...> instanceFactory) const
+	Inject(InstanceFactoryFunction<InstanceType, Deleter, Deps...> instanceFactory) const
 	{
 		return instanceFactory(GetInstance<typename std::remove_const_t<Deps>,
-							   typename std::remove_const_t<InstanceType>>()...);
+		                                   typename std::remove_const_t<InstanceType>>()...);
 	}
 
 	void* GetInstance(std::type_index typeIndex)
@@ -224,7 +234,7 @@ private:
 		if (it == m_InstanceMap.end())
 		{
 			throw std::runtime_error(std::string(typeIndex.name()) +
-									 ": unsatisfied dependency");
+			                         ": unsatisfied dependency");
 		}
 		return it->second->Get();
 	}
@@ -254,17 +264,20 @@ public:
 	void Add(InstanceFactoryFunction<InstanceType, Deleter, Deps...> instanceFactory)
 	{
 		std::type_index instanceTypeId = std::type_index(typeid(typename std::remove_const_t<InstanceType>));
-		DependencyNode& node = m_Graph[instanceTypeId];
-		node.m_DebugTypeName = typeid(typename std::remove_const_t<InterfaceType>).name();
-		node.m_Initializer = [instanceFactory](Injector& inj)
+		DependencyNode& node           = m_Graph[instanceTypeId];
+		node.m_DebugTypeName           = typeid(typename std::remove_const_t<InterfaceType>).name();
+		node.m_Initializer             = [instanceFactory](Injector& inj)
 		{
 			// 此处无法支持同一个服务注册到两个接口
 			auto instance = WrapIntoInsatanceContainer(inj.Inject(instanceFactory));
 			inj.m_InstanceMap.put<InstanceType>(std::move(instance));
 		};
 		node.m_HasInitializer = true;
-		node.m_DebugTypeName = typeid(typename std::remove_const_t<InstanceType>).name();
-		node.m_Dependencies = { std::type_index(typeid(typename std::remove_const_t<Deps>))... };
+		node.m_DebugTypeName  = typeid(typename std::remove_const_t<InstanceType>).name();
+		node.m_Dependencies   = {
+			std::type_index(typeid(typename std::remove_const_t<Deps>))...,
+			std::type_index(typeid(std::remove_const_t<ServiceCollection<Deps>>))...
+		};
 
 		std::type_index interfaceTypeId =
 			std::type_index(typeid(typename std::remove_const_t<ServiceCollection<InterfaceType>>));
@@ -287,7 +300,7 @@ public:
 	template <class InterfaceType, class InstanceType, class Deleter, class... Deps>
 	void Add(InstanceFactoryNativeFunction<InstanceType, Deleter, Deps...> instanceFactory)
 	{
-		InstanceFactoryFunction<InstanceType, Deleter, Deps...> factoryFunction{ instanceFactory };
+		InstanceFactoryFunction<InstanceType, Deleter, Deps...> factoryFunction{instanceFactory};
 		Add<InterfaceType>(factoryFunction);
 	}
 
@@ -313,6 +326,7 @@ public:
 
 private:
 	using InitializerFunction = std::function<void(Injector&)>;
+
 	/**
 	 * @brief 依赖图节点
 	 */
@@ -325,6 +339,7 @@ private:
 			Temp,
 			Marked
 		};
+
 		Mark m_Mark = Mark::Unmarked;
 
 		std::string m_DebugTypeName;       //< 依赖类型（调试用途）
@@ -332,6 +347,7 @@ private:
 		bool m_HasInitializer = false;     //< 如果为false，则说明节点被依赖但没有提供工厂（即没有注册），这将引起异常
 		std::vector<std::type_index> m_Dependencies;
 	};
+
 	/**
 	 * @brief 实例化依赖
 	 * 通过对依赖图拓扑遍历依次实例化依赖
@@ -350,7 +366,11 @@ private:
 			node.m_Mark = DependencyNode::Mark::Temp;
 			for (std::type_index dependent : node.m_Dependencies)
 			{
-				ToposortVisitNode(dependent, injector);
+				// If it's a fake dependent, ignore it.
+				if (m_Graph.find(dependent) != m_Graph.end())
+				{
+					ToposortVisitNode(dependent, injector);
+				}
 			}
 			node.m_Mark = DependencyNode::Mark::Marked;
 			if (node.m_HasInitializer)
@@ -359,11 +379,10 @@ private:
 			}
 		}
 	}
+
 	std::unordered_map<std::type_index, DependencyNode> m_Graph;
 };
-
 } // namespace DI
-
 } // namespace ossian
 
 #endif //OSSIAN_CORE_DI

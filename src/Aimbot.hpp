@@ -13,27 +13,20 @@
 #include <Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
 
-
-
-namespace Ioap = ossian::IOAP;
 namespace Utils = ossian::Utils;
 
-class Aimbot : public Ioap::IExecutable
+class Aimbot
 {
 public:
-	static std::unique_ptr<Aimbot> CreateAimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort)
+	static std::unique_ptr<Aimbot> CreateAimbot(Utils::ConfigLoader* config)
 	{
-		return std::unique_ptr<Aimbot>(new Aimbot(config, serialPort));
+		return std::unique_ptr<Aimbot>(new Aimbot(config));
 	}
 
-    void Process(Ioap::BaseInputData* input) override;
+    void Process();
 
-    bool IsSkip(const Ioap::BaseStatus& refStatus) override
-    {
-        return m_Valid;
-    }
 private:
-	Aimbot(Utils::ConfigLoader* config, SerialPortIO* serialPort);
+	Aimbot(Utils::ConfigLoader* config);
 
     enum class ArmorType
     {
@@ -509,7 +502,6 @@ private:
 
     std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;
     std::atomic_bool m_Valid = false;
-    SerialPortIO* m_SerialPort = nullptr;
     Utils::ConfigLoader* m_Config = nullptr;
 };
 

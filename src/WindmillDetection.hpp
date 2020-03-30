@@ -23,24 +23,22 @@
 #include <atomic>
 #include <memory>
 
-namespace Ioap = ossian::IOAP;
-
 /**
  * @brief 大风车检测
  * 
  * 识别、计算和预测大风车轨迹
  * 
  */
-class WindmillDetection : public Ioap::IExecutable
+class WindmillDetection
 {
 public:
-	static std::unique_ptr<WindmillDetection> CreateWindmillDetection(SerialPortIO* serialPort)
+	static std::unique_ptr<WindmillDetection> CreateWindmillDetection()
 	{
 		static ColorFilter redFilter{ {{{170, 100, 100}, {180, 255, 255}},
 									  {{0, 100, 100}, {25, 255, 255}}} };
 		static ColorFilter blueFilter{ {{{85, 100, 100}, {135, 255, 255}}} };
 
-		return std::unique_ptr<WindmillDetection>(new WindmillDetection(80, redFilter, serialPort));
+		return std::unique_ptr<WindmillDetection>(new WindmillDetection(80, redFilter));
 	}
 
     /**
@@ -48,12 +46,7 @@ public:
      * 计算一张图像并刷新（当达到最大采样数量时）当前目标坐标、运动圆心和半径信息
      * @param input 输入数据指针
      */
-    void Process(Ioap::BaseInputData *input) override;
-
-    bool IsSkip(const Ioap::BaseStatus &refStatus) override
-    {
-        return m_Valid;
-    }
+    void Process();
 
     const std::vector<cv::Point2f> &Targets();
     const cv::Point2f &Center();
@@ -65,12 +58,10 @@ private:
 	 * @param sampleNum 最大采样数量
 	 * @param colorFilter IFilter 类型的颜色过滤器.
 	 */
-	explicit WindmillDetection(std::size_t sampleNum, ColorFilter& colorFilter, SerialPortIO* serialPort);
-	explicit WindmillDetection(std::size_t sampleNum, ColorFilter&& colorFilter, SerialPortIO* serialPort);
+	explicit WindmillDetection(std::size_t sampleNum, ColorFilter& colorFilter);
+	explicit WindmillDetection(std::size_t sampleNum, ColorFilter&& colorFilter);
 
     std::atomic_bool m_Valid;
-
-	SerialPortIO* m_SerialPort;
 
     ossian::SafeQueue<cv::Point2f> m_Track;
     // std::queue<cv::Point2f> m_Track;

@@ -6,6 +6,7 @@
 
 #include <mutex>
 #include <typeindex>
+#include <any>
 
 namespace ossian
 {
@@ -31,7 +32,7 @@ class IODataImpl : public IOData<DataType>
 public:
 	using Type = DataType;
 	using OnReceiveProcType = void(const DataType& value);
-	
+
 	OSSIAN_SERVICE_SETUP(IODataImpl()) = default;
 	~IODataImpl()                      = default;
 	IODataImpl(const IODataImpl&)      = delete;
@@ -111,14 +112,26 @@ private:
 	};
 };
 
+#include <spdlog/spdlog.h>
+
 template <typename Mutex, typename ...DataModelTypes>
 class IODataServiceBuilder
 {
+	template <int N, typename... Ts>
+	using NThTypeOf = typename std::tuple_element<N, std::tuple<Ts...>>::type;
+
+	ApplicationBuilder& m_AppBuilder;
 public:
-	IODataServiceBuilder(ApplicationBuilder& appBuilder)
+	IODataServiceBuilder(ApplicationBuilder& appBuilder): m_AppBuilder(appBuilder)
 	{
-		std::make_tuple((appBuilder.template AddService<IOData<DataModelTypes>,
-		                                                IODataImpl<DataModelTypes, Mutex>>())...);
+		spdlog::info("DataModelTypes: {}", (std::string(typeid(DataModelTypes).name()) + ...));
+		std::make_tuple(std::move((appBuilder.template AddService<IOData<DataModelTypes>,
+		                                                          IODataImpl<DataModelTypes, Mutex>>()))...);
+	}
+
+	template <typename DataModelType, size_t ...Index>
+	auto RegisterHelper()
+	{
 	}
 };
 

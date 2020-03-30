@@ -25,7 +25,7 @@ public:
 };
 
 template <typename Mutex = std::mutex>
-class Remote final : public IRemote, ossian::IODataBuilder<Mutex, RemoteStatus>
+class Remote final : public IRemote, public ossian::IODataBuilder<Mutex, RemoteStatus>
 {
 	ossian::IOData<RemoteStatus>* m_IOData;
 	ossian::UARTManager* m_UARTManager;
@@ -47,7 +47,7 @@ public:
 			       const uint8_t* data)
 			{
 				sscanf(reinterpret_cast<const char*>(data),
-				       "CH1:%d,CH2:%d,CH3:%d,CH4:%d,CH5:%d,S1:%d,S2:%d",
+				       "CH1:%hu,CH2:%hu,CH3:%hu,CH4:%hu,CH5:%hu,S1:%hhu,S2:%hhu",
 				       &m_Status.ch[0],
 				       &m_Status.ch[1],
 				       &m_Status.ch[2],

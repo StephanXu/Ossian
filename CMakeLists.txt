@@ -22,7 +22,6 @@ target_sources(Ossian
             src/Aimbot.cpp
             src/ColorFilter.cpp
             src/main.cpp
-            src/ProgressBar.cpp
             src/Startup.cpp
             src/Utils.cpp
             src/WindmillDetection.cpp
@@ -33,7 +32,8 @@ target_sources(Ossian
             src/Capacitor.cpp
             src/Gun.cpp
             src/Referee.cpp
-            src/Gyro.cpp)
+            src/Gyro.cpp
+            src/IOPeeker.cpp)
 target_include_directories(Ossian
         PRIVATE
             src

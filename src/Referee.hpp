@@ -501,7 +501,7 @@ using RefereeAllMessagesMt = RefereeMt<BulletRemain,
                                        MatchStatus,
                                        MatchResult>;
 
-using RefereeAllMessagesSt = RefereeMt<BulletRemain,
+using RefereeAllMessagesSt = RefereeSt<BulletRemain,
                                        ShootData,
                                        DamageStatus,
                                        AerialRobotStatus,

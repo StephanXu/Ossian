@@ -1,9 +1,12 @@
 
 #include <benchmark/benchmark.h>
 #include "Config.pb.h"
+
 #include <cmath>
 #include <unordered_map>
 #include <typeindex>
+#include <memory>
+#include <functional>
 
 static void BMPow(benchmark::State& state)
 {
@@ -191,6 +194,48 @@ static void BMTemplateCall(benchmark::State& state)
 	}
 }
 
+static void BMSTDFill(benchmark::State& state)
+{
+	auto buffer = std::make_unique<uint8_t[]>(0x1000);
+	for (auto _ : state)
+	{
+		std::fill_n(buffer.get(), 0x1000, 0);
+	}
+}
+
+static void BMMemSet(benchmark::State& state)
+{
+	auto buffer = std::make_unique<uint8_t[]>(0x1000);
+	for (auto _ : state)
+	{
+		memset(buffer.get(), 0, 0x1000);
+	}
+}
+
+static void BMFunctional(benchmark::State& state)
+{
+	std::function<void(int&)> func = [](int& a)
+	{
+		for (int i{}; i < 10; ++i)a++;
+	};
+	int a{};
+	for (auto _ : state)
+	{
+		func(a);
+	}
+}
+
+void NativeFunction(int& a) { for (int i{}; i < 10; ++i)a++; }
+
+static void BMNativeFunction(benchmark::State& state)
+{
+	int a{}, c{};
+	for (auto _ : state)
+	{
+		NativeFunction(a);
+	}
+}
+
 BENCHMARK(BMProtobufParam);
 BENCHMARK(BMNoProtobufParam);
 
@@ -204,3 +249,9 @@ BENCHMARK(BMTypeIndexPtrHashMap);
 
 BENCHMARK(BMVirtualFunctionCall);
 BENCHMARK(BMTemplateCall);
+
+BENCHMARK(BMSTDFill);
+BENCHMARK(BMMemSet);
+
+BENCHMARK(BMFunctional);
+BENCHMARK(BMNativeFunction);

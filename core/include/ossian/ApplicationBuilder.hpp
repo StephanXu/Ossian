@@ -16,9 +16,9 @@
 
 #include <string>
 
-#include "Service.hpp"
 #include "DI.hpp"
 #include "Dispatcher.hpp"
+#include "Factory.hpp"
 
 namespace ossian
 {
@@ -54,8 +54,11 @@ public:
 			"ServiceType has to be derived from InterfaceType");
 	}
 
+	//BaseServiceBuilder(const BaseServiceBuilder<InterfaceType, ServiceType>&) = delete;
+
 	virtual ~BaseServiceBuilder()
 	{
+		spdlog::info("Register DI: {}\t{}", typeid(InterfaceType).name(), typeid(ServiceType).name());
 		m_AppBuilder.template Add<InterfaceType>(
 			InstanceFactory<typename ServiceType::_OssianServiceInjectorType>::Value(m_ConfigureProc));
 	}
@@ -139,26 +142,6 @@ public:
 	}
 };
 
-template <class InterfaceType,
-          class ServiceType>
-class ServiceBuilder<InterfaceType, ServiceType,
-                     std::enable_if_t<std::is_base_of<IOAP::BaseInputAdapter, ServiceType>::value>>
-	: BaseServiceBuilder<InterfaceType, ServiceType>
-{
-public:
-	ServiceBuilder(ApplicationBuilder& appBuilder,
-	               std::function<void(ServiceType&)> configureProc)
-		: BaseServiceBuilder<InterfaceType, ServiceType>(appBuilder, configureProc)
-	{
-	}
-
-	auto AsInputAdapter() -> decltype(*this)&
-	{
-		this->m_AppBuilder.template SetServiceAsInputAdapter<ServiceType>();
-		return *this;
-	}
-};
-
 /**
  * @brief 配置器实现
  * 通过此类进行配置并生成 Dispatcher 对象
@@ -171,45 +154,6 @@ public:
 	ApplicationBuilder(const ApplicationBuilder&& dispatcher) = delete;
 
 	/**
-	 * @brief 注册一项输入服务
-	 * @tparam InputAdapterType 服务类型
-	 */
-	template <typename InputAdapterType>
-	ApplicationBuilder& AddInputAdapter()
-	{
-		AddService<InputAdapterType>();
-		SetServiceAsInputAdapter<InputAdapterType>();
-		return *this;
-	}
-
-	template <typename ServiceType>
-	ApplicationBuilder& SetServiceAsInputAdapter()
-	{
-		m_InputAdapterRealizer.emplace_back(
-			[](DI::Injector& injector) { return injector.GetInstance<ServiceType>(); });
-		return *this;
-	}
-
-	/**
-	 * @brief 注册一条管道
-	 * 注意：目前仅支持注册一条管道
-	 * @tparam StatusType 状态类型
-	 * @tparam InputType 输入类型
-	 * @tparam ActionTypes 动作类型
-	 */
-	template <typename StatusType, typename InputType, typename... ActionTypes>
-	ApplicationBuilder& RegisterPipeline()
-	{
-		m_DIConfig.Add<IOAP::Pipeline>(IOAP::CreatePipeline<StatusType, ActionTypes...>);
-		m_PipelineRealizer.emplace_back([](DI::Injector& injector)
-		{
-			return std::make_tuple(std::type_index(typeid(InputType)),
-			                       injector.GetInstance<IOAP::Pipeline>());
-		});
-		return *this;
-	}
-
-	/**
 	 * @brief 注册一项服务
 	 * @tparam ServiceType 服务类型
 	 */
@@ -217,7 +161,6 @@ public:
 	auto AddService(std::function<void(ServiceType&)> configProc = [](ServiceType&)
 	{
 	})
-	-> ServiceBuilder<InterfaceType, ServiceType>
 	{
 		return ServiceBuilder<InterfaceType, ServiceType>(*this, configProc);
 	}
@@ -226,7 +169,6 @@ public:
 	auto AddService(std::function<void(ServiceType&)> configProc = [](ServiceType&)
 	{
 	})
-	-> ServiceBuilder<ServiceType, ServiceType>
 	{
 		return AddService<ServiceType, ServiceType>(configProc);
 	}
@@ -280,21 +222,14 @@ public:
 	 * 在实例化后 ApplicationBuilder 对象则可以被析构
 	 * @return Dispatcher
 	 */
-	IOAP::Dispatcher Realization()
+	Dispatcher Realization()
 	{
 		spdlog::info("Initialize configuration");
-		return IOAP::Dispatcher(m_DIConfig.BuildInjector(), m_PipelineRealizer, m_InputAdapterRealizer);
+		return Dispatcher(m_DIConfig.BuildInjector());
 	}
 
 private:
 	DI::DIConfiguration m_DIConfig;
-
-	// 用于获得实例化后的Pipeline，但此处框架仅支持一个Pipeline，使用vector是为了之后支持多Pipeline做准备
-	std::vector<IOAP::Realizer<std::tuple<std::type_index, IOAP::Pipeline*>>>
-	m_PipelineRealizer;
-
-	// 用于获得实例化后的InputAdapter
-	std::vector<IOAP::Realizer<IOAP::BaseInputAdapter*>> m_InputAdapterRealizer;
 };
 } // namespace ossian
 
