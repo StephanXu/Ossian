@@ -26,7 +26,7 @@ public:
 	IOListener(IOListener&& other) noexcept = delete;
 	IOListener& operator=(const IOListener& other) = delete;
 	IOListener& operator=(IOListener&& other) noexcept = delete;
-	OSSIAN_SERVICE_SETUP(IOListener(std::vector<IListenable*>* ioBuses));
+	OSSIAN_SERVICE_SETUP(IOListener());
 
 	void Listen(const long timeout) const;
 	// 让一个Bus被epoll接管
@@ -40,6 +40,23 @@ private:
 	void DelEpoll(const FileDescriptor fd);
 	std::unordered_map<int, std::unique_ptr<CallbackData>> m_FDRegistered;
 	std::set<IListenable*> m_Buses;
+};
+
+class Attachable
+{
+public:
+	Attachable(): m_IsListenerAttached(false){}
+	virtual auto AttachListener(IOListener* listener) -> bool
+	{
+		if(m_IsListenerAttached == true)
+		{
+			return false; // Listener 已存在
+		}
+		m_Listener = listener;
+		return m_IsListenerAttached = true;
+	}
+	bool m_IsListenerAttached;
+	IOListener* m_Listener;
 };
 
 } // ossian

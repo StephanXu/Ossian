@@ -21,6 +21,7 @@
 #include <string>
 
 #include "IO.hpp"
+#include "ossian/IOListener.hpp"
 #include "ossian/Factory.hpp"
 namespace ossian
 {
@@ -72,7 +73,8 @@ class CANDevice : public BaseDevice, public std::enable_shared_from_this<CANDevi
 public:
 	CANDevice() = delete;
 	CANDevice(const CANDevice& other) = delete;
-	explicit CANDevice(CANBus* bus, const unsigned int id) noexcept : m_Id(id), m_Bus(bus), m_Callback(DefaultCallback)
+	explicit CANDevice(CANBus* bus, const unsigned int id) noexcept
+	: m_Id(id), m_Bus(bus), m_Callback(DefaultCallback)
 	{};
 
 	CANBus* Bus() const { return m_Bus; }
@@ -93,10 +95,10 @@ private:
 	{}
 };
 
-class CANManager
+class CANManager: private Attachable
 {
 public:
-	OSSIAN_SERVICE_SETUP(CANManager()) = default;
+	OSSIAN_SERVICE_SETUP(CANManager(IOListener* listener));
 	CANManager(const CANManager& other) = delete;
 
 	void WriteTo(const BaseDevice* device, const size_t length, const uint8_t* data);

@@ -9,6 +9,7 @@
 #include <mutex>
 #include <cstring>
 
+#include <spdlog/spdlog.h>
 namespace ossian
 {
 // UARTBus
@@ -176,15 +177,19 @@ std::vector<UARTDevice*> UARTBus::GetDevices() const
 
 // UARTManager
 
-UARTBus* UARTManager::AddBus(std::string const& location)
+UARTManager::UARTManager(IOListener* listener)
 {
-	return AddBus(location,
-	              UARTProperties::Baudrate::R115200,
-	              UARTProperties::FlowControl::FlowControlNone,
-	              UARTProperties::DataBits::DataBits8,
-	              UARTProperties::StopBits::StopBits1,
-	              UARTProperties::Parity::ParityNone);
+	AttachListener(listener);
 }
+
+/* สนำรั๙ภý
+AddBus(location,
+      UARTProperties::Baudrate::R115200,
+      UARTProperties::FlowControl::FlowControlNone,
+      UARTProperties::DataBits::DataBits8,
+      UARTProperties::StopBits::StopBits1,
+      UARTProperties::Parity::ParityNone);
+	  */
 
 UARTBus* UARTManager::AddBus(std::string const& location,
                              const UARTProperties::Baudrate baudrate,
@@ -195,11 +200,18 @@ UARTBus* UARTManager::AddBus(std::string const& location,
 {
 	auto bus = std::make_shared<UARTBus>(this, location, baudrate, flowctrl, databits, stopbits, parity);
 	m_BusMap.insert(std::make_pair(location, bus));
+	m_Listener->AddBus(bus.get());
 	return bus.get();
 }
 
 bool UARTManager::DelBus(std::string const& location)
 {
+	auto bus = Bus(location);
+	if(bus == nullptr)
+	{
+		return false;
+	}
+	m_Listener->DelBus(bus);
 	return m_BusMap.erase(location);
 }
 
@@ -208,12 +220,21 @@ void UARTManager::WriteTo(const UARTDevice* device, const size_t length, const u
 	device->WriteRaw(length, data);
 }
 
-std::shared_ptr<UARTDevice> UARTManager::AddDevice(std::string const& location)
+std::shared_ptr<UARTDevice> UARTManager::AddDevice(std::string const& location,
+												   const UARTProperties::Baudrate baudrate,
+												   const UARTProperties::FlowControl flowctrl,
+												   const UARTProperties::DataBits databits,
+												   const UARTProperties::StopBits stopbits,
+												   const UARTProperties::Parity parity)
 {
 	auto bus = Bus(location);
 	if (nullptr == bus)
 	{
-		bus = AddBus(location);
+		bus = AddBus(location, baudrate, flowctrl, databits, stopbits, parity);
+	}
+	else
+	{
+		spdlog::warn("Adding duplicate device {}!", location);
 	}
 	return bus->AddDevice();
 }

@@ -15,6 +15,7 @@
 #include <string>
 #include "IO.hpp"
 #include "ossian/Factory.hpp"
+#include "ossian/IOListener.hpp"
 namespace ossian
 {
 
@@ -148,21 +149,25 @@ private:
 	{}
 };
 
-class UARTManager
+class UARTManager: private Attachable
 {
 public:
-	OSSIAN_SERVICE_SETUP(UARTManager()) = default;
+	OSSIAN_SERVICE_SETUP(UARTManager(IOListener* listener));
 	UARTManager(const UARTManager& other) = delete;
 
 	void WriteTo(const UARTDevice* device, const size_t length, const uint8_t* data);
-	std::shared_ptr<UARTDevice> AddDevice(std::string const& location);
+	std::shared_ptr<UARTDevice> AddDevice(std::string const& location,
+										  const UARTProperties::Baudrate baudrate,
+										  const UARTProperties::FlowControl flowctrl,
+										  const UARTProperties::DataBits databits,
+										  const UARTProperties::StopBits stopbits,
+										  const UARTProperties::Parity parit);
 	UARTBus* Bus(std::string const& location) const;
 	std::vector<UARTBus*> GetBuses() const;
 
 private:
 	std::unordered_map<std::string, std::shared_ptr<UARTBus>> m_BusMap;
 
-	UARTBus* AddBus(std::string const& location);
 	UARTBus* AddBus(std::string const& location,
 					const UARTProperties::Baudrate baudrate,
 					const UARTProperties::FlowControl flowctrl,
