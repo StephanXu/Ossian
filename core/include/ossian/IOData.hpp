@@ -105,7 +105,7 @@ public:
 	}
 
 private:
-	DataType m_Payload;
+	DataType m_Payload = {};
 	Mutex m_Mutex;
 	std::function<OnReceiveProcType> m_OnChange = [](const DataType& value)
 	{

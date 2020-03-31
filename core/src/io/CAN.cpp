@@ -143,7 +143,7 @@ void CANBus::WriteRaw(const unsigned id, const size_t length, const uint8_t* dat
 		ss << fmt::format("{:02x}", data[i]);
 		ss << " ";
 	}
-	spdlog::info("canlen=[{}]: candata={}", length, ss.str());
+	spdlog::info("CAN Write: id={:#x} len={} data={}", id, length, ss.str());
 	if (true == m_IsOpened)
 	{
 		struct can_frame rawFrame {};
