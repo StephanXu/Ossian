@@ -27,6 +27,7 @@ public:
 	static constexpr double kWheelYn = 232.5 / 1000;  ///< m
 	static constexpr double kWheelSpeedLimit = 5;    ///< 单个麦轮的最大速度
 	static constexpr double kWheelSpeedToMotorRPMCoef = 11.875;
+	static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209;
 
 	//底盘功率控制
 	static constexpr double kBufferTotalCurrentLimit = 16000;
@@ -118,6 +119,7 @@ public:
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
+		m_RC->AddOnChange([](const RemoteStatus& value) {spdlog::info("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
 	}
 
 	void InitChassis()
@@ -154,11 +156,11 @@ public:
 	void UpdateChassisSensorFeedback()
 	{
 		m_ChassisSensorValues.rc = m_RC->Get();
-		spdlog::info("ch0={} ch1={} ch2={} ch3={} ch4={}", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
-		m_ChassisSensorValues.spCap = m_SpCap->Status();
-		m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
+		spdlog::info("@RemoteDataPID=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
+		//m_ChassisSensorValues.spCap = m_SpCap->Status();
+		//m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 
-		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
+		//m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 	}
 
 	void CalcWheelSpeedTarget();
@@ -187,8 +189,8 @@ public:
 
 		//chassis_task
 		UpdateChassisSensorFeedback();
-		if (m_FlagInitChassis)
-			InitChassis();
+		/*if (m_FlagInitChassis)
+			InitChassis();*/
 
 		ChassisModeSet();
 		//[TODO] 模式切换过渡
@@ -198,14 +200,14 @@ public:
 
 		m_MotorMsgCheck.fill(false);
 
-		static std::chrono::high_resolution_clock::time_point lastSendSpCapTimestamp;
+		/*static std::chrono::high_resolution_clock::time_point lastSendSpCapTimestamp;
 		long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::high_resolution_clock::now() - lastSendSpCapTimestamp).count();
 		if (interval > 100)   //不推荐以太高的频率发送功率数据，推荐10Hz
 		{
 			m_SpCap->SetPower(m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower);
 			lastSendSpCapTimestamp = std::chrono::high_resolution_clock::now();
-		}
+		}*/
 	}
 
 private:

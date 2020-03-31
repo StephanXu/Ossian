@@ -216,7 +216,8 @@ public:
 		GimbalCtrlCalc(Pitch);
 		GimbalCtrlCalc(Yaw);
 
-		std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this](double x, size_t ix = 0) {m_Motors[ix++]->SetVoltage(x); });
+		for (size_t i = 0; i < m_Motors.size(); ++i)
+			m_Motors[i]->SetVoltage(m_CurrentSend[i]);
 		m_Motors[Pitch]->Writer()->PackAndSend();
 
 		m_MotorMsgCheck.fill(false);

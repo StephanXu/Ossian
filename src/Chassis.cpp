@@ -100,13 +100,13 @@ void Chassis::ChassisModeSet()
 void Chassis::ChassisCtrl()
 {
 	CalcWheelSpeedTarget();
-	for (size_t i = 0; i < 4; ++i)
+	for (size_t i = 0; i < m_Motors.size(); ++i)
 	{
 		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
-			m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
-			m_Motors[i]->Status().m_RPM / 60.0,
+			m_WheelSpeedSet(i),
+			m_Motors[i]->Status().m_RPM * CHASSIS_MOTOR_RPM_TO_VECTOR_SEN,
 			std::chrono::high_resolution_clock::now());
-		spdlog::info("@PIDChassisSpeed=[$set={},$get={},$pidout={}]", m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM / 60.0, m_CurrentSend[i]);
+		spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM * CHASSIS_MOTOR_RPM_TO_VECTOR_SEN, m_CurrentSend[i]);
 	}
 
 
@@ -114,16 +114,13 @@ void Chassis::ChassisCtrl()
 	/*if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		ChassisPowerCtrlByCurrent();*/
 
-	//std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this](double x, size_t ix = 0) {m_Motors[ix++]->SetVoltage(x); });
-	for (size_t i = 0; i < 4; ++i)
+	for (size_t i = 0; i < m_Motors.size(); ++i)
 		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-	
 	m_Motors[LR]->Writer()->PackAndSend();
 }
 
 //功率控制：通过减小底盘电机的期望速度来实现
-/*
-void Chassis::ChassisCtrl()
+/*void Chassis::ChassisCtrl()
 {
 	CalcWheelSpeedTarget();
 	
@@ -135,12 +132,13 @@ void Chassis::ChassisCtrl()
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 				m_Motors[i]->Status().m_RPM / 60,
 				std::chrono::high_resolution_clock::now());
-			spdlog::info("@PIDChassisSpeed=[$set={},$get={}]", m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM / 60);
+			spdlog::info("@PIDChassisSpeed=[$set={},$get={},$pidout={}]", m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM / 60, m_CurrentSend[i]);
 		}
 			
 	};
 	
 	//如果超级电容快没电了
+	/*spdlog::info("CapacitorVoltage: {}", m_ChassisSensorValues.spCap.m_CapacitorVoltage);
 	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 	{
 		for (int cnt = 0; ; ++cnt)
@@ -153,7 +151,8 @@ void Chassis::ChassisCtrl()
 				break;
 			if (cnt >= 10)
 			{
-				std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this, totalCurrent](double& x) {x = x / totalCurrent * m_ChassisSensorValues.refereeMaxPwr / m_ChassisSensorValues.spCap.m_InputVoltage; });
+				std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this, totalCurrent](double& x) {
+					x = x / totalCurrent * m_ChassisSensorValues.refereeMaxPwr / m_ChassisSensorValues.spCap.m_InputVoltage; });
 				break;
 			}
 		}
@@ -161,7 +160,8 @@ void Chassis::ChassisCtrl()
 	else
 		CalcCurrent();
 
-	std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this](double x, size_t ix = 0) {m_Motors[ix++]->SetVoltage(x); });
+	for (size_t i = 0; i < m_Motors.size(); ++i)
+		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
 	m_Motors[LR]->Writer()->PackAndSend();
 }
 */
