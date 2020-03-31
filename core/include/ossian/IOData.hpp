@@ -6,7 +6,6 @@
 
 #include <mutex>
 #include <typeindex>
-#include <any>
 
 namespace ossian
 {
@@ -111,8 +110,6 @@ private:
 	{
 	};
 };
-
-#include <spdlog/spdlog.h>
 
 template <typename Mutex, typename ...DataModelTypes>
 class IODataServiceBuilder

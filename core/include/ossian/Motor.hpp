@@ -22,8 +22,8 @@ public:
 	virtual auto MotorId() const noexcept -> unsigned int = 0;
 	virtual auto CANId() const noexcept -> unsigned int = 0;
 	virtual auto TimeStamp() const noexcept -> std::chrono::high_resolution_clock::time_point = 0;
-	virtual auto Voltage() const noexcept -> uint16_t = 0;
-	virtual auto SetVoltage(const uint16_t voltage) noexcept -> void = 0;
+	virtual auto Voltage() const noexcept -> int16_t = 0;
+	virtual auto SetVoltage(const int16_t voltage) noexcept -> void = 0;
 	virtual auto Writer() const noexcept -> const IMotorWriter* = 0;
 protected:
 	virtual auto SetMotorId(const unsigned int id) noexcept -> void = 0;
@@ -121,7 +121,7 @@ class DJIMotorWriter : public IMotorWriter
 #pragma pack(push,1)
 	struct PackModel
 	{
-		uint16_t m_Voltage[4];
+		int16_t m_Voltage[4];
 	};
 #pragma pack(pop)
 
@@ -249,12 +249,12 @@ public:
 		return m_TimeStamp;
 	}
 
-	auto Voltage() const noexcept -> uint16_t override
+	auto Voltage() const noexcept -> int16_t override
 	{
 		return m_Voltage;
 	}
 
-	auto SetVoltage(const uint16_t voltage) noexcept -> void override
+	auto SetVoltage(const int16_t voltage) noexcept -> void override
 	{
 		m_Voltage = voltage;
 	}
