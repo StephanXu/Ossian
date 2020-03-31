@@ -53,7 +53,7 @@ public:
 			             [this](const std::shared_ptr<ossian::BaseDevice>& device, const size_t length,
 			                    const uint8_t* data)
 			             {
-							 spdlog::trace("Remote Receive: {}", length);
+							 spdlog::trace("Remote Receive: {}, buffer: {}", length, data);
 				             sscanf(reinterpret_cast<const char*>(data),
 				                    "CH1:%d,CH2:%d,CH3:%d,CH4:%d,CH5:%d,S1:%d,S2:%d",
 				                    &m_Status.ch[0],
