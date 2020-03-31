@@ -55,7 +55,7 @@ public:
 			             {
 							 spdlog::trace("Remote Receive: {}", length);
 				             sscanf(reinterpret_cast<const char*>(data),
-				                    "CH1:%hu,CH2:%hu,CH3:%hu,CH4:%hu,CH5:%hu,S1:%hhu,S2:%hhu",
+				                    "CH1:%h,CH2:%h,CH3:%h,CH4:%h,CH5:%h,S1:%hhu,S2:%hhu",
 				                    &m_Status.ch[0],
 				                    &m_Status.ch[1],
 				                    &m_Status.ch[2],
