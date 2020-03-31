@@ -94,21 +94,24 @@ void Chassis::ChassisModeSet()
 	default:
 		m_CurChassisMode = Disable; break;
 	}
-	
 }
 
 void Chassis::ChassisCtrl()
 {
-	CalcWheelSpeedTarget();
-	for (size_t i = 0; i < m_Motors.size(); ++i)
+	if (m_CurChassisMode == Disable)
+		m_CurrentSend.fill(0);
+	else
 	{
-		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
-			m_WheelSpeedSet(i),
-			m_Motors[i]->Status().m_RPM * CHASSIS_MOTOR_RPM_TO_VECTOR_SEN,
-			std::chrono::high_resolution_clock::now());
-		spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM * CHASSIS_MOTOR_RPM_TO_VECTOR_SEN, m_CurrentSend[i]);
+		CalcWheelSpeedTarget();
+		for (size_t i = 0; i < m_Motors.size(); ++i)
+		{
+			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
+				m_WheelSpeedSet(i),
+				m_Motors[i]->Status().m_RPM * CHASSIS_MOTOR_RPM_TO_VECTOR_SEN,
+				std::chrono::high_resolution_clock::now());
+			spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, 1000, m_Motors[i]->Status().m_RPM * CHASSIS_MOTOR_RPM_TO_VECTOR_SEN, m_CurrentSend[i]);
+		}
 	}
-
 
 	//如果超级电容快没电了
 	/*if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
@@ -203,7 +206,7 @@ void Chassis::ChassisExpAxisSpeedSet()
 	{
 		RCToChassisSpeed();
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
-		m_VySet = Clamp(m_VxSet, -kChassisVyLimit, kChassisVyLimit);
+		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 
 		spdlog::info("VxSet={} VySet={} WzSet={}", m_VxSet, m_VySet, m_WzSet);
 	}
