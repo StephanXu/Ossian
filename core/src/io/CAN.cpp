@@ -15,6 +15,9 @@
 #include <cstring>
 #include <mutex>
 #include <exception>
+#include <chrono>
+
+#include <spdlog/spdlog.h>
 
 #include "ossian/io/IO.hpp"
 
@@ -99,6 +102,7 @@ void CANBus::Read() const
 {
 	if (true == m_IsOpened)
 	{
+		auto start = std::chrono::high_resolution_clock::now();
 		struct can_frame rawFrame {};
 		while (true)
 		{
@@ -109,17 +113,25 @@ void CANBus::Read() const
 			}
 			break;//跳出接收循环
 		}
-
+		
 		const auto id = rawFrame.can_id;
 		const size_t length = rawFrame.can_dlc;
 		std::shared_ptr<uint8_t[]> buffer(new uint8_t[length]());
 		memcpy(buffer.get(), rawFrame.data, length);
+		auto end = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		spdlog::trace("CAN received {} bytes finished with: {} microseconds", length, duration.count());
 
+		start = std::chrono::high_resolution_clock::now();
 		auto it = m_DeviceMap.find(id);
 		if (it != m_DeviceMap.end())
 		{
 			it->second->Invoke(length, buffer.get());
 		}
+		end = std::chrono::high_resolution_clock::now();
+		duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		spdlog::trace("CANDevice callback finished with: {} microseconds", duration.count());
+
 	}
 }
 
