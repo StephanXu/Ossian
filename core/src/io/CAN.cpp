@@ -119,7 +119,7 @@ void CANBus::Read() const
 		std::shared_ptr<uint8_t[]> buffer(new uint8_t[length]());
 		memcpy(buffer.get(), rawFrame.data, length);
 		auto end = std::chrono::high_resolution_clock::now();
-		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 		spdlog::trace("CAN received {} bytes finished with: {} microseconds", length, duration.count());
 
 		start = std::chrono::high_resolution_clock::now();
@@ -129,7 +129,7 @@ void CANBus::Read() const
 			it->second->Invoke(length, buffer.get());
 		}
 		end = std::chrono::high_resolution_clock::now();
-		duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 		spdlog::trace("CANDevice callback finished with: {} microseconds", duration.count());
 
 	}
