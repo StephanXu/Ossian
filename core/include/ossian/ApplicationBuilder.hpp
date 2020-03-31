@@ -224,7 +224,7 @@ public:
 	 */
 	Dispatcher Realization()
 	{
-		spdlog::info("Initialize configuration");
+		spdlog::trace("Realization begin");
 		return Dispatcher(m_DIConfig.BuildInjector());
 	}
 

@@ -24,7 +24,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	spdlog::info("MI_VERSION:{}", mi_version());
 
 	app.AddService<Utils::ConfigLoader>()
-	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/config");
+	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
 	app.AddService<OnlineDebug>(
 		[](OnlineDebug& option)
 		{
