@@ -134,7 +134,7 @@ public:
 
 	auto AddDevice(const std::shared_ptr<IMotor>& motor) -> void override
 	{
-		const size_t index{ motor->MotorId() - (0x1ff == m_CANId ? 1 : 5) };
+		const size_t index{ motor->MotorId() - (0x200 == m_CANId ? 1 : 5) };
 		if (index > m_Motors.size()) { throw std::runtime_error("Invalid motor id"); }
 		m_Motors[index] = motor;
 		spdlog::trace("MotorWriter add device: writerCANId: {:#x}, motorId: {}", m_CANId, motor->MotorId());

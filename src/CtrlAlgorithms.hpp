@@ -6,7 +6,7 @@
 #include <chrono>
 #include <array>
 #include <Eigen/Dense>
-
+#include <spdlog/spdlog.h>
 
 // 限幅函数
 template<typename T>
@@ -122,7 +122,7 @@ public:
 	{
 		double interval = (m_LastTimestamp.time_since_epoch().count() == 0 ?
 			1 : std::chrono::duration<double, std::milli>(curTimestamp - m_LastTimestamp).count());   // ms
-		m_LastTimestamp = curTimestamp;
+		m_LastTimestamp = curTimestamp; 
 		double ki = m_Ki * interval;
 		double kd = m_Kd / interval;
 
@@ -141,6 +141,7 @@ public:
 		m_Integral = Clamp( m_Integral, -m_ThresIntegral, m_ThresIntegral);
 		
 		output = m_Kp * error + ki * m_Integral + kd * (error - m_LastError);
+		spdlog::info("kp={} ki={} kd={}", m_Kp, ki, kd);
 		if (output > 0)
 			output += m_DeadValue;
 		else if (output < 0)

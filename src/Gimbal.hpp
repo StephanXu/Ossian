@@ -122,6 +122,7 @@ public:
 
 		m_GimbalCtrlSrc = RC;
 		m_FlagInitGimbal = true;
+		m_MotorMsgCheck.fill(false);
 
 		m_PIDAngleEcd[Pitch].SetParams(PIDAngleEcdPitchParams);
 		m_PIDAngleGyro[Pitch].SetParams(PIDAngleGyroPitchParams);

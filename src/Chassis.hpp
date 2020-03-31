@@ -16,14 +16,14 @@
 #include <Eigen/Dense>
 #include <cmath>
 #include <array>
-
+#include <spdlog/spdlog.h>
 
 class Chassis
 {
 public:
 	//麦轮运动
-	static constexpr double kWheelRadius = 76 / 1000; ///< m
-	static constexpr double kWheelXn = 175 / 1000;    ///< m
+	static constexpr double kWheelRadius = 76.0 / 1000.0; ///< m
+	static constexpr double kWheelXn = 175.0 / 1000.0;    ///< m
 	static constexpr double kWheelYn = 232.5 / 1000;  ///< m
 	static constexpr double kWheelSpeedLimit = 5;    ///< 单个麦轮的最大速度
 	static constexpr double kWheelSpeedToMotorRPMCoef = 11.875;
@@ -45,7 +45,7 @@ public:
 
 	static constexpr int16_t kChassisRCDeadband = 10; ///< 摇杆死区
 	static constexpr double kChassisVxRCSen = 0.006; ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
-	static constexpr double kChassisVyRCSen = 0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
+	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
 	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 
 	//底盘运动
@@ -90,6 +90,8 @@ public:
 		PIDWheelSpeedParams[2] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->kd();
 		PIDWheelSpeedParams[3] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->thout();
 		PIDWheelSpeedParams[4] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->thiout();
+		/*PIDWheelSpeedParams[0] = 1000; PIDWheelSpeedParams[1] = 10; PIDWheelSpeedParams[2] = 0;
+		PIDWheelSpeedParams[3] = 16384; PIDWheelSpeedParams[4] = 2000;*/
 
 		PIDChassisAngleParams[0] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->kp();
 		PIDChassisAngleParams[1] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->ki();
@@ -106,6 +108,7 @@ public:
 			1, 1, coef;
 
 		m_FlagInitChassis = true;
+		m_MotorMsgCheck.fill(false);
 
 		m_FOFilterVX.SetCoef(0.17);
 		m_FOFilterVY.SetCoef(0.33);
@@ -151,6 +154,7 @@ public:
 	void UpdateChassisSensorFeedback()
 	{
 		m_ChassisSensorValues.rc = m_RC->Get();
+		spdlog::info("ch0={} ch1={} ch2={} ch3={} ch4={}", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		m_ChassisSensorValues.spCap = m_SpCap->Status();
 		m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 

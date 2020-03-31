@@ -11,6 +11,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <sstream>
 #include <cstring>
 #include <mutex>
 #include <exception>
@@ -124,6 +125,13 @@ void CANBus::Read() const
 
 void CANBus::WriteRaw(const unsigned id, const size_t length, const uint8_t* data) const
 {
+	std::stringstream ss;
+	for (size_t i{}; i < length; ++i)
+	{
+		ss << fmt::format("{:02x}", data[i]);
+		ss << " ";
+	}
+	spdlog::info("canlen=[{}]: candata={}", length, ss.str());
 	if (true == m_IsOpened)
 	{
 		struct can_frame rawFrame {};

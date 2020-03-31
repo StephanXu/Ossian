@@ -71,7 +71,7 @@ void Chassis::ChassisPowerCtrlByCurrent()
 void Chassis::RCToChassisSpeed()
 {
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;		// m/s
-	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * (-kChassisVyRCSen);    // m/s
+	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * kChassisVyRCSen;       // m/s
 	if (m_CurChassisMode == Openloop_Z)
 		m_WzSet = m_ChassisSensorValues.rc.ch[kChassisZChannel] * (-kChassisWzRCSen);
 	//[TODO] 键盘操作
@@ -97,20 +97,32 @@ void Chassis::ChassisModeSet()
 	
 }
 
-/*void Chassis::ChassisCtrl()
+void Chassis::ChassisCtrl()
 {
 	CalcWheelSpeedTarget();
 	for (size_t i = 0; i < 4; ++i)
-		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM * MOTOR_RPM_TO_WHEEL_SPEED_COEF, m_Motors[i]->TimeStamp());
-	
-	//如果超级电容快没电了
-	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
-		ChassisPowerCtrlByCurrent();
+	{
+		m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
+			m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
+			m_Motors[i]->Status().m_RPM / 60.0,
+			std::chrono::high_resolution_clock::now());
+		spdlog::info("@PIDChassisSpeed=[$set={},$get={},$pidout={}]", m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM / 60.0, m_CurrentSend[i]);
+	}
 
-	//SendCurrentToMotor();
-}*/
+
+	//如果超级电容快没电了
+	/*if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+		ChassisPowerCtrlByCurrent();*/
+
+	//std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this](double x, size_t ix = 0) {m_Motors[ix++]->SetVoltage(x); });
+	for (size_t i = 0; i < 4; ++i)
+		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
+	
+	m_Motors[LR]->Writer()->PackAndSend();
+}
 
 //功率控制：通过减小底盘电机的期望速度来实现
+/*
 void Chassis::ChassisCtrl()
 {
 	CalcWheelSpeedTarget();
@@ -118,10 +130,14 @@ void Chassis::ChassisCtrl()
 	static auto CalcCurrent = [this]()->void
 	{
 		for (size_t i = 0; i < 4; ++i)
+		{
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 				m_Motors[i]->Status().m_RPM / 60,
 				std::chrono::high_resolution_clock::now());
+			spdlog::info("@PIDChassisSpeed=[$set={},$get={}]", m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM / 60);
+		}
+			
 	};
 	
 	//如果超级电容快没电了
@@ -148,7 +164,7 @@ void Chassis::ChassisCtrl()
 	std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this](double x, size_t ix = 0) {m_Motors[ix++]->SetVoltage(x); });
 	m_Motors[LR]->Writer()->PackAndSend();
 }
-
+*/
 void Chassis::ChassisExpAxisSpeedSet()
 {
 	//[TODO] 检验三角函数的符号
@@ -188,5 +204,7 @@ void Chassis::ChassisExpAxisSpeedSet()
 		RCToChassisSpeed();
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VxSet, -kChassisVyLimit, kChassisVyLimit);
+
+		spdlog::info("VxSet={} VySet={} WzSet={}", m_VxSet, m_VySet, m_WzSet);
 	}
 }

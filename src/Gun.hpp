@@ -106,7 +106,7 @@ public:
 		{
 			++m_CurBulletShotNum;
 		});
-
+		m_FricMotorMsgCheck.fill(false);
 		m_FlagInitFric = m_FlagInitFeed = true;
 
 		PIDController pidFricSpeed;
