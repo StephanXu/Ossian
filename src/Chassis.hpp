@@ -25,9 +25,9 @@ public:
 	static constexpr double kWheelRadius = 76.0 / 1000.0; ///< m
 	static constexpr double kWheelXn = 175.0 / 1000.0;    ///< m
 	static constexpr double kWheelYn = 232.5 / 1000;  ///< m
-	static constexpr double kWheelSpeedLimit = 5;    ///< 单个麦轮的最大速度
+	static constexpr double kWheelSpeedLimit = 225;    ///< 单个麦轮的最大转速rpm
 	static constexpr double kWheelSpeedToMotorRPMCoef = 11.875;
-	static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
+	//static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
 
 	//底盘功率控制
 	static constexpr double kBufferTotalCurrentLimit = 16000;
@@ -57,6 +57,8 @@ public:
 	//pid参数 [TODO]底盘旋转角速度闭环
 	static std::array<double, 5> PIDWheelSpeedParams;
 	static std::array<double, 5> PIDChassisAngleParams;
+
+	static double kVxFilterCoef, kVyFilterCoef;
 
 	enum MotorPosition
 	{
@@ -91,8 +93,6 @@ public:
 		PIDWheelSpeedParams[2] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->kd();
 		PIDWheelSpeedParams[3] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->thout();
 		PIDWheelSpeedParams[4] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->thiout();
-		/*PIDWheelSpeedParams[0] = 1000; PIDWheelSpeedParams[1] = 10; PIDWheelSpeedParams[2] = 0;
-		PIDWheelSpeedParams[3] = 16384; PIDWheelSpeedParams[4] = 2000;*/
 
 		PIDChassisAngleParams[0] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->kp();
 		PIDChassisAngleParams[1] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->ki();
@@ -101,6 +101,8 @@ public:
 		PIDChassisAngleParams[4] = m_Config->Instance<Configuration>()-> mutable_pidchassisangle()->thiout();
 
 		kTopWz = m_Config->Instance<Configuration>()->mutable_chassis()->ktopwz();
+		kVxFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->kvxfiltercoef();
+		kVyFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->kvyfiltercoef();
 
 		double coef = kWheelXn + kWheelYn;
 		m_WheelKinematicMat << 1, -1, -coef,
@@ -111,8 +113,8 @@ public:
 		m_FlagInitChassis = true;
 		m_MotorMsgCheck.fill(false);
 
-		m_FOFilterVX.SetCoef(0.17);
-		m_FOFilterVY.SetCoef(0.33);
+		m_FOFilterVX.SetCoef(kVxFilterCoef);
+		m_FOFilterVY.SetCoef(kVyFilterCoef);
 
 		PIDController pidWheelSpeed;
 		pidWheelSpeed.SetParams(PIDWheelSpeedParams);
@@ -156,7 +158,7 @@ public:
 	void UpdateChassisSensorFeedback()
 	{
 		m_ChassisSensorValues.rc = m_RC->Get();
-		spdlog::info("@RemoteDataPID=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
+		//spdlog::info("@RemoteDataPID=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Status();
 		//m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 
@@ -189,8 +191,8 @@ public:
 
 		//chassis_task
 		UpdateChassisSensorFeedback();
-		/*if (m_FlagInitChassis)
-			InitChassis();*/
+		if (m_FlagInitChassis)
+			InitChassis();
 
 		ChassisModeSet();
 		//[TODO] 模式切换过渡

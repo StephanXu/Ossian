@@ -53,8 +53,9 @@
     "scaleDist": 1.2
   },
   "chassis": {
-    "kTopWz": 3
-
+    "kTopWz": 3,
+    "kVxFilterCoef": 0.17,
+    "kVyFilterCoef": 0.33
   },
   "gimbal": {
 

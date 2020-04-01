@@ -24,11 +24,11 @@ void Startup::ConfigServices(AppBuilder& app)
 	spdlog::info("MI_VERSION:{}", mi_version());
 
 	app.AddService<Utils::ConfigLoader>()
-	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
+	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 4000, "/api/argument");
 	app.AddService<OnlineDebug>(
 		[](OnlineDebug& option)
 		{
-			option.Connect("http://ossian.mrxzh.com/logger");
+			option.Connect("http://ossian.mrxzh.com:4000/logger");
 			option.StartLogging("OnlineLog",
 			                    "OssianLog",
 			                    "A piece of log.");
