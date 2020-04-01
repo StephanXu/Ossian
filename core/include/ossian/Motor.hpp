@@ -214,10 +214,8 @@ public:
 	static auto ConvertEndian(const uint16_t x)->uint16_t
 	{
 		uint16_t res{};
-		const uint8_t* source{ reinterpret_cast<const uint8_t*>(&x) };
-		uint8_t* result{ reinterpret_cast<uint8_t*>(&res) };
-		result[0] |= (source[0] >> 8) & 0x00ff;
-		result[1] |= (source[1] << 8) & 0xff00;
+		res |= (x >> 8) & 0x00ff;
+		res |= (x << 8) & 0xff00;
 	}
 	
 	static auto Parse(ReceiveModel& outModel,
