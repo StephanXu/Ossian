@@ -27,7 +27,7 @@ public:
 	static constexpr double kWheelYn = 232.5 / 1000;  ///< m
 	static constexpr double kWheelSpeedLimit = 5;    ///< 单个麦轮的最大速度
 	static constexpr double kWheelSpeedToMotorRPMCoef = 11.875;
-	static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209;
+	static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
 
 	//底盘功率控制
 	static constexpr double kBufferTotalCurrentLimit = 16000;
@@ -238,7 +238,7 @@ private:
 	ChassisMode m_CurChassisMode;
 	std::array<bool, 4> m_MotorMsgCheck;
 	Eigen::Vector4d m_WheelSpeedSet;
-	static Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
+	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
 	std::array<double, 4> m_CurrentSend;
 
 	FirstOrderFilter m_FOFilterVX, m_FOFilterVY;

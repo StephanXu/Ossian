@@ -6,8 +6,6 @@ double Chassis::kTopWz = 0;
 std::array<double, 5> Chassis::PIDWheelSpeedParams;
 std::array<double, 5> Chassis::PIDChassisAngleParams;
 
-Eigen::Matrix<double, 4, 3> Chassis::m_WheelKinematicMat;
-
 
 void Chassis::CalcWheelSpeedTarget()
 {
@@ -70,6 +68,8 @@ void Chassis::ChassisPowerCtrlByCurrent()
 
 void Chassis::RCToChassisSpeed()
 {
+	//m_ChassisSensorValues.rc.ch[kChassisXChannel] = 200;
+	//m_ChassisSensorValues.rc.ch[kChassisYChannel] = 200;
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;		// m/s
 	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * kChassisVyRCSen;       // m/s
 	if (m_CurChassisMode == Openloop_Z)
@@ -106,10 +106,10 @@ void Chassis::ChassisCtrl()
 		for (size_t i = 0; i < m_Motors.size(); ++i)
 		{
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
-				m_WheelSpeedSet(i),
-				m_Motors[i]->Status().m_RPM * CHASSIS_MOTOR_RPM_TO_VECTOR_SEN,
+				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
+				m_Motors[i]->Status().m_RPM,
 				std::chrono::high_resolution_clock::now());
-			spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, 1000, m_Motors[i]->Status().m_RPM * CHASSIS_MOTOR_RPM_TO_VECTOR_SEN, m_CurrentSend[i]);
+			spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i), m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
 		}
 	}
 
@@ -208,6 +208,6 @@ void Chassis::ChassisExpAxisSpeedSet()
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 
-		spdlog::info("VxSet={} VySet={} WzSet={}", m_VxSet, m_VySet, m_WzSet);
+		spdlog::info("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
 	}
 }
