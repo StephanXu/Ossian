@@ -216,6 +216,7 @@ public:
 		uint16_t res{};
 		res |= (x >> 8) & 0x00ff;
 		res |= (x << 8) & 0xff00;
+		return res;
 	}
 	
 	static auto Parse(ReceiveModel& outModel,
