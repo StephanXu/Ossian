@@ -21,14 +21,14 @@ void Startup::ConfigServices(AppBuilder& app)
 {
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 	app.InitLog();
-	spdlog::info("MI_VERSION:{}", mi_version());
+	spdlog::info("MI_VERSION: {}", mi_version());
 
 	app.AddService<Utils::ConfigLoader>()
-	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 4000, "/api/argument");
+	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
 	app.AddService<OnlineDebug>(
 		[](OnlineDebug& option)
 		{
-			option.Connect("http://ossian.mrxzh.com:4000/logger");
+			option.Connect("http://ossian.mrxzh.com/logger");
 			option.StartLogging("OnlineLog",
 			                    "OssianLog",
 			                    "A piece of log.");
@@ -39,22 +39,22 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<ossian::IOListener>();
 	app.AddService<ossian::MotorManager>();
 
-	app.AddService<IReferee, RefereeAllMessagesSt>(
-		[](RefereeAllMessagesSt& option)
+	app.AddService<IReferee, RefereeAllMessagesMt>(
+		[](IReferee& option)
 		{
 			option.AddReferee("/dev/ttyS0");
 		});
-	app.AddService<IRemote, RemoteSt>(
+	app.AddService<IRemote, RemoteMt>(
 		[](IRemote& option)
 		{
 			option.AddRemote("/dev/ttyTHS2");
 		});
-	app.AddService<ICapacitor, CapacitorSt>(
+	app.AddService<ICapacitor, CapacitorMt>(
 		[](ICapacitor& option)
 		{
 			option.AddCapacitor("can0", 0x211, 0x210);
 		});
-	app.AddService<IGyro, GyroSt>(
+	app.AddService<IGyro, GyroMt>(
 		[](IGyro& option)
 		{
 			option.AddGyro("can0", 0x000);
@@ -78,5 +78,6 @@ void Startup::ConfigServices(AppBuilder& app)
 
 void Startup::ConfigPipeline(AppBuilder& app)
 {
-	app.AddService<ossian::IExecutable, IOPeeker>();
+	app.AddService<ossian::IExecutable, IOPeeker<0>>();
+	app.AddService<ossian::IExecutable, IOPeeker<1>>();
 }

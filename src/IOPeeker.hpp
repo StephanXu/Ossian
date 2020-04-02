@@ -8,6 +8,7 @@
 
 #include <thread>
 
+template <size_t EpollIndex>
 class IOPeeker : public ossian::IExecutable
 {
 public:
@@ -16,7 +17,13 @@ public:
 	{
 	};
 
-	auto ExecuteProc() -> void override;
+	auto ExecuteProc() -> void override
+	{
+		while (true)
+		{
+			m_Listener->Listen(EpollIndex, 1000);
+		}
+	}
 
 private:
 	ossian::IOListener* m_Listener;
