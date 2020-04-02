@@ -177,7 +177,7 @@ private:
 
 	bool DelBus(std::string const& location);
 };
-const size_t MAX_LENGTH = 2048;
+const size_t MAX_LENGTH = 8192;
 } // ossian
 
 #endif // __linux__

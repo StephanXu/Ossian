@@ -105,6 +105,7 @@ bool UARTBus::Open()
 		m_IsOpened = false;
 		return false;
 	}
+	tcflush(fd, TCIOFLUSH);
 	m_FD = fd;
 	m_IsOpened = true;
 	return true;
