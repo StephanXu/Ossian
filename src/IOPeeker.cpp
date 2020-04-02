@@ -6,6 +6,6 @@ auto IOPeeker::ExecuteProc() -> void
 	while (true)
 	{
 		//logger->trace("Listener,{},{}",logger->name(), spdlog::default_logger()->name());
-		m_Listener->Listen(1000);
+		m_Listener->Listen(0, 1000);
 	}
 }

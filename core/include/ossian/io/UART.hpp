@@ -149,7 +149,7 @@ private:
 	{}
 };
 
-class UARTManager: private Attachable
+class UARTManager: private Attachable<0>
 {
 public:
 	OSSIAN_SERVICE_SETUP(UARTManager(IOListener* listener));

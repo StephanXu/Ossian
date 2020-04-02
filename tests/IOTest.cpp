@@ -21,7 +21,8 @@ int main()
 	
 	while (true)
 	{
-		listener.Listen(1000);
+		listener.Listen(0, 1000);
+		listener.Listen(1, 1000);
 	}
 	return 0;
 }

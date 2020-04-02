@@ -201,7 +201,7 @@ UARTBus* UARTManager::AddBus(std::string const& location,
 {
 	auto bus = std::make_shared<UARTBus>(this, location, baudrate, flowctrl, databits, stopbits, parity);
 	m_BusMap.insert(std::make_pair(location, bus));
-	m_Listener->AddBus(bus.get());
+	m_Listener->AddBus(m_Priority, bus.get());
 	return bus.get();
 }
 
@@ -212,7 +212,7 @@ bool UARTManager::DelBus(std::string const& location)
 	{
 		return false;
 	}
-	m_Listener->DelBus(bus);
+	m_Listener->DelBus(m_Priority, bus);
 	return m_BusMap.erase(location);
 }
 

@@ -1,4 +1,4 @@
-#include "ossian/IOListener.hpp"
+Ôªø#include "ossian/IOListener.hpp"
 
 #ifdef __linux__
 #include <sys/epoll.h>
@@ -7,20 +7,23 @@ namespace ossian
 {
 IOListener::IOListener()
 {
-	m_EpollFD = epoll_create(MAX_EVENTS); //¥¥Ω®“ª∏ˆEpoll
+	for (size_t i = 0; i < EPOLL_SIZE; ++i)
+	{
+		m_EpollFD[i] = epoll_create(MAX_EVENTS); //ÂàõÂª∫‰∏Ä‰∏™Epoll
+	}
 }
 
-void IOListener::Listen(const long timeout) const
+void IOListener::Listen(const size_t epollIndex, const long timeout) const
 {
 	struct epoll_event events[MAX_EVENTS + 1];
-	const auto nfd = epoll_wait(m_EpollFD, events, MAX_EVENTS, timeout);
+	const auto nfd = epoll_wait(m_EpollFD[epollIndex], events, MAX_EVENTS, timeout);
 	if (nfd < 0)
 	{
-		throw std::runtime_error("epoll_wait error"); // –Ë“™Catch
+		throw std::runtime_error("epoll_wait error"); // ÈúÄË¶ÅCatch
 	}
 	for (auto i = 0; i < nfd; i++)
 	{
-		//∂¡ ¬º˛
+		//ËØª‰∫ã‰ª∂
 		if ((events[i].events & EPOLLIN))
 		{
 			auto pData = static_cast<CallbackData*>(events[i].data.ptr);
@@ -29,58 +32,58 @@ void IOListener::Listen(const long timeout) const
 	}
 }
 
-void IOListener::AddEpoll(const FileDescriptor fd, std::unique_ptr<CallbackData> pData)
+void IOListener::AddEpoll(const size_t epollIndex, const FileDescriptor fd, std::unique_ptr<CallbackData> pData)
 {
 	struct epoll_event epv;
 	epv.data.ptr = pData.get();
-	epv.events = EPOLLIN; // ƒø«∞epoll÷ª”√”⁄º‡Ã˝ ‰»Î
-	m_FDRegistered.insert(std::make_pair(fd, std::move(pData)));
-	if (epoll_ctl(m_EpollFD, EPOLL_CTL_ADD, fd, &epv) < 0) // ÃÌº”“ª∏ˆΩ⁄µ„
+	epv.events   = EPOLLIN; // ÁõÆÂâçepollÂè™Áî®‰∫éÁõëÂê¨ËæìÂÖ•
+	m_FDRegistered[epollIndex].insert(std::make_pair(fd, std::move(pData)));
+	if (epoll_ctl(m_EpollFD[epollIndex], EPOLL_CTL_ADD, fd, &epv) < 0) // Ê∑ªÂä†‰∏Ä‰∏™ËäÇÁÇπ
 	{
 		throw std::runtime_error("Epoll add failed");
 	}
 }
 
-void IOListener::DelEpoll(const FileDescriptor fd)
+void IOListener::DelEpoll(const size_t epollIndex, const FileDescriptor fd)
 {
 	struct epoll_event epv;
-	auto it = m_FDRegistered.find(fd);
-	if (it == m_FDRegistered.end())
+	auto it = m_FDRegistered[epollIndex].find(fd);
+	if (it == m_FDRegistered[epollIndex].end())
 	{
 		throw std::runtime_error("No such fd registered");
 	}
 	else
 	{
 		epv.data.ptr = NULL;
-		epoll_ctl(m_EpollFD, EPOLL_CTL_DEL, fd, &epv);
-		m_FDRegistered.erase(it);
+		epoll_ctl(m_EpollFD[epollIndex], EPOLL_CTL_DEL, fd, &epv);
+		m_FDRegistered[epollIndex].erase(it);
 	}
 }
 
-bool IOListener::AddBus(IListenable* const bus)
+bool IOListener::AddBus(const size_t epollIndex, IListenable* const bus)
 {
-	auto it = m_Buses.find(bus);
-	if (it != m_Buses.end())
+	auto it = m_Buses[epollIndex].find(bus);
+	if (it != m_Buses[epollIndex].end())
 	{
 		throw std::runtime_error("Bus already exist");
 		return false;
 	}
-	m_Buses.insert(bus);
-	// Ω´FD◊¢≤·µΩEpoll÷–
-	auto fd = bus->FD();
+	m_Buses[epollIndex].insert(bus);
+	// Â∞ÜFDÊ≥®ÂÜåÂà∞Epoll‰∏≠
+	auto fd    = bus->FD();
 	auto pData = std::make_unique<CallbackData>();
 	pData->bus = bus;
-	AddEpoll(fd, std::move(pData));
+	AddEpoll(epollIndex, fd, std::move(pData));
 	return true;
 }
 
-bool IOListener::DelBus(IListenable* const bus)
+bool IOListener::DelBus(const size_t epollIndex, IListenable* const bus)
 {
-	auto it = m_Buses.find(bus);
-	if (it == m_Buses.end())
-		return false; // ≤ª¥Ê‘⁄
-	DelEpoll(bus->FD());
-	m_Buses.erase(it);
+	auto it = m_Buses[epollIndex].find(bus);
+	if (it == m_Buses[epollIndex].end())
+		return false; // ‰∏çÂ≠òÂú®
+	DelEpoll(epollIndex, bus->FD());
+	m_Buses[epollIndex].erase(it);
 	return true;
 }
 } // ossian

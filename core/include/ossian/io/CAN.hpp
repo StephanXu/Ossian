@@ -97,7 +97,7 @@ private:
 	{}
 };
 
-class CANManager: private Attachable
+class CANManager: private Attachable<1>
 {
 public:
 	OSSIAN_SERVICE_SETUP(CANManager(IOListener* listener));
