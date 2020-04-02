@@ -10,7 +10,7 @@
 
 // 限幅函数
 template<typename T>
-inline T Clamp(T value, const T lowerBnd, const T upperBnd)
+inline T Clamp(T value, const T& lowerBnd, const T& upperBnd)
 {
 	if (value > upperBnd)
 		return upperBnd;
@@ -22,7 +22,7 @@ inline T Clamp(T value, const T lowerBnd, const T upperBnd)
 
 //死区限制
 template<typename T>
-inline T DeadbandLimit(T value, const T deadband)
+inline T DeadbandLimit(T value, const T& deadband)
 {
 	if (value > deadband || value < -deadband)
 		return value;
@@ -32,7 +32,7 @@ inline T DeadbandLimit(T value, const T deadband)
 
 //循环限幅
 template<typename T>
-inline T ClampLoop(T value, const T lowerBnd, const T upperBnd)
+inline T ClampLoop(T value, const T& lowerBnd, const T& upperBnd)
 {
 	T len = upperBnd - lowerBnd;
 	if (value > upperBnd)
@@ -59,25 +59,26 @@ inline double RelativeEcdToRad(uint16_t ecd, const uint16_t ecdMid)
 		relativeEcd += kEcdRange;
 	return relativeEcd * kMotorEcdToRadCoef;
 }
-
+// out = k / (k + T) * out + T / (k + T) * in
 // 一阶低通滤波器
 class FirstOrderFilter   
 {
 public:
-	FirstOrderFilter(double k=1) : m_Coef(k) { m_LastValue = 0; }  //参数取决于滤波时间和采样周期
-	void SetCoef(double k) { m_Coef = k; }
+	FirstOrderFilter(double k=1,double t=1) : m_Coef(k),m_FramePeriod(t) { m_LastResult = 0; }  //参数取决于滤波时间和采样周期
+	void SetState(double k, double t) { m_Coef = k; m_FramePeriod = t; }
 	double Calc(double curValue)
 	{
-		double result = (1.0 - m_Coef) * m_LastValue + m_Coef * curValue;
-		m_LastValue = result;
+		double result = m_Coef / (m_Coef + m_FramePeriod) * m_LastResult + m_FramePeriod / (m_Coef + m_FramePeriod) * curValue;
+		m_LastResult = result;
 		return result;
 	}
 
-	void Reset() { m_LastValue = 0; }
+	void Reset() { m_LastResult = 0; }
 
 private:
 	double m_Coef;
-	double m_LastValue;
+	double m_LastResult;
+	double m_FramePeriod;
 };
 
 // 位置式PID
@@ -141,7 +142,6 @@ public:
 		m_Integral = Clamp( m_Integral, -m_ThresIntegral, m_ThresIntegral);
 		
 		output = m_Kp * error + ki * m_Integral + kd * (error - m_LastError);
-		spdlog::info("kp={} ki={} kd={}", m_Kp, ki, kd);
 		if (output > 0)
 			output += m_DeadValue;
 		else if (output < 0)

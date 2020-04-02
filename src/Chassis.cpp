@@ -13,7 +13,7 @@ void Chassis::CalcWheelSpeedTarget()
 {
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);  //底盘三轴运动速度期望 m/s
 	m_WheelSpeedSet = m_WheelKinematicMat * vSet / kWheelRadius / (2.0 * M_PI) * 60; //[4, 3] * [3, 1] --> [4, 1]  轮子转速期望rpm
-
+	m_WheelSpeedSet(2) *= -1, m_WheelSpeedSet(3) *= -1;  //3,4号电机转向与轮子相反
 	//限制麦轮最大速度
 	double maxWheelSpeedItem = m_WheelSpeedSet.maxCoeff();
 	if (maxWheelSpeedItem > kWheelSpeedLimit)
@@ -21,8 +21,8 @@ void Chassis::CalcWheelSpeedTarget()
 		double scaleWheelSpeed = kWheelSpeedLimit / maxWheelSpeedItem;
 		m_WheelSpeedSet *= scaleWheelSpeed;
 	}
-	spdlog::info("@WheelSpeedSet=[$wheel0={},$wheel1={},$wheel2={},$wheel3={}]", 
-		m_WheelSpeedSet(0), m_WheelSpeedSet(1), m_WheelSpeedSet(2), m_WheelSpeedSet(3));
+	/*spdlog::info("@WheelSpeedSet=[$wheel0={},$wheel1={},$wheel2={},$wheel3={}]", 
+		m_WheelSpeedSet(0), m_WheelSpeedSet(1), m_WheelSpeedSet(2), m_WheelSpeedSet(3));*/
 }
 
 void Chassis::ChassisPowerCtrlByCurrent()
@@ -72,17 +72,18 @@ void Chassis::ChassisPowerCtrlByCurrent()
 
 void Chassis::RCToChassisSpeed()
 {
-	//m_ChassisSensorValues.rc.ch[kChassisXChannel] = 200;
-	//m_ChassisSensorValues.rc.ch[kChassisYChannel] = 200;
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;		// m/s
 	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * kChassisVyRCSen;       // m/s
 	if (m_CurChassisMode == Openloop_Z)
-		m_WzSet = m_ChassisSensorValues.rc.ch[kChassisZChannel] * (-kChassisWzRCSen);
+		m_WzSet = m_ChassisSensorValues.rc.ch[kChassisZChannel] * kChassisWzRCSen;
 	//[TODO] 键盘操作
 
 	//一阶低通滤波代替斜坡函数作为底盘速度输入
-	m_VxSet = m_FOFilterVX.Calc(vxChannelSet);
-	m_VySet = m_FOFilterVY.Calc(vyChannelSet);
+	m_VxSet = m_FOFilterVX.Calc(vxChannelSet);//0.167
+	m_VySet = m_FOFilterVY.Calc(vyChannelSet);//0.333
+
+	m_VxSet = DeadbandLimit(m_VxSet, kChassisRCDeadband * kChassisVxRCSen);
+	m_VySet = DeadbandLimit(m_VySet, kChassisRCDeadband * kChassisVyRCSen);
 }
 
 void Chassis::ChassisModeSet()
@@ -136,22 +137,21 @@ void Chassis::ChassisCtrl()
 		CalcWheelSpeedTarget();
 		auto CalcCurrent = [this]()->void
 		{
-			for (size_t i = 0; i < 4; ++i)
+			for (size_t i = 0; i < m_Motors.size(); ++i)
 			{
 				m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 					m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 					m_Motors[i]->Status().m_RPM,
 					std::chrono::high_resolution_clock::now());
-				spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
+				//spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
 			}
 		};
 
-		spdlog::info("@Capacitor=[$inputV={},$curV={},$inputC={},$targetP={}]", 
+		/*spdlog::info("@Capacitor=[$inputV={},$curV={},$inputC={},$targetP={}]", 
 			m_ChassisSensorValues.spCap.m_InputVoltage, m_ChassisSensorValues.spCap.m_CapacitorVoltage, 
-			m_ChassisSensorValues.spCap.m_TestCurrent, m_ChassisSensorValues.spCap.m_TargetPower);
+			m_ChassisSensorValues.spCap.m_TestCurrent, m_ChassisSensorValues.spCap.m_TargetPower);*/
 		//如果超级电容快没电了
-		//if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
-		/*if(0==1)
+		/*if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		{
 			for (int cnt = 0; ; ++cnt)
 			{

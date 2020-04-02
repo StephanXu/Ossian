@@ -47,10 +47,11 @@ public:
 	static constexpr int16_t kChassisRCDeadband = 10; ///< 摇杆死区
 	static constexpr double kChassisVxRCSen = 0.006; ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
 	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
-	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+	static constexpr double kChassisWzRCSen = -0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+	static constexpr double kChassisCtrlPeriod = 0.008; //底盘控制周期 s
 
 	//底盘运动
-	static constexpr double kChassisVxLimit = 4.5; ///< m/s
+	static constexpr double kChassisVxLimit = 3.5; ///< m/s
 	static constexpr double kChassisVyLimit = 1.5; ///< m/s
 	static double kTopWz;  ///< 底盘陀螺旋转速度 rad/s
 
@@ -113,8 +114,8 @@ public:
 		m_FlagInitChassis = true;
 		m_MotorMsgCheck.fill(false);
 
-		m_FOFilterVX.SetCoef(kVxFilterCoef);
-		m_FOFilterVY.SetCoef(kVyFilterCoef);
+		m_FOFilterVX.SetState(kVxFilterCoef, kChassisCtrlPeriod);
+		m_FOFilterVY.SetState(kVyFilterCoef, kChassisCtrlPeriod);
 
 		PIDController pidWheelSpeed;
 		pidWheelSpeed.SetParams(PIDWheelSpeedParams);
@@ -189,7 +190,6 @@ public:
 		if (!(m_MotorMsgCheck[LF] && m_MotorMsgCheck[LR] && m_MotorMsgCheck[RR] && m_MotorMsgCheck[RF]))  //俯视，左前，左后，右后，右前，逆时针
 			return;
 
-		//chassis_task
 		UpdateChassisSensorFeedback();
 		if (m_FlagInitChassis)
 			InitChassis();
