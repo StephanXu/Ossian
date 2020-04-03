@@ -363,7 +363,7 @@ public:
 			                    const size_t length,
 			                    const uint8_t* data)
 			             {
-							 spdlog::trace("Referee Receive: {}", length);
+				             spdlog::trace("Referee Receive: {}", length);
 				             ParseReferee(data, length);
 			             });
 	}
@@ -454,9 +454,11 @@ private:
 			auto readLength{(ReadData<NThTypeOf<Index, MessageTypes...>, Index>(data, length) + ...)};
 			if (0 == readLength && length > sizeof(FrameHeaderWithCmd))
 			{
-				readLength = reinterpret_cast<const FrameHeaderWithCmd*>(data)->m_DataLength;
+				readLength = sizeof(FrameHeaderWithCmd)
+				             + sizeof(FrameTail)
+				             + reinterpret_cast<const FrameHeaderWithCmd*>(data)->m_DataLength;
 			}
-			return readLength;
+			return readLength > length ? 0 : readLength;
 		}
 		catch (std::runtime_error& err)
 		{
