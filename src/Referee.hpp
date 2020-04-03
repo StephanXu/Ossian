@@ -434,7 +434,7 @@ private:
 		}
 		if (length < RefereeMessage<MessageType>::length)
 		{
-			throw std::runtime_error("Buffer is incomplete");
+			throw std::runtime_error("Referee: Buffer is incomplete");
 		}
 		{
 			//[TODO]: Check the thread safe rule for the separate lock design
