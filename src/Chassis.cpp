@@ -100,7 +100,7 @@ void Chassis::ChassisModeSet()
 		m_CurChassisMode = Disable; break;
 	}
 }
-/*
+
 void Chassis::ChassisCtrl()
 {
 	if (m_CurChassisMode == Disable)
@@ -114,20 +114,24 @@ void Chassis::ChassisCtrl()
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 				m_Motors[i]->Status().m_RPM,
 				std::chrono::high_resolution_clock::now());
-			spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
+			//spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
 		}
 	}
 
 	//如果超级电容快没电了
-	/*if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		ChassisPowerCtrlByCurrent();
+
+	for (size_t i = 0; i < m_Motors.size(); ++i)
+		spdlog::info("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);
 
 	for (size_t i = 0; i < m_Motors.size(); ++i)
 		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
 	m_Motors[LR]->Writer()->PackAndSend();
 }
-*/
+
 //功率控制：通过减小底盘电机的期望速度来实现
+/*
 void Chassis::ChassisCtrl()
 {
 	if (m_CurChassisMode == Disable)
@@ -146,38 +150,44 @@ void Chassis::ChassisCtrl()
 				//spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
 			}
 		};
-
-		/*spdlog::info("@Capacitor=[$inputV={},$curV={},$inputC={},$targetP={}]", 
+		m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
+		spdlog::info("@Capacitor=[$inputV={},$curV={},$inputC={},$targetP={}]", 
 			m_ChassisSensorValues.spCap.m_InputVoltage, m_ChassisSensorValues.spCap.m_CapacitorVoltage, 
-			m_ChassisSensorValues.spCap.m_TestCurrent, m_ChassisSensorValues.spCap.m_TargetPower);*/
+			m_ChassisSensorValues.spCap.m_TestCurrent, m_ChassisSensorValues.spCap.m_TargetPower);
 		//如果超级电容快没电了
-		/*if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+		if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		{
 			for (int cnt = 0; ; ++cnt)
 			{
 				m_WheelSpeedSet *= 0.9;
 				CalcCurrent();
 				double totalCurrent = 0;
-				std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [&totalCurrent](double x) {totalCurrent += fabs(x); });
-				if (totalCurrent * m_ChassisSensorValues.spCap.m_InputVoltage < m_ChassisSensorValues.refereeMaxPwr)
+				std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [&totalCurrent](double x) {
+					totalCurrent += fabs(x); });
+				if (totalCurrent * m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt < 
+					m_ChassisSensorValues.refereeMaxPwr)
 					break;
 				if (cnt >= 10)
 				{
 					std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this, totalCurrent](double& x) {
-						x = x / totalCurrent * m_ChassisSensorValues.refereeMaxPwr / m_ChassisSensorValues.spCap.m_InputVoltage; });
+						x = x / totalCurrent * m_ChassisSensorValues.refereeMaxPwr / 
+							m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt; });
 					break;
 				}
 			}
 		}
-		else*/
+		else
 			CalcCurrent();
 	}
-	
+
+	for (size_t i = 0; i < m_Motors.size(); ++i)
+		spdlog::info("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);
+
 	for (size_t i = 0; i < m_Motors.size(); ++i)
 		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
 	m_Motors[LR]->Writer()->PackAndSend();
 }
-
+*/
 void Chassis::ChassisExpAxisSpeedSet()
 {
 	//[TODO] 检验三角函数的符号
@@ -218,6 +228,6 @@ void Chassis::ChassisExpAxisSpeedSet()
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 
-		spdlog::info("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
+		//spdlog::info("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
 	}
 }

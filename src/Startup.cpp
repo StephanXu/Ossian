@@ -28,7 +28,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<OnlineDebug>(
 		[](OnlineDebug& option)
 		{
-			option.Connect("http://ossian.mrxzh.com/logger");
+			option.Connect("http://debug.fenzhengrou.wang:4000/logger");
 			option.StartLogging("OnlineLog",
 			                    "OssianLog",
 			                    "A piece of log.");
@@ -42,7 +42,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IReferee, RefereeAllMessagesMt>(
 		[](IReferee& option)
 		{
-			option.AddReferee("/dev/ttyS0");
+			option.AddReferee("/dev/ttyUSB0");
 		});
 	app.AddService<IRemote, RemoteMt>(
 		[](IRemote& option)

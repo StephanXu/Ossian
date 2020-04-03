@@ -163,7 +163,13 @@ public:
 		//m_ChassisSensorValues.spCap = m_SpCap->Status();
 		//m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 
-		//m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
+		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
+		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000;
+		spdlog::info("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$ChassisVolt={},$MaxPower={}]", 
+			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower, 
+			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
+			m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt,
+			80);
 	}
 
 	void CalcWheelSpeedTarget();
