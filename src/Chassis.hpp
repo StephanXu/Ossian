@@ -122,7 +122,7 @@ public:
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
-		m_RC->AddOnChange([](const RemoteStatus& value) {spdlog::info("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
+		//m_RC->AddOnChange([](const RemoteStatus& value) {spdlog::info("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
 	}
 
 	void InitChassis()
@@ -165,10 +165,9 @@ public:
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000;
-		spdlog::info("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$ChassisVolt={},$MaxPower={}]", 
+		spdlog::info("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]", 
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower, 
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
-			m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt,
 			80);
 	}
 

@@ -114,16 +114,19 @@ void Chassis::ChassisCtrl()
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 				m_Motors[i]->Status().m_RPM,
 				std::chrono::high_resolution_clock::now());
-			//spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
+			spdlog::info("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
+				m_Motors[i]->Status().m_RPM);
+			/*spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, 
+				m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);*/
 		}
 	}
 
 	//如果超级电容快没电了
-	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+	//if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		ChassisPowerCtrlByCurrent();
 
-	for (size_t i = 0; i < m_Motors.size(); ++i)
-		spdlog::info("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);
+	/*for (size_t i = 0; i < m_Motors.size(); ++i)
+		spdlog::info("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
 
 	for (size_t i = 0; i < m_Motors.size(); ++i)
 		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
