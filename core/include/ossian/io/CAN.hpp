@@ -25,6 +25,7 @@
 #include "IO.hpp"
 #include "ossian/IOListener.hpp"
 #include "ossian/Factory.hpp"
+#include "ossian/MultiThread.hpp"
 namespace ossian
 {
 
@@ -54,7 +55,7 @@ public:
 	bool IsOpened() const noexcept { return m_IsOpened; }
 	bool Open();
 	bool Close();
-	void Read() const override;
+	void Read() override;
 	const std::vector<CANDevice*> GetDevices();
 
 	std::shared_ptr<CANDevice> AddDevice(unsigned int id);
@@ -68,6 +69,7 @@ private:
 	std::unordered_map<unsigned int, std::shared_ptr<CANDevice>> m_DeviceMap;
 	CANManager* m_Manager;
 	void UpdateFilter();
+	ThreadPool m_ThreadPool;
 };
 
 class CANDevice : public BaseDevice, public std::enable_shared_from_this<CANDevice>

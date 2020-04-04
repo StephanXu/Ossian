@@ -127,7 +127,7 @@ std::shared_ptr<UARTDevice> const& UARTBus::AddDevice()
 	return m_Device;
 }
 
-void UARTBus::Read() const
+void UARTBus::Read()
 {
 	if (true == m_IsOpened)
 	{
@@ -145,7 +145,7 @@ void UARTBus::Read() const
 		size_t length = nbytes;
 		std::shared_ptr<uint8_t[]> buffer(new uint8_t[length]());
 		memcpy(buffer.get(), buf, length);
-		m_Device->Invoke(length, buffer.get());
+		m_ThreadPool.AddTask([device=m_Device, length, buffer]() { device->Invoke(length, buffer.get()); });
 	}
 }
 

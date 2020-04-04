@@ -4,13 +4,14 @@
 #include "ossian/io/IO.hpp"
 #include <iostream>
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <vector>
 using namespace ossian;
 using namespace std;
 
 void func(shared_ptr<CANDevice> const& device, const size_t length, const uint8_t* data)
 {
-	cout << length << endl;
+	spdlog::info("Callback function called with length {}", length);
 }
 
 int main()

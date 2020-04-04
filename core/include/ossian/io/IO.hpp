@@ -82,7 +82,7 @@ class IListenable
 {
 public:
 	virtual ~IListenable();
-	virtual void Read() const = 0;
+	virtual void Read() = 0;
 	virtual FileDescriptor FD() const noexcept = 0;
 };
 

@@ -16,6 +16,8 @@
 #include "IO.hpp"
 #include "ossian/Factory.hpp"
 #include "ossian/IOListener.hpp"
+#include "ossian/MultiThread.hpp"
+
 namespace ossian
 {
 
@@ -104,7 +106,7 @@ public:
 	bool IsOpened() const noexcept { return m_IsOpened; }
 	bool Open();
 	bool Close();
-	void Read() const override;
+	void Read() override;
 	std::vector<UARTDevice*> GetDevices() const;
 
 	std::shared_ptr<UARTDevice> const& AddDevice();
@@ -123,6 +125,8 @@ private:
 
 	std::shared_ptr<UARTDevice> m_Device;
 	UARTManager* m_Manager;
+
+	ThreadPool m_ThreadPool;
 };
 
 class UARTDevice : public BaseDevice, public std::enable_shared_from_this<UARTDevice>
