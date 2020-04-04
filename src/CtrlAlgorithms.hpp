@@ -6,8 +6,8 @@
 #include <chrono>
 #include <array>
 #include <Eigen/Dense>
-#include <spdlog/spdlog.h>
 
+using hrClock = std::chrono::high_resolution_clock;
 // 限幅函数
 template<typename T>
 inline T Clamp(T value, const T& lowerBnd, const T& upperBnd)
@@ -116,10 +116,10 @@ public:
 	{
 		m_Integral = 0;
 		m_LastError = 0;
-		m_LastTimestamp = std::chrono::high_resolution_clock::time_point();
+		m_LastTimestamp = hrClock::time_point();
 	}
 
-	double Calc(double expectation, double feedback, std::chrono::high_resolution_clock::time_point curTimestamp, bool flagRadLimit=false)
+	double Calc(double expectation, double feedback, hrClock::time_point curTimestamp, bool flagRadLimit=false)
 	{
 		double interval = (m_LastTimestamp.time_since_epoch().count() == 0 ?
 			1 : std::chrono::duration<double, std::milli>(curTimestamp - m_LastTimestamp).count());   // ms
@@ -146,13 +146,15 @@ public:
 			output += m_DeadValue;
 		else if (output < 0)
 			output += -m_DeadValue;
+
+		m_LastError = error;
 		//将pid输出做限幅处理
 		return Clamp(output, -m_ThresOutput, m_ThresOutput);
 	}
 
 private:
 	double m_Kp, m_Ki, m_Kd;
-	std::chrono::high_resolution_clock::time_point m_LastTimestamp; //输入PID的上一条报文的时间戳
+	hrClock::time_point m_LastTimestamp; //输入PID的上一条报文的时间戳
 	double m_LastError, /*m_Expectation,*/ m_Integral;
 	double m_ThresError1, m_ThresError2;  //ThresError1 > ThresError2
 	double m_ThresIntegral, m_ThresOutput;

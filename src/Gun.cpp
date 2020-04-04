@@ -71,9 +71,9 @@ void Gun::FricCtrl()
 	else
 	{
 		currentFricBelow = m_PIDFricSpeed[FricBelow].Calc(m_FricSpeedSet, m_Motors[FricBelow]->Status().m_RPM, 
-			std::chrono::high_resolution_clock::now());
+			hrClock::now());
 		currentFricUpper = m_PIDFricSpeed[FricUpper].Calc(-m_FricSpeedSet, m_Motors[FricUpper]->Status().m_RPM, 
-			std::chrono::high_resolution_clock::now());
+			hrClock::now());
 	}
 	m_Motors[FricBelow]->SetVoltage(currentFricBelow);
 	m_Motors[FricUpper]->SetVoltage(currentFricUpper);
@@ -116,7 +116,7 @@ void Gun::FeedRotateCtrl(bool stop, int rpmSet, bool reverse)
 		current = 0;
 	else
 	{
-		current = m_PIDFeedSpeed.Calc(rpmSet, m_Motors[Feed]->Status().m_RPM, std::chrono::high_resolution_clock::now());
+		current = m_PIDFeedSpeed.Calc(rpmSet, m_Motors[Feed]->Status().m_RPM, hrClock::now());
 		if (reverse)
 			current *= -1;
 	}
@@ -147,9 +147,9 @@ void Gun::SingleShotCtrl(int rpmSet)
 
 void Gun::FeedCtrl()
 {
-	static std::chrono::high_resolution_clock::time_point lastShootTimestamp;
+	static hrClock::time_point lastShootTimestamp;
 	long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::high_resolution_clock::now() - lastShootTimestamp).count();
+						 hrClock::now() - lastShootTimestamp).count();
 	
 	if (m_FeedMode == FeedMode::Stop)
 		FeedRotateCtrl(true);
@@ -162,7 +162,7 @@ void Gun::FeedCtrl()
 		if (interval >= 1000)  //µ¥·¢¼ä¸ô1s
 		{
 			SingleShotCtrl(kFeedSemiRPM);
-			lastShootTimestamp = std::chrono::high_resolution_clock::now();
+			lastShootTimestamp = hrClock::now();
 		}
 	}
 	else if (m_FeedMode == FeedMode::Burst)
@@ -171,7 +171,7 @@ void Gun::FeedCtrl()
 		{
 			for (int cnt = 0; cnt < kBurstBulletNum; ++cnt)
 				SingleShotCtrl(kFeedBurstRPM);
-			lastShootTimestamp = std::chrono::high_resolution_clock::now();
+			lastShootTimestamp = hrClock::now();
 		}
 	}
 	else if (m_FeedMode == FeedMode::Auto)

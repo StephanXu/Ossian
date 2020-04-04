@@ -12,6 +12,7 @@
 #include <memory>
 #include <atomic>
 
+using hrClock = std::chrono::high_resolution_clock;
 class Gimbal
 {
 public:
@@ -29,8 +30,10 @@ public:
 	static constexpr double   kYawMidRad = kYawMidEcd * kMotorEcdToRadCoef;
 
 	//最大最小的 相对（中值的）角度
-	const std::array<double, 2> kMaxRelativeAngle = { RelativeEcdToRad(kPitchMaxEcd, kPitchMidEcd),RelativeEcdToRad(kYawMaxEcd, kYawMidEcd) };
-	const std::array<double, 2> kMinRelativeAngle = { RelativeEcdToRad(kPitchMinEcd, kPitchMidEcd),RelativeEcdToRad(kYawMinEcd, kYawMidEcd) };
+	const std::array<double, 2> kMaxRelativeAngle = { RelativeEcdToRad(kPitchMaxEcd, kPitchMidEcd),
+													  RelativeEcdToRad(kYawMaxEcd, kYawMidEcd) };
+	const std::array<double, 2> kMinRelativeAngle = { RelativeEcdToRad(kPitchMinEcd, kPitchMidEcd),
+													  RelativeEcdToRad(kYawMinEcd, kYawMidEcd) };
 	/*
 	static constexpr double   PITCH_MAX_RAD = kPitchMaxEcd * kMotorEcdToRadCoef;
 	static constexpr double   PITCH_MIN_RAD = kPitchMinEcd * kMotorEcdToRadCoef;
@@ -136,7 +139,7 @@ public:
 	void InitGimbal()
 	{
 		m_CurGimbalAngleMode = Gyro; //or gyro
-		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
+		m_LastEcdTimeStamp.fill(hrClock::time_point());
 		m_MotorMsgCheck.fill(false);
 		m_AngleInput.fill(0);
 
@@ -227,7 +230,7 @@ public:
 private:
 	ossian::MotorManager* m_MotorManager;  	
 	std::array<std::shared_ptr<ossian::DJIMotor>, 2> m_Motors;  	
-	std::chrono::high_resolution_clock::time_point m_LastRefresh;
+	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	ossian::IOData<RemoteStatus>* m_RC;  //遥控器
 	ossian::IOData<GyroModel>* m_GyroListener;
@@ -247,14 +250,15 @@ private:
 
 	std::array<double, 2> m_AngleInput;
 	std::array<double, 2> m_LastEcdAngle;
-	std::array<std::chrono::high_resolution_clock::time_point, 2> m_LastEcdTimeStamp;
+	std::array<hrClock::time_point, 2> m_LastEcdTimeStamp;
 
 	/*double m_YawAdd, m_PitchAdd; //角度增量rad
 	double m_LastYaw, m_LastPitch;*/
 	std::array<double, 2> m_GyroAngleSet; //累加 陀螺仪模式
 	std::array<double, 2> m_EcdAngleSet; //累加 编码器模式
 
-	std::array<PIDController,2> m_PIDAngleEcd, m_PIDAngleGyro, m_PIDAngleSpeed; //设定角度--->旋转角速度  旋转角速度-->6020控制电压
+	//设定角度--->旋转角速度  旋转角速度-->6020控制电压
+	std::array<PIDController,2> m_PIDAngleEcd, m_PIDAngleGyro, m_PIDAngleSpeed; 
 	std::array<double, 2> m_CurrentSend;
 };
 

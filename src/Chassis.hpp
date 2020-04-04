@@ -18,6 +18,7 @@
 #include <array>
 #include <spdlog/spdlog.h>
 
+using hrClock = std::chrono::high_resolution_clock;
 class Chassis
 {
 public:
@@ -207,20 +208,20 @@ public:
 
 		m_MotorMsgCheck.fill(false);
 
-		/*static std::chrono::high_resolution_clock::time_point lastSendSpCapTimestamp;
+		/*static hrClock::time_point lastSendSpCapTimestamp;
 		long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::high_resolution_clock::now() - lastSendSpCapTimestamp).count();
+			hrClock::now() - lastSendSpCapTimestamp).count();
 		if (interval > 100)   //不推荐以太高的频率发送功率数据，推荐10Hz
 		{
 			m_SpCap->SetPower(m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower);
-			lastSendSpCapTimestamp = std::chrono::high_resolution_clock::now();
+			lastSendSpCapTimestamp = hrClock::now();
 		}*/
 	}
 
 private:
 	ossian::MotorManager* m_MotorManager;
 	std::array<std::shared_ptr<ossian::DJIMotor>, 4> m_Motors;
-	std::chrono::high_resolution_clock::time_point m_LastRefresh;
+	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	ossian::IOData<RemoteStatus>* m_RC;  //遥控器
 	ICapacitor* m_SpCap;

@@ -75,6 +75,7 @@ void Aimbot::Process(cv::Mat& image)
     //ImageInputData* imageInput = dynamic_cast<ImageInputData*>(input);
 	
     //cv::Mat origFrame = imageInput->m_Image;
+    auto start=std::chrono::high_resolution_clock::now();
     cv::Mat origFrame = image;
     if (origFrame.empty())
     {
@@ -98,7 +99,8 @@ void Aimbot::Process(cv::Mat& image)
         Math::RegularizeErrAngle(deltaYaw, 'y');
         Math::RegularizeErrAngle(deltaPitch, 'p');
     }
-    
+    double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
+    spdlog::info("AimbotFPS={}", 1000.0 / interval);
 	spdlog::info("Aimbot Status: {}\t{}\t{}", deltaYaw, deltaPitch, dist);
     
     //[TODO] “发送”两角度给云台

@@ -113,16 +113,18 @@ void Chassis::ChassisCtrl()
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 				m_Motors[i]->Status().m_RPM,
-				std::chrono::high_resolution_clock::now());
-			spdlog::info("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
-				m_Motors[i]->Status().m_RPM);
-			/*spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, 
-				m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);*/
+				hrClock::now());
+			/*spdlog::info("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
+				m_Motors[i]->Status().m_RPM);*/
+			spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", 
+							i,
+							m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, 
+							m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
 		}
 	}
 
 	//如果超级电容快没电了
-	//if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		ChassisPowerCtrlByCurrent();
 
 	/*for (size_t i = 0; i < m_Motors.size(); ++i)
@@ -149,7 +151,7 @@ void Chassis::ChassisCtrl()
 				m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 					m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 					m_Motors[i]->Status().m_RPM,
-					std::chrono::high_resolution_clock::now());
+					hrClock::now());
 				//spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
 			}
 		};
@@ -204,21 +206,21 @@ void Chassis::ChassisExpAxisSpeedSet()
 		double vy = m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
-		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
+		m_WzSet = -m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, hrClock::now(), true); //符号为负？
 	}
 	/*else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{
 		RCToChassisSpeed();
 		m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[kChassisZChannel] * kChassisWzRCSen, -M_PI, M_PI);
 		double deltaAngle = ClampLoop(m_AngleSet - m_ChassisSensorValues.gyroZ, -M_PI, M_PI);
-		m_WzSet = m_PIDChassisAngle.Calc(deltaAngle, 0, std::chrono::high_resolution_clock::now(), true); //符号为负？
+		m_WzSet = m_PIDChassisAngle.Calc(deltaAngle, 0, hrClock::now(), true); //符号为负？
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 	}*/
 	else if (m_CurChassisMode == Top)
 	{
 		RCToChassisSpeed();
-		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);
+		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);     
 		double vx = m_VxSet * cosine - m_VySet * sine;
 		double vy = m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);

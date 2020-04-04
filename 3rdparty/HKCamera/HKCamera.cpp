@@ -111,7 +111,7 @@ void HKCamera::SetDevice(const int camIndex)
         throw std::runtime_error("Get PayloadSize fail");
     m_PayloadSize = stParam.nCurValue;
 
-    if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 750))
+    if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 200))
         throw std::runtime_error("Set ExposureTime fail");
 
     if (MV_OK != MV_CC_SetEnumValue(m_Handle, "PixelFormat", 0x01080009))

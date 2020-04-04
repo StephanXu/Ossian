@@ -14,6 +14,7 @@
 #include <array>
 #include <atomic>
 
+using hrClock = std::chrono::high_resolution_clock;
 class Gun
 {
 public:
@@ -228,7 +229,7 @@ public:
 private:
 	ossian::MotorManager* m_MotorManager;
 	std::array<std::shared_ptr<ossian::DJIMotor>, 3> m_Motors;
-	std::chrono::high_resolution_clock::time_point m_LastRefresh;
+	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	ossian::IOData<RemoteStatus>* m_RC;  //遥控器
 	Gimbal* m_Gimbal;
