@@ -14,6 +14,7 @@
 #include "Referee.hpp"
 #include "Gyro.hpp"
 #include "IOPeeker.hpp"
+#include "CameraPeeker.hpp"
 
 #include <thread>
 
@@ -74,10 +75,14 @@ void Startup::ConfigServices(AppBuilder& app)
 			option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 1, 0x200);
 			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 2, 0x200);
 		});
+
+	app.AddService<Aimbot>();
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)
 {
 	app.AddService<ossian::IExecutable, IOPeeker<0>>();
 	app.AddService<ossian::IExecutable, IOPeeker<1>>();
+
+	app.AddService<ossian::IExecutable, CameraPeeker>();
 }
