@@ -128,7 +128,6 @@ void CANBus::Read() const
 		{
 			it->second->Invoke(length, buffer.get());
 		}
-		spdlog::info("@Task=[$CANRemainTask={}]", m_ThreadPool.WaitingCount());
 		end = std::chrono::high_resolution_clock::now();
 		duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 		spdlog::trace("CANDevice callback finished with: {} microseconds", duration.count());
