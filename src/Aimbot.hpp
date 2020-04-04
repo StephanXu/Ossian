@@ -1,7 +1,8 @@
 ﻿#ifndef AIMBOT_HPP
 #define AIMBOT_HPP
 
-#include <ossian/ossian.hpp>
+#include <ossian/Factory.hpp>
+#include <ossian/Configuration.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "InputAdapter.hpp"
@@ -18,15 +19,10 @@ namespace Utils = ossian::Utils;
 class Aimbot
 {
 public:
-	static std::unique_ptr<Aimbot> CreateAimbot(Utils::ConfigLoader* config)
-	{
-		return std::unique_ptr<Aimbot>(new Aimbot(config));
-	}
-
-    void Process();
-
+    void Process(cv::Mat& image);
+    OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config));
+	
 private:
-	Aimbot(Utils::ConfigLoader* config);
 
     enum class ArmorType
     {

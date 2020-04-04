@@ -130,6 +130,22 @@ public:
 	 */
 	bool IsValid();
 
+	/**
+	 * @fn	static bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* DataBuffer, cv::Mat& refDest)
+	 *
+	 * @brief	convert data stream in Mat format
+	 *
+	 * @exception	std::runtime_error	Raised when a runtime error condition occurs.
+	 *
+	 * @param			pstImageInfo	If non-null, information describing the image.
+	 * @param [in]		DataBuffer  	If non-null, buffer for data.
+	 * @param [out]		refDest			The reference matrix destination.
+	 *
+	 * @returns	True if it succeeds, false if it fails.
+	 */
+	static bool ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo,
+								 unsigned char* DataBuffer,
+								 cv::Mat& refDest);
 private:
 	// Basic settings and status
 	bool m_IsValid{ false };
@@ -163,23 +179,6 @@ private:
 	static int RGB2BGR(unsigned char* pRgbData,
 					   unsigned int width,
 					   unsigned int height);
-
-	/**
-	 * @fn	static bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* DataBuffer, cv::Mat& refDest)
-	 *
-	 * @brief	convert data stream in Mat format
-	 *
-	 * @exception	std::runtime_error	Raised when a runtime error condition occurs.
-	 *
-	 * @param			pstImageInfo	If non-null, information describing the image.
-	 * @param [in]		DataBuffer  	If non-null, buffer for data.
-	 * @param [out]		refDest			The reference matrix destination.
-	 *
-	 * @returns	True if it succeeds, false if it fails.
-	 */
-	static bool ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo,
-								 unsigned char* DataBuffer,
-								 cv::Mat& refDest);
 
 	static void __stdcall ImageCallBack(unsigned char* pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser)
 	{

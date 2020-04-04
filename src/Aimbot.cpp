@@ -69,16 +69,15 @@ Aimbot::Aimbot(Utils::ConfigLoader* config)
     Aimbot::Armor::frameCenter.y = m_Config->Instance<Configuration>()->mutable_camera()->frameheight();
 }
 
-void Aimbot::Process()
+void Aimbot::Process(cv::Mat& image)
 {
     //[注意]：这里是不安全的使用方法，应当优化
     //ImageInputData* imageInput = dynamic_cast<ImageInputData*>(input);
 	
     //cv::Mat origFrame = imageInput->m_Image;
-    cv::Mat origFrame; ///< [TODO]: Give parameters
+    cv::Mat origFrame = image;
     if (origFrame.empty())
     {
-        m_Valid = true;
         return;
     }
 #ifdef _DEBUG
