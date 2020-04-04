@@ -98,7 +98,7 @@ std::shared_ptr<CANDevice> CANBus::AddDevice(unsigned int id)
 	return device;
 }
 
-void CANBus::Read()
+void CANBus::Read() const
 {
 	if (true == m_IsOpened)
 	{
@@ -126,12 +126,12 @@ void CANBus::Read()
 		auto it = m_DeviceMap.find(id);
 		if (it != m_DeviceMap.end())
 		{
-			m_ThreadPool.AddTask(
-				[device = it->second, length, buffer](){device->Invoke(length, buffer.get()); });
+			it->second->Invoke(length, buffer.get());
 		}
 		end = std::chrono::high_resolution_clock::now();
 		duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 		spdlog::trace("CANDevice callback finished with: {} microseconds", duration.count());
+
 	}
 }
 
