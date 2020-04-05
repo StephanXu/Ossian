@@ -111,7 +111,7 @@ void HKCamera::SetDevice(const int camIndex)
         throw std::runtime_error("Get PayloadSize fail");
     m_PayloadSize = stParam.nCurValue;
 
-    if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 200))
+    if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 750))
         throw std::runtime_error("Set ExposureTime fail");
 
     if (MV_OK != MV_CC_SetEnumValue(m_Handle, "PixelFormat", 0x01080009))
@@ -147,7 +147,7 @@ void HKCamera::SetFrameSize(const int width, const int height)
     m_FrameHeight = height;
 }
 
-bool HKCamera::ReadFrame(cv::Mat &outMat)
+bool HKCamera::ReadFrame(cv::cuda::GpuMat &outMat)
 {
     if (!m_IsValid)
         return false;
@@ -210,7 +210,7 @@ bool HKCamera::IsValid()
     return m_IsValid;
 }
 
-bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned char *DataBuffer, cv::Mat &refDest)
+bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned char *DataBuffer, cv::cuda::GpuMat &refDest)
 {
     //if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8)
     //{
@@ -223,8 +223,12 @@ bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned cha
     //}
     if (pstImageInfo->enPixelType == PixelType_Gvsp_BayerRG8)
     {
-        cv::Mat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
-        cv::cvtColor(BayerRG8Src, refDest, cv::COLOR_BayerRG2RGB);
+        //cv::cuda::Stream cudaStream;
+        cv::cuda::GpuMat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
+        refDest = BayerRG8Src;
+        //cv::cuda::cvtColor(BayerRG8Src, refDest, cv::COLOR_BayerRG2BGR, 0, cudaStream);
+        //cv::Mat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
+        //cv::cvtColor(BayerRG8Src, refDest, cv::COLOR_BayerRG2RGB);
     } else
     {
         throw std::runtime_error("Unsupported pixel format");

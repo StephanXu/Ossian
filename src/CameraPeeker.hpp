@@ -22,7 +22,8 @@ public:
 	{
 		m_Camera.SetReceiveImageCallback([this](unsigned char* data, MV_FRAME_OUT_INFO_EX* pFrameInfo)
 										 {
-											 cv::Mat image;
+											 cv::cuda::GpuMat image;
+											 spdlog::info("CudaEnabledDeviceCount={}", cv::cuda::getCudaEnabledDeviceCount());
 											 HKCamera::ConvertDataToMat(pFrameInfo, data, image);
 											 m_Aimbot->Process(image);
 										 });

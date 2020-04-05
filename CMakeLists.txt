@@ -62,3 +62,4 @@ target_link_options(Ossian
         PRIVATE
             "$<${gcc_like_cxx}:-pthread>"
         )
+message(STATUS "OpenCV_LIBS = ${OpenCV_LIBS}")

@@ -18,6 +18,8 @@
 #define HK_CAMERA_HPP
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/cuda.hpp>
+
 #include <MvCameraControl.h>
 
 #include <exception>
@@ -101,7 +103,7 @@ public:
 	 *
 	 * @returns	True if it succeeds, false if it fails.
 	 */
-	bool ReadFrame(cv::Mat& outMat);
+	bool ReadFrame(cv::cuda::GpuMat& outMat);
 
 	/**
 	 * @fn	void HKCamera::StartGrabFrame();
@@ -145,7 +147,7 @@ public:
 	 */
 	static bool ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo,
 								 unsigned char* DataBuffer,
-								 cv::Mat& refDest);
+								 cv::cuda::GpuMat& refDest);
 private:
 	// Basic settings and status
 	bool m_IsValid{ false };

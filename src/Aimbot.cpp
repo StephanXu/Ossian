@@ -69,15 +69,15 @@ Aimbot::Aimbot(Utils::ConfigLoader* config)
     Aimbot::Armor::frameCenter.y = m_Config->Instance<Configuration>()->mutable_camera()->frameheight();
 }
 
-void Aimbot::Process(cv::Mat& image)
+void Aimbot::Process(cv::cuda::GpuMat& image)
 {
     //[注意]：这里是不安全的使用方法，应当优化
     //ImageInputData* imageInput = dynamic_cast<ImageInputData*>(input);
 	
     //cv::Mat origFrame = imageInput->m_Image;
     auto start=std::chrono::high_resolution_clock::now();
-    cv::Mat origFrame = image;
-    if (origFrame.empty())
+    cv::cuda::Stream cudaStream;
+    if (image.empty())
     {
         return;
     }
@@ -89,7 +89,7 @@ void Aimbot::Process(cv::Mat& image)
     ArmorType armorType;
     bool shootMode = false;  //[TODO] 删除，将发弹决策放到电控部分
 
-    bool foundArmor = FindArmor(origFrame, armorBBox, armorType);
+    bool foundArmor = FindArmor(image, cudaStream, armorBBox, armorType);
     double deltaYaw = 0, deltaPitch = 0, dist = 0;
     static PoseSolver angleSolver;
     if (foundArmor)

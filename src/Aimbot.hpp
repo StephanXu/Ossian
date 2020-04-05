@@ -4,6 +4,9 @@
 #include <ossian/Factory.hpp>
 #include <ossian/Configuration.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/cuda.hpp>
+#include <opencv2/cudaimgproc.hpp>
+#include <opencv2/cudaarithm.hpp>
 
 #include "InputAdapter.hpp"
 #include "Utils.hpp"
@@ -19,7 +22,7 @@ namespace Utils = ossian::Utils;
 class Aimbot
 {
 public:
-    void Process(cv::Mat& image);
+    void Process(cv::cuda::GpuMat& image);
     OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config));
 	
 private:
@@ -389,27 +392,40 @@ private:
         Tracking
     };
 
-    bool DetectArmor(const cv::Mat& frame,
+    bool DetectArmor(const cv::cuda::GpuMat& frame, cv::cuda::Stream& cudaStream,
                      Armor& outTarget) noexcept
     {
         using OssianConfig::Configuration;
-        static int enemyColor = 0 == m_Config->Instance<Configuration>()->mutable_aimbot()->enemycolor();
+        static int enemyColor = m_Config->Instance<Configuration>()->mutable_aimbot()->enemycolor();
         static int brightness = m_Config->Instance<Configuration>()->mutable_aimbot()->brightness();
         static int thresColor = m_Config->Instance<Configuration>()->mutable_aimbot()->threscolor();
 
-        const static cv::Mat element3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
-        const static cv::Mat element5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
+        //const static cv::Mat element3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+        //const static cv::Mat element5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
 
-        cv::Mat grayColor, binaryColor, binary;
-        std::vector<cv::Mat> channels;
-        cv::split(frame, channels);
+        cv::cuda::GpuMat frameBGR(frame), 
+                         grayBrightness(cv::Size(1440, 1080), CV_8UC1),
+                         grayColor(cv::Size(1440, 1080), CV_8UC1),
+                         binaryColor(cv::Size(1440, 1080), CV_8UC1), 
+                         binaryBrightness(cv::Size(1440, 1080), CV_8UC1), 
+                         binary(cv::Size(1440, 1080), CV_8UC1);
+        std::vector<cv::cuda::GpuMat> channels;
+        spdlog::info("frameIsEmpty={}", frame.empty());
+        spdlog::info("frameSize={} {}", frame.cols,frame.rows);
+        spdlog::info("frameType={}", frame.type());
+        
+        cv::cuda::demosaicing(frame, frameBGR, cv::cuda::COLOR_BayerRG2BGR_MHT);
 
-        cv::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor);
+        cv::cuda::cvtColor(frameBGR, grayBrightness, cv::COLOR_BGR2GRAY);
+        cv::cuda::threshold(grayBrightness, binaryBrightness, brightness, 255, cv::THRESH_BINARY);
 
-        cv::threshold(grayColor, binaryColor, thresColor, 255, cv::THRESH_BINARY);
-        cv::bitwise_and(brightness, binaryColor, binary);
-        cv::dilate(binary, binary, element3);
-        cv::erode(binary, binary, element3);
+        cv::cuda::split(frameBGR, channels);
+        cv::cuda::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor);
+        cv::cuda::threshold(grayColor, binaryColor, thresColor, 255, cv::THRESH_BINARY);
+
+        cv::cuda::bitwise_and(binaryBrightness, binaryColor, binary);  
+        //cv::dilate(binary, binary, element3);
+        //cv::erode(binary, binary, element3);
 #ifdef _DEBUG
         //cv::imshow("BinaryBrightness", m_BinaryBrightness);
         cv::imshow("BinaryColor", binaryColor);
@@ -462,13 +478,13 @@ private:
         return !armors.empty();
     }
 
-    bool FindArmor(const cv::Mat& origFrame, cv::Rect2d& armorBBox, ArmorType& armorType)
+    bool FindArmor(const cv::cuda::GpuMat& origFrame, cv::cuda::Stream& cudaStream, cv::Rect2d& armorBBox, ArmorType& armorType)
     {
         bool armorFound{ false };
         Armor target;
         if (m_ArmorState == AlgorithmState::Detecting)
         {
-            armorFound = DetectArmor(origFrame, target);
+            armorFound = DetectArmor(origFrame, cudaStream, target);
         }
 
         if (armorFound)

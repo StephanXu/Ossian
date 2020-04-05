@@ -36,8 +36,8 @@ message TestVideoSource {
 
 message Aimbot {
 	enum EnemyColor {
-		Red = 0; // 红色敌人
-		Blue = 2; // 蓝色敌人
+		Blue = 0; // 蓝色敌人
+		Red = 2; // 红色敌人
 	}
 	EnemyColor enemyColor = 1;
 
