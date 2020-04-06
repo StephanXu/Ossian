@@ -76,7 +76,6 @@ void Aimbot::Process(cv::cuda::GpuMat& image)
 	
     //cv::Mat origFrame = imageInput->m_Image;
     auto start=std::chrono::high_resolution_clock::now();
-    cv::cuda::Stream cudaStream;
     if (image.empty())
     {
         return;
@@ -89,7 +88,9 @@ void Aimbot::Process(cv::cuda::GpuMat& image)
     ArmorType armorType;
     bool shootMode = false;  //[TODO] 删除，将发弹决策放到电控部分
 
-    bool foundArmor = FindArmor(image, cudaStream, armorBBox, armorType);
+    bool foundArmor = FindArmor(image, armorBBox, armorType);
+    double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
+    spdlog::info("@Aimbot=[$ms={}]", interval);
     double deltaYaw = 0, deltaPitch = 0, dist = 0;
     static PoseSolver angleSolver;
     if (foundArmor)
@@ -99,8 +100,7 @@ void Aimbot::Process(cv::cuda::GpuMat& image)
         Math::RegularizeErrAngle(deltaYaw, 'y');
         Math::RegularizeErrAngle(deltaPitch, 'p');
     }
-    double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
-    spdlog::info("AimbotFPS={}", 1000.0 / interval);
+    
 	spdlog::info("Aimbot Status: {}\t{}\t{}", deltaYaw, deltaPitch, dist);
     
     //[TODO] “发送”两角度给云台

@@ -223,12 +223,17 @@ bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned cha
     //}
     if (pstImageInfo->enPixelType == PixelType_Gvsp_BayerRG8)
     {
-        //cv::cuda::Stream cudaStream;
-        cv::cuda::GpuMat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
-        refDest = BayerRG8Src;
-        //cv::cuda::cvtColor(BayerRG8Src, refDest, cv::COLOR_BayerRG2BGR, 0, cudaStream);
+        cv::cuda::Stream cudaStream;
+        static constexpr size_t hostBufSize = 1440 * 1080 * sizeof(unsigned char);
+        unsigned char* devBuf = nullptr;
+        cudaMalloc((void**)&devBuf, hostBufSize);
+        cudaMemcpy(devBuf, DataBuffer, hostBufSize, cudaMemcpyHostToDevice);
+        cv::cuda::GpuMat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, devBuf);
+        //cv::cuda::resize(BayerRG8Src, BayerRG8Src, cv::Size(540, 720), 0.0, 0.0, 1, cudaStream);
+        cv::cuda::demosaicing(BayerRG8Src, refDest, cv::cuda::COLOR_BayerRG2BGR_MHT, 0,cudaStream);
+        cudaFree(devBuf);
         //cv::Mat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
-        //cv::cvtColor(BayerRG8Src, refDest, cv::COLOR_BayerRG2RGB);
+        //cv::cvtColor(BayerRG8Src, refDest, cv::COLOR_BayerRG2BGR);
     } else
     {
         throw std::runtime_error("Unsupported pixel format");

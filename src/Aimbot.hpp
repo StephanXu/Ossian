@@ -392,7 +392,7 @@ private:
         Tracking
     };
 
-    bool DetectArmor(const cv::cuda::GpuMat& frame, cv::cuda::Stream& cudaStream,
+    bool DetectArmor(const cv::cuda::GpuMat& frame,
                      Armor& outTarget) noexcept
     {
         using OssianConfig::Configuration;
@@ -402,28 +402,19 @@ private:
 
         //const static cv::Mat element3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
         //const static cv::Mat element5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
-
-        cv::cuda::GpuMat frameBGR(frame), 
-                         grayBrightness(cv::Size(1440, 1080), CV_8UC1),
-                         grayColor(cv::Size(1440, 1080), CV_8UC1),
-                         binaryColor(cv::Size(1440, 1080), CV_8UC1), 
-                         binaryBrightness(cv::Size(1440, 1080), CV_8UC1), 
-                         binary(cv::Size(1440, 1080), CV_8UC1);
-        std::vector<cv::cuda::GpuMat> channels;
-        spdlog::info("frameIsEmpty={}", frame.empty());
-        spdlog::info("frameSize={} {}", frame.cols,frame.rows);
-        spdlog::info("frameType={}", frame.type());
         
-        cv::cuda::demosaicing(frame, frameBGR, cv::cuda::COLOR_BayerRG2BGR_MHT);
+        cv::cuda::GpuMat grayBrightness, grayColor, binaryColor, binaryBrightness, binary;
+        std::vector<cv::cuda::GpuMat> channels;
+        
+        cv::cuda::Stream cudaStream;
 
-        cv::cuda::cvtColor(frameBGR, grayBrightness, cv::COLOR_BGR2GRAY);
-        cv::cuda::threshold(grayBrightness, binaryBrightness, brightness, 255, cv::THRESH_BINARY);
+        cv::cuda::cvtColor(frame, grayBrightness, cv::COLOR_BGR2GRAY, 0, cudaStream);
+        cv::cuda::threshold(grayBrightness, binaryBrightness, brightness, 255, cv::THRESH_BINARY, cudaStream);
 
-        cv::cuda::split(frameBGR, channels);
-        cv::cuda::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor);
-        cv::cuda::threshold(grayColor, binaryColor, thresColor, 255, cv::THRESH_BINARY);
-
-        cv::cuda::bitwise_and(binaryBrightness, binaryColor, binary);  
+        cv::cuda::split(frame, channels, cudaStream);
+        cv::cuda::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor,cv::noArray(),-1,cudaStream);
+        cv::cuda::threshold(grayColor, binaryColor, thresColor, 255, cv::THRESH_BINARY, cudaStream);
+        cv::cuda::bitwise_and(binaryBrightness, binaryColor, binary, cv::noArray(), cudaStream);
         //cv::dilate(binary, binary, element3);
         //cv::erode(binary, binary, element3);
 #ifdef _DEBUG
@@ -437,8 +428,9 @@ private:
         std::vector<cv::Vec4i> hierarchy;
         std::vector<LightBar> lightBars;
 
-        cv::findContours(binary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
-
+        cv::Mat hostBinary; 
+        binary.download(hostBinary, cudaStream);
+        cv::findContours(hostBinary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
         for (size_t i = 0; i < contours.size(); ++i)
         {
             if (contours[i].size() >= 6)
@@ -478,13 +470,13 @@ private:
         return !armors.empty();
     }
 
-    bool FindArmor(const cv::cuda::GpuMat& origFrame, cv::cuda::Stream& cudaStream, cv::Rect2d& armorBBox, ArmorType& armorType)
+    bool FindArmor(const cv::cuda::GpuMat& origFrame, cv::Rect2d& armorBBox, ArmorType& armorType)
     {
         bool armorFound{ false };
         Armor target;
         if (m_ArmorState == AlgorithmState::Detecting)
         {
-            armorFound = DetectArmor(origFrame, cudaStream, target);
+            armorFound = DetectArmor(origFrame, target);
         }
 
         if (armorFound)

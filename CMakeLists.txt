@@ -9,6 +9,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(mimalloc 1.6 REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
+find_package(CUDA REQUIRED)
 
 add_subdirectory(proto)
 add_subdirectory(core)
@@ -47,12 +48,17 @@ target_link_libraries(Ossian
             mimalloc
             proto
             ${OpenCV_LIBS}
+            ${CUDA_LIBRARIES}
             OssianCore
             Eigen3::Eigen
         )
 
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
 set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
+set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
+
+
+include_directories(${CUDA_INCLUDE_DIRS})
 target_compile_options(Ossian
         PRIVATE
             "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused;-ggdb;-g3>>"
