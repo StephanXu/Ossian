@@ -81,8 +81,8 @@ void Startup::ConfigServices(AppBuilder& app)
 
 void Startup::ConfigPipeline(AppBuilder& app)
 {
-	app.AddService<ossian::IExecutable, IOPeeker<0>>();
-	app.AddService<ossian::IExecutable, IOPeeker<1>>();
+	//app.AddService<ossian::IExecutable, IOPeeker<0>>();
+	//app.AddService<ossian::IExecutable, IOPeeker<1>>();
 
 	app.AddService<ossian::IExecutable, CameraPeeker>();
 }

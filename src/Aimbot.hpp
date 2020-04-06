@@ -24,7 +24,7 @@ class Aimbot
 public:
     void Process(cv::cuda::GpuMat& image);
     OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config));
-	
+    cv::Mat debugFrame;
 private:
 
     enum class ArmorType
@@ -119,10 +119,10 @@ private:
         }
         Armor(const cv::Rect2d& armorRect, ArmorType armorType) noexcept
         {
-            m_Vertexes.emplace_back(cv::Point2d(armorRect.x, armorRect.y));
-            m_Vertexes.emplace_back(cv::Point2d(armorRect.x + armorRect.width, armorRect.y));
-            m_Vertexes.emplace_back(cv::Point2d(armorRect.x + armorRect.width, armorRect.y + armorRect.height));
-            m_Vertexes.emplace_back(cv::Point2d(armorRect.x, armorRect.y + armorRect.height));
+            m_Vertexes.emplace_back(cv::Point2f(armorRect.x, armorRect.y));
+            m_Vertexes.emplace_back(cv::Point2f(armorRect.x + armorRect.width, armorRect.y));
+            m_Vertexes.emplace_back(cv::Point2f(armorRect.x + armorRect.width, armorRect.y + armorRect.height));
+            m_Vertexes.emplace_back(cv::Point2f(armorRect.x, armorRect.y + armorRect.height));
 
             m_MinRect = cv::minAreaRect(m_Vertexes);
             m_Center = (armorRect.tl() + armorRect.br()) / 2;
@@ -171,13 +171,13 @@ private:
                 m_LeftLight.Ellipse().points(leftLightRectPts);
                 m_RightLight.Ellipse().points(rightLightRectPts);
 
-                m_Vertexes.emplace_back(cv::Point2d(leftLightRectPts[2].x, leftLightRectPts[2].y)); //左上
-                m_Vertexes.emplace_back(cv::Point2d(rightLightRectPts[2].x, rightLightRectPts[2].y)); //右上
-                m_Vertexes.emplace_back(cv::Point2d(rightLightRectPts[0].x, rightLightRectPts[0].y)); //右下
-                m_Vertexes.emplace_back(cv::Point2d(leftLightRectPts[0].x, leftLightRectPts[0].y)); //左下
+                m_Vertexes.emplace_back(cv::Point2f(leftLightRectPts[2].x, leftLightRectPts[2].y)); //左上
+                m_Vertexes.emplace_back(cv::Point2f(rightLightRectPts[2].x, rightLightRectPts[2].y)); //右上
+                m_Vertexes.emplace_back(cv::Point2f(rightLightRectPts[0].x, rightLightRectPts[0].y)); //右下
+                m_Vertexes.emplace_back(cv::Point2f(leftLightRectPts[0].x, leftLightRectPts[0].y)); //左下
 
-                cv::Point2d center1 = (m_Vertexes[0] + m_Vertexes[2]) / 2.0;
-                cv::Point2d center2 = (m_Vertexes[1] + m_Vertexes[3]) / 2.0;
+                cv::Point2f center1 = (m_Vertexes[0] + m_Vertexes[2]) / 2.0;
+                cv::Point2f center2 = (m_Vertexes[1] + m_Vertexes[3]) / 2.0;
                 m_Center = (center1 + center2) / 2.0;
                 m_MinRect = cv::minAreaRect(m_Vertexes);
 
@@ -223,7 +223,7 @@ private:
         {
             return m_ArmorType;
         }
-        std::vector<cv::Point2d> Vertexes() const
+        std::vector<cv::Point2f> Vertexes() const
         {
             return m_Vertexes;
         }
@@ -232,7 +232,7 @@ private:
     private:
         LightBar m_LeftLight;
         LightBar m_RightLight;
-        std::vector<cv::Point2d> m_Vertexes;  ///<装甲板的四个顶点，从左上点开始，顺时针排列
+        std::vector<cv::Point2f> m_Vertexes;  ///<装甲板的四个顶点，从左上点开始，顺时针排列
         cv::Point2d m_Center;
         ArmorType m_ArmorType;
         double m_Score;
@@ -419,8 +419,9 @@ private:
         //cv::erode(binary, binary, element3);
 #ifdef _DEBUG
         //cv::imshow("BinaryBrightness", m_BinaryBrightness);
-        cv::imshow("BinaryColor", binaryColor);
-        cv::imshow("DebugBinary", binary);
+        frame.download(debugFrame, cudaStream);
+        //cv::imshow("BinaryColor", binaryColor);
+        //cv::imshow("DebugBinary", binary);
         cv::waitKey(10);
 #endif // DEBUG
 
@@ -447,7 +448,6 @@ private:
                 }
             }
         }
-
         std::vector<Armor> armors;
 
         for (size_t i = 0; i < lightBars.size(); ++i)
@@ -466,7 +466,6 @@ private:
             std::sort(armors.rbegin(), armors.rend()); //armor[0]是得分最高的装甲板，也就是击打目标
             outTarget = armors[0];
         }
-
         return !armors.empty();
     }
 
