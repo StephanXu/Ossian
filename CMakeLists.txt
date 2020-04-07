@@ -34,7 +34,8 @@ target_sources(Ossian
             src/Gun.cpp
             src/Referee.cpp
             src/Gyro.cpp
-            src/IOPeeker.cpp)
+            src/IOPeeker.cpp
+            src/CameraPeeker.cpp)
 target_include_directories(Ossian
         PRIVATE
             src
