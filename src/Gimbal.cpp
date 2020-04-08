@@ -46,27 +46,27 @@ void Gimbal::GimbalExpAngleSet(MotorPosition position)
 		return;
 	else if (m_GimbalCtrlSrc == RC)
 	{
-		double ecdAngleAdd = m_AngleInput[position]; 
+		double angleInput = m_AngleInput[position]; 
 		if (m_CurGimbalAngleMode == Gyro)
 		{
 			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw); 
 			double errorAngle = ClampLoop(m_GyroAngleSet[position] - gyro, -M_PI, M_PI); 
 			//判断会不会越过限位
-			if (curEcdAngle + errorAngle + ecdAngleAdd > kMaxRelativeAngle[position])
+			if (curEcdAngle + errorAngle + angleInput > kMaxRelativeAngle[position])
 			{
-				if (ecdAngleAdd > 0)
-					ecdAngleAdd = kMaxRelativeAngle[position] - errorAngle - curEcdAngle;
+				if (angleInput > 0)
+					angleInput = kMaxRelativeAngle[position] - errorAngle - curEcdAngle;
 			}
-			else if (curEcdAngle + errorAngle + ecdAngleAdd < kMinRelativeAngle[position])
+			else if (curEcdAngle + errorAngle + angleInput < kMinRelativeAngle[position])
 			{
-				if (ecdAngleAdd < 0)
-					ecdAngleAdd = kMinRelativeAngle[position] - errorAngle - curEcdAngle;
+				if (angleInput < 0)
+					angleInput = kMinRelativeAngle[position] - errorAngle - curEcdAngle;
 			}
-			m_GyroAngleSet[position] = ClampLoop(m_GyroAngleSet[position] + ecdAngleAdd, -M_PI, M_PI);
+			m_GyroAngleSet[position] = ClampLoop(m_GyroAngleSet[position] + angleInput, -M_PI, M_PI);
 		}
 		else if (m_CurGimbalAngleMode == Encoding)
 		{
-			m_EcdAngleSet[position] += ecdAngleAdd;
+			m_EcdAngleSet[position] += angleInput;
 			m_EcdAngleSet[position] = Clamp(m_EcdAngleSet[position], kMinRelativeAngle[position], 
 											kMaxRelativeAngle[position]);
 		}
@@ -92,13 +92,17 @@ void Gimbal::GimbalCtrlCalc(MotorPosition position)
 			//[TODO]用电机转速rpm换算出云台角速度
 			//初始时刻，无法通过差分计算出角速度 
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
+			{
+				m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
 				return;
+			}
+				
 			double interval = std::chrono::duration<double, std::milli>(m_Motors[position]->TimeStamp() - 
 				m_LastEcdTimeStamp[position]).count();  //ms
 			double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Status().m_Encoding, position == Pitch ? 
 				kPitchMidEcd : kYawMidEcd);
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) 
-				                   / interval / 1000; //rad/s
+				                   / interval / 1000.0; //rad/s
 			double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, hrClock::now(), 
 																true);
 			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, angleSpeedEcd, hrClock::now());

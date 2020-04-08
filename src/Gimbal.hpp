@@ -134,30 +134,47 @@ public:
 		m_PIDAngleGyro[Yaw].SetParams(PIDAngleGyroYawParams);
 		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
 
+		m_LastEcdTimeStamp.fill(hrClock::time_point());
 	}
 
 	void InitGimbal()
 	{
-		m_CurGimbalAngleMode = Gyro; //or gyro
-		m_LastEcdTimeStamp.fill(hrClock::time_point());
+		m_CurGimbalAngleMode = Encoding; 
 		m_MotorMsgCheck.fill(false);
 		m_AngleInput.fill(0);
-
-		m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
-		m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
 
 		m_EcdAngleSet[Pitch] = kPitchMidRad;
 		m_EcdAngleSet[Yaw] = kYawMidRad;
 
-		m_PIDAngleEcd[Pitch].Reset();
-		m_PIDAngleGyro[Pitch].Reset();
-		m_PIDAngleSpeed[Pitch].Reset();
-		
-		m_PIDAngleEcd[Yaw].Reset();
-		m_PIDAngleGyro[Yaw].Reset();
-		m_PIDAngleSpeed[Yaw].Reset();
+		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Status().m_Encoding, kPitchMidEcd);
+		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Status().m_Encoding, kYawMidEcd);
+		if (errorPitch < 0.1 && errorYaw < 0.1) 
+		{
+			spdlog::info("Gimbal Init Done.");
+			m_CurGimbalAngleMode = Gyro;
+			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
+			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
 
-		m_FlagInitGimbal = false;
+			m_LastEcdTimeStamp.fill(hrClock::time_point());
+			m_PIDAngleEcd[Pitch].Reset();
+			m_PIDAngleGyro[Pitch].Reset();
+			m_PIDAngleSpeed[Pitch].Reset();
+
+			m_PIDAngleEcd[Yaw].Reset();
+			m_PIDAngleGyro[Yaw].Reset();
+			m_PIDAngleSpeed[Yaw].Reset();
+
+			m_FlagInitGimbal = false;
+		}
+		else
+		{
+			GimbalCtrlCalc(Pitch);
+			GimbalCtrlCalc(Yaw);
+
+			for (size_t i = 0; i < m_Motors.size(); ++i)
+				m_Motors[i]->SetVoltage(m_CurrentSend[i]);
+			m_Motors[Pitch]->Writer()->PackAndSend();
+		}
 	}
 
 	auto AddMotor(MotorPosition position,
@@ -176,7 +193,7 @@ public:
 				motorId);
 	}
 
-	double RelativeAngleToChassis() { return -RelativeEcdToRad(m_YawEcd.load(), kYawMidEcd); } //[TODO]负号？
+	double RelativeAngleToChassis() { return -RelativeEcdToRad(m_Motors[Yaw]->Status().m_Encoding, kYawMidEcd); } //[TODO]负号？
 
 	GimbalInputSrc GimbalCtrlSrc() { return m_GimbalCtrlSrc.load(); }
 
@@ -184,9 +201,26 @@ public:
 	{
 		m_GimbalSensorValues.rc = m_RC->Get();
 		m_GimbalSensorValues.imu = m_GyroListener->Get();
+		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
+		std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
+		m_GimbalSensorValues.imu.m_Pitch = -m_GimbalSensorValues.imu.m_Pitch;
+		//gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wz 
 			- sin(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wx;
-		//gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
+		
+		spdlog::info("@IMUAngle=[$roll={},$pitch={},$yaw={}]",
+			m_GimbalSensorValues.imu.m_Roll,
+			m_GimbalSensorValues.imu.m_Pitch,
+			m_GimbalSensorValues.imu.m_Yaw);
+		spdlog::info("@IMUSpeed=[$roll={},$pitch={},$yaw={}]",
+			m_GimbalSensorValues.imu.m_Wx,
+			m_GimbalSensorValues.imu.m_Wy,
+			m_GimbalSensorValues.imu.m_Wz);
+
+		spdlog::info("@MotorEncoder=[$pitch={},$yaw={}]",
+			m_Motors[Pitch]->Status().m_Encoding,
+			m_Motors[Yaw]->Status().m_Encoding);
+		
 	}
 	//设置云台角度输入来源
 	void GimbalCtrlSrcSet();
@@ -209,11 +243,12 @@ public:
 		UpdateGimbalSensorFeedback();
 		if (m_FlagInitGimbal)
 			InitGimbal();
+
 		GimbalCtrlSrcSet();
 		GimbalCtrlInputProc();
 		//[TODO] 模式切换过渡
 
-		GimbalExpAngleSet(Pitch);
+		GimbalExpAngleSet(Pitch);//include_directories(${CUDA_INCLUDE_DIRS}) 
 		GimbalExpAngleSet(Yaw);
 
 		GimbalCtrlCalc(Pitch);
@@ -244,7 +279,7 @@ private:
 		GyroModel imu;
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
-	std::atomic<uint16_t> m_YawEcd;
+	//std::atomic<uint16_t> m_YawEcd;
 
 	bool m_FlagInitGimbal;
 

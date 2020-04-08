@@ -19,6 +19,8 @@ public:
 
 	auto ExecuteProc() -> void override
 	{
+		std::this_thread::sleep_for(std::chrono::seconds(5));
+		spdlog::info("IMU Calib Done.");
 		while (true)
 		{
 			m_Listener->Listen(EpollIndex, 1000);

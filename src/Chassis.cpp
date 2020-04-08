@@ -202,8 +202,8 @@ void Chassis::ChassisExpAxisSpeedSet()
 	{
 		RCToChassisSpeed();
 		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);
-		double vx = m_VxSet * cosine - m_VySet * sine;
-		double vy = m_VxSet * sine + m_VySet * cosine;
+		double vx = m_VxSet * cosine + m_VySet * sine;
+		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
 		m_WzSet = -m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, hrClock::now(), true); //符号为负？
@@ -221,8 +221,8 @@ void Chassis::ChassisExpAxisSpeedSet()
 	{
 		RCToChassisSpeed();
 		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);     
-		double vx = m_VxSet * cosine - m_VySet * sine;
-		double vy = m_VxSet * sine + m_VySet * cosine;
+		double vx = m_VxSet * cosine + m_VySet * sine;
+		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
 		m_WzSet = kTopWz;

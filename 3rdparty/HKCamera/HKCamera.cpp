@@ -63,6 +63,21 @@ bool HKCamera::Initialize()
     if (MV_OK != MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &m_DeviceList))
         throw std::runtime_error("Enum devices fail");
     m_IsValid = true;
+
+    //cuda≥ı ºªØ
+    int deviceCount = 0; 		
+    cudaError_t cudaStatus;  		
+    cudaStatus = cudaGetDeviceCount(&deviceCount); 		
+    if (cudaStatus != cudaSuccess) 			
+        throw std::runtime_error("cudaGetDeviceCount() failed: {}", cudaStatus);
+    if (deviceCount < 1)
+        throw std::runtime_error("cuda device not found");
+    spdlog::info("cudaEnabledDeviceCount={}", deviceCount); 		
+    cv::cuda::printCudaDeviceInfo(cv::cuda::getDevice()); 		
+    cudaStatus = cudaSetDevice(0); 		
+    if (cudaStatus != cudaSuccess) 			
+        throw std::runtime_error("cudaSetDevice() failed: {}", cudaStatus);
+    cudaSetDeviceFlags(cudaDeviceMapHost);
 }
 
 std::vector<MV_CC_DEVICE_INFO> HKCamera::ListDevices()
@@ -152,7 +167,7 @@ bool HKCamera::ReadFrame(cv::cuda::GpuMat &outMat)
     if (!m_IsValid)
         return false;
     // get one frame from camera with timeout= ? ms
-    if (MV_OK != MV_CC_GetOneFrameTimeout(m_Handle, m_Data.get(), m_PayloadSize, &stImageInfo, 100))
+    if (MV_OK != MV_CC_GetOneFrameTimeout(m_Handle, m_Data, m_PayloadSize, &stImageInfo, 100))
         throw std::runtime_error("Get frame fail"); //[ATTENTION]: Which error code represents time out.
 #ifdef _DEBUG
     MVCC_FLOATVALUE struFloatValue = { 0 };
@@ -169,7 +184,7 @@ bool HKCamera::ReadFrame(cv::cuda::GpuMat &outMat)
         return false; //[ATTENTION]: Is that necessary for exiting the function?
     }
 #endif
-    if (!ConvertDataToMat(&stImageInfo, m_Data.get(), outMat))
+    if (!ConvertDataToMat(&stImageInfo, m_Data, outMat))
         throw std::runtime_error("OpenCV format convert failed");
     return true;
 }
@@ -183,7 +198,9 @@ void HKCamera::StartGrabFrame()
         throw std::runtime_error("Start Grabbing fail");
 
     memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-    m_Data = std::make_unique<unsigned char[]>(m_PayloadSize);
+    cudaError_t cudaStatus = cudaMallocManaged(&m_Data, m_PayloadSize);
+    if (cudaStatus != cudaSuccess)
+        spdlog::error("cudaMallocManaged() Failed: {}", cudaStatus);
     if (!m_Data)
         std::bad_alloc();
     m_IsGrabbing = true;
@@ -197,12 +214,15 @@ void HKCamera::Close()
     m_IsGrabbing = false;
     // Close device
     if (m_IsOpenedDevice && MV_OK != MV_CC_CloseDevice(m_Handle))
-        throw std::runtime_error("ClosDevice fail");
+        throw std::runtime_error("CloseDevice fail");
     m_IsOpenedDevice = false;
     // Destroy m_Handle
     if (m_Handle && MV_OK != MV_CC_DestroyHandle(m_Handle))
         throw std::runtime_error("Destroy Handle fail");
     m_Handle = nullptr;
+
+    cudaFree(m_Data);
+    m_Data = nullptr;
 }
 
 bool HKCamera::IsValid()
@@ -224,17 +244,13 @@ bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned cha
     if (pstImageInfo->enPixelType == PixelType_Gvsp_BayerRG8)
     {
         cv::cuda::Stream cudaStream;
-        static constexpr size_t hostBufSize = 1440 * 1080 * sizeof(unsigned char);
-        unsigned char* devBuf = nullptr;
-        cudaMalloc((void**)&devBuf, hostBufSize);
-        cudaMemcpy(devBuf, DataBuffer, hostBufSize, cudaMemcpyHostToDevice);
-        cv::cuda::GpuMat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, devBuf);
-        //cv::cuda::resize(BayerRG8Src, BayerRG8Src, cv::Size(540, 720), 0.0, 0.0, 1, cudaStream);
-        cv::cuda::demosaicing(BayerRG8Src, refDest, cv::cuda::COLOR_BayerRG2BGR_MHT, 0,cudaStream);
-        cudaFree(devBuf);
+        cv::cuda::GpuMat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
+        cv::cuda::demosaicing(BayerRG8Src, refDest, cv::cuda::COLOR_BayerRG2BGR_MHT, 0, cudaStream);
+
         //cv::Mat BayerRG8Src(pstImageInfo->nHeight, pstImageInfo->nWidth, CV_8UC1, DataBuffer);
         //cv::cvtColor(BayerRG8Src, refDest, cv::COLOR_BayerRG2BGR);
-    } else
+    } 
+    else
     {
         throw std::runtime_error("Unsupported pixel format");
     }

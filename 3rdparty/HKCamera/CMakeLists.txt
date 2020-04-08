@@ -25,7 +25,6 @@ target_sources(HKCamera
         )
 
 set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
-include_directories(${CUDA_INCLUDE_DIRS}) 
 message(STATUS "CUDA_INCLUDE_DIRS = ${CUDA_INCLUDE_DIRS}")
 
 target_include_directories(HKCamera PUBLIC ./)

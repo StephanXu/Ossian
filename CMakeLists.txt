@@ -58,7 +58,6 @@ set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
 set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
 
 
-include_directories(${CUDA_INCLUDE_DIRS})
 target_compile_options(Ossian
         PRIVATE
             "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused;-ggdb;-g3>>"

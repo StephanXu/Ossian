@@ -163,7 +163,7 @@ private:
 	MV_CC_DEVICE_INFO_LIST m_DeviceList;
 
 	// Image data
-	std::unique_ptr<unsigned char[]> m_Data{ nullptr };
+	unsigned char* m_Data = nullptr;
 	
 	std::function<ImageCallBackType> m_ImageCallback{};
 

@@ -67,28 +67,31 @@ Aimbot::Aimbot(Utils::ConfigLoader* config)
 
     Aimbot::Armor::frameCenter.x = m_Config->Instance<Configuration>()->mutable_camera()->framewidth();
     Aimbot::Armor::frameCenter.y = m_Config->Instance<Configuration>()->mutable_camera()->frameheight();
+
+    cudaError_t cudaStatus = cudaMallocManaged(&m_pBinary, 1440 * 1080 * sizeof(unsigned char));
+    if (cudaStatus != cudaSuccess)         
+        spdlog::error("Aimbot: cudaMallocManaged() Failed: {}", cudaStatus);     
+    if (!m_pBinary)        
+        std::bad_alloc();
 }
 
-void Aimbot::Process(cv::cuda::GpuMat& image)
+void Aimbot::Process(unsigned char* pImage)
 {
     //[注意]：这里是不安全的使用方法，应当优化
     //ImageInputData* imageInput = dynamic_cast<ImageInputData*>(input);
 	
     //cv::Mat origFrame = imageInput->m_Image;
     auto start=std::chrono::high_resolution_clock::now();
-    if (image.empty())
+    if (!pImage)
     {
         return;
     }
-#ifdef _DEBUG
-	cv::imshow("damn", origFrame);
-	cv::waitKey(1);
-#endif
+
     cv::Rect2d armorBBox;
     ArmorType armorType;
     bool shootMode = false;  //[TODO] 删除，将发弹决策放到电控部分
 
-    bool foundArmor = FindArmor(image, armorBBox, armorType);
+    bool foundArmor = FindArmor(pImage, armorBBox, armorType);
     double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
     spdlog::info("@Aimbot=[$ms={}]", interval);
     double deltaYaw = 0, deltaPitch = 0, dist = 0;
@@ -100,10 +103,9 @@ void Aimbot::Process(cv::cuda::GpuMat& image)
         Math::RegularizeErrAngle(deltaYaw, 'y');
         Math::RegularizeErrAngle(deltaPitch, 'p');
     }
-    
 	spdlog::info("Aimbot Status: {}\t{}\t{}", deltaYaw, deltaPitch, dist);
     
-    //[TODO] “发送”两角度给云台
+    //[TODO] 发送两角度给云台
 	/*try
 	{
         std::lock_guard<std::mutex> guard{ m_AngleLock };
@@ -122,14 +124,12 @@ void Aimbot::Process(cv::cuda::GpuMat& image)
 
 #ifdef _DEBUG
     //putText(debugFrame, fmt::format("ms: {:.4f}",ms), cv::Point(30, 50), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(173, 205, 249));
-    cv::Mat debugFrame;
-    origFrame.copyTo(debugFrame);
     putText(debugFrame, fmt::format("yaw: {:.4f}", sendYaw), cv::Point(50, 90), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     putText(debugFrame, fmt::format("pitch: {:.4f}", sendPitch), cv::Point(50, 110), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     putText(debugFrame, fmt::format("dist: {:.4f}", dist), cv::Point(50, 130), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     putText(debugFrame, fmt::format("ms: {}", armorType == ArmorType::Small ? "Small" : "Big"), cv::Point(50, 150), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     putText(debugFrame, fmt::format("ms: {}", shootMode ? "Shoot" : "Stop shooting"), cv::Point(220, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
-    cv::circle(debugFrame, redDot, 2, cv::Scalar(0, 255, 0), -1);
+    //cv::circle(debugFrame, redDot, 2, cv::Scalar(0, 255, 0), -1);
     imshow("DebugFrame", debugFrame);
     cv::waitKey(10);
 #endif // _DEBUG

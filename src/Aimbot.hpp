@@ -7,6 +7,7 @@
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudaarithm.hpp>
+#include <cuda_runtime.h>
 
 #include "InputAdapter.hpp"
 #include "Utils.hpp"
@@ -22,9 +23,15 @@ namespace Utils = ossian::Utils;
 class Aimbot
 {
 public:
-    void Process(cv::cuda::GpuMat& image);
+    void Process(unsigned char* pImage);
     OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config));
+    ~Aimbot()
+    {
+        cudaFree(m_pBinary);
+        m_pBinary = nullptr;
+    }
     cv::Mat debugFrame;
+
 private:
 
     enum class ArmorType
@@ -392,8 +399,7 @@ private:
         Tracking
     };
 
-    bool DetectArmor(const cv::cuda::GpuMat& frame,
-                     Armor& outTarget) noexcept
+    bool DetectArmor(unsigned char* pImage, Armor& outTarget) noexcept
     {
         using OssianConfig::Configuration;
         static int enemyColor = m_Config->Instance<Configuration>()->mutable_aimbot()->enemycolor();
@@ -402,36 +408,42 @@ private:
 
         //const static cv::Mat element3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
         //const static cv::Mat element5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
-        
-        cv::cuda::GpuMat grayBrightness, grayColor, binaryColor, binaryBrightness, binary;
+        cv::cuda::Stream cudaStream;
+        cv::cuda::GpuMat dFrame(1080, 1440, CV_8UC1, pImage);     
+        cv::cuda::GpuMat dBinary(1080, 1440, CV_8UC1, m_pBinary);
+        cv::Mat hBinary(1080, 1440, CV_8UC1, m_pBinary);
+        cv::cuda::GpuMat grayBrightness, grayColor, binaryColor, binaryBrightness;
         std::vector<cv::cuda::GpuMat> channels;
         
-        cv::cuda::Stream cudaStream;
+        cv::cuda::demosaicing(dFrame, dFrame, cv::cuda::COLOR_BayerRG2BGR_MHT, 0, cudaStream);
 
-        cv::cuda::cvtColor(frame, grayBrightness, cv::COLOR_BGR2GRAY, 0, cudaStream);
+        cv::cuda::cvtColor(dFrame, grayBrightness, cv::COLOR_BGR2GRAY, 0, cudaStream);
         cv::cuda::threshold(grayBrightness, binaryBrightness, brightness, 255, cv::THRESH_BINARY, cudaStream);
 
-        cv::cuda::split(frame, channels, cudaStream);
-        cv::cuda::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor,cv::noArray(),-1,cudaStream);
+        cv::cuda::split(dFrame, channels, cudaStream);
+        cv::cuda::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor, cv::noArray(), -1, 
+                           cudaStream);
         cv::cuda::threshold(grayColor, binaryColor, thresColor, 255, cv::THRESH_BINARY, cudaStream);
-        cv::cuda::bitwise_and(binaryBrightness, binaryColor, binary, cv::noArray(), cudaStream);
+        cv::cuda::bitwise_and(binaryBrightness, binaryColor, dBinary, cv::noArray(), cudaStream);
         //cv::dilate(binary, binary, element3);
         //cv::erode(binary, binary, element3);
 #ifdef _DEBUG
-        //cv::imshow("BinaryBrightness", m_BinaryBrightness);
-        frame.download(debugFrame, cudaStream);
-        //cv::imshow("BinaryColor", binaryColor);
-        //cv::imshow("DebugBinary", binary);
-        cv::waitKey(10);
+        cv::Mat debugBinaryBrightness, debugBinaryColor, debugBinary;
+        dFrame.download(debugFrame);
+        binaryBrightness.download(debugBinaryBrightness);
+        binaryColor.download(debugBinaryColor);
+        dBinary.download(debugBinary);
+        cv::imshow("BinaryBrightness", debugBinaryBrightness);
+        cv::imshow("BinaryColor", debugBinaryColor);
+        cv::imshow("DebugBinary", debugBinary);
+        //cv::waitKey(10);
 #endif // DEBUG
 
         std::vector<std::vector<cv::Point> > contours;
         std::vector<cv::Vec4i> hierarchy;
         std::vector<LightBar> lightBars;
 
-        cv::Mat hostBinary; 
-        binary.download(hostBinary, cudaStream);
-        cv::findContours(hostBinary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
+        cv::findContours(hBinary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
         for (size_t i = 0; i < contours.size(); ++i)
         {
             if (contours[i].size() >= 6)
@@ -442,7 +454,7 @@ private:
                 {
                     lightBars.emplace_back(possibleLightBar);
 #ifdef _DEBUG
-                    //ellipse(debugFrame, possibleLightBar.Ellipse(), cv::Scalar(255, 255, 0));
+                    cv::ellipse(debugFrame, possibleLightBar.Ellipse(), cv::Scalar(255, 255, 0));
 #endif // DEBUG
 
                 }
@@ -469,13 +481,13 @@ private:
         return !armors.empty();
     }
 
-    bool FindArmor(const cv::cuda::GpuMat& origFrame, cv::Rect2d& armorBBox, ArmorType& armorType)
+    bool FindArmor(unsigned char* pImage, cv::Rect2d& armorBBox, ArmorType& armorType)
     {
         bool armorFound{ false };
         Armor target;
         if (m_ArmorState == AlgorithmState::Detecting)
         {
-            armorFound = DetectArmor(origFrame, target);
+            armorFound = DetectArmor(pImage, target);
         }
 
         if (armorFound)
@@ -487,17 +499,15 @@ private:
 #ifdef _DEBUG
         if (armorFound)
         {
-            //ShowTargetArmor(cv::Scalar(62, 255, 192), cv::Scalar(62, 255, 192));
-        }
-        else
-        {
-            //cv::rectangle(debugFrame, defaultAimBox, cv::Scalar(250, 255, 245), 2);
-            //cv::circle(debugFrame, (defaultAimBox.tl() + defaultAimBox.br()) / 2, 3, cv::Scalar(250, 255, 245), -1);
+            cv::rectangle(debugFrame, cv::boundingRect(m_CurTargetArmor.Vertexes()), colorArmor, 2);
+            cv::circle(debugFrame, m_CurTargetArmor.Center(), 3, colorCenter, -1);
         }
 #endif // _DEBUG
 
         return armorFound;
     }
+
+    unsigned char* m_pBinary = nullptr;
 
     double m_Yaw = 0;
     double m_Pitch = 0;
