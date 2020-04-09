@@ -148,7 +148,7 @@ public:
 
 		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Status().m_Encoding, kPitchMidEcd);
 		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Status().m_Encoding, kYawMidEcd);
-		if (errorPitch < 0.1 && errorYaw < 0.1) 
+		if (fabs(errorPitch) < 0.1 && fabs(errorYaw) < 0.1) 
 		{
 			spdlog::info("Gimbal Init Done.");
 			m_CurGimbalAngleMode = Gyro;

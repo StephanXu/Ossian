@@ -90,17 +90,18 @@ void Gimbal::GimbalCtrlCalc(MotorPosition position)
 		else if (m_CurGimbalAngleMode == Encoding)
 		{
 			//[TODO]用电机转速rpm换算出云台角速度
+			double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Status().m_Encoding, position == Pitch ?
+				kPitchMidEcd : kYawMidEcd);
 			//初始时刻，无法通过差分计算出角速度 
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
 			{
 				m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
+				m_LastEcdAngle[position] = curEcdAngle;
 				return;
 			}
-				
 			double interval = std::chrono::duration<double, std::milli>(m_Motors[position]->TimeStamp() - 
 				m_LastEcdTimeStamp[position]).count();  //ms
-			double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Status().m_Encoding, position == Pitch ? 
-				kPitchMidEcd : kYawMidEcd);
+			
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) 
 				                   / interval / 1000.0; //rad/s
 			double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, hrClock::now(), 

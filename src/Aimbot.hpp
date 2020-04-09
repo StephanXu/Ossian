@@ -408,12 +408,12 @@ private:
 
         //const static cv::Mat element3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
         //const static cv::Mat element5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
-        cv::cuda::Stream cudaStream;
-        cv::cuda::GpuMat dFrame(1080, 1440, CV_8UC1, pImage);     
-        cv::cuda::GpuMat dBinary(1080, 1440, CV_8UC1, m_pBinary);
-        cv::Mat hBinary(1080, 1440, CV_8UC1, m_pBinary);
-        cv::cuda::GpuMat grayBrightness, grayColor, binaryColor, binaryBrightness;
-        std::vector<cv::cuda::GpuMat> channels;
+        static cv::cuda::Stream cudaStream;
+        static cv::cuda::GpuMat dFrame(1080, 1440, CV_8UC1, pImage);
+        static cv::cuda::GpuMat dBinary(1080, 1440, CV_8UC1, m_pBinary);
+        static cv::Mat hBinary(1080, 1440, CV_8UC1, m_pBinary);
+        static cv::cuda::GpuMat grayBrightness, grayColor, binaryColor, binaryBrightness;
+        static std::vector<cv::cuda::GpuMat> channels;
         
         cv::cuda::demosaicing(dFrame, dFrame, cv::cuda::COLOR_BayerRG2BGR_MHT, 0, cudaStream);
 
