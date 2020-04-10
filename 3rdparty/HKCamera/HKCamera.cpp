@@ -64,6 +64,7 @@ bool HKCamera::Initialize()
         throw std::runtime_error("Enum devices fail");
     m_IsValid = true;
 
+#ifdef ENABLE_CUDA
     //cuda≥ı ºªØ
     int deviceCount = 0; 		
     cudaError_t cudaStatus;  		
@@ -78,6 +79,7 @@ bool HKCamera::Initialize()
     if (cudaStatus != cudaSuccess) 			
         throw std::runtime_error("cudaSetDevice() failed");
     cudaSetDeviceFlags(cudaDeviceMapHost);
+#endif //ENABLE_CUDA
 }
 
 std::vector<MV_CC_DEVICE_INFO> HKCamera::ListDevices()
@@ -198,9 +200,15 @@ void HKCamera::StartGrabFrame()
         throw std::runtime_error("Start Grabbing fail");
 
     memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
+
+#ifdef ENABLE_CUDA
     cudaError_t cudaStatus = cudaMallocManaged(&m_Data, m_PayloadSize);
     if (cudaStatus != cudaSuccess)
         spdlog::error("cudaMallocManaged() Failed: {}", cudaStatus);
+#else
+    m_Data = new unsigned char[m_PayloadSize];
+#endif // ENABLE_CUDA
+
     if (!m_Data)
         std::bad_alloc();
     m_IsGrabbing = true;
@@ -221,7 +229,10 @@ void HKCamera::Close()
         throw std::runtime_error("Destroy Handle fail");
     m_Handle = nullptr;
 
+#ifdef ENABLE_CUDA
     cudaFree(m_Data);
+#endif // ENABLE_CUDA
+
     m_Data = nullptr;
 }
 

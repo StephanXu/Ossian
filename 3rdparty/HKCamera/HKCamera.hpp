@@ -19,7 +19,10 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/cuda.hpp>
+#ifdef ENABLE_CUDA
 #include <cuda_runtime.h>
+#endif // ENABLE_CUDA
+
 #include <MvCameraControl.h>
 
 #include <exception>
