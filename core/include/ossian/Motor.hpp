@@ -114,6 +114,23 @@ private:
 	WriterContainer m_Writers;
 };
 
+#pragma pack(push,1)
+struct ReceiveModel3508
+{
+	uint16_t m_Encoding;
+	int16_t m_RPM;
+	int16_t m_Current;
+	uint8_t m_Temperature;
+	uint8_t m_Reserve;
+};
+
+struct ReceiveModel2006
+{
+	
+};
+#pragma pack(pop)
+
+template<size_t DefaultWriterCANId>
 class DJIMotorWriter : public IMotorWriter
 {
 	friend class MotorManager;
@@ -127,6 +144,179 @@ class DJIMotorWriter : public IMotorWriter
 
 public:
 	DJIMotorWriter(const unsigned int canId)
+		:m_Motors(m_MotorsNum)
+		, m_CANId(canId)
+	{
+	}
+
+	auto AddDevice(const std::shared_ptr<IMotor>& motor) -> void override
+	{
+		const size_t index{ motor->MotorId() - (DefaultWriterCANId == m_CANId ? 1 : 5) };
+		if (index > m_Motors.size()) { throw std::runtime_error("Invalid motor id"); }
+		m_Motors[index] = motor;
+		spdlog::trace("MotorWriter add device: writerCANId: {:#x}, motorId: {}", m_CANId, motor->MotorId());
+	}
+
+	auto Pack(PackModel& outModel) const noexcept -> void
+	{
+		for (size_t i{}; i < m_MotorsNum; ++i)
+		{
+			outModel.m_Voltage[i] = 0;
+			outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() >> 8) & 0x00ff;
+			outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() << 8) & 0xff00;
+		}
+	}
+
+	auto Send(const PackModel& refModel) const -> void
+	{
+		if (m_Device)
+		{
+			m_Device->WriteRaw(sizeof(PackModel), reinterpret_cast<const uint8_t*>(&refModel));
+		}
+	}
+
+	auto PackAndSend() const -> void override
+	{
+		PackModel buffer{};
+		Pack(buffer);
+		Send(buffer);
+	}
+
+	auto CANId() const noexcept -> unsigned int override
+	{
+		return m_CANId;
+	}
+
+	auto Location() const -> std::string
+	{
+		if (!m_Device) { throw std::runtime_error("Empty device"); }
+		return m_Device->Bus()->Location();
+	}
+
+private:
+
+	auto SetDevice(const std::shared_ptr<CANDevice> device) noexcept -> void override
+	{
+		m_Device = device;
+	}
+
+	const unsigned int m_MotorsNum = 4;
+	std::vector<std::shared_ptr<IMotor>> m_Motors;
+	unsigned int m_CANId;
+	std::shared_ptr<CANDevice> m_Device;
+};
+
+template<typename ReceiveModel, size_t CANIdBase>
+class DJIMotor : public IMotor
+{
+	friend class MotorManager;
+public:
+	DJIMotor(unsigned int motorId)
+		:m_MotorId(motorId)
+	{
+	}
+
+	static auto ConvertEndian(const uint16_t x)->uint16_t
+	{
+		uint16_t res{};
+		res |= (x >> 8) & 0x00ff;
+		res |= (x << 8) & 0xff00;
+		return res;
+	}
+
+	static auto Parse(ReceiveModel& outModel,
+					  const uint8_t* buffer,
+					  const size_t bufferSize)
+	{
+		if (buffer)
+		{
+			std::copy(buffer,
+					  buffer + bufferSize,
+					  reinterpret_cast<uint8_t*>(&outModel));
+			outModel.m_Encoding = ConvertEndian(outModel.m_Encoding);
+			outModel.m_RPM = ConvertEndian(outModel.m_RPM);
+			outModel.m_Current = ConvertEndian(outModel.m_Current);
+		}
+	}
+
+	auto Parse(const uint8_t* buffer, const size_t bufferSize)->void override
+	{
+		m_TimeStamp = std::chrono::high_resolution_clock::now();
+		Parse(m_Status, buffer, bufferSize);
+	}
+
+	auto Status() noexcept -> ReceiveModel&
+	{
+		return m_Status;
+	}
+
+	auto MotorId() const noexcept -> uint32_t override
+	{
+		return m_MotorId;
+	}
+
+	auto CANId() const noexcept -> unsigned int override
+	{
+		return m_MotorId + CANIdBase;
+	}
+
+	auto TimeStamp() const noexcept -> std::chrono::high_resolution_clock::time_point override
+	{
+		return m_TimeStamp;
+	}
+
+	auto Voltage() const noexcept -> int16_t override
+	{
+		return m_Voltage;
+	}
+
+	auto SetVoltage(const int16_t voltage) noexcept -> void override
+	{
+		m_Voltage = voltage;
+	}
+
+	auto Writer() const noexcept->const IMotorWriter* override
+	{
+		return m_Writer;
+	}
+
+private:
+	ReceiveModel m_Status = {};
+	std::chrono::high_resolution_clock::time_point m_TimeStamp;
+	unsigned int m_MotorId;
+	uint16_t m_Voltage = 0;
+	const IMotorWriter* m_Writer;
+
+	auto SetMotorId(const unsigned int id) noexcept -> void override
+	{
+		m_MotorId = id;
+	}
+
+	auto SetWriter(const IMotorWriter* writer)->void override
+	{
+		m_Writer = writer;
+	}
+};
+
+using DJIMotor3508Writer = DJIMotorWriter<0x200>;
+using DJIMotor3508 = DJIMotor<ReceiveModel3508, 0x200>;
+
+using DJIMotor6020Writer = DJIMotorWriter<0x1ff>;
+using DJIMotor6020 = DJIMotor<ReceiveModel3508, 0x204>;
+
+class DJIMotor2006Writer : public IMotorWriter
+{
+	friend class MotorManager;
+
+#pragma pack(push,1)
+	struct PackModel
+	{
+		int16_t m_Voltage[4];
+	};
+#pragma pack(pop)
+
+public:
+	DJIMotor2006Writer(const unsigned int canId)
 		:m_Motors(m_MotorsNum)
 		, m_CANId(canId)
 	{
@@ -188,14 +378,12 @@ private:
 	unsigned int m_CANId;
 	std::shared_ptr<CANDevice> m_Device;
 };
-
-class DJIMotor : public IMotor
+class DJIMotor2006 : public IMotor
 {
 	friend class MotorManager;
-	using DefaultWriter = DJIMotorWriter;
 	const unsigned int CANIdBase = 0x200;
 public:
-	DJIMotor(unsigned int motorId)
+	DJIMotor2006(unsigned int motorId)
 		:m_MotorId(motorId)
 	{
 	}
@@ -205,9 +393,8 @@ public:
 	{
 		uint16_t m_Encoding;
 		int16_t m_RPM;
-		int16_t m_Current;
-		uint8_t m_Temperature;
-		uint8_t m_Reserve;
+		int16_t m_Torque;
+		uint16_t m_Reserve;
 	};
 #pragma pack(pop)
 
@@ -218,7 +405,7 @@ public:
 		res |= (x << 8) & 0xff00;
 		return res;
 	}
-	
+
 	static auto Parse(ReceiveModel& outModel,
 					  const uint8_t* buffer,
 					  const size_t bufferSize)
@@ -230,7 +417,7 @@ public:
 					  reinterpret_cast<uint8_t*>(&outModel));
 			outModel.m_Encoding = ConvertEndian(outModel.m_Encoding);
 			outModel.m_RPM = ConvertEndian(outModel.m_RPM);
-			outModel.m_Current = ConvertEndian(outModel.m_Current);
+			outModel.m_Torque = ConvertEndian(outModel.m_Torque);
 		}
 	}
 
