@@ -58,7 +58,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IGyro, GyroMt>(
 		[](IGyro& option)
 		{
-			option.AddGyro("can0", 0x000);
+			option.AddGyro("can1", 0x0050);
 		});
 	
 	app.AddService<Chassis>(
@@ -72,8 +72,8 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Gimbal>(
 		[](Gimbal& option)
 		{
-			option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 1, 0x200);
-			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 2, 0x200);
+			option.AddMotor(Gimbal::MotorPosition::Pitch, "can0", 6, 0x2FF);
+			option.AddMotor(Gimbal::MotorPosition::Yaw, "can0", 7, 0x2FF);
 		});
 
 	app.AddService<Aimbot>();

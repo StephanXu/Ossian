@@ -146,10 +146,10 @@ public:
 				  const unsigned int writerCanId)->void
 	{
 		m_Motors[position] =
-			m_MotorManager->AddMotor<ossian::DJIMotor>(
+			m_MotorManager->AddMotor<ossian::DJIMotor3508>(
 				location,
-				m_MotorManager->GetOrAddWriter<ossian::DJIMotorWriter>(location, writerCanId),
-				[this, position](const std::shared_ptr<ossian::DJIMotor>& motor)
+				m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508Writer>(location, writerCanId),
+				[this, position](const std::shared_ptr<ossian::DJIMotor3508>& motor)
 				{
 					MotorReceiveProc(motor, position);
 				},
@@ -189,7 +189,7 @@ public:
 	//根据当前模式，计算底盘三轴速度
 	void ChassisExpAxisSpeedSet();
 
-	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor>& motor,
+	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor3508>& motor,
 						  MotorPosition position)->void
 	{
 		m_MotorMsgCheck[position] = true;
@@ -220,7 +220,7 @@ public:
 
 private:
 	ossian::MotorManager* m_MotorManager;
-	std::array<std::shared_ptr<ossian::DJIMotor>, 4> m_Motors;
+	std::array<std::shared_ptr<ossian::DJIMotor3508>, 4> m_Motors;
 	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	ossian::IOData<RemoteStatus>* m_RC;  //遥控器

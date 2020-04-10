@@ -180,10 +180,10 @@ public:
 				  const unsigned int writerCanId)->void
 	{
 		m_Motors[position] =
-			m_MotorManager->AddMotor<ossian::DJIMotor>(
+			m_MotorManager->AddMotor<ossian::DJIMotor6020>(
 				location,
-				m_MotorManager->GetOrAddWriter<ossian::DJIMotorWriter>(location, writerCanId),
-				[this, position](const std::shared_ptr<ossian::DJIMotor>& motor)
+				m_MotorManager->GetOrAddWriter<ossian::DJIMotor6020Writer>(location, writerCanId),
+				[this, position](const std::shared_ptr<ossian::DJIMotor6020>& motor)
 				{
 					MotorReceiveProc(motor, position);
 				},
@@ -232,7 +232,7 @@ public:
 	//双环pid计算 
 	void GimbalCtrlCalc(MotorPosition position);
 
-	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor>& motor, MotorPosition position)->void
+	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor6020>& motor, MotorPosition position)->void
 	{
 		m_MotorMsgCheck[position] = true;
 		if (!(m_MotorMsgCheck[Pitch] && m_MotorMsgCheck[Yaw]))
@@ -262,7 +262,7 @@ public:
 
 private:
 	ossian::MotorManager* m_MotorManager;  	
-	std::array<std::shared_ptr<ossian::DJIMotor>, 2> m_Motors;  	
+	std::array<std::shared_ptr<ossian::DJIMotor6020>, 2> m_Motors;  	
 	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	ossian::IOData<RemoteStatus>* m_RC;  //遥控器
