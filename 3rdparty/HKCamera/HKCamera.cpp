@@ -69,14 +69,14 @@ bool HKCamera::Initialize()
     cudaError_t cudaStatus;  		
     cudaStatus = cudaGetDeviceCount(&deviceCount); 		
     if (cudaStatus != cudaSuccess) 			
-        throw std::runtime_error("cudaGetDeviceCount() failed: {}", cudaStatus);
+        throw std::runtime_error("cudaGetDeviceCount() failed");
     if (deviceCount < 1)
         throw std::runtime_error("cuda device not found");
     spdlog::info("cudaEnabledDeviceCount={}", deviceCount); 		
     cv::cuda::printCudaDeviceInfo(cv::cuda::getDevice()); 		
     cudaStatus = cudaSetDevice(0); 		
     if (cudaStatus != cudaSuccess) 			
-        throw std::runtime_error("cudaSetDevice() failed: {}", cudaStatus);
+        throw std::runtime_error("cudaSetDevice() failed");
     cudaSetDeviceFlags(cudaDeviceMapHost);
 }
 

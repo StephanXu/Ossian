@@ -46,13 +46,13 @@ inline T ClampLoop(T value, const T& lowerBnd, const T& upperBnd)
 
 
 //计算当前编码值与中值之间的相对角度rad
-inline double RelativeEcdToRad(uint16_t ecd, const uint16_t ecdMid)
+inline double RelativeEcdToRad(const uint16_t ecd, const uint16_t ecdMid)
 {
 	static constexpr uint16_t kHalfEcdRange = 4096;
 	static constexpr uint16_t kEcdRange = 8191;
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 
-	int relativeEcd = ecd - ecdMid;
+	int relativeEcd = static_cast<int>(ecd) - static_cast<int>(ecdMid);
 	if (relativeEcd > kHalfEcdRange)
 		relativeEcd -= kEcdRange;
 	else if (relativeEcd < -kHalfEcdRange)

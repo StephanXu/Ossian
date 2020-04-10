@@ -15,7 +15,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc)
 find_package(CUDA REQUIRED)
-
+include_directories(${CUDA_INCLUDE_DIRS}) 
 # The target wrap HKCameraLibrary
 add_library(HKCamera)
 target_sources(HKCamera

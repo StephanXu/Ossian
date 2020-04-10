@@ -18,16 +18,13 @@ class Gimbal
 public:
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
-	static constexpr uint16_t kPitchMinEcd = 50;
-	static constexpr uint16_t kPitchMaxEcd = 300;
-	static constexpr uint16_t kPitchMidEcd = 100;
+	static constexpr uint16_t kPitchMinEcd = 4187;
+	static constexpr uint16_t kPitchMaxEcd = 5666;
+	static constexpr uint16_t kPitchMidEcd = 3000;
 	
 	static constexpr uint16_t kYawMinEcd = 10;
 	static constexpr uint16_t kYawMaxEcd = 600;
 	static constexpr uint16_t kYawMidEcd = 200;
-
-	static constexpr double   kPitchMidRad = kPitchMidEcd * kMotorEcdToRadCoef;
-	static constexpr double   kYawMidRad = kYawMidEcd * kMotorEcdToRadCoef;
 
 	//最大最小的 相对（中值的）角度
 	const std::array<double, 2> kMaxRelativeAngle = { RelativeEcdToRad(kPitchMaxEcd, kPitchMidEcd),
@@ -143,8 +140,8 @@ public:
 		m_MotorMsgCheck.fill(false);
 		m_AngleInput.fill(0);
 
-		m_EcdAngleSet[Pitch] = kPitchMidRad;
-		m_EcdAngleSet[Yaw] = kYawMidRad;
+		m_EcdAngleSet[Pitch] = 0;
+		m_EcdAngleSet[Yaw] = 0;
 
 		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Status().m_Encoding, kPitchMidEcd);
 		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Status().m_Encoding, kYawMidEcd);
@@ -241,14 +238,14 @@ public:
 			return;
 
 		UpdateGimbalSensorFeedback();
-		if (m_FlagInitGimbal)
+		/*if (m_FlagInitGimbal)
 			InitGimbal();
 
 		GimbalCtrlSrcSet();
 		GimbalCtrlInputProc();
 		//[TODO] 模式切换过渡
 
-		GimbalExpAngleSet(Pitch);//include_directories(${CUDA_INCLUDE_DIRS}) 
+		GimbalExpAngleSet(Pitch);
 		GimbalExpAngleSet(Yaw);
 
 		GimbalCtrlCalc(Pitch);
@@ -256,7 +253,7 @@ public:
 
 		for (size_t i = 0; i < m_Motors.size(); ++i)
 			m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-		m_Motors[Pitch]->Writer()->PackAndSend();
+		m_Motors[Pitch]->Writer()->PackAndSend();*/
 
 		m_MotorMsgCheck.fill(false);
 	}
