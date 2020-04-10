@@ -190,12 +190,13 @@ public:
 				motorId);
 	}
 
-	double RelativeAngleToChassis() { return -RelativeEcdToRad(m_Motors[Yaw]->Status().m_Encoding, kYawMidEcd); } //[TODO]负号？
+	double RelativeAngleToChassis() { return -RelativeEcdToRad(m_YawEcd.load(), kYawMidEcd); } //[TODO]负号？
 
 	GimbalInputSrc GimbalCtrlSrc() { return m_GimbalCtrlSrc.load(); }
 
 	void UpdateGimbalSensorFeedback()
 	{
+		m_YawEcd = m_Motors[Yaw]->Status().m_Encoding;
 		m_GimbalSensorValues.rc = m_RC->Get();
 		m_GimbalSensorValues.imu = m_GyroListener->Get();
 		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
@@ -276,7 +277,7 @@ private:
 		GyroModel imu;
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
-	//std::atomic<uint16_t> m_YawEcd;
+	std::atomic<uint16_t> m_YawEcd;
 
 	bool m_FlagInitGimbal;
 

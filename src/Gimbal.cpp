@@ -99,11 +99,10 @@ void Gimbal::GimbalCtrlCalc(MotorPosition position)
 				m_LastEcdAngle[position] = curEcdAngle;
 				return;
 			}
-			double interval = std::chrono::duration<double, std::milli>(m_Motors[position]->TimeStamp() - 
-				m_LastEcdTimeStamp[position]).count();  //ms
+			double interval = std::chrono::duration<double, std::milli>(m_Motors[position]->TimeStamp() -
+				m_LastEcdTimeStamp[position]).count() / 1000.0;  //s
 			
-			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) 
-				                   / interval / 1000.0; //rad/s
+			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s
 			double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, hrClock::now(), 
 																true);
 			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, angleSpeedEcd, hrClock::now());
