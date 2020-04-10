@@ -161,9 +161,12 @@ public:
 	{
 		for (size_t i{}; i < m_MotorsNum; ++i)
 		{
-			outModel.m_Voltage[i] = 0;
-			outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() >> 8) & 0x00ff;
-			outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() << 8) & 0xff00;
+			if (m_Motors[i])
+			{
+				outModel.m_Voltage[i] = 0;
+				outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() >> 8) & 0x00ff;
+				outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() << 8) & 0xff00;
+			}
 		}
 	}
 
@@ -334,9 +337,12 @@ public:
 	{
 		for (size_t i{}; i < m_MotorsNum; ++i)
 		{
-			outModel.m_Voltage[i] = 0;
-			outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() >> 8) & 0x00ff;
-			outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() << 8) & 0xff00;
+			if (m_Motors[i])
+			{
+				outModel.m_Voltage[i] = 0;
+				outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() >> 8) & 0x00ff;
+				outModel.m_Voltage[i] |= (m_Motors[i]->Voltage() << 8) & 0xff00;
+			}
 		}
 	}
 
