@@ -148,9 +148,9 @@ public:
 	 *
 	 * @returns	True if it succeeds, false if it fails.
 	 */
-	static bool ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo,
+	/*static bool ConvertDataToMat(MV_FRAME_OUT_INFO_EX* pstImageInfo,
 								 unsigned char* DataBuffer,
-								 cv::cuda::GpuMat& refDest);
+								 cv::cuda::GpuMat& refDest);*/
 private:
 	// Basic settings and status
 	bool m_IsValid{ false };

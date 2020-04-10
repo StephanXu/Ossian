@@ -186,8 +186,8 @@ bool HKCamera::ReadFrame(cv::cuda::GpuMat &outMat)
         return false; //[ATTENTION]: Is that necessary for exiting the function?
     }
 #endif
-    if (!ConvertDataToMat(&stImageInfo, m_Data, outMat))
-        throw std::runtime_error("OpenCV format convert failed");
+    /*if (!ConvertDataToMat(&stImageInfo, m_Data, outMat))
+        throw std::runtime_error("OpenCV format convert failed");*/
     return true;
 }
 
@@ -241,7 +241,7 @@ bool HKCamera::IsValid()
     return m_IsValid;
 }
 
-bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned char *DataBuffer, cv::cuda::GpuMat &refDest)
+/*bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned char *DataBuffer, cv::cuda::GpuMat &refDest)
 {
     //if (pstImageInfo->enPixelType == PixelType_Gvsp_Mono8)
     //{
@@ -271,7 +271,7 @@ bool HKCamera::ConvertDataToMat(MV_FRAME_OUT_INFO_EX *pstImageInfo, unsigned cha
         return true;
     }
     return false;
-}
+}*/
 
 int HKCamera::RGB2BGR(unsigned char *pRgbData, unsigned int width, unsigned int height)
 {
