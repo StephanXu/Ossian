@@ -110,12 +110,12 @@ void Gimbal::GimbalCtrlCalc(MotorPosition position)
 			m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
 			m_LastEcdAngle[position] = curEcdAngle;
 
-			spdlog::info("@pidAngleEcd{}=[$set={},$get={},$pidout={}]", 
+			spdlog::info("@pidAngleEcd{}=[$set_ae={},$get_ae={},$pidout_ae={}]", 
 				position, 
 				m_EcdAngleSet[position], 
 				curEcdAngle, 
 				angleSpeedSet);
-			spdlog::info("@pidAngleSpeed{}=[$set={},$get={},$pidout={}]",
+			spdlog::info("@pidAngleSpeed{}=[$set_as={},$get_as={},$pidout_as={}]",
 				position,
 				angleSpeedSet,
 				angleSpeedEcd,

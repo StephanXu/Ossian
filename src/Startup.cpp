@@ -29,7 +29,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<OnlineDebug>(
 		[](OnlineDebug& option)
 		{
-			option.Connect("http://debug.fenzhengrou.wang:4000/logger");
+			option.Connect("http://ossian.mrxzh.com/logger");
 			option.StartLogging("OnlineLog",
 			                    "OssianLog",
 			                    "A piece of log.");
@@ -72,11 +72,11 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Gimbal>(
 		[](Gimbal& option)
 		{
-			option.AddMotor(Gimbal::MotorPosition::Pitch, "can0", 6, 0x2FF);
-			option.AddMotor(Gimbal::MotorPosition::Yaw, "can0", 7, 0x2FF);
+			option.AddMotor(Gimbal::MotorPosition::Pitch, "can0", 7, 0x2ff);
+			option.AddMotor(Gimbal::MotorPosition::Yaw, "can0", 6, 0x2ff);
 		});
 
-	app.AddService<Aimbot>();
+	//app.AddService<Aimbot>();
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)

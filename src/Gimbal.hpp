@@ -132,6 +132,7 @@ public:
 		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
 
 		m_LastEcdTimeStamp.fill(hrClock::time_point());
+		m_CurrentSend.fill(0);
 	}
 
 	void InitGimbal()
@@ -139,6 +140,7 @@ public:
 		m_CurGimbalAngleMode = Encoding; 
 		m_MotorMsgCheck.fill(false);
 		m_AngleInput.fill(0);
+		m_CurrentSend.fill(0);
 
 		m_EcdAngleSet[Pitch] = 0;
 		m_EcdAngleSet[Yaw] = 0;
@@ -206,16 +208,16 @@ public:
 		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wz 
 			- sin(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wx;
 		
-		spdlog::info("@IMUAngle=[$roll={},$pitch={},$yaw={}]",
+		spdlog::info("@IMUAngle=[$roll_gyro={},$pitch_gyro={},$yaw_gyro={}]",
 			m_GimbalSensorValues.imu.m_Roll,
 			m_GimbalSensorValues.imu.m_Pitch,
 			m_GimbalSensorValues.imu.m_Yaw);
-		spdlog::info("@IMUSpeed=[$roll={},$pitch={},$yaw={}]",
+		spdlog::info("@IMUSpeed=[$roll_w={},$pitch_w={},$yaw_w={}]",
 			m_GimbalSensorValues.imu.m_Wx,
 			m_GimbalSensorValues.imu.m_Wy,
 			m_GimbalSensorValues.imu.m_Wz);
 
-		spdlog::info("@MotorEncoder=[$pitch={},$yaw={}]",
+		spdlog::info("@MotorEncoder=[$pitch_ecd={},$yaw_ecd={}]",
 			m_Motors[Pitch]->Status().m_Encoding,
 			m_Motors[Yaw]->Status().m_Encoding);
 		
@@ -250,11 +252,11 @@ public:
 		GimbalExpAngleSet(Yaw);
 
 		GimbalCtrlCalc(Pitch);
-		GimbalCtrlCalc(Yaw);
+		GimbalCtrlCalc(Yaw);*/
 
 		for (size_t i = 0; i < m_Motors.size(); ++i)
 			m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-		m_Motors[Pitch]->Writer()->PackAndSend();*/
+		m_Motors[Pitch]->Writer()->PackAndSend();
 
 		m_MotorMsgCheck.fill(false);
 	}
