@@ -17,6 +17,8 @@
 #ifndef HK_CAMERA_HPP
 #define HK_CAMERA_HPP
 
+#define ENABLE_CUDA
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/cuda.hpp>
 #ifdef ENABLE_CUDA

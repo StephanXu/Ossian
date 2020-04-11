@@ -64,19 +64,19 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Chassis>(
 		[](Chassis& option)
 		{
-			option.AddMotor(Chassis::MotorPosition::LF, "can0", 1, 0x200);
-			option.AddMotor(Chassis::MotorPosition::LR, "can0", 2, 0x200);
-			option.AddMotor(Chassis::MotorPosition::RR, "can0", 3, 0x200);
-			option.AddMotor(Chassis::MotorPosition::RF, "can0", 4, 0x200);
+			//option.AddMotor(Chassis::MotorPosition::LF, "can0", 1, 0x200);
+			//option.AddMotor(Chassis::MotorPosition::LR, "can0", 2, 0x200);
+			//option.AddMotor(Chassis::MotorPosition::RR, "can0", 3, 0x200);
+			//option.AddMotor(Chassis::MotorPosition::RF, "can0", 4, 0x200);
 		});
 	app.AddService<Gimbal>(
 		[](Gimbal& option)
 		{
-			option.AddMotor(Gimbal::MotorPosition::Pitch, "can0", 7, 0x2ff);
-			option.AddMotor(Gimbal::MotorPosition::Yaw, "can0", 6, 0x2ff);
+			//option.AddMotor(Gimbal::MotorPosition::Pitch, "can0", 7, 0x2ff);
+			//option.AddMotor(Gimbal::MotorPosition::Yaw, "can0", 6, 0x2ff);
 		});
 
-	//app.AddService<Aimbot>();
+	app.AddService<Aimbot>();
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)
@@ -84,5 +84,5 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddService<ossian::IExecutable, IOPeeker<0>>();
 	app.AddService<ossian::IExecutable, IOPeeker<1>>();
 
-	//app.AddService<ossian::IExecutable, CameraPeeker>();
+	app.AddService<ossian::IExecutable, CameraPeeker>();
 }

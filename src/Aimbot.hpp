@@ -1,6 +1,8 @@
 ﻿#ifndef AIMBOT_HPP
 #define AIMBOT_HPP
 
+#define ENABLE_CUDA
+
 #include <ossian/Factory.hpp>
 #include <ossian/Configuration.hpp>
 #include <opencv2/opencv.hpp>
@@ -27,8 +29,11 @@ public:
     OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config));
     ~Aimbot()
     {
-        cudaFree(m_pBinary);
-        m_pBinary = nullptr;
+        //cudaFree(m_pBinary);
+        cudaFree(m_pdFrame);
+        delete[]m_phBinary;
+        m_pdFrame = nullptr;
+        m_phBinary = nullptr;
     }
     cv::Mat debugFrame;
 
@@ -408,14 +413,11 @@ private:
 
         //const static cv::Mat element3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
         //const static cv::Mat element5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
-        static cv::cuda::Stream cudaStream;
-        static cv::cuda::GpuMat dFrame(1080, 1440, CV_8UC1, pImage);
-        static cv::cuda::GpuMat dBinary(1080, 1440, CV_8UC1, m_pBinary);
-        static cv::Mat hBinary(1080, 1440, CV_8UC1, m_pBinary);
-        static cv::cuda::GpuMat grayBrightness, grayColor, binaryColor, binaryBrightness;
-        static std::vector<cv::cuda::GpuMat> channels;
+        cudaMemcpy(m_pdFrame, pImage, 1440 * 1080 * 1, cudaMemcpyHostToDevice);
+        cv::cuda::GpuMat dFrame(1080, 1440, CV_8UC1, m_pdFrame);
         
         cv::cuda::demosaicing(dFrame, dFrame, cv::cuda::COLOR_BayerRG2BGR_MHT, 0, cudaStream);
+        //cv::cuda::cvtColor(dFrame, dFrame, cv::COLOR_BayerRG2BGR, 0, cudaStream);
 
         cv::cuda::cvtColor(dFrame, grayBrightness, cv::COLOR_BGR2GRAY, 0, cudaStream);
         cv::cuda::threshold(grayBrightness, binaryBrightness, brightness, 255, cv::THRESH_BINARY, cudaStream);
@@ -424,6 +426,7 @@ private:
         cv::cuda::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor, cv::noArray(), -1, 
                            cudaStream);
         cv::cuda::threshold(grayColor, binaryColor, thresColor, 255, cv::THRESH_BINARY, cudaStream);
+
         cv::cuda::bitwise_and(binaryBrightness, binaryColor, dBinary, cv::noArray(), cudaStream);
         //cv::dilate(binary, binary, element3);
         //cv::erode(binary, binary, element3);
@@ -439,10 +442,11 @@ private:
         //cv::waitKey(10);
 #endif // DEBUG
 
-        std::vector<std::vector<cv::Point> > contours;
-        std::vector<cv::Vec4i> hierarchy;
-        std::vector<LightBar> lightBars;
-
+        static std::vector<std::vector<cv::Point> > contours;
+        static std::vector<cv::Vec4i> hierarchy;
+        static std::vector<LightBar> lightBars;
+        cudaMemcpy(m_phBinary, dBinary.data, 1440 * 1080 * 1, cudaMemcpyDeviceToHost);
+        cv::Mat hBinary(1080, 1440, CV_8UC1, m_phBinary);
         cv::findContours(hBinary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
         for (size_t i = 0; i < contours.size(); ++i)
         {
@@ -460,7 +464,7 @@ private:
                 }
             }
         }
-        std::vector<Armor> armors;
+        static std::vector<Armor> armors;
 
         for (size_t i = 0; i < lightBars.size(); ++i)
         {
@@ -507,7 +511,16 @@ private:
         return armorFound;
     }
 
-    unsigned char* m_pBinary = nullptr;
+    unsigned char* m_pdFrame = nullptr;
+    unsigned char* m_phBinary = nullptr;
+
+    cv::cuda::Stream cudaStream;
+    cv::cuda::GpuMat dBinary,
+        grayBrightness,
+        grayColor,
+        binaryColor,
+        binaryBrightness;
+    std::vector<cv::cuda::GpuMat> channels;
 
     double m_Yaw = 0;
     double m_Pitch = 0;

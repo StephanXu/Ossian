@@ -74,11 +74,11 @@ bool HKCamera::Initialize()
     if (deviceCount < 1)
         throw std::runtime_error("cuda device not found");
     spdlog::info("cudaEnabledDeviceCount={}", deviceCount); 		
-    cv::cuda::printCudaDeviceInfo(cv::cuda::getDevice()); 		
+    cv::cuda::printCudaDeviceInfo(cv::cuda::getDevice()); 	
+    cudaSetDeviceFlags(cudaDeviceMapHost);
     cudaStatus = cudaSetDevice(0); 		
     if (cudaStatus != cudaSuccess) 			
         throw std::runtime_error("cudaSetDevice() failed");
-    cudaSetDeviceFlags(cudaDeviceMapHost);
 #endif //ENABLE_CUDA
 }
 
@@ -200,13 +200,12 @@ void HKCamera::StartGrabFrame()
         throw std::runtime_error("Start Grabbing fail");
 
     memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-
+    spdlog::info("payloadSize={}", m_PayloadSize);
 #ifdef ENABLE_CUDA
-    cudaError_t cudaStatus = cudaMallocManaged(&m_Data, m_PayloadSize);
-    if (cudaStatus != cudaSuccess)
-        spdlog::error("cudaMallocManaged() Failed: {}", cudaStatus);
-#else
     m_Data = new unsigned char[m_PayloadSize];
+    /*cudaError_t cudaStatus = cudaMallocManaged(&m_Data, m_PayloadSize);
+    if (cudaStatus != cudaSuccess)
+        spdlog::error("cudaMallocManaged() Failed: {}", cudaStatus);*/
 #endif // ENABLE_CUDA
 
     if (!m_Data)
@@ -230,7 +229,8 @@ void HKCamera::Close()
     m_Handle = nullptr;
 
 #ifdef ENABLE_CUDA
-    cudaFree(m_Data);
+    delete[]m_Data;
+    //cudaFree(m_Data);
 #endif // ENABLE_CUDA
 
     m_Data = nullptr;
