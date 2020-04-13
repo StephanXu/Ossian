@@ -68,7 +68,7 @@ Aimbot::Aimbot(Utils::ConfigLoader* config)
     Aimbot::Armor::frameCenter.x = m_Config->Instance<Configuration>()->mutable_camera()->framewidth();
     Aimbot::Armor::frameCenter.y = m_Config->Instance<Configuration>()->mutable_camera()->frameheight();
 
-#ifdef ENABLE_CUDA
+#ifdef WITH_CUDA
     /*cudaError_t cudaStatus = cudaMallocManaged(&m_pBinary, 1440 * 1080 * sizeof(unsigned char));
     if (cudaStatus != cudaSuccess)         
         spdlog::error("Aimbot: cudaMallocManaged() Failed: {}", cudaStatus);    */ 
@@ -78,7 +78,7 @@ Aimbot::Aimbot(Utils::ConfigLoader* config)
     m_phBinary = new unsigned char[1440 * 1080 * 1];
     if (!m_pdFrame || !m_phBinary)        
         std::bad_alloc();
-#endif //ENABLE_CUDA
+#endif //WITH_CUDA
 }
 
 void Aimbot::Process(unsigned char* pImage)

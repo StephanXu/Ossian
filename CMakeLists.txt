@@ -9,7 +9,9 @@ find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(mimalloc 1.6 REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
-find_package(CUDA REQUIRED)
+find_package(CUDA)
+
+message(STATUS "CUDA_FOUND: ${CUDA_FOUND}")
 
 add_subdirectory(proto)
 add_subdirectory(core)
@@ -39,6 +41,7 @@ target_sources(Ossian
 target_include_directories(Ossian
         PRIVATE
             src
+            "$<$<BOOL:${CUDA_FOUND}>:${CUDA_INCLUDE_DIRS}>"
         )
 target_link_libraries(Ossian
         PRIVATE
@@ -49,7 +52,7 @@ target_link_libraries(Ossian
             mimalloc
             proto
             ${OpenCV_LIBS}
-            ${CUDA_LIBRARIES}
+            "$<$<BOOL:${CUDA_FOUND}>:${CUDA_LIBRARIES}>"
             OssianCore
             Eigen3::Eigen
         )
@@ -57,7 +60,6 @@ target_link_libraries(Ossian
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
 set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
 set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
-include_directories(${CUDA_INCLUDE_DIRS}) 
 
 target_compile_options(Ossian
         PRIVATE
@@ -69,3 +71,5 @@ target_link_options(Ossian
             "$<${gcc_like_cxx}:-pthread>"
         )
 message(STATUS "OpenCV_LIBS = ${OpenCV_LIBS}")
+
+target_compile_definitions(Ossian PRIVATE "$<$<BOOL:${CUDA_FOUND}>:WITH_CUDA>")

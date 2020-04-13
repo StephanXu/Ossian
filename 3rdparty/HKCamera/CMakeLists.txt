@@ -14,8 +14,10 @@ set_property(TARGET HKCameraLibrary PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${HK
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc)
-find_package(CUDA REQUIRED)
-include_directories(${CUDA_INCLUDE_DIRS}) 
+find_package(CUDA)
+
+message(STATUS "CUDA_FOUND: ${CUDA_FOUND}")
+
 # The target wrap HKCameraLibrary
 add_library(HKCamera)
 target_sources(HKCamera
@@ -25,9 +27,14 @@ target_sources(HKCamera
         )
 
 set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
-message(STATUS "CUDA_INCLUDE_DIRS = ${CUDA_INCLUDE_DIRS}")
 
-target_include_directories(HKCamera PUBLIC ./)
+target_include_directories(HKCamera
+        PUBLIC
+            ./
+        PRIVATE
+            "$<$<BOOL:${CUDA_FOUND}>:${CUDA_INCLUDE_DIRS}>"
+        )
+target_compile_definitions(HKCamera PUBLIC "$<$<BOOL:${CUDA_FOUND}>:WITH_CUDA>")
 target_link_libraries(HKCamera
         PUBLIC
             HKCameraLibrary
@@ -35,5 +42,5 @@ target_link_libraries(HKCamera
             fmt::fmt
             opencv_core
             opencv_imgproc
-            ${CUDA_LIBRARIES}
+            "$<$<BOOL:${CUDA_FOUND}>:${CUDA_LIBRARIES}>"
         )

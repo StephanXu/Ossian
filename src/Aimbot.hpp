@@ -1,8 +1,6 @@
 ﻿#ifndef AIMBOT_HPP
 #define AIMBOT_HPP
 
-#define ENABLE_CUDA
-
 #include <ossian/Factory.hpp>
 #include <ossian/Configuration.hpp>
 #include <opencv2/opencv.hpp>
