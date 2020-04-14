@@ -18,8 +18,9 @@
 #define HK_CAMERA_HPP
 
 #include <opencv2/opencv.hpp>
-#include <opencv2/core/cuda.hpp>
+
 #ifdef WITH_CUDA
+#include <opencv2/core/cuda.hpp>
 #include <cuda_runtime.h>
 #endif // WITH_CUDA
 
