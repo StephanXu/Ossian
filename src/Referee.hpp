@@ -1,4 +1,15 @@
-﻿#ifndef OSSIAN_REFEREE_HPP
+﻿/**
+ * @file Referee.hpp
+ * @author Xu Zihan (mrxzh@outlook.com)
+ * @brief Referee I/O logic
+ * @version 0.1
+ * @date 2020-03-19
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
+
+#ifndef OSSIAN_REFEREE_HPP
 #define OSSIAN_REFEREE_HPP
 
 #include <ossian/Factory.hpp>
@@ -11,6 +22,10 @@
 #include <typeindex>
 
 #pragma pack(push,1)
+
+/**
+ * @brief 连命令码的帧头结构
+ */
 struct FrameHeaderWithCmd
 {
 	uint8_t m_SOF;         ///< 起始字节(0xA5)
@@ -20,6 +35,9 @@ struct FrameHeaderWithCmd
 	uint16_t m_CmdId;      ///< 命令码
 };
 
+/**
+ * @brief 帧尾
+ */
 struct FrameTail
 {
 	uint16_t m_CRC16; ///< 整包校验
@@ -309,6 +327,11 @@ struct BulletRemain
 	uint16_t m_BulletRemainingNum; ///< 弹丸剩余发射数目
 };
 
+/**
+ * @brief 裁判系统消息结构
+ * 
+ * @tparam MessageType 内含消息种类(e.g. ShootData)
+ */
 template <typename MessageType>
 struct RefereeMessage
 {
@@ -321,21 +344,99 @@ struct RefereeMessage
 
 #pragma pack(pop)
 
+/**
+ * @brief Determine whether the model is valid.
+ * 
+ * @tparam T Model type.
+ */
 template <typename T>
 struct IsValidModel
 {
 	static constexpr bool value = {sizeof(T) == T::length};
 };
 
+/**
+ * @brief Get Nth type of a type sequence.
+ * 
+ * @tparam N Type index.
+ * @tparam Ts Type sequence.
+ */
 template <int N, typename... Ts>
 using NThTypeOf = typename std::tuple_element<N, std::tuple<Ts...>>::type;
 
+/**
+	 * @brief Find a type in std::tuple.
+	 * 
+	 * @tparam T The type to find.
+	 * @tparam Tuple The tuple.
+	 */
+template <typename T, typename Tuple>
+struct IndexOf
+{
+	static_assert(!std::is_same<Tuple, std::tuple<>>::value, "Could not find T in given Tuple");
+};
+
+template <typename T, typename... Types>
+struct IndexOf<T, std::tuple<T, Types...>>
+{
+	static constexpr std::size_t value = 0;
+};
+
+template <typename T, typename U, typename... Types>
+struct IndexOf<T, std::tuple<U, Types...>>
+{
+	static constexpr std::size_t value = 1 + IndexOf<T, std::tuple<Types...>>::value;
+};
+
+/**
+ * @brief Count the number of occurrences of the type in std::tuple.
+ * 
+ * @tparam T Type to count.
+ * @tparam Tuple The tuple.
+ */
+template <typename T, typename Tuple>
+struct CountOf
+{
+};
+
+template <typename T>
+struct CountOf<T, std::tuple<>>
+{
+	static constexpr std::size_t value = 0;
+};
+
+template <typename T, typename... Types>
+struct CountOf<T, std::tuple<T, Types...>>
+{
+	static constexpr std::size_t value = 1 + CountOf<T, std::tuple<Types...>>::value;
+};
+
+template <typename T, typename U, typename... Types>
+struct CountOf<T, std::tuple<U, Types...>>
+{
+	static constexpr std::size_t value = 0 + CountOf<T, std::tuple<Types...>>::value;
+};
+
+/**
+ * @brief Interface of Referee system service.
+ */
 class IReferee
 {
 public:
+	/**
+	 * @brief Initialize referee system.
+	 * 
+	 * @param location The location of referee system (e.g. /dev/ttyTHS2).
+	 */
 	virtual auto AddReferee(std::string location) -> void = 0;
 };
 
+/**
+ * @brief The implementation of referee system.
+ * 
+ * @tparam std::mutex Mutex type (e.g. std::mutex).
+ * @tparam MessageTypes The types of message to listen. (e.g. BulletRemain, ShootData).
+ */
 template <typename Mutex = std::mutex, typename ...MessageTypes>
 class Referee : public IReferee, public ossian::IODataBuilder<Mutex, MessageTypes...>
 {
@@ -369,61 +470,20 @@ public:
 	}
 
 private:
-	template <typename T>
-	struct IsValidModel
-	{
-		static constexpr bool value = {sizeof(T) == T::length};
-	};
-
-	template <int N, typename... Ts>
-	using NThTypeOf = typename std::tuple_element<N, std::tuple<Ts...>>::type;
-
-	template <typename T, typename Tuple>
-	struct IndexOf
-	{
-		static_assert(!std::is_same<Tuple, std::tuple<>>::value, "Could not find T in given Tuple");
-	};
-
-	template <typename T, typename... Types>
-	struct IndexOf<T, std::tuple<T, Types...>>
-	{
-		static constexpr std::size_t value = 0;
-	};
-
-	template <typename T, typename U, typename... Types>
-	struct IndexOf<T, std::tuple<U, Types...>>
-	{
-		static constexpr std::size_t value = 1 + IndexOf<T, std::tuple<Types...>>::value;
-	};
-
-	template <typename T, typename Tuple>
-	struct CountOf
-	{
-	};
-
-	template <typename T>
-	struct CountOf<T, std::tuple<>>
-	{
-		static constexpr std::size_t value = 0;
-	};
-
-	template <typename T, typename ...Types>
-	struct CountOf<T, std::tuple<T, Types...>>
-	{
-		static constexpr std::size_t value = 1 + CountOf<T, std::tuple<Types...>>::value;
-	};
-
-	template <typename T, typename U, typename ...Types>
-	struct CountOf<T, std::tuple<U, Types...>>
-	{
-		static constexpr std::size_t value = 0 + CountOf<T, std::tuple<Types...>>::value;
-	};
-
 	using Container = std::tuple<ossian::IOData<MessageTypes>*...>;
 	static_assert((IsValidModel<MessageTypes>::value || ...), "There is a invalid model");
 	static_assert(((CountOf<MessageTypes, std::tuple<MessageTypes>>::value == 1) && ...),
 		"Redefined message in MessageTypes");
 
+	/**
+	 * @brief Try to parse the buffer into specified message type.
+	 * 
+	 * @tparam MessageType The message type to parse.
+	 * @tparam Index The Index of message type in listening sequence.
+	 * @param data Buffer to parse.
+	 * @param length Buffer's length.
+	 * @return size_t The length that have parsed.
+	 */
 	template <typename MessageType, size_t Index>
 	auto ReadData(const uint8_t* data, const size_t length) -> size_t
 	{
@@ -446,6 +506,14 @@ private:
 		return RefereeMessage<MessageType>::length;
 	}
 
+	/**
+	 * @brief Try to match a message type and parse.
+	 * 
+	 * @tparam Index 
+	 * @param data Buffer.
+	 * @param length Buffer's length.
+	 * @return size_t The length that have parsed.
+	 */
 	template <size_t ...Index>
 	auto ReadPack(const uint8_t* data, const size_t length, std::index_sequence<Index...>) -> size_t
 	{
@@ -467,6 +535,12 @@ private:
 		}
 	}
 
+	/**
+	 * @brief Parse the whole buffer.
+	 * 
+	 * @param data Buffer.
+	 * @param length Buffer's length.
+	 */
 	auto ParseReferee(const uint8_t* data, const size_t length)
 	{
 		size_t remainLength = length;

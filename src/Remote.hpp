@@ -1,3 +1,14 @@
+﻿/**
+ * @file Remote.hpp
+ * @author Xu Zihan (mrxzh@outlook.com)
+ * @brief Remote controller I/O logic
+ * @version 0.1
+ * @date 2020-02-25
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
+
 #ifndef OSSIAN_REMOTE_HPP
 #define OSSIAN_REMOTE_HPP
 
@@ -8,6 +19,9 @@
 
 #include <mutex>
 
+/**
+ * @brief Remote controller I/O data model
+ */
 struct RemoteStatus
 {
 	/* rocker channel information */
@@ -17,13 +31,27 @@ struct RemoteStatus
 	uint8_t sw[2];
 };
 
+/**
+ * @brief Remote controller service interface
+ */
 class IRemote
 {
 public:
 	virtual ~IRemote() = default;
+
+	/**
+	 * @brief Initialize remote controller.
+	 * 
+	 * @param location The location of remote controller. (e.g. /dev/ttyTHS2)
+	 */
 	virtual auto AddRemote(std::string location) -> void = 0;
 };
 
+/**
+ * @brief Remote IO service
+ * 
+ * @tparam std::mutex Mutex type
+ */
 template <typename Mutex = std::mutex>
 class Remote final : public IRemote, public ossian::IODataBuilder<Mutex, RemoteStatus>
 {

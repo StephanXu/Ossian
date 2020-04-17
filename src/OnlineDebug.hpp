@@ -1,4 +1,15 @@
-﻿#ifndef OSSIAN_ONLINE_DEBUG_HPP
+﻿/**
+ * @file OnlineDebug.hpp
+ * @author Xu Zihan (mrxzh@outlook.com)
+ * @brief Online debug logic
+ * @version 0.1
+ * @date 2020-02-23
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
+
+#ifndef OSSIAN_ONLINE_DEBUG_HPP
 #define OSSIAN_ONLINE_DEBUG_HPP
 
 #include <spdlog/spdlog.h>
@@ -20,6 +31,9 @@ class SignalRLogger : public signalr::log_writer
 	}
 };
 
+/**
+ * @brief RPC hub (for server calling client).
+ */
 class OnlineDebugHub :public BaseHub
 {
 public:
@@ -30,6 +44,11 @@ public:
 	static auto ReloadSettings(std::string settings) -> void;
 };
 
+/**
+ * @brief Log sink.
+ * 
+ * @tparam Mutex Mutex type.
+ */
 template<typename Mutex>
 class online_logger_sink : public spdlog::sinks::base_sink<Mutex>
 {
@@ -61,6 +80,9 @@ protected:
 using online_logger_sink_mt = online_logger_sink<std::mutex>;
 using online_logger_sink_st = online_logger_sink<spdlog::details::null_mutex>;
 
+/**
+ * @brief Online debug service
+ */
 class OnlineDebug
 {
 	std::unique_ptr<OnlineDebugHub> m_Hub;
@@ -71,6 +93,11 @@ public:
 		m_Valid = false;
 	}
 
+	/**
+	 * @brief Connect to service
+	 * 
+	 * @param url URL
+	 */
 	auto Connect(std::string url)
 	{
 		m_Hub.reset(new OnlineDebugHub{ std::move(
@@ -81,6 +108,13 @@ public:
 		m_Valid = true;
 	}
 
+	/**
+	 * @brief Initialize logger.
+	 * 
+	 * @param loggerName The logger name. In order to access logger through spdlog::get("loggerName").
+	 * @param logName The log name to display on online board.
+	 * @param logDescription The description to display on online board.
+	 */
 	auto StartLogging(std::string loggerName,
 					  std::string logName, 
 					  std::string logDescription)
