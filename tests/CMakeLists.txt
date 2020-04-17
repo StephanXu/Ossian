@@ -5,6 +5,12 @@ target_link_libraries(IOTest PRIVATE OssianCore spdlog::spdlog)
 target_link_libraries(IOTest PRIVATE mimalloc)
 target_sources(IOTest PRIVATE IOTest.cpp)
 
+add_executable (WITGyroTest)
+target_compile_features(WITGyroTest PRIVATE cxx_std_17)
+target_link_libraries(WITGyroTest PRIVATE OssianCore spdlog::spdlog)
+target_link_libraries(WITGyroTest PRIVATE mimalloc)
+target_sources(WITGyroTest PRIVATE "WITGyroTest.cpp")
+
 add_executable(RefereeTest)
 target_compile_features(RefereeTest PRIVATE cxx_std_17)
 target_link_libraries(RefereeTest PRIVATE OssianCore spdlog::spdlog signalrclient mimalloc)
