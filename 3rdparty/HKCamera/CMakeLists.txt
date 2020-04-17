@@ -31,7 +31,6 @@ set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
 target_include_directories(HKCamera
         PUBLIC
             ./
-        PRIVATE
             "$<$<BOOL:${CUDA_FOUND}>:${CUDA_INCLUDE_DIRS}>"
         )
 target_compile_definitions(HKCamera PUBLIC "$<$<BOOL:${CUDA_FOUND}>:WITH_CUDA>")
