@@ -8,7 +8,7 @@ target_sources(OssianCore
 			src/io/CAN.cpp
 			src/io/UART.cpp
 			src/io/I2C.cpp
-		)
+			src/Utility.cpp)
 target_include_directories(OssianCore
 		PUBLIC
 			include
@@ -41,4 +41,3 @@ target_link_options(OssianCore
 		PRIVATE
 		"$<${gcc_like_cxx}:-pthread>"
 		)
-target_compile_definitions(OssianCore PUBLIC __linux__)

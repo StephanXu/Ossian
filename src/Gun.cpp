@@ -70,9 +70,9 @@ void Gun::FricCtrl()
 		currentFricBelow = currentFricUpper = 0;
 	else
 	{
-		currentFricBelow = m_PIDFricSpeed[FricBelow].Calc(m_FricSpeedSet, m_MotorsFric[FricBelow]->Status().m_RPM,
+		currentFricBelow = m_PIDFricSpeed[FricBelow].Calc(m_FricSpeedSet, m_MotorsFric[FricBelow]->Get().m_RPM,
 			hrClock::now());
-		currentFricUpper = m_PIDFricSpeed[FricUpper].Calc(-m_FricSpeedSet, m_MotorsFric[FricUpper]->Status().m_RPM,
+		currentFricUpper = m_PIDFricSpeed[FricUpper].Calc(-m_FricSpeedSet, m_MotorsFric[FricUpper]->Get().m_RPM,
 			hrClock::now());
 	}
 	m_MotorsFric[FricBelow]->SetVoltage(currentFricBelow);
@@ -104,7 +104,7 @@ void Gun::FeedModeSet()
 	}
 	
 	//Èô¿¨µ¯Ôò²¦µ¯ÂÖ·´×ª
-	bool jammed = m_FeedMode != FeedMode::Stop && m_MotorFeed->Status().m_RPM < kFeedJamRPM;
+	bool jammed = m_FeedMode != FeedMode::Stop && m_MotorFeed->Get().m_RPM < kFeedJamRPM;
 	if (jammed)
 		m_FeedMode = FeedMode::Reverse; 
 }
@@ -116,7 +116,7 @@ void Gun::FeedRotateCtrl(bool stop, int rpmSet, bool reverse)
 		current = 0;
 	else
 	{
-		current = m_PIDFeedSpeed.Calc(rpmSet, m_MotorFeed->Status().m_RPM, hrClock::now());
+		current = m_PIDFeedSpeed.Calc(rpmSet, m_MotorFeed->Get().m_RPM, hrClock::now());
 		if (reverse)
 			current *= -1;
 	}

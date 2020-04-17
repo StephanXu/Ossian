@@ -1,7 +1,8 @@
 ﻿#ifndef OSSIAN_GUN_HPP
 #define OSSIAN_GUN_HPP
 
-#include <ossian/Motor.hpp>
+#include <ossian/motors/Motor.hpp>
+#include <ossian/motors/DJIMotor.hpp>
 #include <ossian/IOData.hpp>
 
 #include "CtrlAlgorithms.hpp"
@@ -144,20 +145,20 @@ public:
 	{
 		if (position == FricBelow || position == FricUpper)
 			m_MotorsFric[position] =
-			m_MotorManager->AddMotor<ossian::DJIMotor3508>(
+			m_MotorManager->AddMotor<ossian::DJIMotor3508Mt>(
 				location,
-				m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508Writer>(location, writerCanId),
-				[this, position](const std::shared_ptr<ossian::DJIMotor3508>& motor)
+				m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508WriterMt>(location, writerCanId),
+				[this, position](const std::shared_ptr<ossian::DJIMotor3508Mt>& motor)
 				{
 					MotorFricReceiveProc(motor, position);
 				},
 				motorId);
 		else if (position == Feed)
 			m_MotorFeed =
-				m_MotorManager->AddMotor<ossian::DJIMotor2006>(
+				m_MotorManager->AddMotor<ossian::DJIMotor2006Mt>(
 					location,
-					m_MotorManager->GetOrAddWriter<ossian::DJIMotor2006Writer>(location, writerCanId),
-					[this, position](const std::shared_ptr<ossian::DJIMotor2006>& motor)
+					m_MotorManager->GetOrAddWriter<ossian::DJIMotor2006WriterMt>(location, writerCanId),
+					[this, position](const std::shared_ptr<ossian::DJIMotor2006Mt>& motor)
 					{
 						MotorFeedReceiveProc(motor, position);
 					},
@@ -199,7 +200,7 @@ public:
 
 	void FeedCtrl();
 
-	auto MotorFricReceiveProc(const std::shared_ptr<ossian::DJIMotor3508>& motor, MotorPosition position)->void
+	auto MotorFricReceiveProc(const std::shared_ptr<ossian::DJIMotor3508Mt>& motor, MotorPosition position)->void
 	{
 		m_FricMotorMsgCheck[position] = true;
 		if (!(m_FricMotorMsgCheck[FricBelow] && m_FricMotorMsgCheck[FricUpper]))
@@ -215,7 +216,7 @@ public:
 		m_FricMotorMsgCheck.fill(false);
 	}
 
-	auto MotorFeedReceiveProc(const std::shared_ptr<ossian::DJIMotor2006>& motor, MotorPosition position)->void
+	auto MotorFeedReceiveProc(const std::shared_ptr<ossian::DJIMotor2006Mt>& motor, MotorPosition position)->void
 	{
 		UpdateGunSensorFeedback();
 		if (m_FlagInitFeed)
@@ -228,8 +229,8 @@ public:
 
 private:
 	ossian::MotorManager* m_MotorManager;
-	std::array<std::shared_ptr<ossian::DJIMotor3508>, 2> m_MotorsFric;
-	std::shared_ptr<ossian::DJIMotor2006> m_MotorFeed;
+	std::array<std::shared_ptr<ossian::DJIMotor3508Mt>, 2> m_MotorsFric;
+	std::shared_ptr<ossian::DJIMotor2006Mt> m_MotorFeed;
 
 	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;

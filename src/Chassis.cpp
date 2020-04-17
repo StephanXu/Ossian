@@ -112,14 +112,14 @@ void Chassis::ChassisCtrl()
 		{
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
-				m_Motors[i]->Status().m_RPM,
+				m_Motors[i]->Get().m_RPM,
 				hrClock::now());
 			/*spdlog::info("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
-				m_Motors[i]->Status().m_RPM);*/
+				m_Motors[i]->Get().m_RPM);*/
 			spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", 
 							i,
 							m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, 
-							m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
+							m_Motors[i]->Get().m_RPM, m_CurrentSend[i]);
 		}
 	}
 
@@ -150,9 +150,9 @@ void Chassis::ChassisCtrl()
 			{
 				m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 					m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
-					m_Motors[i]->Status().m_RPM,
+					m_Motors[i]->Get().m_RPM,
 					hrClock::now());
-				//spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Status().m_RPM, m_CurrentSend[i]);
+				//spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Get().m_RPM, m_CurrentSend[i]);
 			}
 		};
 		m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;

@@ -56,16 +56,15 @@ public:
 
 	auto Set(const DataType& value) noexcept -> void override
 	{
-		{
-			std::lock_guard<Mutex>{m_Mutex};
-			m_Payload = value;
-		}
+		m_Mutex.lock();
+		m_Payload = value;
+		m_Mutex.unlock();
 		m_OnChange(value);
 	}
 
 	auto Get() noexcept -> DataType override
 	{
-		std::lock_guard<Mutex>{m_Mutex};
+		std::lock_guard<Mutex> guard{m_Mutex};
 		return m_Payload;
 	}
 
@@ -94,11 +93,14 @@ public:
 		return std::type_index{typeid(DataType)};
 	}
 
-	auto AddOnChange(std::function<OnReceiveProcType> callback) -> void
+	auto AddOnChange(std::function<OnReceiveProcType> callback) -> void override
 	{
 		m_OnChange = [callback, onChange = m_OnChange](const DataType& value)
 		{
-			onChange(value);
+			if (onChange)
+			{
+				onChange(value);
+			}
 			callback(value);
 		};
 	}
@@ -106,9 +108,7 @@ public:
 private:
 	DataType m_Payload = {};
 	Mutex m_Mutex;
-	std::function<OnReceiveProcType> m_OnChange = [](const DataType& value)
-	{
-	};
+	std::function<OnReceiveProcType> m_OnChange{};
 };
 
 template <typename Mutex, typename ...DataModelTypes>

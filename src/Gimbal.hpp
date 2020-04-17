@@ -1,7 +1,8 @@
 ﻿#ifndef OSSIAN_GIMBAL_HPP
 #define OSSIAN_GIMBAL_HPP
 
-#include <ossian/Motor.hpp>
+#include <ossian/motors/Motor.hpp>
+#include <ossian/motors/DJIMotor.hpp>
 #include "CtrlAlgorithms.hpp"
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
@@ -145,8 +146,8 @@ public:
 		m_EcdAngleSet[Pitch] = 0;
 		m_EcdAngleSet[Yaw] = 0;
 
-		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Status().m_Encoding, kPitchMidEcd);
-		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Status().m_Encoding, kYawMidEcd);
+		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Get().m_Encoding, kPitchMidEcd);
+		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Get().m_Encoding, kYawMidEcd);
 		if (fabs(errorPitch) < 0.1 && fabs(errorYaw) < 0.1) 
 		{
 			spdlog::info("Gimbal Init Done.");
@@ -182,10 +183,10 @@ public:
 				  const unsigned int writerCanId)->void
 	{
 		m_Motors[position] =
-			m_MotorManager->AddMotor<ossian::DJIMotor6020>(
+			m_MotorManager->AddMotor<ossian::DJIMotor6020Mt>(
 				location,
-				m_MotorManager->GetOrAddWriter<ossian::DJIMotor6020Writer>(location, writerCanId),
-				[this, position](const std::shared_ptr<ossian::DJIMotor6020>& motor)
+				m_MotorManager->GetOrAddWriter<ossian::DJIMotor6020WriterMt>(location, writerCanId),
+				[this, position](const std::shared_ptr<ossian::DJIMotor6020Mt>& motor)
 				{
 					MotorReceiveProc(motor, position);
 				},
@@ -198,7 +199,7 @@ public:
 
 	void UpdateGimbalSensorFeedback()
 	{
-		m_YawEcd = m_Motors[Yaw]->Status().m_Encoding;
+		m_YawEcd = m_Motors[Yaw]->Get().m_Encoding;
 		m_GimbalSensorValues.rc = m_RC->Get();
 		m_GimbalSensorValues.imu = m_GyroListener->Get();
 		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
@@ -218,8 +219,8 @@ public:
 			m_GimbalSensorValues.imu.m_Wz);
 
 		spdlog::info("@MotorEncoder=[$pitch_ecd={},$yaw_ecd={}]",
-			m_Motors[Pitch]->Status().m_Encoding,
-			m_Motors[Yaw]->Status().m_Encoding);
+			m_Motors[Pitch]->Get().m_Encoding,
+			m_Motors[Yaw]->Get().m_Encoding);
 		
 	}
 	//设置云台角度输入来源
@@ -234,7 +235,7 @@ public:
 	//双环pid计算 
 	void GimbalCtrlCalc(MotorPosition position);
 
-	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor6020>& motor, MotorPosition position)->void
+	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor6020Mt>& motor, MotorPosition position)->void
 	{
 		m_MotorMsgCheck[position] = true;
 		if (!(m_MotorMsgCheck[Pitch] && m_MotorMsgCheck[Yaw]))
@@ -264,7 +265,7 @@ public:
 
 private:
 	ossian::MotorManager* m_MotorManager;  	
-	std::array<std::shared_ptr<ossian::DJIMotor6020>, 2> m_Motors;  	
+	std::array<std::shared_ptr<ossian::DJIMotor6020Mt>, 2> m_Motors;  	
 	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	ossian::IOData<RemoteStatus>* m_RC;  //遥控器

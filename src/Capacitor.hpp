@@ -96,7 +96,7 @@ public:
 
 	auto Status()->CapacitorStatus override
 	{
-		std::lock_guard<Mutex> {m_Mutex};
+		std::lock_guard<Mutex> guard{m_Mutex};
 		return m_Status;
 	}
 

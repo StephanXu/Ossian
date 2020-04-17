@@ -1,7 +1,8 @@
 ﻿#ifndef OSSIAN_CHASSIS_HPP
 #define OSSIAN_CHASSIS_HPP
 
-#include <ossian/Motor.hpp>
+#include <ossian/motors/Motor.hpp>
+#include <ossian/motors/DJIMotor.hpp>
 #include <ossian/IOData.hpp>
 
 #include "CtrlAlgorithms.hpp"
@@ -146,10 +147,10 @@ public:
 				  const unsigned int writerCanId)->void
 	{
 		m_Motors[position] =
-			m_MotorManager->AddMotor<ossian::DJIMotor3508>(
+			m_MotorManager->AddMotor<ossian::DJIMotor3508Mt>(
 				location,
-				m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508Writer>(location, writerCanId),
-				[this, position](const std::shared_ptr<ossian::DJIMotor3508>& motor)
+				m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508WriterMt>(location, writerCanId),
+				[this, position](const std::shared_ptr<ossian::DJIMotor3508Mt>& motor)
 				{
 					MotorReceiveProc(motor, position);
 				},
@@ -161,7 +162,7 @@ public:
 	{
 		m_ChassisSensorValues.rc = m_RC->Get();
 		//spdlog::info("@RemoteDataPID=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
-		//m_ChassisSensorValues.spCap = m_SpCap->Status();
+		//m_ChassisSensorValues.spCap = m_SpCap->Get();
 		//m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
@@ -189,7 +190,7 @@ public:
 	//根据当前模式，计算底盘三轴速度
 	void ChassisExpAxisSpeedSet();
 
-	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor3508>& motor,
+	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor3508Mt>& motor,
 						  MotorPosition position)->void
 	{
 		m_MotorMsgCheck[position] = true;
@@ -220,7 +221,7 @@ public:
 
 private:
 	ossian::MotorManager* m_MotorManager;
-	std::array<std::shared_ptr<ossian::DJIMotor3508>, 4> m_Motors;
+	std::array<std::shared_ptr<ossian::DJIMotor3508Mt>, 4> m_Motors;
 	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	ossian::IOData<RemoteStatus>* m_RC;  //遥控器

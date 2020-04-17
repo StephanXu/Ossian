@@ -40,7 +40,7 @@ void Gimbal::GimbalCtrlInputProc()
 //遥控器：绝对量控制  [TODO]鼠标：增量控制
 void Gimbal::GimbalExpAngleSet(MotorPosition position)
 {
-	double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Status().m_Encoding, position == Pitch ? kPitchMidEcd : 
+	double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Get().m_Encoding, position == Pitch ? kPitchMidEcd : 
 		kYawMidEcd);
 	if (m_GimbalCtrlSrc == Disable)
 		return;
@@ -90,7 +90,7 @@ void Gimbal::GimbalCtrlCalc(MotorPosition position)
 		else if (m_CurGimbalAngleMode == Encoding)
 		{
 			//[TODO]用电机转速rpm换算出云台角速度
-			double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Status().m_Encoding, position == Pitch ?
+			double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Get().m_Encoding, position == Pitch ?
 				kPitchMidEcd : kYawMidEcd);
 			//初始时刻，无法通过差分计算出角速度 
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)

@@ -19,7 +19,6 @@
 #include "ossian/ApplicationBuilder.hpp"
 #include "ossian/Factory.hpp"
 #include "ossian/Configuration.hpp"
-#include "ossian/Motor.hpp"
 #include "ossian/IOData.hpp"
 
 // IO
@@ -29,5 +28,9 @@
 #include "ossian/io/CAN.hpp"
 #include "ossian/io/UART.hpp"
 #include "ossian/io/IOError.hpp"
+
+// MOTORS
+#include "ossian/motors/Motor.hpp"
+#include "ossian/motors/DJIMotor.hpp"
 
 #endif // OSSIAN_CORE_OSSIAN
