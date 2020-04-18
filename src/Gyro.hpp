@@ -78,7 +78,7 @@ public:
 				}
 				if (readPtr < data)
 				{
-					spdlog::warn("Remote: Incomplete data.");
+					spdlog::warn("Gyro: Incomplete data.");
 					return;
 				}
 				spdlog::trace("Gyro Receive: {}, buffer: {}", length, data);
