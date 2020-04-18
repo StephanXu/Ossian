@@ -61,7 +61,7 @@ public:
 		{
 			throw std::runtime_error("UARTManager is null");
 		}
-		m_UARTManager->AddDevice(location,
+		auto dev = m_UARTManager->AddDevice(location,
 		                         ossian::UARTProperties::R230400,
 		                         ossian::UARTProperties::FlowControlNone,
 		                         ossian::UARTProperties::DataBits8,
@@ -117,6 +117,8 @@ public:
 				}
 				m_DataListener->Set(model);
 			});
+		const uint8_t command[] = { 'A','T','+','E','T','\n' };
+		dev->WriteRaw(6, command);
 	}
 
 private:
