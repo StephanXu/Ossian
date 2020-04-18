@@ -19,13 +19,13 @@ class Gimbal
 public:
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
-	static constexpr uint16_t kPitchMinEcd = 4187;
-	static constexpr uint16_t kPitchMaxEcd = 5666;
-	static constexpr uint16_t kPitchMidEcd = 3000;
+	static constexpr uint16_t kPitchMinEcd = 4176;
+	static constexpr uint16_t kPitchMaxEcd = 5670;
+	static constexpr uint16_t kPitchMidEcd = 4772;
 	
-	static constexpr uint16_t kYawMinEcd = 10;
-	static constexpr uint16_t kYawMaxEcd = 600;
-	static constexpr uint16_t kYawMidEcd = 200;
+	static constexpr uint16_t kYawMinEcd = 7552;
+	static constexpr uint16_t kYawMaxEcd = 3456;
+	static constexpr uint16_t kYawMidEcd = 5504;
 
 	//最大最小的 相对（中值的）角度
 	const std::array<double, 2> kMaxRelativeAngle = { RelativeEcdToRad(kPitchMaxEcd, kPitchMidEcd),
@@ -171,6 +171,8 @@ public:
 			GimbalCtrlCalc(Pitch);
 			GimbalCtrlCalc(Yaw);
 
+			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] == kRCSwDown)
+				m_CurrentSend.fill(0);
 			for (size_t i = 0; i < m_Motors.size(); ++i)
 				m_Motors[i]->SetVoltage(m_CurrentSend[i]);
 			m_Motors[Pitch]->Writer()->PackAndSend();
@@ -201,7 +203,7 @@ public:
 	{
 		m_YawEcd = m_Motors[Yaw]->Get().m_Encoding;
 		m_GimbalSensorValues.rc = m_RC->Get();
-		m_GimbalSensorValues.imu = m_GyroListener->Get();
+		/*m_GimbalSensorValues.imu = m_GyroListener->Get();
 		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
 		std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
 		m_GimbalSensorValues.imu.m_Pitch = -m_GimbalSensorValues.imu.m_Pitch;
@@ -216,7 +218,7 @@ public:
 		spdlog::info("@IMUSpeed=[$roll_w={},$pitch_w={},$yaw_w={}]",
 			m_GimbalSensorValues.imu.m_Wx,
 			m_GimbalSensorValues.imu.m_Wy,
-			m_GimbalSensorValues.imu.m_Wz);
+			m_GimbalSensorValues.imu.m_Wz);*/
 
 		spdlog::info("@MotorEncoder=[$pitch_ecd={},$yaw_ecd={}]",
 			m_Motors[Pitch]->Get().m_Encoding,
@@ -243,9 +245,9 @@ public:
 
 		UpdateGimbalSensorFeedback();
 		/*if (m_FlagInitGimbal)
-			InitGimbal();
+			InitGimbal();*/
 
-		GimbalCtrlSrcSet();
+		/*GimbalCtrlSrcSet();
 		GimbalCtrlInputProc();
 		//[TODO] 模式切换过渡
 
@@ -253,11 +255,11 @@ public:
 		GimbalExpAngleSet(Yaw);
 
 		GimbalCtrlCalc(Pitch);
-		GimbalCtrlCalc(Yaw);*/
+		GimbalCtrlCalc(Yaw);
 
 		for (size_t i = 0; i < m_Motors.size(); ++i)
 			m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-		m_Motors[Pitch]->Writer()->PackAndSend();
+		m_Motors[Pitch]->Writer()->PackAndSend();*/
 
 		m_MotorMsgCheck.fill(false);
 	}
