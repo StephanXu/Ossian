@@ -13,7 +13,7 @@ void Chassis::CalcWheelSpeedTarget()
 {
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);  //底盘三轴运动速度期望 m/s
 	m_WheelSpeedSet = m_WheelKinematicMat * vSet / kWheelRadius / (2.0 * M_PI) * 60; //[4, 3] * [3, 1] --> [4, 1]  轮子转速期望rpm
-	m_WheelSpeedSet(2) *= -1, m_WheelSpeedSet(3) *= -1;  //3,4号电机转向与轮子相反
+	//m_WheelSpeedSet(2) *= -1, m_WheelSpeedSet(3) *= -1;  //3,4号电机转向与轮子相反
 	//限制麦轮最大速度
 	double maxWheelSpeedItem = m_WheelSpeedSet.maxCoeff();
 	if (maxWheelSpeedItem > kWheelSpeedLimit)
@@ -122,7 +122,7 @@ void Chassis::ChassisCtrl()
 							m_Motors[i]->Get().m_RPM, m_CurrentSend[i]);
 		}
 	}
-
+	m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
 	//如果超级电容快没电了
 	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		ChassisPowerCtrlByCurrent();

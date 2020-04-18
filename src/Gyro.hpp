@@ -17,6 +17,7 @@
 #include <ossian/IOData.hpp>
 
 #include <mutex>
+#include <sstream>
 #include "ossian/ApplicationBuilder.hpp"
 
 struct GyroModel
@@ -58,7 +59,7 @@ public:
 	{
 		if (!m_UARTManager)
 		{
-			throw std::runtime_error("CANManager is null");
+			throw std::runtime_error("UARTManager is null");
 		}
 		m_UARTManager->AddDevice(location,
 		                         ossian::UARTProperties::R230400,
@@ -69,6 +70,14 @@ public:
 			[this](const std::shared_ptr<ossian::BaseDevice>& device, const size_t length,
 			       const uint8_t* data)
 			{
+				std::stringstream ss;
+				for (size_t i{}; i < length; ++i)
+				{
+					ss << fmt::format("{:02x}", data[i]);
+					ss << " ";
+				}
+				spdlog::info("Gyro Buffer: len={} data={}", length, ss.str());
+
 				const double g = 9.8;
 				const size_t packSize = 8;
 				const uint8_t* readPtr{ data + length - packSize };

@@ -444,7 +444,7 @@ private:
         cv::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor);
         cv::threshold(grayColor, binaryColor, thresColor, 255, cv::THRESH_BINARY);
 
-        cv::bitwise_and(binaryBrightness, binaryColor, binary, cv::noArray());
+        cv::bitwise_and(binaryBrightness, binaryColor, binary);
 
         cv::dilate(binary, binary, element3);
         cv::erode(binary, binary, element3);

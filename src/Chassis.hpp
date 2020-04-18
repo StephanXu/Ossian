@@ -110,8 +110,12 @@ public:
 		double coef = kWheelXn + kWheelYn;
 		m_WheelKinematicMat << 1, -1, -coef,
 			1, 1, -coef,
+			-1, 1, -coef,
+			-1, -1, -coef;    //3,4号电机转向与轮子相反
+		/*m_WheelKinematicMat << 1, -1, -coef,
+			1, 1, -coef,
 			1, -1, coef,
-			1, 1, coef;
+			1, 1, coef;*/
 
 		m_FlagInitChassis = true;
 		m_MotorMsgCheck.fill(false);
