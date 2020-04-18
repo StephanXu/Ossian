@@ -58,9 +58,9 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IGyro, GyroMt>(
 		[](IGyro& option)
 		{
-			option.AddGyro("can1", 0x0050);
+			option.AddGyro("/dev/ttyUSB1");
 		});
-	
+
 	app.AddService<Chassis>(
 		[](Chassis& option)
 		{
