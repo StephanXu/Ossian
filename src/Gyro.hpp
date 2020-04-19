@@ -95,24 +95,24 @@ public:
 					switch (readPtr[1])
 					{
 					case 0x51: ///< 加速度
-						model.m_Ax = static_cast<double>((readPtr[3] << 8) | readPtr[2]) / 32768 * 16 * g;
-						model.m_Ay = static_cast<double>((readPtr[5] << 8) | readPtr[4]) / 32768 * 16 * g;
-						model.m_Az = static_cast<double>((readPtr[7] << 8) | readPtr[6]) / 32768 * 16 * g;
+						model.m_Ax = ((readPtr[3] << 8) | readPtr[2]) / 32768.0f * 16.0f * g;
+						model.m_Ay = ((readPtr[5] << 8) | readPtr[4]) / 32768.0f * 16.0f * g;
+						model.m_Az = ((readPtr[7] << 8) | readPtr[6]) / 32768.0f * 16.0f * g;
 						break;
 					case 0x52: ///< 角速度
-						model.m_Wx = static_cast<double>((readPtr[3] << 8) | readPtr[2]) / 32768 * 2000 / 180 * M_PI;
-						model.m_Wy = static_cast<double>((readPtr[5] << 8) | readPtr[4]) / 32768 * 2000 / 180 * M_PI;
-						model.m_Wz = static_cast<double>((readPtr[7] << 8) | readPtr[6]) / 32768 * 2000 / 180 * M_PI;
+						model.m_Wx = ((readPtr[3] << 8) | readPtr[2]) / 32768.0f * 2000.0f / 180.0f * M_PI;
+						model.m_Wy = ((readPtr[5] << 8) | readPtr[4]) / 32768.0f * 2000.0f / 180.0f * M_PI;
+						model.m_Wz = ((readPtr[7] << 8) | readPtr[6]) / 32768.0f * 2000.0f / 180.0f * M_PI;
 						break;
 					case 0x53: ///< 角度
-						model.m_Roll = static_cast<double>((readPtr[3] << 8) | readPtr[2]) / 32768 * M_PI;
-						model.m_Pitch = static_cast<double>((readPtr[5] << 8) | readPtr[4]) / 32768 * M_PI;
-						model.m_Yaw = static_cast<double>((readPtr[7] << 8) | readPtr[6]) / 32768 * M_PI;
+						model.m_Roll = ((readPtr[3] << 8) | readPtr[2]) / 32768.0f * M_PI;
+						model.m_Pitch = ((readPtr[5] << 8) | readPtr[4]) / 32768.0f * M_PI;
+						model.m_Yaw = ((readPtr[7] << 8) | readPtr[6]) / 32768.0f * M_PI;
 						break;
 					case 0x54: ///< 磁场
-						model.m_Hx = static_cast<double>((readPtr[3] << 8) | readPtr[2]);
-						model.m_Hy = static_cast<double>((readPtr[5] << 8) | readPtr[4]);
-						model.m_Hz = static_cast<double>((readPtr[7] << 8) | readPtr[6]);
+						model.m_Hx = ((readPtr[3] << 8) | readPtr[2]);
+						model.m_Hy = ((readPtr[5] << 8) | readPtr[4]);
+						model.m_Hz = ((readPtr[7] << 8) | readPtr[6]);
 						break;
 					}
 					readPtr += packSize;
