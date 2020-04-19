@@ -62,11 +62,11 @@ public:
 			throw std::runtime_error("UARTManager is null");
 		}
 		auto dev = m_UARTManager->AddDevice(location,
-		                         ossian::UARTProperties::R230400,
-		                         ossian::UARTProperties::FlowControlNone,
-		                         ossian::UARTProperties::DataBits8,
-		                         ossian::UARTProperties::StopBits1,
-		                         ossian::UARTProperties::ParityNone)->SetCallback(
+		                                    ossian::UARTProperties::R230400,
+		                                    ossian::UARTProperties::FlowControlNone,
+		                                    ossian::UARTProperties::DataBits8,
+		                                    ossian::UARTProperties::StopBits1,
+		                                    ossian::UARTProperties::ParityNone)->SetCallback(
 			[this](const std::shared_ptr<ossian::BaseDevice>& device, const size_t length,
 			       const uint8_t* data)
 			{
@@ -78,49 +78,77 @@ public:
 				}
 				spdlog::info("Gyro Buffer: len={} data={}", length, ss.str());
 				spdlog::trace("Gyro Receive: {}, buffer: {}", length, data);
-				const size_t packSize{ 8 };
-				const double g{ 9.8 };
+				const size_t packSize{8};
+				const double g{9.8};
+				bool receiveFlag[4]{false, false, false, false};
 				auto model = m_DataListener->Get();
-				for (const uint8_t* readPtr{ data }; readPtr - data < length; ++readPtr)
+				for (const uint8_t* readPtr{data + length - packSize}; readPtr - data >= 0; --
+				     readPtr)
 				{
-					if ((data + length) - readPtr - 1 < packSize)
+					if (receiveFlag[0] && receiveFlag[1] && receiveFlag[2] && receiveFlag[3])
 					{
-						spdlog::warn("Gyro: Incomplete data.");
-						return;
+						// All data have already updated.
+						break;
 					}
 					if (readPtr[0] != 0x55)
 					{
+						// Looking for frame header.
 						continue;
 					}
+					int16_t payloadValue[3] =
+					{
+						*reinterpret_cast<const int16_t*>(&readPtr[2]),
+						*reinterpret_cast<const int16_t*>(&readPtr[4]),
+						*reinterpret_cast<const int16_t*>(&readPtr[6])
+					};
 					switch (readPtr[1])
 					{
 					case 0x51: ///< 加速度
-						model.m_Ax = ((readPtr[3] << 8) | readPtr[2]) / 32768.0f * 16.0f * g;
-						model.m_Ay = ((readPtr[5] << 8) | readPtr[4]) / 32768.0f * 16.0f * g;
-						model.m_Az = ((readPtr[7] << 8) | readPtr[6]) / 32768.0f * 16.0f * g;
+						if (receiveFlag[0])
+						{
+							break;
+						}
+						model.m_Ax     = payloadValue[0] / 32768.0 * 16.0 * g;
+						model.m_Ay     = payloadValue[1] / 32768.0 * 16.0 * g;
+						model.m_Az     = payloadValue[2] / 32768.0 * 16.0 * g;
+						receiveFlag[0] = true;
 						break;
 					case 0x52: ///< 角速度
-						model.m_Wx = ((readPtr[3] << 8) | readPtr[2]) / 32768.0f * 2000.0f / 180.0f * M_PI;
-						model.m_Wy = ((readPtr[5] << 8) | readPtr[4]) / 32768.0f * 2000.0f / 180.0f * M_PI;
-						model.m_Wz = ((readPtr[7] << 8) | readPtr[6]) / 32768.0f * 2000.0f / 180.0f * M_PI;
+						if (receiveFlag[1])
+						{
+							break;
+						}
+						model.m_Wx     = payloadValue[0] / 32768.0 * 2000.0 / 180.0 * M_PI;
+						model.m_Wy     = payloadValue[1] / 32768.0 * 2000.0 / 180.0 * M_PI;
+						model.m_Wz     = payloadValue[2] / 32768.0 * 2000.0 / 180.0 * M_PI;
+						receiveFlag[1] = true;
 						break;
 					case 0x53: ///< 角度
-						model.m_Roll = ((readPtr[3] << 8) | readPtr[2]) / 32768.0f * M_PI;
-						model.m_Pitch = ((readPtr[5] << 8) | readPtr[4]) / 32768.0f * M_PI;
-						model.m_Yaw = ((readPtr[7] << 8) | readPtr[6]) / 32768.0f * M_PI;
+						if (receiveFlag[2])
+						{
+							break;
+						}
+						model.m_Roll   = payloadValue[0] / 32768.0 * 180.0;
+						model.m_Pitch  = payloadValue[1] / 32768.0 * 180.0;
+						model.m_Yaw    = payloadValue[2] / 32768.0 * 180.0;
+						receiveFlag[2] = true;
 						break;
 					case 0x54: ///< 磁场
-						model.m_Hx = ((readPtr[3] << 8) | readPtr[2]);
-						model.m_Hy = ((readPtr[5] << 8) | readPtr[4]);
-						model.m_Hz = ((readPtr[7] << 8) | readPtr[6]);
+						if (receiveFlag[3])
+						{
+							break;
+						}
+						model.m_Hx     = payloadValue[0];
+						model.m_Hy     = payloadValue[1];
+						model.m_Hz     = payloadValue[2];
+						receiveFlag[3] = true;
 						break;
 					}
-					readPtr += packSize;
-					m_DataListener->Set(model);
+					readPtr -= packSize - 1; ///< There is a extra minus after each loop.
 				}
-				
+				m_DataListener->Set(model);
 			});
-		const uint8_t command[] = { 'A','T','+','E','T','\n' };
+		const uint8_t command[] = {'A', 'T', '+', 'E', 'T', '\n'};
 		dev->WriteRaw(6, command);
 	}
 
