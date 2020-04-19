@@ -1,4 +1,6 @@
-﻿#include "ossian/MultiThread.hpp"
+﻿#ifndef OSSIAN_CORE_IO_BUFFERPOOL
+#define  OSSIAN_CORE_IO_BUFFERPOOL
+#include "ossian/MultiThread.hpp"
 #include "boost/circular_buffer.hpp"
 namespace ossian
 {
@@ -64,4 +66,5 @@ public:
 private:
     std::unique_ptr<boost::circular_buffer<TaskWrapper>> m_Tasks;
 };
-}
+} // ossian
+#endif // OSSIAN_CORE_IO_BUFFERPOOL
