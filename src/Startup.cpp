@@ -43,7 +43,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IReferee, RefereeAllMessagesMt>(
 		[](IReferee& option)
 		{
-			//option.AddReferee("/dev/ttyUSB0");
+			option.AddReferee("/dev/ttyUSB0");
 		});
 	app.AddService<IRemote, RemoteMt>(
 		[](IRemote& option)
@@ -58,7 +58,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IGyro, GyroMt>(
 		[](IGyro& option)
 		{
-			//option.AddGyro("/dev/ttyUSB1");
+			option.AddGyro("/dev/ttyUSB1");
 		});
 
 	app.AddService<Chassis>(

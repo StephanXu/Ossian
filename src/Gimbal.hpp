@@ -134,6 +134,10 @@ public:
 
 		m_LastEcdTimeStamp.fill(hrClock::time_point());
 		m_CurrentSend.fill(0);
+		
+		/*m_GyroListener->AddOnChange([](const GyroModel& value) {
+			spdlog::info("@GyroOnChange=[$gyro={}]",1);});*/
+
 	}
 
 	auto AddMotor(MotorPosition position,
@@ -160,7 +164,7 @@ public:
 	{
 		m_YawEcd = m_Motors[Yaw]->Get().m_Encoding;
 		m_GimbalSensorValues.rc = m_RC->Get();
-		/*m_GimbalSensorValues.imu = m_GyroListener->Get();
+		m_GimbalSensorValues.imu = m_GyroListener->Get();
 		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
 		std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
 		m_GimbalSensorValues.imu.m_Pitch = -m_GimbalSensorValues.imu.m_Pitch;
@@ -175,7 +179,7 @@ public:
 		spdlog::info("@IMUSpeed=[$roll_w={},$pitch_w={},$yaw_w={}]",
 			m_GimbalSensorValues.imu.m_Wx,
 			m_GimbalSensorValues.imu.m_Wy,
-			m_GimbalSensorValues.imu.m_Wz);*/
+			m_GimbalSensorValues.imu.m_Wz);
 
 		spdlog::info("@MotorEncoder=[$pitch_ecd={},$yaw_ecd={}]",
 			m_Motors[Pitch]->Get().m_Encoding,

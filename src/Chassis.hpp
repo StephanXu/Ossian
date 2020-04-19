@@ -165,7 +165,7 @@ public:
 	void UpdateChassisSensorFeedback()
 	{
 		m_ChassisSensorValues.rc = m_RC->Get();
-		//spdlog::info("@RemoteDataPID=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
+		//spdlog::info("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
 		//m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 
