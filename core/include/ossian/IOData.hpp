@@ -97,10 +97,7 @@ public:
 	{
 		m_OnChange = [callback, onChange = m_OnChange](const DataType& value)
 		{
-			if (onChange)
-			{
-				onChange(value);
-			}
+			onChange(value);
 			callback(value);
 		};
 	}
@@ -108,7 +105,7 @@ public:
 private:
 	DataType m_Payload = {};
 	Mutex m_Mutex;
-	std::function<OnReceiveProcType> m_OnChange{};
+	std::function<OnReceiveProcType> m_OnChange = [](const DataType&){};
 };
 
 template <typename Mutex, typename ...DataModelTypes>

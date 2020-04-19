@@ -67,7 +67,7 @@ public:
 
 	enum GimbalInputSrc
 	{
-		Disable, RC, Mouse, Aimbot, Windmill
+		Disable, Init, RC, Mouse, Aimbot, Windmill
 	};
 
 	enum MotorPosition
@@ -136,49 +136,6 @@ public:
 		m_CurrentSend.fill(0);
 	}
 
-	void InitGimbal()
-	{
-		m_CurGimbalAngleMode = Encoding; 
-		m_MotorMsgCheck.fill(false);
-		m_AngleInput.fill(0);
-		m_CurrentSend.fill(0);
-
-		m_EcdAngleSet[Pitch] = 0;
-		m_EcdAngleSet[Yaw] = 0;
-
-		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Get().m_Encoding, kPitchMidEcd);
-		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Get().m_Encoding, kYawMidEcd);
-		if (fabs(errorPitch) < 0.1 && fabs(errorYaw) < 0.1) 
-		{
-			spdlog::info("Gimbal Init Done.");
-			m_CurGimbalAngleMode = Gyro;
-			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
-			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
-
-			m_LastEcdTimeStamp.fill(hrClock::time_point());
-			m_PIDAngleEcd[Pitch].Reset();
-			m_PIDAngleGyro[Pitch].Reset();
-			m_PIDAngleSpeed[Pitch].Reset();
-
-			m_PIDAngleEcd[Yaw].Reset();
-			m_PIDAngleGyro[Yaw].Reset();
-			m_PIDAngleSpeed[Yaw].Reset();
-
-			m_FlagInitGimbal = false;
-		}
-		else
-		{
-			GimbalCtrlCalc(Pitch);
-			GimbalCtrlCalc(Yaw);
-
-			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] == kRCSwDown)
-				m_CurrentSend.fill(0);
-			for (size_t i = 0; i < m_Motors.size(); ++i)
-				m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-			m_Motors[Pitch]->Writer()->PackAndSend();
-		}
-	}
-
 	auto AddMotor(MotorPosition position,
 				  const std::string location,
 				  const unsigned int motorId,
@@ -235,7 +192,7 @@ public:
 	void GimbalExpAngleSet(MotorPosition position);
 
 	//双环pid计算 
-	void GimbalCtrlCalc(MotorPosition position);
+	void GimbalCtrl(MotorPosition position);
 
 	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor6020Mt>& motor, MotorPosition position)->void
 	{
@@ -244,22 +201,16 @@ public:
 			return;
 
 		UpdateGimbalSensorFeedback();
-		/*if (m_FlagInitGimbal)
-			InitGimbal();*/
 
-		/*GimbalCtrlSrcSet();
+		GimbalCtrlSrcSet();
 		GimbalCtrlInputProc();
 		//[TODO] 模式切换过渡
 
 		GimbalExpAngleSet(Pitch);
 		GimbalExpAngleSet(Yaw);
 
-		GimbalCtrlCalc(Pitch);
-		GimbalCtrlCalc(Yaw);
-
-		for (size_t i = 0; i < m_Motors.size(); ++i)
-			m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-		m_Motors[Pitch]->Writer()->PackAndSend();*/
+		GimbalCtrl(Pitch);
+		GimbalCtrl(Yaw);
 
 		m_MotorMsgCheck.fill(false);
 	}

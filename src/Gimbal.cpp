@@ -12,6 +12,37 @@ std::array<double, 5> Gimbal::PIDAngleSpeedYawParams;
 
 void Gimbal::GimbalCtrlSrcSet()
 {
+	if (m_FlagInitGimbal)
+	{
+		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Get().m_Encoding, kPitchMidEcd);
+		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Get().m_Encoding, kYawMidEcd);
+		if (fabs(errorPitch) < 0.1 && fabs(errorYaw) < 0.1) 
+		{
+			spdlog::info("Gimbal Init Done.");
+			m_CurGimbalAngleMode = Gyro;
+			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
+			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
+
+			m_LastEcdTimeStamp.fill(hrClock::time_point());
+			m_PIDAngleEcd[Pitch].Reset();
+			m_PIDAngleGyro[Pitch].Reset();
+			m_PIDAngleSpeed[Pitch].Reset();
+
+			m_PIDAngleEcd[Yaw].Reset();
+			m_PIDAngleGyro[Yaw].Reset();
+			m_PIDAngleSpeed[Yaw].Reset();
+
+			m_FlagInitGimbal = false;
+		}
+		else
+		{
+			m_GimbalCtrlSrc = Init;
+			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwUp)
+				m_GimbalCtrlSrc = Disable;
+			m_CurGimbalAngleMode = Encoding;
+		}
+	}
+		
 	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
 	{
 	case kRCSwUp:
@@ -71,14 +102,19 @@ void Gimbal::GimbalExpAngleSet(MotorPosition position)
 											kMaxRelativeAngle[position]);
 		}
 	}
+	else if (m_GimbalCtrlSrc == Init)
+	{
+		m_EcdAngleSet[Pitch] = 0;
+		m_EcdAngleSet[Yaw] = 0;
+	}
 	
 }
 
-void Gimbal::GimbalCtrlCalc(MotorPosition position)
+void Gimbal::GimbalCtrl(MotorPosition position)
 {
 	if (m_GimbalCtrlSrc == Disable)
 		m_CurrentSend.fill(0);
-	else if (m_GimbalCtrlSrc == RC)
+	else if (m_GimbalCtrlSrc == RC || m_GimbalCtrlSrc == Init)
 	{
 		if (m_CurGimbalAngleMode == Gyro)
 		{
@@ -123,4 +159,8 @@ void Gimbal::GimbalCtrlCalc(MotorPosition position)
 
 		}
 	}
+
+	for (size_t i = 0; i < m_Motors.size(); ++i)
+		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
+	m_Motors[Pitch]->Writer()->PackAndSend();
 }
