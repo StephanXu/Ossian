@@ -49,7 +49,7 @@ bool UARTBus::Open()
 	fd = open(m_Location.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
 	if (fd < 0)
 	{
-		throw std::runtime_error("Device open failed!");
+		throw std::runtime_error("Device open failed! Location: "+m_Location);
 		return false;
 	}
 	// 指定波特率
@@ -102,6 +102,7 @@ bool UARTBus::Open()
 	ClearFlag(opt.c_iflag, BRKINT | ICRNL | INPCK | ISTRIP | IXON); // exp
 	if (tcsetattr(fd, TCSANOW, &opt) < 0)
 	{
+		throw std::runtime_error("Device attribute failed to set! Location: " + m_Location);
 		m_IsOpened = false;
 		return false;
 	}
