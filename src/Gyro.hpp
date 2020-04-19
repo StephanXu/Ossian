@@ -83,7 +83,7 @@ public:
 				auto model = m_DataListener->Get();
 				for (const uint8_t* readPtr{ data }; readPtr - data < length; ++readPtr)
 				{
-					if (readPtr - data < packSize)
+					if ((data + length) - readPtr - 1 < packSize)
 					{
 						spdlog::warn("Gyro: Incomplete data.");
 						return;
@@ -115,7 +115,7 @@ public:
 						model.m_Hz = ((readPtr[7] << 8) | readPtr[6]);
 						break;
 					}
-					readPtr += 8;
+					readPtr += packSize;
 					m_DataListener->Set(model);
 				}
 				
