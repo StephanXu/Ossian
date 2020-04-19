@@ -81,7 +81,7 @@ public:
 				const double g = 9.8;
 				const size_t packSize = 8;
 				const uint8_t* readPtr{ data + length - packSize };
-				while (readPtr - data >= 0 && (readPtr[0] == 0x55))
+				while (readPtr - data >= 0 && (readPtr[0] != 0x55))
 				{
 					--readPtr;
 				}
