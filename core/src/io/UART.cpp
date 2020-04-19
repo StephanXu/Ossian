@@ -1,4 +1,4 @@
-#include "ossian/io/UART.hpp"
+ï»¿#include "ossian/io/UART.hpp"
 
 #ifdef __linux__
 #include <termios.h>
@@ -52,16 +52,16 @@ bool UARTBus::Open()
 		throw std::runtime_error("Device open failed! Location: "+m_Location);
 		return false;
 	}
-	// Ö¸¶¨²¨ÌØÂÊ
+	// æŒ‡å®šæ³¢ç‰¹ç‡
 	tcgetattr(fd, &opt);
 	opt.c_cc[VMIN] = 0;
 	opt.c_cc[VTIME] = 0;
 	ClearFlag(opt.c_cflag, CIBAUD);
 	cfsetispeed(&opt, m_Baudrate);
 	cfsetospeed(&opt, m_Baudrate);
-	SetFlag(opt.c_cflag, CLOCAL | CREAD); // ±ØĞë¿ªÆô
+	SetFlag(opt.c_cflag, CLOCAL | CREAD); // å¿…é¡»å¼€å¯
 	ClearFlag(opt.c_cflag, CSIZE);
-	SetFlag(opt.c_cflag, m_DataBits); // Êı¾İÎ»ÉèÖÃ
+	SetFlag(opt.c_cflag, m_DataBits); // æ•°æ®ä½è®¾ç½®
 	switch (m_StopBits)
 	{
 	case UARTProperties::StopBits1:
@@ -114,7 +114,7 @@ bool UARTBus::Open()
 
 bool UARTBus::Close()
 {
-	close(m_FD); //¹Ø±ÕÌ×½Ó×Ö
+	close(m_FD); //å…³é—­å¥—æ¥å­—
 	m_IsOpened = false;
 	return true;
 }
@@ -137,11 +137,11 @@ void UARTBus::Read() const
 		while (true)
 		{
 			nbytes = read(m_FD, &buf, sizeof(buf));
-			if ((nbytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //Õâ¼¸ÖÖ´íÎóÂë¶¼ËµÃ÷»¹ÓĞÊı¾İ´ı½ÓÊÕ
+			if ((nbytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //è¿™å‡ ç§é”™è¯¯ç éƒ½è¯´æ˜è¿˜æœ‰æ•°æ®å¾…æ¥æ”¶
 			{
 				continue;
 			}
-			break;//Ìø³ö½ÓÊÕÑ­»·
+			break;//è·³å‡ºæ¥æ”¶å¾ªç¯
 		}
 		size_t length = nbytes;
 		std::shared_ptr<uint8_t[]> buffer(new uint8_t[length]());
@@ -160,11 +160,11 @@ void UARTBus::WriteRaw(size_t length, const uint8_t* data) const
 			while (1)
 			{
 				const int bytes = write(m_FD, data, sizeof(uint8_t) * length);
-				if ((bytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //Õâ¼¸ÖÖ´íÎóÂë¶¼ËµÃ÷»¹ÓĞÊı¾İ´ı´¦Àí
+				if ((bytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //è¿™å‡ ç§é”™è¯¯ç éƒ½è¯´æ˜è¿˜æœ‰æ•°æ®å¾…å¤„ç†
 				{
-					continue;//¼ÌĞø½ÓÊÕÊı¾İ
+					continue;//ç»§ç»­æ¥æ”¶æ•°æ®
 				}
-				break;//Ìø³ö½ÓÊÕÑ­»·
+				break;//è·³å‡ºæ¥æ”¶å¾ªç¯
 			}
 		}
 	}
@@ -184,7 +184,7 @@ UARTManager::UARTManager(IOListener* listener)
 	AttachListener(listener);
 }
 
-/* Ê¹ÓÃÑùÀı
+/* ä½¿ç”¨æ ·ä¾‹
 AddBus(location,
       UARTProperties::Baudrate::R115200,
       UARTProperties::FlowControl::FlowControlNone,
@@ -259,6 +259,22 @@ std::vector<UARTBus*> UARTManager::GetBuses() const
 		buses.push_back(it.second.get());
 	}
 	return buses;
+}
+
+std::vector<ossian::UARTDevice*> ossian::UARTManager::GetDevices() const
+{
+	//[TODO] æ”¹å–„ä»£ç æ‰§è¡Œæ•ˆç‡
+	std::vector<ossian::UARTDevice*> devices;
+	auto buses = GetBuses();
+	for (auto && bus : buses)
+	{
+		auto devs = bus->GetDevices();
+		for (auto && dev : devs)
+		{
+			devices.push_back(dev);
+		}
+	}
+	return devices;
 }
 
 } // ossian

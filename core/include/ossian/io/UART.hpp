@@ -16,6 +16,7 @@
 #include "IO.hpp"
 #include "ossian/Factory.hpp"
 #include "ossian/IOListener.hpp"
+#include "ossian/io/BufferPool.hpp"
 namespace ossian
 {
 
@@ -129,11 +130,22 @@ class UARTDevice : public BaseDevice, public std::enable_shared_from_this<UARTDe
 {
 public:
 	UARTDevice() = delete;
-	explicit UARTDevice(UARTBus* bus) noexcept :m_Bus(bus), m_Callback(DefaultCallback) {};
+	explicit UARTDevice(UARTBus* bus) noexcept :m_Bus(bus), m_Callback(DefaultCallback)
+	{
+		m_BufferPool = std::make_unique<BufferPool>(2);
+	};
 	UARTDevice(const UARTDevice& other) = delete;
 
 	UARTBus* Bus() const { return m_Bus; }
-	void Invoke(const size_t length, const uint8_t* data) override { m_Callback(shared_from_this(), length, data); }
+	void Invoke(const size_t length, const uint8_t* data) override
+	{
+		m_BufferPool->AddTask(
+		[callback = m_Callback, ptr = shared_from_this(), length, data]()
+		{
+			callback(ptr, length, data);
+		});
+	}
+	void Process() const { return m_BufferPool->Process(); }
 	void WriteRaw(const size_t length, const uint8_t* data) const override { m_Bus->WriteRaw(length, data); }
 
 	std::shared_ptr<BaseDevice> SetCallback(std::function<ReceiveCallback<UARTDevice>> const& callback)
@@ -145,6 +157,7 @@ public:
 private:
 	UARTBus* m_Bus;
 	std::function<ReceiveCallback<UARTDevice>> m_Callback;
+	std::unique_ptr<BufferPool> m_BufferPool;
 	static void DefaultCallback(std::shared_ptr<UARTDevice> const&, const size_t, const uint8_t*)
 	{}
 };
@@ -164,6 +177,7 @@ public:
 										  const UARTProperties::Parity parit);
 	UARTBus* Bus(std::string const& location) const;
 	std::vector<UARTBus*> GetBuses() const;
+	std::vector<UARTDevice*> GetDevices() const;
 
 private:
 	std::unordered_map<std::string, std::shared_ptr<UARTBus>> m_BusMap;
