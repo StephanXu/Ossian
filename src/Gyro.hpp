@@ -77,45 +77,48 @@ public:
 					ss << " ";
 				}
 				spdlog::info("Gyro Buffer: len={} data={}", length, ss.str());
-
-				const double g = 9.8;
-				const size_t packSize = 8;
-				const uint8_t* readPtr{ data + length - packSize };
-				while (readPtr - data >= 0 && (readPtr[0] != 0x55))
-				{
-					--readPtr;
-				}
-				if (readPtr < data)
-				{
-					spdlog::warn("Gyro: Incomplete data.");
-					return;
-				}
 				spdlog::trace("Gyro Receive: {}, buffer: {}", length, data);
+				const size_t packSize{ 8 };
+				const double g{ 9.8 };
 				auto model = m_DataListener->Get();
-				switch (readPtr[1])
+				for (const uint8_t* readPtr{ data }; readPtr - data < length; ++readPtr)
 				{
-				case 0x51: ///< 加速度
-					model.m_Ax = ((readPtr[3] << 8) | readPtr[2]) / 32768 * 16 * g;
-					model.m_Ay = ((readPtr[5] << 8) | readPtr[4]) / 32768 * 16 * g;
-					model.m_Az = ((readPtr[7] << 8) | readPtr[6]) / 32768 * 16 * g;
-					break;
-				case 0x52: ///< 角速度
-					model.m_Wx = ((readPtr[3] << 8) | readPtr[2]) / 32768 * 2000 / 180 * M_PI;
-					model.m_Wy = ((readPtr[5] << 8) | readPtr[4]) / 32768 * 2000 / 180 * M_PI;
-					model.m_Wz = ((readPtr[7] << 8) | readPtr[6]) / 32768 * 2000 / 180 * M_PI;
-					break;
-				case 0x53: ///< 角度
-					model.m_Roll = ((readPtr[3] << 8) | readPtr[2]) / 32768 * M_PI;
-					model.m_Pitch = ((readPtr[5] << 8) | readPtr[4]) / 32768 * M_PI;
-					model.m_Yaw   = ((readPtr[7] << 8) | readPtr[6]) / 32768 * M_PI;
-					break;
-				case 0x54: ///< 磁场
-					model.m_Hx = ((readPtr[3] << 8) | readPtr[2]);
-					model.m_Hy = ((readPtr[5] << 8) | readPtr[4]);
-					model.m_Hz = ((readPtr[7] << 8) | readPtr[6]);
-					break;
+					if (readPtr - data < packSize)
+					{
+						spdlog::warn("Gyro: Incomplete data.");
+						return;
+					}
+					if (readPtr[0] != 0x55)
+					{
+						continue;
+					}
+					switch (readPtr[1])
+					{
+					case 0x51: ///< 加速度
+						model.m_Ax = ((readPtr[3] << 8) | readPtr[2]) / 32768 * 16 * g;
+						model.m_Ay = ((readPtr[5] << 8) | readPtr[4]) / 32768 * 16 * g;
+						model.m_Az = ((readPtr[7] << 8) | readPtr[6]) / 32768 * 16 * g;
+						break;
+					case 0x52: ///< 角速度
+						model.m_Wx = ((readPtr[3] << 8) | readPtr[2]) / 32768 * 2000 / 180 * M_PI;
+						model.m_Wy = ((readPtr[5] << 8) | readPtr[4]) / 32768 * 2000 / 180 * M_PI;
+						model.m_Wz = ((readPtr[7] << 8) | readPtr[6]) / 32768 * 2000 / 180 * M_PI;
+						break;
+					case 0x53: ///< 角度
+						model.m_Roll = ((readPtr[3] << 8) | readPtr[2]) / 32768 * M_PI;
+						model.m_Pitch = ((readPtr[5] << 8) | readPtr[4]) / 32768 * M_PI;
+						model.m_Yaw = ((readPtr[7] << 8) | readPtr[6]) / 32768 * M_PI;
+						break;
+					case 0x54: ///< 磁场
+						model.m_Hx = ((readPtr[3] << 8) | readPtr[2]);
+						model.m_Hy = ((readPtr[5] << 8) | readPtr[4]);
+						model.m_Hz = ((readPtr[7] << 8) | readPtr[6]);
+						break;
+					}
+					readPtr += 8;
+					m_DataListener->Set(model);
 				}
-				m_DataListener->Set(model);
+				
 			});
 		const uint8_t command[] = { 'A','T','+','E','T','\n' };
 		dev->WriteRaw(6, command);
