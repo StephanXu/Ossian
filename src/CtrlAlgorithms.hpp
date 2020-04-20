@@ -105,7 +105,10 @@ public:
 		if (params[4] >= 0)
 			m_ThresIntegral = params[4];
 	}
-
+	void SetDeadBand(const double db)
+	{
+		m_DeadValue = db;
+	}
 	void SetThresError(double th1, double th2)
 	{
 		m_ThresError1 = th1;

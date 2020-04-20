@@ -201,6 +201,7 @@ public:
 		if (!(m_MotorMsgCheck[LF] && m_MotorMsgCheck[LR] && m_MotorMsgCheck[RR] && m_MotorMsgCheck[RF]))  //俯视，左前，左后，右后，右前，逆时针
 			return;
 
+		hrClock::time_point begin = hrClock::now();
 		UpdateChassisSensorFeedback();
 		if (m_FlagInitChassis)
 			InitChassis();
@@ -212,7 +213,8 @@ public:
 		ChassisCtrl();
 
 		m_MotorMsgCheck.fill(false);
-
+		double interval = std::chrono::duration<double, std::milli>(hrClock::now() - begin).count();
+		spdlog::info("@CtrlInterval=[$time={}]", interval);
 		/*static hrClock::time_point lastSendSpCapTimestamp;
 		long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
 			hrClock::now() - lastSendSpCapTimestamp).count();
