@@ -18,12 +18,26 @@
 
 #include <thread>
 
-void Startup::ConfigServices(AppBuilder& app)
+Startup::Startup()
 {
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
-	app.InitLog();
+
+	// Initialize logger
+	const auto console = spdlog::stderr_color_mt("console");
+	spdlog::set_default_logger(console);
+	spdlog::set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
+	spdlog::set_level(spdlog::level::trace);
+	
 	spdlog::info("MI_VERSION: {}", mi_version());
 
+	// Load configuration
+	Utils::ConfigLoader config;
+	config.LoadConfigFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
+	m_Config = *config.Instance<OssianConfig::Configuration>();
+}
+
+void Startup::ConfigServices(AppBuilder& app)
+{
 	app.AddService<Utils::ConfigLoader>()
 	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
 	app.AddService<OnlineDebug>(

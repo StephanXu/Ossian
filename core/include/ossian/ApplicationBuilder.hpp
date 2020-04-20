@@ -12,9 +12,6 @@
 #define OSSIAN_CORE_CONFIG
 
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-
-#include <string>
 
 #include "DI.hpp"
 #include "Dispatcher.hpp"
@@ -24,6 +21,14 @@
 namespace ossian
 {
 class ApplicationBuilder;
+
+class IStartup
+{
+public:
+	virtual ~IStartup() = default;
+	virtual auto ConfigServices(ApplicationBuilder& app) -> void = 0;
+	virtual auto ConfigPipeline(ApplicationBuilder& app) -> void = 0;
+};
 
 template <typename BuilderType>
 class CustomBuilder
@@ -154,6 +159,16 @@ public:
 	ApplicationBuilder(const ApplicationBuilder& dispatcher)  = delete;
 	ApplicationBuilder(const ApplicationBuilder&& dispatcher) = delete;
 
+	template<typename TStartup, class...Args>
+	auto UseStartup(Args...args) -> ApplicationBuilder&
+	{
+		static_assert(std::is_base_of<IStartup, TStartup>::value, "TStartup should derived from ossian::IStartup.");
+		m_Startup = std::make_unique<TStartup>(args...);
+		m_Startup->ConfigServices(*this);
+		m_Startup->ConfigPipeline(*this);
+		return *this;
+	}
+	
 	/**
 	 * @brief 注册一项服务
 	 * @tparam ServiceType 服务类型
@@ -219,20 +234,6 @@ public:
 	}
 
 	/**
-	 * @brief	初始化日志
-	 * @author	Xu Zihan
-	 * @date	2019/11/21
-	 */
-	ApplicationBuilder& InitLog()
-	{
-		const auto console = spdlog::stderr_color_mt("console");
-		spdlog::set_default_logger(console);
-		spdlog::set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
-		spdlog::set_level(spdlog::level::trace);
-		return *this;
-	}
-
-	/**
 	 * @brief 实例化所有依赖并创建分发器
 	 * 在实例化后 ApplicationBuilder 对象则可以被析构
 	 * @return Dispatcher
@@ -245,7 +246,9 @@ public:
 
 private:
 	DI::DIConfiguration m_DIConfig;
+	std::unique_ptr<IStartup> m_Startup;
 };
+
 } // namespace ossian
 
 #endif // OSSIAN_CORE_CONFIG

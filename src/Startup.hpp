@@ -1,17 +1,21 @@
 ﻿#ifndef STARTUP_HPP
 #define STARTUP_HPP
 
-#include <ossian/ossian.hpp>
+#include <ossian/ApplicationBuilder.hpp>
 
+#include "Config.pb.h"
 
-class Startup
+class Startup : public ossian::IStartup
 {
     using AppBuilder = ossian::ApplicationBuilder;
-
+    OssianConfig::Configuration m_Config;
+	
 public:
-    static void ConfigServices(AppBuilder& app);
+    Startup();
 
-    static void ConfigPipeline(AppBuilder& app);
+    auto ConfigServices(AppBuilder& app) -> void override;
+
+    auto ConfigPipeline(AppBuilder& app) -> void override;
 };
 
 #endif //STARTUP_HPP

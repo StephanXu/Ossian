@@ -152,7 +152,9 @@ public:
 		return *this;
 	}
 };
+
 } //Utils
+
 } //ossian
 
 
