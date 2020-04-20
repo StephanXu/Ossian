@@ -62,7 +62,7 @@ public:
 			throw std::runtime_error("UARTManager is null");
 		}
 		auto dev = m_UARTManager->AddDevice(location,
-		                                    ossian::UARTProperties::R115200,
+		                                    ossian::UARTProperties::R230400,
 		                                    ossian::UARTProperties::FlowControlNone,
 		                                    ossian::UARTProperties::DataBits8,
 		                                    ossian::UARTProperties::StopBits1,

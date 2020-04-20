@@ -136,9 +136,9 @@ void Chassis::ChassisCtrl()
 	/*for (size_t i = 0; i < m_Motors.size(); ++i)
 		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
 
-	for (size_t i = 0; i < m_Motors.size(); ++i)
+	/*for (size_t i = 0; i < m_Motors.size(); ++i)
 		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-	m_Motors[LR]->Writer()->PackAndSend();
+	m_Motors[LR]->Writer()->PackAndSend();*/
 }
 
 //功率控制：通过减小底盘电机的期望速度来实现
