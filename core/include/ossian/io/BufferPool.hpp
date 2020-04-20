@@ -17,8 +17,8 @@ public:
      * @param threadNum 线程数目
      */
     BufferPool(const int size)
+        :m_Tasks(size)
     {
-        m_Tasks = std::make_unique<boost::circular_buffer<TaskWrapper>>(size);
     }
     ~BufferPool() = default;
 
@@ -38,18 +38,18 @@ public:
         auto binded = std::bind(f, std::forward<Args>(args)...);
         std::packaged_task<ResultType()> task{ std::move(binded) };
         auto fut = task.get_future();
-        m_Tasks->push_back(std::move(task));
+        m_Tasks.push_back(std::move(task));
         return fut;
     }
 
     bool Empty() const
     {
-        return m_Tasks->empty();
+        return m_Tasks.empty();
     }
 
     size_t WaitingCount() const
     {
-        return m_Tasks->size();
+        return m_Tasks.size();
     }
 
     // 尝试取出数据并处理
@@ -58,13 +58,14 @@ public:
         while (!Empty())
         {
             TaskWrapper task;
-            task = m_Tasks->pop_front();
+            task = std::move(m_Tasks.front());
+            m_Tasks.pop_front();
             task();
         }
     }
 
 private:
-    std::unique_ptr<boost::circular_buffer<TaskWrapper>> m_Tasks;
+    boost::circular_buffer<TaskWrapper> m_Tasks;
 };
 } // ossian
 #endif // OSSIAN_CORE_IO_BUFFERPOOL
