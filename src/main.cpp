@@ -1,7 +1,5 @@
 ﻿#include <ossian/ApplicationBuilder.hpp>
 
-#include <memory>
-
 #include "Startup.hpp"
 
 int main()

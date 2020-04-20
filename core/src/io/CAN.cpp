@@ -126,7 +126,7 @@ void CANBus::Read() const
 		auto it = m_DeviceMap.find(id);
 		if (it != m_DeviceMap.end())
 		{
-			it->second->Invoke(length, buffer.get());
+			it->second->Invoke(length, buffer);
 		}
 		end = std::chrono::high_resolution_clock::now();
 		duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);

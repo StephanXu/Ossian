@@ -10,7 +10,7 @@
 
 #ifdef __linux__
 #include <termios.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -25,9 +25,9 @@
 #include "IO.hpp"
 #include "ossian/IOListener.hpp"
 #include "ossian/Factory.hpp"
+
 namespace ossian
 {
-
 /**
  * Controller Area Network Identifier structure
  *
@@ -43,7 +43,7 @@ class CANManager;
 class CANBus : public IListenable
 {
 public:
-	CANBus() = delete;
+	CANBus()                    = delete;
 	CANBus(const CANBus& other) = delete;
 	explicit CANBus(CANManager* manager, std::string const& location, bool isLoopback);
 	~CANBus();
@@ -73,14 +73,21 @@ private:
 class CANDevice : public BaseDevice, public std::enable_shared_from_this<CANDevice>
 {
 public:
-	CANDevice() = delete;
+	CANDevice()                       = delete;
 	CANDevice(const CANDevice& other) = delete;
+
 	explicit CANDevice(CANBus* bus, const unsigned int id) noexcept
-	: m_Id(id), m_Bus(bus), m_Callback(DefaultCallback)
-	{};
+		: m_Id(id), m_Bus(bus), m_Callback(DefaultCallback)
+	{
+	};
 
 	CANBus* Bus() const { return m_Bus; }
-	void Invoke(const size_t length, const uint8_t* data) override { m_Callback(shared_from_this(), length, data); }
+
+	void Invoke(const size_t length, std::shared_ptr<uint8_t[]> data) override
+	{
+		m_Callback(shared_from_this(), length, data.get());
+	}
+
 	void WriteRaw(const size_t length, const uint8_t* data) const override { m_Bus->WriteRaw(m_Id, length, data); }
 
 	std::shared_ptr<CANDevice> SetCallback(std::function<ReceiveCallback<CANDevice>> const& callback)
@@ -93,11 +100,13 @@ private:
 	const unsigned int m_Id;
 	CANBus* m_Bus;
 	std::function<ReceiveCallback<CANDevice>> m_Callback;
+
 	static void DefaultCallback(std::shared_ptr<CANDevice> const&, const size_t, const uint8_t*)
-	{}
+	{
+	}
 };
 
-class CANManager: private Attachable<1>
+class CANManager : private Attachable<1>
 {
 public:
 	OSSIAN_SERVICE_SETUP(CANManager(IOListener* listener));
@@ -113,7 +122,6 @@ private:
 	CANBus* AddBus(std::string const& location, bool isLoopback = false);
 	bool DelBus(std::string const& location);
 };
-
 } // ossian
 
 #endif // __linux__

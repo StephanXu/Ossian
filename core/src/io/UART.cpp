@@ -146,7 +146,7 @@ void UARTBus::Read() const
 		size_t length = nbytes;
 		std::shared_ptr<uint8_t[]> buffer(new uint8_t[length]());
 		memcpy(buffer.get(), buf, length);
-		m_Device->Invoke(length, buffer.get());
+		m_Device->Invoke(length, std::move(buffer));
 	}
 }
 

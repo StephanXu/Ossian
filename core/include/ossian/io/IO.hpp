@@ -72,7 +72,7 @@ public:
 	 * @param 	length	The length.
 	 * @param 	data  	If non-null, the data.
 	 */
-	virtual void Invoke(const size_t length, const uint8_t* data) = 0;
+	virtual void Invoke(const size_t length, std::shared_ptr<uint8_t[]> data) = 0;
 };
 
 inline BaseDevice::~BaseDevice() = default;
