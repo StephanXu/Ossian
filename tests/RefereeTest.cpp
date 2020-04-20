@@ -13,7 +13,7 @@ int main()
 	onlineDbg.StartLogging("OnlineLog",
 	                       "Referee",
 	                       "Log of referee test.");
-	spdlog::info("Start testing...");
+	SPDLOG_TRACE("Start testing...");
 	ossian::IOListener listener;
 	auto mgr = std::make_shared<ossian::UARTManager>(&listener);
 	using namespace ossian::UARTProperties;
@@ -26,13 +26,15 @@ int main()
 	   ->SetCallback(
 		   [](std::shared_ptr<ossian::UARTDevice> const& device, const size_t length, const uint8_t* data)
 		   {
+#if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE)
 			   std::stringstream ss;
 			   for (size_t i{}; i < length; ++i)
 			   {
 				   ss << fmt::format("{:02x}", data[i]);
 				   ss << " ";
 			   }
-			   spdlog::info("[{}]: {}", length, ss.str());
+			   SPDLOG_INFO("[{}]: {}", length, ss.str());
+#endif
 		   });	
 	while (true)
 	{

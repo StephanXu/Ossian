@@ -15,14 +15,14 @@ bool I2CBus::Open()
 {	
 	if(m_IsOpened)
 	{
-		spdlog::trace("I2C Bus {} is already opened.", m_Location);
+		SPDLOG_TRACE("I2C Bus {} is already opened.", m_Location);
 		return false;
 	}
-	spdlog::trace("Opening i2c bus at {}", m_Location);
+	SPDLOG_TRACE("Opening i2c bus at {}", m_Location);
 	m_FD = open(m_Location.c_str(), O_RDWR);
 	if (m_FD < 0)
 	{
-		spdlog::warn("Failed to open {}, errno {}", m_Location, errno);
+		SPDLOG_WARN("Failed to open {}, errno {}", m_Location, errno);
 		return false;
 	}
 	m_IsOpened = true;
@@ -33,12 +33,12 @@ bool I2CBus::Close()
 {
 	if (!m_IsOpened)
 	{
-		spdlog::trace("I2C Bus {} is already closed.", m_Location);
+		SPDLOG_TRACE("I2C Bus {} is already closed.", m_Location);
 		return false;
 	}
 	close(m_FD);
 	m_FD = -1;
-	spdlog::trace("Closing i2c bus at {}", m_Location);
+	SPDLOG_TRACE("Closing i2c bus at {}", m_Location);
 	m_IsOpened = false;
 	return true;
 }
@@ -63,12 +63,12 @@ bool I2CDevice::Open()
 {
 	if (m_IsOpened)
 	{
-		spdlog::trace("I2C Device {} is already opened. No need to call again.", m_Address);
+		SPDLOG_TRACE("I2C Device {} is already opened. No need to call again.", m_Address);
 		return false;
 	}
 	if (ioctl(m_Bus->FD(), I2C_SLAVE, m_Address) < 0)
 	{
-		spdlog::warn("I2C Device {} on {} failed to open, errno {}", m_Address, m_Bus->Location(), errno);
+		SPDLOG_WARN("I2C Device {} on {} failed to open, errno {}", m_Address, m_Bus->Location(), errno);
 		return false;
 	}
 	m_IsOpened = true;
@@ -79,7 +79,7 @@ void I2CDevice::ReadRaw(const size_t length, uint8_t* data)
 {
 	if(read(m_Bus->FD(), data, length) < 0)
 	{
-		spdlog::warn("I2C Device {} on {} failed to read, errno {}", m_Address, m_Bus->Location(), errno);
+		SPDLOG_WARN("I2C Device {} on {} failed to read, errno {}", m_Address, m_Bus->Location(), errno);
 	}
 }
 
@@ -87,7 +87,7 @@ void I2CDevice::WriteRaw(const size_t length, const uint8_t* data)
 {
 	if(write(m_Bus->FD(), data, length) < 0)
 	{
-		spdlog::warn("I2C Device {} on {} failed to write, errno {}", m_Address, m_Bus->Location(), errno);
+		SPDLOG_WARN("I2C Device {} on {} failed to write, errno {}", m_Address, m_Bus->Location(), errno);
 
 	}
 }

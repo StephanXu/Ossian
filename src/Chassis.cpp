@@ -21,7 +21,7 @@ void Chassis::CalcWheelSpeedTarget()
 		double scaleWheelSpeed = kWheelSpeedLimit / maxWheelSpeedItem;
 		m_WheelSpeedSet *= scaleWheelSpeed;
 	}
-	/*spdlog::info("@WheelSpeedSet=[$wheel0={},$wheel1={},$wheel2={},$wheel3={}]", 
+	/*SPDLOG_INFO("@WheelSpeedSet=[$wheel0={},$wheel1={},$wheel2={},$wheel3={}]", 
 		m_WheelSpeedSet(0), m_WheelSpeedSet(1), m_WheelSpeedSet(2), m_WheelSpeedSet(3));*/
 }
 
@@ -114,11 +114,11 @@ void Chassis::ChassisCtrl()
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 				m_Motors[i]->Get().m_RPM,
 				hrClock::now());
-			//spdlog::info("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
-			/*spdlog::info("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
+			//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
+			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
-			//spdlog::info("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
-			spdlog::info("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
+			//SPDLOG_INFO("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
+			SPDLOG_DEBUG("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
 							i,
 							i,
 							m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, 
@@ -134,7 +134,7 @@ void Chassis::ChassisCtrl()
 		ChassisPowerCtrlByCurrent();
 
 	/*for (size_t i = 0; i < m_Motors.size(); ++i)
-		spdlog::info("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
+		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
 
 	for (size_t i = 0; i < m_Motors.size(); ++i)
 		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
@@ -158,11 +158,11 @@ void Chassis::ChassisCtrl()
 					m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
 					m_Motors[i]->Get().m_RPM,
 					hrClock::now());
-				//spdlog::info("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Get().m_RPM, m_CurrentSend[i]);
+				//SPDLOG_INFO("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Get().m_RPM, m_CurrentSend[i]);
 			}
 		};
 		m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
-		spdlog::info("@Capacitor=[$inputV={},$curV={},$inputC={},$targetP={}]", 
+		SPDLOG_INFO("@Capacitor=[$inputV={},$curV={},$inputC={},$targetP={}]", 
 			m_ChassisSensorValues.spCap.m_InputVoltage, m_ChassisSensorValues.spCap.m_CapacitorVoltage, 
 			m_ChassisSensorValues.spCap.m_TestCurrent, m_ChassisSensorValues.spCap.m_TargetPower);
 		//如果超级电容快没电了
@@ -192,7 +192,7 @@ void Chassis::ChassisCtrl()
 	}
 
 	for (size_t i = 0; i < m_Motors.size(); ++i)
-		spdlog::info("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);
+		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);
 
 	for (size_t i = 0; i < m_Motors.size(); ++i)
 		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
@@ -239,6 +239,6 @@ void Chassis::ChassisExpAxisSpeedSet()
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 
-		//spdlog::info("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
+		//SPDLOG_INFO("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
 	}
 }

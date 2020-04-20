@@ -28,7 +28,7 @@ Startup::Startup()
 	spdlog::set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
 	spdlog::set_level(spdlog::level::trace);
 	
-	spdlog::info("MI_VERSION: {}", mi_version());
+	SPDLOG_INFO("MI_VERSION: {}", mi_version());
 
 	// Load configuration
 	Utils::ConfigLoader config;

@@ -19,7 +19,7 @@ void IOListener::Listen(const size_t epollIndex, const long timeout) const
 	const auto nfd = epoll_wait(m_EpollFD[epollIndex], events, MAX_EVENTS, timeout);
 	if (nfd < 0)
 	{
-		spdlog::warn("epoll_wait error");
+		SPDLOG_WARN("epoll_wait error");
 		return;
 	}
 	for (auto i = 0; i < nfd; i++)

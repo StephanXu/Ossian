@@ -15,7 +15,7 @@ HKCamera::HKCamera(const int camIndex, const int frameWidth, const int frameHeig
     catch (std::exception e)
     {
         m_IsValid = false;
-        spdlog::error("HKCamera initialize fail: {}", e.what());
+        SPDLOG_ERROR("HKCamera initialize fail: {}", e.what());
     }
 }
 
@@ -73,7 +73,7 @@ bool HKCamera::Initialize()
         throw std::runtime_error("cudaGetDeviceCount() failed");
     if (deviceCount < 1)
         throw std::runtime_error("cuda device not found");
-    spdlog::info("cudaEnabledDeviceCount={}", deviceCount); 		
+    SPDLOG_INFO("cudaEnabledDeviceCount={}", deviceCount); 		
     cv::cuda::printCudaDeviceInfo(cv::cuda::getDevice()); 	
     cudaSetDeviceFlags(cudaDeviceMapHost);
     cudaStatus = cudaSetDevice(0); 		
@@ -175,7 +175,7 @@ bool HKCamera::ReadFrame(cv::cuda::GpuMat &outMat)
     MVCC_FLOATVALUE struFloatValue = { 0 };
     if (MV_OK == MV_CC_GetFloatValue(m_Handle, "ResultingFrameRate", &struFloatValue))
     {
-        spdlog::info("Got frame: {}x{} FrameNum: {} FPS: {:<3}",
+        SPDLOG_TRACE("Got frame: {}x{} FrameNum: {} FPS: {:<3}",
                      stImageInfo.nWidth,
                      stImageInfo.nHeight,
                      stImageInfo.nFrameNum,
@@ -200,12 +200,12 @@ void HKCamera::StartGrabFrame()
         throw std::runtime_error("Start Grabbing fail");
 
     memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-    spdlog::info("payloadSize={}", m_PayloadSize);
+    SPDLOG_INFO("payloadSize={}", m_PayloadSize);
 #ifdef WITH_CUDA
     m_Data = new unsigned char[m_PayloadSize];
     /*cudaError_t cudaStatus = cudaMallocManaged(&m_Data, m_PayloadSize);
     if (cudaStatus != cudaSuccess)
-        spdlog::error("cudaMallocManaged() Failed: {}", cudaStatus);*/
+        SPDLOG_ERROR("cudaMallocManaged() Failed: {}", cudaStatus);*/
 #endif // WITH_CUDA
 
     if (!m_Data)

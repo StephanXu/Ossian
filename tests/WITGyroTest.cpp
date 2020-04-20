@@ -10,13 +10,15 @@ using namespace std;
 
 void func(shared_ptr<UARTDevice> const& device, const size_t length, const uint8_t* data)
 {
+#if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE)
 	std::stringstream ss;
 	for (size_t i{}; i < length; ++i)
 	{
 		ss << fmt::format("{:02x}", data[i]);
 		ss << " ";
 	}
-	spdlog::info("UART: location={} len={} data={}", device->Bus()->Location(),length, ss.str());
+	SPDLOG_INFO("UART: location={} len={} data={}", device->Bus()->Location(),length, ss.str());
+#endif
 }
 
 int main()

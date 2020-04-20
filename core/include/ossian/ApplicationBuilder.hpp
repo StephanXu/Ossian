@@ -64,7 +64,7 @@ public:
 
 	virtual ~BaseServiceBuilder()
 	{
-		spdlog::trace("Register DI: {}\t{}", typeid(InterfaceType).name(), typeid(ServiceType).name());
+		SPDLOG_TRACE("Register DI: {}\t{}", typeid(InterfaceType).name(), typeid(ServiceType).name());
 		m_AppBuilder.template Add<InterfaceType>(
 			InstanceFactory<typename ServiceType::_OssianServiceInjectorType>::Value(m_ConfigureProc));
 	}
@@ -240,7 +240,7 @@ public:
 	 */
 	Dispatcher Realization()
 	{
-		spdlog::trace("Realization begin");
+		SPDLOG_TRACE("Realization begin");
 		return Dispatcher(m_DIConfig.BuildInjector());
 	}
 

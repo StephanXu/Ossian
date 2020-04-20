@@ -72,4 +72,8 @@ target_link_options(Ossian
         )
 message(STATUS "OpenCV_LIBS = ${OpenCV_LIBS}")
 
-target_compile_definitions(Ossian PRIVATE "$<$<BOOL:${CUDA_FOUND}>:WITH_CUDA>")
+target_compile_definitions(Ossian 
+        PRIVATE 
+            "$<$<BOOL:${CUDA_FOUND}>:WITH_CUDA>"
+            "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE"
+        )

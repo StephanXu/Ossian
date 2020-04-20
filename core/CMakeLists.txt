@@ -43,3 +43,8 @@ target_link_options(OssianCore
 		PRIVATE
 		"$<${gcc_like_cxx}:-pthread>"
 		)
+
+target_compile_definitions(OssianCore
+        PUBLIC 
+            "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE"
+        )

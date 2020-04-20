@@ -125,7 +125,7 @@ void WindmillDetection::Process()
     std::tie(m_Center, m_Radius) = FitRound();
     GenerateTargetPosition(currentTarget, m_Center);
 
-	spdlog::info("Center:({},{}),Radius:{}", m_Center.x, m_Center.y, m_Radius);
+	SPDLOG_INFO("Center:({},{}),Radius:{}", m_Center.x, m_Center.y, m_Radius);
 	//m_SerialPort->SendData(1, 2, 3, m_SerialPort->FlagHelper(1, 0, 0, 0));
 	//cv::circle(image, Targets()[0], 10,
 	//		   cv::Scalar{ 0, 255, 0 }, 2);

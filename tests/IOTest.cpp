@@ -11,7 +11,7 @@ using namespace std;
 
 void func(shared_ptr<CANDevice> const& device, const size_t length, const uint8_t* data)
 {
-	spdlog::info("Callback function called with length {}", length);
+	SPDLOG_INFO("Callback function called with length {}", length);
 }
 
 int main()

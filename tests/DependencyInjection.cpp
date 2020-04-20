@@ -10,14 +10,14 @@ class HelloPrinter : public IPrinter
 {
 public:
 	OSSIAN_SERVICE_SETUP(HelloPrinter()) {}
-	auto PrintText()->void override { spdlog::warn("Hello"); }
+	auto PrintText()->void override { SPDLOG_WARN("Hello"); }
 };
 
 class WorldPrinter : public IPrinter
 {
 public:
 	OSSIAN_SERVICE_SETUP(WorldPrinter()) {}
-	auto PrintText()->void override { spdlog::warn("World"); }
+	auto PrintText()->void override { SPDLOG_WARN("World"); }
 };
 
 class ResultGenerator

@@ -12,7 +12,7 @@ int main()
 	onlineDbg.StartLogging("OnlineLog",
 	                       "Camera",
 	                       "Test of HKCamera.");
-	spdlog::info("Start testing...");
+	SPDLOG_INFO("Start testing...");
 
 	HKCamera camera(0, 1440, 1080);
 	auto timeStamp = std::chrono::system_clock::now();
@@ -22,10 +22,10 @@ int main()
 			if (pFrameInfo)
 			{
 				auto currentTime = std::chrono::system_clock::now();
-				spdlog::info("GetOneFrame succeed, width:{}, height:{}",
+				SPDLOG_INFO("GetOneFrame succeed, width:{}, height:{}",
 							 pFrameInfo->nWidth,
 							 pFrameInfo->nHeight);
-				spdlog::info("@Fps=[$FPS={}]",
+				SPDLOG_INFO("@Fps=[$FPS={}]",
 							 1.0f / static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(currentTime - timeStamp).count()) * 1000000);
 				timeStamp = currentTime;
 			}

@@ -71,10 +71,10 @@ Aimbot::Aimbot(Utils::ConfigLoader* config)
 #ifdef WITH_CUDA
     /*cudaError_t cudaStatus = cudaMallocManaged(&m_pBinary, 1440 * 1080 * sizeof(unsigned char));
     if (cudaStatus != cudaSuccess)         
-        spdlog::error("Aimbot: cudaMallocManaged() Failed: {}", cudaStatus);    */ 
+        SPDLOG_ERROR("Aimbot: cudaMallocManaged() Failed: {}", cudaStatus);    */ 
     cudaError_t cudaStatus = cudaMalloc(&m_pdFrame, 1440 * 1080 * 1);
     if (cudaStatus != cudaSuccess)
-        spdlog::error("Aimbot: cudaMalloc() Failed: {}", cudaStatus);    
+        SPDLOG_ERROR("Aimbot: cudaMalloc() Failed: {}", cudaStatus);    
     m_phBinary = new unsigned char[1440 * 1080 * 1];
     if (!m_pdFrame || !m_phBinary)        
         std::bad_alloc();
@@ -99,7 +99,7 @@ void Aimbot::Process(unsigned char* pImage)
 
     bool foundArmor = FindArmor(pImage, armorBBox, armorType);
     double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
-    spdlog::info("@Aimbot=[$ms={}]", interval);
+    SPDLOG_INFO("@Aimbot=[$ms={}]", interval);
     double deltaYaw = 0, deltaPitch = 0, dist = 0;
     static PoseSolver angleSolver;
     if (foundArmor)
@@ -109,7 +109,7 @@ void Aimbot::Process(unsigned char* pImage)
         Math::RegularizeErrAngle(deltaYaw, 'y');
         Math::RegularizeErrAngle(deltaPitch, 'p');
     }
-	spdlog::info("Aimbot Status: {}\t{}\t{}", deltaYaw, deltaPitch, dist);
+	SPDLOG_INFO("Aimbot Status: {}\t{}\t{}", deltaYaw, deltaPitch, dist);
     
     //[TODO] 发送两角度给云台
 	/*try
@@ -124,7 +124,7 @@ void Aimbot::Process(unsigned char* pImage)
 	}
     catch (std::runtime_error & e)
     {
-        spdlog::error("Send data error: {}", e.what());
+        SPDLOG_ERROR("Send data error: {}", e.what());
         //std::abort();
     }*/
 

@@ -59,7 +59,7 @@ public:
 			opt.always_print_primitive_fields = true;
 			opt.add_whitespace                = true;
 			google::protobuf::util::MessageToJsonString(*m_Config, &str, opt);
-			spdlog::info("{}", str);
+			SPDLOG_INFO("{}", str);
 		}
 #endif
 		m_Valid = true;
@@ -84,10 +84,10 @@ public:
 		}
 		catch (ConfigParseError& err)
 		{
-			spdlog::error("Parse configuration from file {} failed: {}", configFilename, err.what());
+			SPDLOG_ERROR("Parse configuration from file {} failed: {}", configFilename, err.what());
 			std::abort();
 		}
-		spdlog::trace("Load configuration from file: {}", configFilename);
+		SPDLOG_TRACE("Load configuration from file: {}", configFilename);
 	}
 
 	template <typename ConfigType>
@@ -105,10 +105,10 @@ public:
 		}
 		catch (ConfigParseError& err)
 		{
-			spdlog::error("Parse configuration from {} failed: {}", host, err.what());
+			SPDLOG_ERROR("Parse configuration from {} failed: {}", host, err.what());
 			std::abort();
 		}
-		spdlog::trace("Load configuration from {}", host);
+		SPDLOG_TRACE("Load configuration from {}", host);
 	}
 
 	bool Valid() const noexcept

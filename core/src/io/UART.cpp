@@ -236,7 +236,7 @@ std::shared_ptr<UARTDevice> UARTManager::AddDevice(std::string const& location,
 	}
 	else
 	{
-		spdlog::warn("Adding duplicate device {}!", location);
+		SPDLOG_WARN("Adding duplicate device {}!", location);
 	}
 	return bus->AddDevice();
 }

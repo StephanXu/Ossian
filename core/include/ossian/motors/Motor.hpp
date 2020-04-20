@@ -69,7 +69,7 @@ public:
 		                                  const size_t length,
 		                                  const uint8_t* data)
 		{
-			spdlog::info("MotorManager Received: {}", length);
+			SPDLOG_TRACE("MotorManager Received: {}", length);
 			auto motor = std::static_pointer_cast<MotorType>(m_Motors[device]);
 			motor->Parse(data, length);
 			callback(motor);
@@ -80,10 +80,10 @@ public:
 		motor->SetWriter(writer.get());
 		m_Motors.insert(std::make_pair(dev, motor));
 
-		spdlog::trace("Add new motor: location: {}, motorId: {}, CANId: {:#x},",
-		              location,
-		              motor->MotorId(),
-		              motor->CANId());
+		SPDLOG_TRACE("Add new motor: location: {}, motorId: {}, CANId: {:#x},",
+		             location,
+		             motor->MotorId(),
+		             motor->CANId());
 
 		return motor;
 	}
@@ -103,7 +103,7 @@ public:
 		writer->SetDevice(dev);
 		m_Writers.insert(std::make_pair(dev, writer));
 
-		spdlog::trace("Add new motor writer: location: {}, CANId: {:#x}", location, writer->CANId());
+		SPDLOG_TRACE("Add new motor writer: location: {}, CANId: {:#x}", location, writer->CANId());
 
 		return std::dynamic_pointer_cast<IMotorWriter>(writer);
 	}
@@ -115,7 +115,6 @@ private:
 	Container m_Motors;
 	WriterContainer m_Writers;
 };
-
 } // ossian
 
 #endif //OSSIAN_CORE_MOTOR

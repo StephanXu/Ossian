@@ -81,18 +81,19 @@ public:
 			             [this](const std::shared_ptr<ossian::BaseDevice>& device, const size_t length,
 			                    const uint8_t* data)
 			             {
-							 const size_t packSize = 54;
-							 const uint8_t* readPtr = { data + length - packSize };
-							 while (readPtr - data >= 0 && ('C' != readPtr[0] || 'H' != readPtr[1] || '1' != readPtr[2]))
-							 {
-								 --readPtr;
-							 }
-							 if (readPtr < data)
-							 {
-								 spdlog::warn("Remote: Incomplete data.");
-								 return;
-							 }
-				             spdlog::trace("Remote Receive: {}, buffer: {}", length, data);
+				             const size_t packSize  = 54;
+				             const uint8_t* readPtr = {data + length - packSize};
+				             while (readPtr - data >= 0 &&
+				                    ('C' != readPtr[0] || 'H' != readPtr[1] || '1' != readPtr[2]))
+				             {
+					             --readPtr;
+				             }
+				             if (readPtr < data)
+				             {
+					             SPDLOG_WARN("Remote: Incomplete data.");
+					             return;
+				             }
+				             SPDLOG_TRACE("Remote Receive: {}, buffer: {}", length, data);
 				             sscanf(reinterpret_cast<const char*>(readPtr),
 				                    "CH1:%d,CH2:%d,CH3:%d,CH4:%d,CH5:%d,S1:%d,S2:%d",
 				                    &m_Status.ch[0],

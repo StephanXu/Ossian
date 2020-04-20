@@ -464,7 +464,7 @@ public:
 			                    const size_t length,
 			                    const uint8_t* data)
 			             {
-				             spdlog::trace("Referee Receive: {}", length);
+				             SPDLOG_TRACE("Referee Receive: {}", length);
 				             ParseReferee(data, length);
 			             });
 	}
@@ -501,7 +501,7 @@ private:
 			//std::lock_guard<Mutex> guard{std::get<Index>(m_Mutexes)};
 			std::get<Index>(m_Container)->Set(reinterpret_cast<const RefereeMessage<MessageType>*>(data)->m_Payload);
 		}
-		spdlog::trace("Matched message: {:x}\t Message Length: {}\t Matched: {}",
+		SPDLOG_TRACE("Matched message: {:x}\t Message Length: {}\t Matched: {}",
 		              MessageType::cmdId, RefereeMessage<MessageType>::length, Index);
 		return RefereeMessage<MessageType>::length;
 	}
@@ -530,7 +530,7 @@ private:
 		}
 		catch (std::runtime_error& err)
 		{
-			spdlog::warn("{}", err.what());
+			SPDLOG_WARN("{}", err.what());
 			return 0;
 		}
 	}

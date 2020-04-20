@@ -34,12 +34,12 @@ public:
 		}
 		catch (std::runtime_error & e)
 		{
-			spdlog::error(e.what());
+			SPDLOG_ERROR(e.what());
 			m_Valid = false;
 		}
 		catch (std::bad_alloc & e)
 		{
-			spdlog::error(e.what());
+			SPDLOG_ERROR(e.what());
 			m_Valid = false;
 		}
 	}
@@ -52,7 +52,7 @@ public:
 		}
 		catch (std::exception e)
 		{
-			spdlog::error("Camera destory fail");
+			SPDLOG_ERROR("Camera destory fail");
 			std::abort();
 		}
 	}
@@ -96,7 +96,7 @@ public:
 		}
 		catch (std::runtime_error & e)
 		{
-			spdlog::error(e.what());
+			SPDLOG_ERROR(e.what());
 			m_Valid = false;
 		}
 
@@ -200,7 +200,7 @@ public:
 			if (0xA5 == inModel.beginCode && 0xAA == inModel.endCode)
 			{
 				m_InModel.store(inModel);
-				//spdlog::info("damn {}\t{}\t{}\t{}", inModel.beginCode, inModel.gimbalIndex, inModel.pitchMotor, inModel.yawMotor);
+				//SPDLOG_INFO("damn {}\t{}\t{}\t{}", inModel.beginCode, inModel.gimbalIndex, inModel.pitchMotor, inModel.yawMotor);
 			}
 			std::this_thread::sleep_for(std::chrono::microseconds(interval));
 		}

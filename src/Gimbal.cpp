@@ -18,7 +18,7 @@ void Gimbal::GimbalCtrlSrcSet()
 		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Get().m_Encoding, kYawMidEcd);
 		if (fabs(errorPitch) < 0.1 && fabs(errorYaw) < 0.1) 
 		{
-			spdlog::info("Gimbal Init Done.");
+			SPDLOG_TRACE("Gimbal Init Done.");
 			m_CurGimbalAngleMode = Gyro;
 			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
 			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
@@ -146,12 +146,12 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 			m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
 			m_LastEcdAngle[position] = curEcdAngle;
 
-			spdlog::info("@pidAngleEcd{}=[$set_ae={},$get_ae={},$pidout_ae={}]", 
+			SPDLOG_DEBUG("@pidAngleEcd{}=[$set_ae={},$get_ae={},$pidout_ae={}]", 
 				position, 
 				m_EcdAngleSet[position], 
 				curEcdAngle, 
 				angleSpeedSet);
-			spdlog::info("@pidAngleSpeed{}=[$set_as={},$get_as={},$pidout_as={}]",
+			SPDLOG_DEBUG("@pidAngleSpeed{}=[$set_as={},$get_as={},$pidout_as={}]",
 				position,
 				angleSpeedSet,
 				angleSpeedEcd,

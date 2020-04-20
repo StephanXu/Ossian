@@ -27,7 +27,7 @@ class SignalRLogger : public signalr::log_writer
 	// Inherited via log_writer
 	void __cdecl write(const std::string& entry) override
 	{
-		spdlog::info(entry);
+		SPDLOG_INFO(entry);
 	}
 };
 

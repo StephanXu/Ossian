@@ -136,7 +136,7 @@ public:
 		m_CurrentSend.fill(0);
 		
 		/*m_GyroListener->AddOnChange([](const GyroModel& value) {
-			spdlog::info("@GyroOnChange=[$gyro={}]",1);});*/
+			SPDLOG_INFO("@GyroOnChange=[$gyro={}]",1);});*/
 
 	}
 
@@ -172,20 +172,20 @@ public:
 		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wz 
 			- sin(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wx;
 		
-		spdlog::info("@IMUAngle=[$roll_gyro={},$pitch_gyro={},$yaw_gyro={}]",
+		SPDLOG_DEBUG("@IMUAngle=[$roll_gyro={},$pitch_gyro={},$yaw_gyro={}]",
 			m_GimbalSensorValues.imu.m_Roll,
 			m_GimbalSensorValues.imu.m_Pitch,
 			m_GimbalSensorValues.imu.m_Yaw);
-		spdlog::info("@IMUSpeed=[$roll_w={},$pitch_w={},$yaw_w={}]",
+		SPDLOG_DEBUG("@IMUSpeed=[$roll_w={},$pitch_w={},$yaw_w={}]",
 			m_GimbalSensorValues.imu.m_Wx,
 			m_GimbalSensorValues.imu.m_Wy,
 			m_GimbalSensorValues.imu.m_Wz);
-		spdlog::info("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
+		SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
 			m_GimbalSensorValues.imu.m_Hx,
 			m_GimbalSensorValues.imu.m_Hy,
 			m_GimbalSensorValues.imu.m_Hz);
 
-		spdlog::info("@MotorEncoder=[$pitch_ecd={},$yaw_ecd={}]",
+		SPDLOG_DEBUG("@MotorEncoder=[$pitch_ecd={},$yaw_ecd={}]",
 			m_Motors[Pitch]->Get().m_Encoding,
 			m_Motors[Yaw]->Get().m_Encoding);
 		

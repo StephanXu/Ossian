@@ -88,7 +88,7 @@ public:
 		const size_t index{ motor->MotorId() - (DefaultWriterCANId == m_CANId ? 1 : 5) };
 		if (index > m_Motors.size()) { throw std::runtime_error("Invalid motor id"); }
 		m_Motors[index] = motor;
-		spdlog::trace("MotorWriter add device: writerCANId: {:#x}, motorId: {}", m_CANId, motor->MotorId());
+		SPDLOG_TRACE("MotorWriter add device: writerCANId: {:#x}, motorId: {}", m_CANId, motor->MotorId());
 	}
 
 	auto Pack(PackModel& outModel) noexcept -> void

@@ -70,14 +70,16 @@ public:
 			[this](const std::shared_ptr<ossian::BaseDevice>& device, const size_t length,
 			       const uint8_t* data)
 			{
+#if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE)
 				std::stringstream ss;
 				for (size_t i{}; i < length; ++i)
 				{
 					ss << fmt::format("{:02x}", data[i]);
 					ss << " ";
 				}
-				spdlog::info("Gyro Buffer: len={} data={}", length, ss.str());
-				spdlog::trace("Gyro Receive: {}, buffer: {}", length, data);
+				SPDLOG_TRACE("Gyro Buffer: len={} data={}", length, ss.str());
+				SPDLOG_TRACE("Gyro Receive: {}, buffer: {}", length, data);
+#endif
 				const size_t packSize{8};
 				const double g{9.8};
 				bool receiveFlag[4]{false, false, false, false};

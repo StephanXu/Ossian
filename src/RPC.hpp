@@ -216,7 +216,7 @@ protected:
 					}
 					catch (const std::exception & ex)
 					{
-						spdlog::error("exception when starting connection: {}", ex.what());
+						SPDLOG_ERROR("exception when starting connection: {}", ex.what());
 					}
 					m_Valid = false;
 					m_Task.set_value();
@@ -242,7 +242,7 @@ protected:
 					}
 					catch (const std::exception & ex)
 					{
-						spdlog::error("exception when starting connection: {}", ex.what());
+						SPDLOG_ERROR("exception when starting connection: {}", ex.what());
 					}
 					m_Valid = false;
 					m_Task.set_value();
@@ -282,11 +282,11 @@ public:
 						{
 							std::rethrow_exception(exception);
 						}
-						spdlog::info("connection stopped successfully");
+						SPDLOG_TRACE("connection stopped successfully");
 					}
 					catch (const std::exception & e)
 					{
-						spdlog::error("exception when stopping connection: {}", e.what());
+						SPDLOG_ERROR("exception when stopping connection: {}", e.what());
 					}
 					m_Task.set_value();
 				});

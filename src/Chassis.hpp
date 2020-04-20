@@ -128,7 +128,7 @@ public:
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
-		//m_RC->AddOnChange([](const RemoteStatus& value) {spdlog::info("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
+		//m_RC->AddOnChange([](const RemoteStatus& value) {SPDLOG_DEBUG("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
 	}
 
 	void InitChassis()
@@ -165,13 +165,13 @@ public:
 	void UpdateChassisSensorFeedback()
 	{
 		m_ChassisSensorValues.rc = m_RC->Get();
-		//spdlog::info("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
+		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
 		//m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000;
-		spdlog::info("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]", 
+		SPDLOG_DEBUG("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]", 
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower, 
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
 			80);
@@ -214,7 +214,7 @@ public:
 
 		m_MotorMsgCheck.fill(false);
 		double interval = std::chrono::duration<double, std::milli>(hrClock::now() - begin).count();
-		spdlog::info("@CtrlInterval=[$time={}]", interval);
+		SPDLOG_DEBUG("@CtrlInterval=[$time={}]", interval);
 		/*static hrClock::time_point lastSendSpCapTimestamp;
 		long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
 			hrClock::now() - lastSendSpCapTimestamp).count();
