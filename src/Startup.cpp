@@ -75,14 +75,14 @@ void Startup::ConfigServices(AppBuilder& app)
 			option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 7, 0x2ff);
 			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 6, 0x2ff);
 		});
-	app.AddService<IOWorker>();
 	//app.AddService<Aimbot>();
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)
 {
-	app.AddService<ossian::IExecutable, IOPeeker<0>>();
-	app.AddService<ossian::IExecutable, IOPeeker<1>>();
-
+	app.AddExecutable<IOWorker>();
+	app.AddExecutable<IOPeeker<0>>();
+	app.AddExecutable<IOPeeker<1>>();
+	
 	//app.AddService<ossian::IExecutable, CameraPeeker>();
 }

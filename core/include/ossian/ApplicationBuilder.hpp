@@ -19,6 +19,7 @@
 #include "DI.hpp"
 #include "Dispatcher.hpp"
 #include "Factory.hpp"
+#include "Pipeline.hpp"
 
 namespace ossian
 {
@@ -171,6 +172,20 @@ public:
 	})
 	{
 		return AddService<ServiceType, ServiceType>(configProc);
+	}
+
+	/**
+	 * @brief 注册一项执行服务
+	 * @tparam ServiceType 服务类型
+	 */
+	template <typename ExecutableType>
+	auto AddExecutable(std::function<void(ExecutableType&)> configProc = [](ExecutableType&)
+	{
+	})
+	{
+		static_assert(std::is_base_of<IExecutable, ExecutableType>::value, 
+					  "ExecutableType should derived from ossian::IExecutable");
+		return AddService<IExecutable, ExecutableType>(configProc);
 	}
 
 	/**
