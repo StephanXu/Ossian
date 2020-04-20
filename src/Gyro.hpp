@@ -128,9 +128,9 @@ public:
 						{
 							break;
 						}
-						model.m_Roll   = payloadValue[0] / 32768.0 * 180.0;
-						model.m_Pitch  = payloadValue[1] / 32768.0 * 180.0;
-						model.m_Yaw    = payloadValue[2] / 32768.0 * 180.0;
+						model.m_Roll   = payloadValue[0] / 32768.0 * M_PI;
+						model.m_Pitch  = payloadValue[1] / 32768.0 * M_PI;
+						model.m_Yaw    = payloadValue[2] / 32768.0 * M_PI;
 						receiveFlag[2] = true;
 						break;
 					case 0x54: ///< 磁场

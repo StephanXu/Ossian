@@ -117,7 +117,7 @@ void Chassis::ChassisCtrl()
 			//spdlog::info("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
 			/*spdlog::info("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
-			spdlog::info("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
+			//spdlog::info("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
 			spdlog::info("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
 							i,
 							i,

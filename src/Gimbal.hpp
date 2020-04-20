@@ -180,6 +180,10 @@ public:
 			m_GimbalSensorValues.imu.m_Wx,
 			m_GimbalSensorValues.imu.m_Wy,
 			m_GimbalSensorValues.imu.m_Wz);
+		spdlog::info("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
+			m_GimbalSensorValues.imu.m_Hx,
+			m_GimbalSensorValues.imu.m_Hy,
+			m_GimbalSensorValues.imu.m_Hz);
 
 		spdlog::info("@MotorEncoder=[$pitch_ecd={},$yaw_ecd={}]",
 			m_Motors[Pitch]->Get().m_Encoding,
