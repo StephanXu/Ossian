@@ -265,10 +265,10 @@ std::vector<ossian::UARTDevice*> ossian::UARTManager::GetDevices() const
 {
 	//[TODO] 改善代码执行效率
 	std::vector<ossian::UARTDevice*> devices;
-	auto buses = GetBuses();
-	for (auto && bus : buses)
+	auto busesMap = m_BusMap;
+	for (auto && it : busesMap)
 	{
-		auto devs = bus->GetDevices();
+		auto devs = it.second->GetDevices();
 		for (auto && dev : devs)
 		{
 			devices.push_back(dev);

@@ -6,6 +6,7 @@
 #include <ossian/Pipeline.hpp>
 #include <spdlog/spdlog.h>
 
+#include "ossian/io/UART.hpp"
 #include <thread>
 
 template <size_t EpollIndex>
@@ -27,6 +28,29 @@ public:
 
 private:
 	ossian::IOListener* m_Listener;
+};
+
+class IOWorker : public ossian::IExecutable
+{
+public:
+	OSSIAN_SERVICE_SETUP(IOWorker(ossian::UARTManager* uartmgr))
+		: m_UARTManager(uartmgr)
+	{};
+
+	auto ExecuteProc() -> void override
+	{
+		while (true)
+		{
+			auto devices = m_UARTManager->GetDevices();
+			for (auto dev : devices)
+			{
+				dev->Process();
+			}
+		}
+	}
+
+private:
+	ossian::UARTManager* m_UARTManager;
 };
 
 #endif // OSSIAN_IO_PEEKER_HPP
