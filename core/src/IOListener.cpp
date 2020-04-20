@@ -2,7 +2,7 @@
 
 #ifdef __linux__
 #include <sys/epoll.h>
-
+#include <spdlog/spdlog.h>
 namespace ossian
 {
 IOListener::IOListener()
@@ -19,7 +19,8 @@ void IOListener::Listen(const size_t epollIndex, const long timeout) const
 	const auto nfd = epoll_wait(m_EpollFD[epollIndex], events, MAX_EVENTS, timeout);
 	if (nfd < 0)
 	{
-		throw std::runtime_error("epoll_wait error"); // 需要Catch
+		spdlog::warn("epoll_wait error");
+		return;
 	}
 	for (auto i = 0; i < nfd; i++)
 	{
