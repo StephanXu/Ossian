@@ -80,7 +80,7 @@ public:
 				SPDLOG_TRACE("Gyro Buffer: len={} data={}", length, ss.str());
 				SPDLOG_TRACE("Gyro Receive: {}", length);
 #endif
-				const size_t packSize{8};
+				const size_t packSize{11}; ///< wt901c
 				const double g{9.8};
 				bool receiveFlag[4]{false, false, false, false};
 				auto model = m_DataListener->Get();
