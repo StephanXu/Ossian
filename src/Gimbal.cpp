@@ -16,7 +16,7 @@ void Gimbal::GimbalCtrlSrcSet()
 	{
 		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Get().m_Encoding, kPitchMidEcd);
 		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Get().m_Encoding, kYawMidEcd);
-		if (fabs(errorPitch) < 0.1 && fabs(errorYaw) < 0.1) 
+		if (fabs(errorPitch) < 0.1 /*&& fabs(errorYaw) < 0.1*/) 
 		{
 			SPDLOG_TRACE("Gimbal Init Done.");
 			m_CurGimbalAngleMode = Gyro;
@@ -42,7 +42,7 @@ void Gimbal::GimbalCtrlSrcSet()
 			m_CurGimbalAngleMode = Encoding;
 		}
 	}
-		
+	SPDLOG_INFO("@FlagInitGimbal=[$flag={}]", static_cast<int>(m_FlagInitGimbal));
 	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
 	{
 	case kRCSwUp:
@@ -122,6 +122,19 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_Wy : m_GimbalSensorValues.imu.m_Wz);
 			double angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro, hrClock::now(), true);
 			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed, hrClock::now());
+
+			SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={}]",
+				position,
+				position,
+				m_GyroAngleSet[position],
+				position,
+				gyro);
+			SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
+				position,
+				position,
+				angleSpeedSet,
+				position,
+				gyroSpeed);
 		}
 		else if (m_CurGimbalAngleMode == Encoding)
 		{
@@ -135,8 +148,8 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 				m_LastEcdAngle[position] = curEcdAngle;
 				return;
 			}
-			double interval = std::chrono::duration<double, std::milli>(m_Motors[position]->TimeStamp() -
-				m_LastEcdTimeStamp[position]).count() / 1000.0;  //s
+			double interval = std::chrono::duration_cast<std::chrono::microseconds>(m_Motors[position]->TimeStamp() -
+				m_LastEcdTimeStamp[position]).count() / 1000000.0;
 			
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s
 			double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, hrClock::now(), 
@@ -146,16 +159,18 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 			m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
 			m_LastEcdAngle[position] = curEcdAngle;
 
-			SPDLOG_DEBUG("@pidAngleEcd{}=[$set_ae={},$get_ae={},$pidout_ae={}]", 
+			SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={}]",
 				position, 
-				m_EcdAngleSet[position], 
-				curEcdAngle, 
-				angleSpeedSet);
-			SPDLOG_DEBUG("@pidAngleSpeed{}=[$set_as={},$get_as={},$pidout_as={}]",
+				position,
+				m_EcdAngleSet[position],
+				position,
+				curEcdAngle);
+			SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
+				position,
 				position,
 				angleSpeedSet,
-				angleSpeedEcd,
-				m_CurrentSend[position]);
+				position,
+				angleSpeedEcd);
 
 		}
 	}

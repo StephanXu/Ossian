@@ -102,7 +102,7 @@ public:
 		PIDAngleSpeedPitchParams[2] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->kd();
 		PIDAngleSpeedPitchParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->thout();
 		PIDAngleSpeedPitchParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->thiout();
-
+		
 		PIDAngleEcdYawParams[0] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->kp();
 		PIDAngleEcdYawParams[1] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->ki();
 		PIDAngleEcdYawParams[2] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->kd();
@@ -136,7 +136,8 @@ public:
 		m_CurrentSend.fill(0);
 		
 		/*m_GyroListener->AddOnChange([](const GyroModel& value) {
-			SPDLOG_INFO("@GyroOnChange=[$gyro={}]",1);});*/
+			SPDLOG_INFO("@GyroOnChange=[$roll={},$pitch={},$yaw={}]",
+				value.m_Roll, value.m_Pitch, value.m_Yaw); });*/
 
 	}
 
@@ -172,22 +173,22 @@ public:
 		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wz 
 			- sin(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wx;
 		
-		SPDLOG_DEBUG("@IMUAngle=[$roll_gyro={},$pitch_gyro={},$yaw_gyro={}]",
+		/*SPDLOG_INFO("@IMUAngle=[$GRoll={},$GPitch={},$GYaw={}]",
 			m_GimbalSensorValues.imu.m_Roll,
 			m_GimbalSensorValues.imu.m_Pitch,
 			m_GimbalSensorValues.imu.m_Yaw);
-		SPDLOG_DEBUG("@IMUSpeed=[$roll_w={},$pitch_w={},$yaw_w={}]",
+		SPDLOG_INFO("@IMUSpeed=[$WRoll={},$WPitch={},$WYaw={}]",
 			m_GimbalSensorValues.imu.m_Wx,
 			m_GimbalSensorValues.imu.m_Wy,
-			m_GimbalSensorValues.imu.m_Wz);
-		SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
+			m_GimbalSensorValues.imu.m_Wz);*/
+		/*SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
 			m_GimbalSensorValues.imu.m_Hx,
 			m_GimbalSensorValues.imu.m_Hy,
-			m_GimbalSensorValues.imu.m_Hz);
+			m_GimbalSensorValues.imu.m_Hz);*/
 
-		SPDLOG_DEBUG("@MotorEncoder=[$pitch_ecd={},$yaw_ecd={}]",
+		/*SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
 			m_Motors[Pitch]->Get().m_Encoding,
-			m_Motors[Yaw]->Get().m_Encoding);
+			m_Motors[Yaw]->Get().m_Encoding);*/
 		
 	}
 	//设置云台角度输入来源
@@ -215,10 +216,10 @@ public:
 		//[TODO] 模式切换过渡
 
 		GimbalExpAngleSet(Pitch);
-		GimbalExpAngleSet(Yaw);
+		//GimbalExpAngleSet(Yaw);
 
 		GimbalCtrl(Pitch);
-		GimbalCtrl(Yaw);
+		//GimbalCtrl(Yaw);
 
 		m_MotorMsgCheck.fill(false);
 	}
