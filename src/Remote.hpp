@@ -93,7 +93,7 @@ public:
 					             SPDLOG_WARN("Remote: Incomplete data.");
 					             return;
 				             }
-				             SPDLOG_TRACE("Remote Receive: {}, buffer: {}", length, data);
+				             SPDLOG_TRACE("Remote Receive: {}", length);
 				             sscanf(reinterpret_cast<const char*>(readPtr),
 				                    "CH1:%d,CH2:%d,CH3:%d,CH4:%d,CH5:%d,S1:%d,S2:%d",
 				                    &m_Status.ch[0],

@@ -143,7 +143,14 @@ public:
 		logger->set_level(spdlog::level::level_enum::trace);
 		spdlog::register_logger(logger);
 		spdlog::set_default_logger(logger);
-		spdlog::flush_every(std::chrono::seconds(1));
+		std::thread([logger]()
+					{
+						while (true)
+						{
+							std::this_thread::sleep_for(std::chrono::milliseconds(500));
+							logger->flush();
+						}
+					}).detach();
 	}
 };
 

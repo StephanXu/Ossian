@@ -78,7 +78,7 @@ public:
 					ss << " ";
 				}
 				SPDLOG_TRACE("Gyro Buffer: len={} data={}", length, ss.str());
-				SPDLOG_TRACE("Gyro Receive: {}, buffer: {}", length, data);
+				SPDLOG_TRACE("Gyro Receive: {}", length);
 #endif
 				const size_t packSize{8};
 				const double g{9.8};
