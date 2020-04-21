@@ -128,7 +128,16 @@ public:
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
-		m_RC->AddOnChange([](const RemoteStatus& value) {SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
+
+		/*m_RC->AddOnChange([](const RemoteStatus& value) {
+			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", 
+				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
+
+		m_RefereePowerHeatDataListener->AddOnChange([](const PowerHeatData& value) {
+			SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
+				value.m_ChassisPower,
+				value.m_ChassisPowerBuffer,
+				80); });*/
 	}
 
 	void InitChassis()
@@ -170,11 +179,11 @@ public:
 		//m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
-		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000;
-		SPDLOG_DEBUG("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]", 
+		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000;  //v
+		/*SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]", 
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower, 
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
-			80);
+			80);*/
 	}
 
 	void CalcWheelSpeedTarget();

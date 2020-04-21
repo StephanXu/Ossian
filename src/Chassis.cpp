@@ -95,7 +95,7 @@ void Chassis::ChassisModeSet()
 	case kRCSwMid:
 		m_CurChassisMode = Disable; break; 
 	case kRCSwDown:
-		m_CurChassisMode = Disable; break;   //Top
+		m_CurChassisMode = Top; break;   //Top
 	default:
 		m_CurChassisMode = Disable; break;
 	}
@@ -118,7 +118,7 @@ void Chassis::ChassisCtrl()
 			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
 			//SPDLOG_INFO("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
-			SPDLOG_DEBUG("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
+			SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
 							i,
 							i,
 							m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, 
@@ -136,9 +136,9 @@ void Chassis::ChassisCtrl()
 	/*for (size_t i = 0; i < m_Motors.size(); ++i)
 		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
 
-	/*for (size_t i = 0; i < m_Motors.size(); ++i)
+	for (size_t i = 0; i < m_Motors.size(); ++i)
 		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-	m_Motors[LR]->Writer()->PackAndSend();*/
+	m_Motors[LR]->Writer()->PackAndSend();
 }
 
 //功率控制：通过减小底盘电机的期望速度来实现
