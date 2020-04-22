@@ -133,7 +133,10 @@ public:
 		//double error = m_Expectation - feedback;
 		double error = expectation - feedback;
 		if (flagRadLimit)
+		{
 			error = ClampLoop(error, -M_PI, M_PI);  //角度环，角度误差范围限制
+		}
+			
 		double output = 0.0;
 		//积分分离法：如果误差超过 ±m_ThresError1 范围，则积分清零
 		if (fabs(error) >= m_ThresError1)

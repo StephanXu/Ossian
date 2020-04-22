@@ -20,8 +20,8 @@ public:
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
 	static constexpr uint16_t kPitchMinEcd = 4176;
-	static constexpr uint16_t kPitchMaxEcd = 5670;
-	static constexpr uint16_t kPitchMidEcd = 4772;
+	static constexpr uint16_t kPitchMaxEcd = 5715;
+	static constexpr uint16_t kPitchMidEcd = 4705;
 	
 	static constexpr uint16_t kYawMinEcd = 7552;
 	static constexpr uint16_t kYawMaxEcd = 3456;
@@ -173,22 +173,22 @@ public:
 		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wz 
 			- sin(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wx;
 		
-		/*SPDLOG_INFO("@IMUAngle=[$GRoll={},$GPitch={},$GYaw={}]",
+		SPDLOG_INFO("@IMUAngle=[$GRoll={},$GPitch={},$GYaw={}]",
 			m_GimbalSensorValues.imu.m_Roll,
 			m_GimbalSensorValues.imu.m_Pitch,
 			m_GimbalSensorValues.imu.m_Yaw);
 		SPDLOG_INFO("@IMUSpeed=[$WRoll={},$WPitch={},$WYaw={}]",
 			m_GimbalSensorValues.imu.m_Wx,
 			m_GimbalSensorValues.imu.m_Wy,
-			m_GimbalSensorValues.imu.m_Wz);*/
+			m_GimbalSensorValues.imu.m_Wz);
 		/*SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
 			m_GimbalSensorValues.imu.m_Hx,
 			m_GimbalSensorValues.imu.m_Hy,
 			m_GimbalSensorValues.imu.m_Hz);*/
 
-		/*SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
+		SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
 			m_Motors[Pitch]->Get().m_Encoding,
-			m_Motors[Yaw]->Get().m_Encoding);*/
+			m_Motors[Yaw]->Get().m_Encoding);
 		
 	}
 	//设置云台角度输入来源

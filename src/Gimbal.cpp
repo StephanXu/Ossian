@@ -12,6 +12,7 @@ std::array<double, 5> Gimbal::PIDAngleSpeedYawParams;
 
 void Gimbal::GimbalCtrlSrcSet()
 {
+	SPDLOG_INFO("@FlagInitGimbal=[$flag={}]", static_cast<int>(m_FlagInitGimbal));
 	if (m_FlagInitGimbal)
 	{
 		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Get().m_Encoding, kPitchMidEcd);
@@ -19,7 +20,7 @@ void Gimbal::GimbalCtrlSrcSet()
 		if (fabs(errorPitch) < 0.1 /*&& fabs(errorYaw) < 0.1*/) 
 		{
 			SPDLOG_TRACE("Gimbal Init Done.");
-			m_CurGimbalAngleMode = Gyro;
+			m_CurGimbalAngleMode = Encoding;
 			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
 			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
 
@@ -40,9 +41,10 @@ void Gimbal::GimbalCtrlSrcSet()
 			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwUp)
 				m_GimbalCtrlSrc = Disable;
 			m_CurGimbalAngleMode = Encoding;
+			return;
 		}
 	}
-	SPDLOG_INFO("@FlagInitGimbal=[$flag={}]", static_cast<int>(m_FlagInitGimbal));
+	
 	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
 	{
 	case kRCSwUp:
@@ -165,12 +167,14 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 				m_EcdAngleSet[position],
 				position,
 				curEcdAngle);
-			SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
+			SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={},$pidoutAS{}={}]",
 				position,
 				position,
 				angleSpeedSet,
 				position,
-				angleSpeedEcd);
+				angleSpeedEcd,
+				position,
+				m_CurrentSend[position]/10000.0);
 
 		}
 	}
