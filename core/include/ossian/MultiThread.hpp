@@ -165,7 +165,8 @@ public:
 
     void operator()()
     {
-        m_Impl->Impl();
+        if (m_Impl)
+            m_Impl->Impl();
     }
 
 private:

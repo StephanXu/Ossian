@@ -216,10 +216,14 @@ public:
 		//[TODO] 模式切换过渡
 
 		GimbalExpAngleSet(Pitch);
-		//GimbalExpAngleSet(Yaw);
+		GimbalExpAngleSet(Yaw);
 
 		GimbalCtrl(Pitch);
-		//GimbalCtrl(Yaw);
+		GimbalCtrl(Yaw);
+
+		for (size_t i = 0; i < m_Motors.size(); ++i)
+			m_Motors[i]->SetVoltage(m_CurrentSend[i]);
+		m_Motors[Pitch]->Writer()->PackAndSend();
 
 		m_MotorMsgCheck.fill(false);
 	}

@@ -19,17 +19,28 @@
 #include <signalrclient/hub_connection_builder.h>
 #include <ossian/Factory.hpp>
 #include <ossian/Configuration.hpp>
+#include <spdlog/sinks/basic_file_sink.h>
+
 
 #include "RPC.hpp"
 
 class SignalRLogger : public signalr::log_writer
 {
+	std::shared_ptr<spdlog::logger> m_Logger;
+public:
+	SignalRLogger()
+		:m_Logger(spdlog::basic_logger_mt("SignalRLogger", "OnlineDebug.log"))
+	{
+	}
+
 	// Inherited via log_writer
 	void __cdecl write(const std::string& entry) override
 	{
-		SPDLOG_INFO(entry);
+		m_Logger->info(entry);
+		//SPDLOG_INFO(entry);
 	}
 };
+
 
 /**
  * @brief RPC hub (for server calling client).
@@ -102,7 +113,7 @@ public:
 	{
 		m_Hub.reset(new OnlineDebugHub{ std::move(
 			signalr::hub_connection_builder::create(url)
-			   .with_logging(std::make_shared<SignalRLogger>(), signalr::trace_level::errors)
+			   .with_logging(std::make_shared<SignalRLogger>(), signalr::trace_level::all)
 			   .build())
 			});
 		m_Valid = true;

@@ -154,8 +154,9 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 				m_LastEcdTimeStamp[position]).count() / 1000000.0;
 			
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s
-			double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, hrClock::now(), 
-																true);
+			/*double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, hrClock::now(), 
+																true);*/
+			double angleSpeedSet = 0;
 			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, angleSpeedEcd, hrClock::now());
 
 			m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
@@ -178,8 +179,4 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 
 		}
 	}
-
-	for (size_t i = 0; i < m_Motors.size(); ++i)
-		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-	m_Motors[Pitch]->Writer()->PackAndSend();
 }
