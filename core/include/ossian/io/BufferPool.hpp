@@ -2,6 +2,8 @@
 #define  OSSIAN_CORE_IO_BUFFERPOOL
 #include "ossian/MultiThread.hpp"
 #include "boost/circular_buffer.hpp"
+
+#include <mutex>
 namespace ossian
 {
 /**
@@ -34,6 +36,7 @@ public:
     template <typename F, typename... Args>
     std::future<typename std::result_of<F(Args...)>::type> AddTask(F f, Args&&... args)
     {
+        std::lock_guard<std::mutex> lock{ m_Mutex };
         typedef typename std::result_of<F(Args...)>::type ResultType;
         auto binded = std::bind(f, std::forward<Args>(args)...);
         std::packaged_task<ResultType()> task{ std::move(binded) };
@@ -44,11 +47,13 @@ public:
 
     bool Empty() const
     {
+        std::lock_guard<std::mutex> lock{ m_Mutex };
         return m_Tasks.empty();
     }
 
     size_t WaitingCount() const
     {
+        std::lock_guard<std::mutex> lock{ m_Mutex };
         return m_Tasks.size();
     }
 
@@ -65,6 +70,7 @@ public:
     }
 
 private:
+    mutable std::mutex m_Mutex;
     boost::circular_buffer<TaskWrapper> m_Tasks;
 };
 } // ossian
