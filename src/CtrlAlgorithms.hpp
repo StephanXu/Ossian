@@ -135,6 +135,7 @@ public:
 		if (flagRadLimit)
 		{
 			error = ClampLoop(error, -M_PI, M_PI);  //角度环，角度误差范围限制
+			error = DeadbandLimit(error, 0.01);
 		}
 			
 		double output = 0.0;
@@ -148,6 +149,7 @@ public:
 		m_Integral = Clamp( m_Integral, -m_ThresIntegral, m_ThresIntegral);
 		
 		output = m_Kp * error + ki * m_Integral + kd * (error - m_LastError);
+
 		if (output > 0)
 			output += m_DeadValue;
 		else if (output < 0)

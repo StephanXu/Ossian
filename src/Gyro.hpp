@@ -150,8 +150,9 @@ public:
 				}
 				m_DataListener->Set(model);
 			});
-		const uint8_t command[] = {'A', 'T', '+', 'E', 'T', '\n'};
-		dev->WriteRaw(6, command);
+		//const uint8_t command[] = {'A', 'T', '+', 'E', 'T', '\n'};
+		const uint8_t command[] = { 0xff,0xaa,0x63,0,0x00 };
+		dev->WriteRaw(5, command);
 	}
 
 private:

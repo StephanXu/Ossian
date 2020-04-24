@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include "ossian/io/UART.hpp"
+#include <chrono>
 #include <thread>
 
 template <size_t EpollIndex>

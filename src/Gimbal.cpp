@@ -17,7 +17,7 @@ void Gimbal::GimbalCtrlSrcSet()
 	{
 		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Get().m_Encoding, kPitchMidEcd);
 		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Get().m_Encoding, kYawMidEcd);
-		if (fabs(errorPitch) < 0.1 /*&& fabs(errorYaw) < 0.1*/) 
+		if (/*fabs(errorPitch) < 0.1 &&*/ fabs(errorYaw) < 0.1) 
 		{
 			SPDLOG_TRACE("Gimbal Init Done.");
 			m_CurGimbalAngleMode = Encoding;
@@ -143,7 +143,7 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 			//[TODO]用电机转速rpm换算出云台角速度
 			double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Get().m_Encoding, position == Pitch ?
 				kPitchMidEcd : kYawMidEcd);
-			//初始时刻，无法通过差分计算出角速度 
+			/*//初始时刻，无法通过差分计算出角速度 
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
 			{
 				m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
@@ -153,27 +153,28 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 			double interval = std::chrono::duration_cast<std::chrono::microseconds>(m_Motors[position]->TimeStamp() -
 				m_LastEcdTimeStamp[position]).count() / 1000000.0;
 			
-			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s
-			/*double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, hrClock::now(), 
+			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
+			/*double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, m_Motors[position]->TimeStamp(),
 																true);*/
 			double angleSpeedSet = 0;
-			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, angleSpeedEcd, hrClock::now());
+			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_Wy : m_GimbalSensorValues.imu.m_Wz);
+			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed, m_Motors[position]->TimeStamp());
 
 			m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
 			m_LastEcdAngle[position] = curEcdAngle;
 
-			SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={}]",
+			/*SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={}]",
 				position, 
 				position,
 				m_EcdAngleSet[position],
 				position,
-				curEcdAngle);
+				curEcdAngle);*/
 			SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={},$pidoutAS{}={}]",
 				position,
 				position,
 				angleSpeedSet,
 				position,
-				angleSpeedEcd,
+				gyroSpeed,
 				position,
 				m_CurrentSend[position]/10000.0);
 
