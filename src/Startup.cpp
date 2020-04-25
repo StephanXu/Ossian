@@ -78,10 +78,10 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Chassis>(
 		[](Chassis& option)
 		{
-			option.AddMotor(Chassis::MotorPosition::LF, "can1", 1, 0x200);
-			option.AddMotor(Chassis::MotorPosition::LR, "can1", 2, 0x200);
-			option.AddMotor(Chassis::MotorPosition::RR, "can1", 3, 0x200);
-			option.AddMotor(Chassis::MotorPosition::RF, "can1", 4, 0x200);
+			option.AddMotor(Chassis::MotorPosition::LF, "can0", 1, 0x200);
+			option.AddMotor(Chassis::MotorPosition::LR, "can0", 2, 0x200);
+			option.AddMotor(Chassis::MotorPosition::RR, "can0", 3, 0x200);
+			option.AddMotor(Chassis::MotorPosition::RF, "can0", 4, 0x200);
 		});
 	app.AddService<Gimbal>(
 		[](Gimbal& option)

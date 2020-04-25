@@ -21,6 +21,8 @@ void Gimbal::GimbalCtrlSrcSet()
 		{
 			SPDLOG_TRACE("Gimbal Init Done.");
 			m_CurGimbalAngleMode = Encoding;
+			m_EcdAngleSet[Pitch] = 0;
+			m_EcdAngleSet[Yaw] = 0;
 			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
 			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
 
@@ -66,6 +68,7 @@ void Gimbal::GimbalCtrlInputProc()
 		//遥控器传来的角度期望rad
 		m_AngleInput[Pitch] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kPitchChannel], kGimbalRCDeadband) * kPitchRCSen; 
 		m_AngleInput[Yaw] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kYawChannel], kGimbalRCDeadband) * kYawRCSen; 
+		SPDLOG_INFO("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
 	}
 }
 
@@ -102,6 +105,7 @@ void Gimbal::GimbalExpAngleSet(MotorPosition position)
 			m_EcdAngleSet[position] += angleInput;
 			m_EcdAngleSet[position] = Clamp(m_EcdAngleSet[position], kMinRelativeAngle[position], 
 											kMaxRelativeAngle[position]);
+			SPDLOG_INFO("@RelativeAngleYaw=[$min={},$max={}]", kMinRelativeAngle[Yaw], kMaxRelativeAngle[Yaw]);
 		}
 	}
 	else if (m_GimbalCtrlSrc == Init)
@@ -122,8 +126,8 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 		{
 			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw);
 			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_Wy : m_GimbalSensorValues.imu.m_Wz);
-			double angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro, hrClock::now(), true);
-			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed, hrClock::now());
+			double angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
+			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
 
 			SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={}]",
 				position,
@@ -156,12 +160,14 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
 			/*double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle, m_Motors[position]->TimeStamp(),
 																true);*/
-			double angleSpeedSet = 0;
-			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_Wy : m_GimbalSensorValues.imu.m_Wz);
-			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed, m_Motors[position]->TimeStamp());
 
-			m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
-			m_LastEcdAngle[position] = curEcdAngle;
+			//[TODO] 检查maxminRelativeAngle[Yaw]是否正确 --- 角度环set抖动
+			double angleSpeedSet = 2;
+			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_Wy : m_GimbalSensorValues.imu.m_Wz);
+			m_CurrentSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
+
+			/*m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
+			m_LastEcdAngle[position] = curEcdAngle;*/
 
 			/*SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={}]",
 				position, 

@@ -46,7 +46,7 @@ inline T ClampLoop(T value, const T& lowerBnd, const T& upperBnd)
 
 
 //计算当前编码值与中值之间的相对角度rad
-inline double RelativeEcdToRad(const uint16_t ecd, const uint16_t ecdMid)
+inline double RelativeEcdToRad(const uint16_t& ecd, const uint16_t& ecdMid)
 {
 	static constexpr uint16_t kHalfEcdRange = 4096;
 	static constexpr uint16_t kEcdRange = 8191;
@@ -92,6 +92,8 @@ public:
 		m_ThresError1 = m_ThresError2 = DOUBLE_MAX;
 		m_ThresIntegral = m_ThresOutput = DOUBLE_MAX;
 		m_DeadValue = 0.0;
+		m_FlagAngleLoop = false;
+		m_CtrlInterval = 1;
 	}
 
 	//设置PID五参数
@@ -105,11 +107,19 @@ public:
 		if (params[4] >= 0)
 			m_ThresIntegral = params[4];
 	}
-	void SetDeadBand(const double db)
+	void SetCtrlFreq(const double& freq)
+	{
+		m_CtrlInterval = 1000.0 / freq;  //ms
+	}
+	void SetFlagAngleLoop()
+	{
+		m_FlagAngleLoop = true;
+	}
+	void SetDeadBand(const double& db)
 	{
 		m_DeadValue = db;
 	}
-	void SetThresError(double th1, double th2)
+	void SetThresError(const double& th1, const double& th2)
 	{
 		m_ThresError1 = th1;
 		m_ThresError2 = th2;
@@ -119,20 +129,20 @@ public:
 	{
 		m_Integral = 0;
 		m_LastError = 0;
-		m_LastTimestamp = hrClock::time_point();
+		//m_LastTimestamp = hrClock::time_point();
 	}
 
-	double Calc(double expectation, double feedback, hrClock::time_point curTimestamp, bool flagRadLimit=false)
+	double Calc(double expectation, double feedback)
 	{
-		double interval = (m_LastTimestamp.time_since_epoch().count() == 0 ?
+		/*double interval = (m_LastTimestamp.time_since_epoch().count() == 0 ?
 			1 : std::chrono::duration<double, std::milli>(curTimestamp - m_LastTimestamp).count());   // ms
-		m_LastTimestamp = curTimestamp; 
-		double ki = m_Ki * interval;
-		double kd = m_Kd / interval;
+		m_LastTimestamp = curTimestamp; */
+		double ki = m_Ki * m_CtrlInterval;
+		double kd = m_Kd / m_CtrlInterval;
 
 		//double error = m_Expectation - feedback;
 		double error = expectation - feedback;
-		if (flagRadLimit)
+		if (m_FlagAngleLoop)
 		{
 			error = ClampLoop(error, -M_PI, M_PI);  //角度环，角度误差范围限制
 			error = DeadbandLimit(error, 0.01);
@@ -147,7 +157,8 @@ public:
 			m_Integral += error;
 		//将积分做限幅处理
 		m_Integral = Clamp( m_Integral, -m_ThresIntegral, m_ThresIntegral);
-		
+		//SPDLOG_INFO("@PIDInterval=[$interval={}]", interval);
+		//SPDLOG_INFO("@Integral=[$i={}]", m_Integral);
 		output = m_Kp * error + ki * m_Integral + kd * (error - m_LastError);
 
 		if (output > 0)
@@ -162,11 +173,13 @@ public:
 
 private:
 	double m_Kp, m_Ki, m_Kd;
-	hrClock::time_point m_LastTimestamp; //输入PID的上一条报文的时间戳
+	//hrClock::time_point m_LastTimestamp; //输入PID的上一条报文的时间戳
 	double m_LastError, /*m_Expectation,*/ m_Integral;
 	double m_ThresError1, m_ThresError2;  //ThresError1 > ThresError2
 	double m_ThresIntegral, m_ThresOutput;
 	double m_DeadValue; //死区：PID输出小于此值，执行机构没反应
+	bool m_FlagAngleLoop;
+	double m_CtrlInterval;  //ms
 };
 
 class KalmanFilter

@@ -23,6 +23,9 @@ using hrClock = std::chrono::high_resolution_clock;
 class Chassis
 {
 public:
+	//底盘pid控制频率
+	static constexpr double ctrlFreq = 125;   //hz
+
 	//麦轮运动
 	static constexpr double kWheelRadius = 76.0 / 1000.0; ///< m
 	static constexpr double kWheelXn = 175.0 / 1000.0;    ///< m
@@ -125,10 +128,12 @@ public:
 
 		PIDController pidWheelSpeed;
 		pidWheelSpeed.SetParams(PIDWheelSpeedParams);
+		pidWheelSpeed.SetCtrlFreq(ctrlFreq);
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
-
+		m_PIDChassisAngle.SetCtrlFreq(ctrlFreq);
+		m_PIDChassisAngle.SetFlagAngleLoop();
 		/*m_RC->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", 
 				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});

@@ -112,8 +112,7 @@ void Chassis::ChassisCtrl()
 		{
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
-				m_Motors[i]->Get().m_RPM,
-				m_Motors[i]->TimeStamp());
+				m_Motors[i]->Get().m_RPM);
 			//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
 			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
@@ -212,7 +211,7 @@ void Chassis::ChassisExpAxisSpeedSet()
 		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
-		m_WzSet = -m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0, hrClock::now(), true); //符号为负？
+		m_WzSet = -m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0); //符号为负？
 	}
 	/*else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{

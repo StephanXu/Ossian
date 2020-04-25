@@ -70,10 +70,8 @@ void Gun::FricCtrl()
 		currentFricBelow = currentFricUpper = 0;
 	else
 	{
-		currentFricBelow = m_PIDFricSpeed[FricBelow].Calc(m_FricSpeedSet, m_MotorsFric[FricBelow]->Get().m_RPM,
-			m_MotorsFric[FricBelow]->TimeStamp());
-		currentFricUpper = m_PIDFricSpeed[FricUpper].Calc(-m_FricSpeedSet, m_MotorsFric[FricUpper]->Get().m_RPM,
-			m_MotorsFric[FricUpper]->TimeStamp());
+		currentFricBelow = m_PIDFricSpeed[FricBelow].Calc(m_FricSpeedSet, m_MotorsFric[FricBelow]->Get().m_RPM);
+		currentFricUpper = m_PIDFricSpeed[FricUpper].Calc(-m_FricSpeedSet, m_MotorsFric[FricUpper]->Get().m_RPM);
 	}
 	m_MotorsFric[FricBelow]->SetVoltage(currentFricBelow);
 	m_MotorsFric[FricUpper]->SetVoltage(currentFricUpper);
@@ -116,7 +114,7 @@ void Gun::FeedRotateCtrl(bool stop, int rpmSet, bool reverse)
 		current = 0;
 	else
 	{
-		current = m_PIDFeedSpeed.Calc(rpmSet, m_MotorFeed->Get().m_RPM, m_MotorFeed->TimeStamp());
+		current = m_PIDFeedSpeed.Calc(rpmSet, m_MotorFeed->Get().m_RPM);
 		if (reverse)
 			current *= -1;
 	}
