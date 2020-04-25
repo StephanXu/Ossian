@@ -4,6 +4,7 @@
 #include <ossian/motors/Motor.hpp>
 #include <ossian/motors/DJIMotor.hpp>
 #include <ossian/IOData.hpp>
+#include <ossian/Pipeline.hpp>
 
 #include "CtrlAlgorithms.hpp"
 #include "InputAdapter.hpp"
@@ -19,12 +20,72 @@
 #include <array>
 #include <spdlog/spdlog.h>
 
-using hrClock = std::chrono::high_resolution_clock;
+//底盘电机数量
+static constexpr size_t kNumChassisMotors = 4;
+
 class Chassis
 {
 public:
+	//俯视，左前，左后，右后，右前，逆时针
+	enum MotorPosition
+	{
+		LF, LR, RR, RF
+	};
+
+	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager))
+		: m_MotorManager(motorManager)
+	{
+		m_MotorMsgCheck.fill(false);
+	}
+
+	auto AddMotor(const MotorPosition position,
+				  const std::string location,
+				  const unsigned int motorId,
+				  const unsigned int writerCanId)->void
+	{
+		m_Motors[position] =
+			m_MotorManager->AddMotor<ossian::DJIMotor3508Mt>(
+				location,
+				m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508WriterMt>(location, writerCanId),
+				[this, position](const std::shared_ptr<ossian::DJIMotor3508Mt>& motor)
+				{
+					MotorReceiveProc(motor, position);
+				},
+				motorId);
+		
+	}
+
+	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor3508Mt>& motor,
+						  MotorPosition position)->void
+	{
+		m_MotorMsgCheck[position] = true;
+		if (!(m_MotorMsgCheck[LF] && m_MotorMsgCheck[LR] && m_MotorMsgCheck[RR] && m_MotorMsgCheck[RF]))  
+			return;
+		
+		m_MotorMsgCheck.fill(false);
+	}
+
+	void SendCurrentToMotors(const std::array<double, kNumChassisMotors>& currentSend)
+	{
+		for (size_t i = 0; i < kNumChassisMotors; ++i)
+			m_Motors[i]->SetVoltage(currentSend[i]);
+		m_Motors[LR]->Writer()->PackAndSend();
+	}
+
+private:
+	ossian::MotorManager* m_MotorManager;
+	std::array<std::shared_ptr<ossian::DJIMotor3508Mt>, kNumChassisMotors> m_Motors;
+	hrClock::time_point m_LastRefresh;
+	
+	std::array<bool, kNumChassisMotors> m_MotorMsgCheck;
+};
+
+
+class ChassisCtrlTask : public ossian::IExecutable
+{
+public:
 	//底盘pid控制频率
-	static constexpr double ctrlFreq = 125;   //hz
+	static constexpr double kCtrlFreq = 125;   //hz
 
 	//麦轮运动
 	static constexpr double kWheelRadius = 76.0 / 1000.0; ///< m
@@ -66,11 +127,12 @@ public:
 
 	static double kVxFilterCoef, kVyFilterCoef;
 
+	//俯视，左前，左后，右后，右前，逆时针
 	enum MotorPosition
 	{
 		LF, LR, RR, RF
 	};
-	
+
 	enum ChassisMode
 	{
 		Disable,				 ///< 失能
@@ -80,15 +142,18 @@ public:
 		Openloop_Z				 ///< 单独调试底盘
 	};
 
-	OSSIAN_SERVICE_SETUP(Chassis(ossian::MotorManager* motorManager,
-								 ossian::IOData<RemoteStatus>* remote,
-								 ICapacitor* capacitor,
-								 Gimbal* gimbal,
-								 Utils::ConfigLoader* config,
-								 ossian::IOData<PowerHeatData>* powerHeatDataListener))
-		: m_MotorManager(motorManager)
+	OSSIAN_SERVICE_SETUP(ChassisCtrlTask(ossian::IOData<ossian::MultipleMotorsStatus<kNumChassisMotors>>* motors,
+										 ossian::IOData<RemoteStatus>* remote,
+										 ICapacitor* capacitor,
+										 Chassis* chassis,
+										 Gimbal* gimbal,
+										 Utils::ConfigLoader* config,
+										 ossian::IOData<PowerHeatData>* powerHeatDataListener)) 
+
+		: m_Motors(motors)
 		, m_RC(remote)
 		, m_SpCap(capacitor)
+		, m_Chassis(chassis)
 		, m_Gimbal(gimbal)
 		, m_Config(config)
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
@@ -104,7 +169,7 @@ public:
 		PIDChassisAngleParams[1] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->ki();
 		PIDChassisAngleParams[2] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->kd();
 		PIDChassisAngleParams[3] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->thout();
-		PIDChassisAngleParams[4] = m_Config->Instance<Configuration>()-> mutable_pidchassisangle()->thiout();
+		PIDChassisAngleParams[4] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->thiout();
 
 		kTopWz = m_Config->Instance<Configuration>()->mutable_chassis()->ktopwz();
 		kVxFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->kvxfiltercoef();
@@ -121,21 +186,20 @@ public:
 			1, 1, coef;*/
 
 		m_FlagInitChassis = true;
-		m_MotorMsgCheck.fill(false);
 
 		m_FOFilterVX.SetState(kVxFilterCoef, kChassisCtrlPeriod);
 		m_FOFilterVY.SetState(kVyFilterCoef, kChassisCtrlPeriod);
 
 		PIDController pidWheelSpeed;
 		pidWheelSpeed.SetParams(PIDWheelSpeedParams);
-		pidWheelSpeed.SetCtrlFreq(ctrlFreq);
+		pidWheelSpeed.SetkCtrlFreq(kCtrlFreq);
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
-		m_PIDChassisAngle.SetCtrlFreq(ctrlFreq);
+		m_PIDChassisAngle.SetkCtrlFreq(kCtrlFreq);
 		m_PIDChassisAngle.SetFlagAngleLoop();
 		/*m_RC->AddOnChange([](const RemoteStatus& value) {
-			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", 
+			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
 				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
 
 		m_RefereePowerHeatDataListener->AddOnChange([](const PowerHeatData& value) {
@@ -148,7 +212,6 @@ public:
 	void InitChassis()
 	{
 		m_AngleSet = 0;
-		m_MotorMsgCheck.fill(false);
 
 		m_FOFilterVX.Reset();
 		m_FOFilterVY.Reset();
@@ -159,25 +222,9 @@ public:
 		m_FlagInitChassis = false;
 	}
 
-	auto AddMotor(const MotorPosition position,
-				  const std::string location,
-				  const unsigned int motorId,
-				  const unsigned int writerCanId)->void
-	{
-		m_Motors[position] =
-			m_MotorManager->AddMotor<ossian::DJIMotor3508Mt>(
-				location,
-				m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508WriterMt>(location, writerCanId),
-				[this, position](const std::shared_ptr<ossian::DJIMotor3508Mt>& motor)
-				{
-					MotorReceiveProc(motor, position);
-				},
-				motorId);
-		
-	}
-
 	void UpdateChassisSensorFeedback()
 	{
+		m_ChassisSensorValues.motors = m_Motors->Get();
 		m_ChassisSensorValues.rc = m_RC->Get();
 		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
@@ -185,8 +232,8 @@ public:
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000;  //v
-		/*SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]", 
-			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower, 
+		/*SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
+			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower,
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
 			80);*/
 	}
@@ -208,52 +255,49 @@ public:
 	//根据当前模式，计算底盘三轴速度
 	void ChassisExpAxisSpeedSet();
 
-	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor3508Mt>& motor,
-						  MotorPosition position)->void
+	auto ExecuteProc() -> void override
 	{
-		m_MotorMsgCheck[position] = true;
-		if (!(m_MotorMsgCheck[LF] && m_MotorMsgCheck[LR] && m_MotorMsgCheck[RR] && m_MotorMsgCheck[RF]))  //俯视，左前，左后，右后，右前，逆时针
-			return;
-
-		UpdateChassisSensorFeedback();
-		if (m_FlagInitChassis)
-			InitChassis();
-
-		ChassisModeSet();
-		//[TODO] 模式切换过渡
-
-		ChassisExpAxisSpeedSet();
-		ChassisCtrl();
-
-		m_MotorMsgCheck.fill(false);
-		/*static hrClock::time_point lastSendSpCapTimestamp;
-		long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-			hrClock::now() - lastSendSpCapTimestamp).count();
-		if (interval > 100)   //不推荐以太高的频率发送功率数据，推荐10Hz
+		while (true)
 		{
-			m_SpCap->SetPower(m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower);
-			lastSendSpCapTimestamp = hrClock::now();
-		}*/
+			UpdateChassisSensorFeedback();
+			if (m_FlagInitChassis)
+				InitChassis();
+
+			ChassisModeSet();
+			//[TODO] 模式切换过渡
+
+			ChassisExpAxisSpeedSet();
+			ChassisCtrl();
+
+			/*static hrClock::time_point lastSendSpCapTimestamp;
+			long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+				hrClock::now() - lastSendSpCapTimestamp).count();
+			if (interval > 100)   //不推荐以太高的频率发送功率数据，推荐10Hz
+			{
+				m_SpCap->SetPower(m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower);
+				lastSendSpCapTimestamp = hrClock::now();
+			}*/
+		}
 	}
 
 private:
-	ossian::MotorManager* m_MotorManager;
-	std::array<std::shared_ptr<ossian::DJIMotor3508Mt>, 4> m_Motors;
-	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
 	ossian::IOData<RemoteStatus>* m_RC;  //遥控器
+	ossian::IOData<ossian::MultipleMotorsStatus<kNumChassisMotors>>* m_Motors;
 	ICapacitor* m_SpCap;
 	Gimbal* m_Gimbal;
+	Chassis* m_Chassis;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 
 	bool m_FlagInitChassis;
 	struct ChassisSensorFeedback
 	{
+		ossian::MultipleMotorsStatus<kNumChassisMotors> motors;
 		RemoteStatus rc;
 		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	///< 底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 		CapacitorStatus spCap;												///< 超级电容数据
 		PowerHeatData refereePowerHeatData;									///< 裁判系统数据
-		int refereeMaxPwr=80, refereeMaxBuf=60;  
+		int refereeMaxPwr = 80, refereeMaxBuf = 60;
 		double relativeAngle;												///< 底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
 	} m_ChassisSensorValues;
 
@@ -262,14 +306,13 @@ private:
 
 
 	ChassisMode m_CurChassisMode;
-	std::array<bool, 4> m_MotorMsgCheck;
 	Eigen::Vector4d m_WheelSpeedSet;
 	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
-	std::array<double, 4> m_CurrentSend;
+	std::array<double, kNumChassisMotors> m_CurrentSend;
 
 	FirstOrderFilter m_FOFilterVX, m_FOFilterVY;
 	PIDController m_PIDChassisAngle; ///< 底盘要旋转的角度--->底盘旋转角速度  底盘跟随角度环
-	std::array<PIDController, 4> m_PIDChassisSpeed; ///< 麦轮转速--->3508电流
+	std::array<PIDController, kNumChassisMotors> m_PIDChassisSpeed; ///< 麦轮转速--->3508电流
 };
 
 #endif // OSSIAN_CHASSIS_HPP

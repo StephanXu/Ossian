@@ -18,7 +18,7 @@ class Gimbal
 {
 public:
 	//云台pid控制频率
-	static constexpr double ctrlFreq = 125;   //hz
+	static constexpr double kCtrlFreq = 125;   //hz
 
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
@@ -129,26 +129,26 @@ public:
 		m_MotorMsgCheck.fill(false);
 
 		m_PIDAngleEcd[Pitch].SetParams(PIDAngleEcdPitchParams);
-		m_PIDAngleEcd[Pitch].SetCtrlFreq(ctrlFreq);
+		m_PIDAngleEcd[Pitch].SetkCtrlFreq(kCtrlFreq);
 		m_PIDAngleEcd[Pitch].SetFlagAngleLoop();
 
 		m_PIDAngleGyro[Pitch].SetParams(PIDAngleGyroPitchParams);
-		m_PIDAngleGyro[Pitch].SetCtrlFreq(ctrlFreq);
+		m_PIDAngleGyro[Pitch].SetkCtrlFreq(kCtrlFreq);
 		m_PIDAngleGyro[Pitch].SetFlagAngleLoop();
 
 		m_PIDAngleSpeed[Pitch].SetParams(PIDAngleSpeedPitchParams);
-		m_PIDAngleSpeed[Pitch].SetCtrlFreq(ctrlFreq);
+		m_PIDAngleSpeed[Pitch].SetkCtrlFreq(kCtrlFreq);
 
 		m_PIDAngleEcd[Yaw].SetParams(PIDAngleEcdYawParams);
-		m_PIDAngleEcd[Yaw].SetCtrlFreq(ctrlFreq);
+		m_PIDAngleEcd[Yaw].SetkCtrlFreq(kCtrlFreq);
 		m_PIDAngleEcd[Yaw].SetFlagAngleLoop();
 
 		m_PIDAngleGyro[Yaw].SetParams(PIDAngleGyroYawParams);
-		m_PIDAngleGyro[Yaw].SetCtrlFreq(ctrlFreq);
+		m_PIDAngleGyro[Yaw].SetkCtrlFreq(kCtrlFreq);
 		m_PIDAngleGyro[Yaw].SetFlagAngleLoop();
 
 		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
-		m_PIDAngleSpeed[Yaw].SetCtrlFreq(ctrlFreq);
+		m_PIDAngleSpeed[Yaw].SetkCtrlFreq(kCtrlFreq);
 
 		m_LastEcdTimeStamp.fill(hrClock::time_point());
 		m_CurrentSend.fill(0);

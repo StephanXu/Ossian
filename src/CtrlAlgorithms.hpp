@@ -107,7 +107,7 @@ public:
 		if (params[4] >= 0)
 			m_ThresIntegral = params[4];
 	}
-	void SetCtrlFreq(const double& freq)
+	void SetkCtrlFreq(const double& freq)
 	{
 		m_CtrlInterval = 1000.0 / freq;  //ms
 	}

@@ -11,6 +11,13 @@
 namespace ossian
 {
 
+template<size_t NumMotors>
+struct MultipleMotorsStatus
+{
+	uint16_t m_Encoding[NumMotors];
+	int16_t m_RPM[NumMotors];
+};
+
 #pragma pack(push,1)
 
 struct ReceiveModel3508

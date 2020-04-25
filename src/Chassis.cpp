@@ -2,14 +2,14 @@
 #include "Chassis.hpp"
 
 
-double Chassis::kTopWz = 0;
-double Chassis::kVxFilterCoef = 0;
-double Chassis::kVyFilterCoef = 0;
-std::array<double, 5> Chassis::PIDWheelSpeedParams;
-std::array<double, 5> Chassis::PIDChassisAngleParams;
+double ChassisCtrlTask::kTopWz = 0;
+double ChassisCtrlTask::kVxFilterCoef = 0;
+double ChassisCtrlTask::kVyFilterCoef = 0;
+std::array<double, 5> ChassisCtrlTask::PIDWheelSpeedParams;
+std::array<double, 5> ChassisCtrlTask::PIDChassisAngleParams;
 
 
-void Chassis::CalcWheelSpeedTarget()
+void ChassisCtrlTask::CalcWheelSpeedTarget()
 {
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);  //底盘三轴运动速度期望 m/s
 	m_WheelSpeedSet = m_WheelKinematicMat * vSet / kWheelRadius / (2.0 * M_PI) * 60; //[4, 3] * [3, 1] --> [4, 1]  轮子转速期望rpm
@@ -25,7 +25,7 @@ void Chassis::CalcWheelSpeedTarget()
 		m_WheelSpeedSet(0), m_WheelSpeedSet(1), m_WheelSpeedSet(2), m_WheelSpeedSet(3));*/
 }
 
-void Chassis::ChassisPowerCtrlByCurrent()
+void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 {
 	//double curPwr, curBuf, maxPwr, maxBuf; //这四个量从裁判系统获取
 
@@ -70,7 +70,7 @@ void Chassis::ChassisPowerCtrlByCurrent()
 	}
 }
 
-void Chassis::RCToChassisSpeed()
+void ChassisCtrlTask::RCToChassisSpeed()
 {
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;		// m/s
 	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * kChassisVyRCSen;       // m/s
@@ -86,7 +86,7 @@ void Chassis::RCToChassisSpeed()
 	m_VySet = DeadbandLimit(m_VySet, kChassisRCDeadband * kChassisVyRCSen);
 }
 
-void Chassis::ChassisModeSet()
+void ChassisCtrlTask::ChassisModeSet()
 {
 	switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
 	{
@@ -101,18 +101,18 @@ void Chassis::ChassisModeSet()
 	}
 }
 
-void Chassis::ChassisCtrl()
+void ChassisCtrlTask::ChassisCtrl()
 {
 	if (m_CurChassisMode == Disable)
 		m_CurrentSend.fill(0);
 	else
 	{
 		CalcWheelSpeedTarget();
-		for (size_t i = 0; i < m_Motors.size(); ++i)
+		for (size_t i = 0; i < kNumChassisMotors; ++i)
 		{
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
-				m_Motors[i]->Get().m_RPM);
+				m_ChassisSensorValues.motors.m_RPM[i]);
 			//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
 			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
@@ -122,7 +122,7 @@ void Chassis::ChassisCtrl()
 							i,
 							m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, 
 							i,
-							m_Motors[i]->Get().m_RPM, 
+							m_ChassisSensorValues.motors.m_RPM[i],
 							i,
 							m_CurrentSend[i]);
 		}
@@ -134,15 +134,13 @@ void Chassis::ChassisCtrl()
 
 	/*for (size_t i = 0; i < m_Motors.size(); ++i)
 		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
-
-	for (size_t i = 0; i < m_Motors.size(); ++i)
-		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-	m_Motors[LR]->Writer()->PackAndSend();
+	
+	m_Chassis->SendCurrentToMotors(m_CurrentSend);
 }
 
 //功率控制：通过减小底盘电机的期望速度来实现
 /*
-void Chassis::ChassisCtrl()
+void ChassisCtrlTask::ChassisCtrl()
 {
 	if (m_CurChassisMode == Disable)
 		m_CurrentSend.fill(0);
@@ -198,7 +196,7 @@ void Chassis::ChassisCtrl()
 	m_Motors[LR]->Writer()->PackAndSend();
 }
 */
-void Chassis::ChassisExpAxisSpeedSet()
+void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 {
 	//[TODO] 检验三角函数的符号
 	if (m_CurChassisMode == Disable)
