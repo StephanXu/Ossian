@@ -75,7 +75,7 @@ public:
 							 ossian::IOData<RobotStatus>* robotStatusListener,
 							 ossian::IOData<ShootData>* shootDataListener))
 		: m_MotorManager(motorManager)
-		, m_RC(remote)
+		, m_RCListener(remote)
 		, m_GimbalCtrlTask(gimbalCtrlTask)
 		, m_Config(config)
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
@@ -173,7 +173,7 @@ public:
 	{
 		static uint16_t lastHeat = 0;      //上次读取的热量值
 
-		m_GunSensorValues.rc = m_RC->Get();
+		m_GunSensorValues.rc = m_RCListener->Get();
 		m_GunSensorValues.gimbalInputSrc = m_GimbalCtrlTask->GimbalCtrlSrc();  //[TODO] 增加对自瞄模式射击的处理
 
 		m_GunSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
@@ -238,7 +238,7 @@ private:
 
 	hrClock::time_point m_LastRefresh;
 	Utils::ConfigLoader* m_Config;
-	ossian::IOData<RemoteStatus>* m_RC;  //遥控器
+	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
 	GimbalCtrlTask* m_GimbalCtrlTask;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 	ossian::IOData<RobotStatus>* m_RefereeRobotStatusListener;

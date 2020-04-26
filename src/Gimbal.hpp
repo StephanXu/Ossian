@@ -93,7 +93,7 @@ class GimbalCtrlTask : public ossian::IExecutable
 {
 public:
 	//云台pid控制频率
-	static constexpr double kCtrlFreq = 125;   //hz
+	static constexpr double kCtrlFreq = 500;   //hz
 
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
@@ -158,8 +158,8 @@ public:
 		Gimbal* gimbal,
 		Utils::ConfigLoader* config,
 		ossian::IOData<GyroModel>* gyroListener))
-		: m_Motors(motors)
-		, m_RC(remote)
+		: m_MotorsListener(motors)
+		, m_RCListener(remote)
 		, m_Gimbal(gimbal)
 		, m_Config(config)
 		, m_GyroListener(gyroListener)
@@ -238,9 +238,8 @@ public:
 
 	void UpdateGimbalSensorFeedback()
 	{
-		m_GimbalSensorValues.motors = m_Motors->WaitNextValue();
 		m_YawEcd = m_GimbalSensorValues.motors.m_Encoding[Yaw];
-		m_GimbalSensorValues.rc = m_RC->Get();
+		m_GimbalSensorValues.rc = m_RCListener->Get();
 		m_GimbalSensorValues.imu = m_GyroListener->Get();
 		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
 		std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
@@ -286,6 +285,8 @@ public:
 	{
 		while (true)
 		{
+			m_MotorsStatus = m_MotorsListener->WaitNextValue();
+
 			UpdateGimbalSensorFeedback();
 
 			GimbalCtrlSrcSet();
@@ -301,14 +302,15 @@ public:
 	}
 
 private:
-	ossian::IOData<GimbalMotorsModel>* m_Motors;
+	ossian::IOData<GimbalMotorsModel>* m_MotorsListener;
 	Utils::ConfigLoader* m_Config;
 	Gimbal* m_Gimbal;
-	ossian::IOData<RemoteStatus>* m_RC;  //遥控器
+	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
 	ossian::IOData<GyroModel>* m_GyroListener;
 
 	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
 	std::atomic<GimbalInputSrc> m_GimbalCtrlSrc;
+	GimbalMotorsModel m_MotorsStatus;
 
 	struct GimbalSensorFeedback
 	{

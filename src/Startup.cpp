@@ -67,7 +67,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<ICapacitor, CapacitorMt>(
 		[](ICapacitor& option)
 		{
-			option.AddCapacitor("can0", 0x211, 0x210);
+			//option.AddCapacitor("can0", 0x211, 0x210);
 		});
 	app.AddService<IGyro, GyroMt>(
 		[](IGyro& option)

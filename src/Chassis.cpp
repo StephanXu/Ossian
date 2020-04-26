@@ -112,7 +112,7 @@ void ChassisCtrlTask::ChassisCtrl()
 		{
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
 				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
-				m_ChassisSensorValues.motors.m_RPM[i]);
+				m_MotorsStatus.m_RPM[i]);
 			//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
 			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
@@ -122,7 +122,7 @@ void ChassisCtrlTask::ChassisCtrl()
 							i,
 							m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, 
 							i,
-							m_ChassisSensorValues.motors.m_RPM[i],
+							m_MotorsStatus.m_RPM[i],
 							i,
 							m_CurrentSend[i]);
 		}

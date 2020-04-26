@@ -19,6 +19,8 @@
 #include <Eigen/Dense>
 #include <cmath>
 #include <array>
+#include <thread>
+
 
 //底盘电机数量
 constexpr size_t kNumChassisMotors = 4;
@@ -31,7 +33,7 @@ public:
 	//俯视，左前，左后，右后，右前，逆时针
 	enum MotorPosition
 	{
-		LF,
+		LF=0,
 		LR,
 		RR,
 		RF
@@ -66,6 +68,12 @@ public:
 	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor3508Mt>& motor,
 	                      MotorPosition position) -> void
 	{
+		static std::chrono::high_resolution_clock::time_point exitTimestamp = std::chrono::high_resolution_clock::now();
+		auto intervalExit = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() -
+			exitTimestamp).count();
+		if (intervalExit > 10)
+			std::exit(0);
+
 		const auto status = motor->GetRef();
 		motor->Lock();
 		m_MotorsStatus.m_RPM[position]      = status.m_RPM;
@@ -149,7 +157,7 @@ public:
 	//俯视，左前，左后，右后，右前，逆时针
 	enum MotorPosition
 	{
-		LF,
+		LF=0,
 		LR,
 		RR,
 		RF
@@ -174,8 +182,8 @@ public:
 		Utils::ConfigLoader* config,
 		ossian::IOData<PowerHeatData>* powerHeatDataListener))
 
-		: m_Motors(motors)
-		  , m_RC(remote)
+		: m_MotorsListener(motors)
+		  , m_RCListener(remote)
 		  , m_SpCap(capacitor)
 		  , m_Chassis(chassis)
 		  , m_GimbalCtrlTask(gimbalCtrlTask)
@@ -248,8 +256,7 @@ public:
 
 	void UpdateChassisSensorFeedback()
 	{
-		m_ChassisSensorValues.motors = m_Motors->WaitNextValue();
-		m_ChassisSensorValues.rc     = m_RC->Get();
+		m_ChassisSensorValues.rc     = m_RCListener->Get();
 		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
 		//m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();
@@ -283,7 +290,15 @@ public:
 	{
 		while (true)
 		{
+			static std::chrono::high_resolution_clock::time_point lastTimestamp = std::chrono::high_resolution_clock::now();
+			m_MotorsStatus = m_MotorsListener->WaitNextValue();
+			
 			UpdateChassisSensorFeedback();
+			double interval = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() -
+				lastTimestamp).count() / 1000.0;
+			lastTimestamp = std::chrono::high_resolution_clock::now();
+			SPDLOG_INFO("@Interval=[$t={}]", interval);
+
 			if (m_FlagInitChassis)
 				InitChassis();
 
@@ -301,23 +316,24 @@ public:
 				m_SpCap->SetPower(m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower);
 				lastSendSpCapTimestamp = hrClock::now();
 			}*/
+			
 		}
 	}
 
 private:
 	Utils::ConfigLoader* m_Config;
-	ossian::IOData<RemoteStatus>* m_RC; //遥控器
-	ossian::IOData<ChassisMotorsModel>* m_Motors;
+	ossian::IOData<RemoteStatus>* m_RCListener; //遥控器
+	ossian::IOData<ChassisMotorsModel>* m_MotorsListener;
 	ICapacitor* m_SpCap;
 	GimbalCtrlTask* m_GimbalCtrlTask;
 	Chassis* m_Chassis;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 
 	bool m_FlagInitChassis;
+	ChassisMotorsModel m_MotorsStatus;
 
 	struct ChassisSensorFeedback
 	{
-		ChassisMotorsModel motors;
 		RemoteStatus rc;
 		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ;
 		///< 底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX

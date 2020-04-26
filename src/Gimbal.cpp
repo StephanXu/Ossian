@@ -15,8 +15,8 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 	SPDLOG_INFO("@FlagInitGimbal=[$flag={}]", static_cast<int>(m_FlagInitGimbal));
 	if (m_FlagInitGimbal)
 	{
-		double errorPitch = RelativeEcdToRad(m_GimbalSensorValues.motors.m_Encoding[Pitch], kPitchMidEcd);
-		double errorYaw = RelativeEcdToRad(m_GimbalSensorValues.motors.m_Encoding[Yaw], kYawMidEcd);
+		double errorPitch = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Pitch], kPitchMidEcd);
+		double errorYaw = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawMidEcd);
 		if (/*fabs(errorPitch) < 0.1 &&*/ fabs(errorYaw) < 0.1) 
 		{
 			SPDLOG_TRACE("Gimbal Init Done.");
@@ -76,7 +76,7 @@ void GimbalCtrlTask::GimbalCtrlInputProc()
 //遥控器：绝对量控制  [TODO]鼠标：增量控制
 void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 {
-	double curEcdAngle = RelativeEcdToRad(m_GimbalSensorValues.motors.m_Encoding[position], position == Pitch ?
+	double curEcdAngle = RelativeEcdToRad(m_MotorsStatus.m_Encoding[position], position == Pitch ?
 		kPitchMidEcd : kYawMidEcd);
 	if (m_GimbalCtrlSrc == Disable)
 		return;
@@ -145,7 +145,7 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 		else if (m_CurGimbalAngleMode == Encoding)
 		{
 			//[TODO]用电机转速rpm换算出云台角速度
-			double curEcdAngle = RelativeEcdToRad(m_GimbalSensorValues.motors.m_Encoding[position], position == Pitch ?
+			double curEcdAngle = RelativeEcdToRad(m_MotorsStatus.m_Encoding[position], position == Pitch ?
 				kPitchMidEcd : kYawMidEcd);
 			/*//初始时刻，无法通过差分计算出角速度 
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)

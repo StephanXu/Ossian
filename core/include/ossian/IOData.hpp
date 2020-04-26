@@ -146,7 +146,7 @@ public:
 		m_Payload     = value;
 		m_RefreshFlag = true;
 		m_Mutex.unlock();
-		m_ConditionVariable.notify_one();
+		m_ConditionVariable.notify_all();
 		m_OnChange(value);
 	}
 

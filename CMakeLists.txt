@@ -65,6 +65,7 @@ target_compile_options(Ossian
         PRIVATE
             "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused;-ggdb;-g3>>"
             "$<${msvc_cxx}:$<$<CONFIG:Debug>:-W3>>"
+            "-pg"
         )
 target_link_options(Ossian
         PRIVATE
