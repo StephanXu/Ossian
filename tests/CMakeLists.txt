@@ -25,3 +25,8 @@ add_executable(DITest)
 target_compile_features(DITest PRIVATE cxx_std_17)
 target_link_libraries(DITest PRIVATE OssianCore HKCamera spdlog::spdlog signalrclient mimalloc)
 target_sources(DITest PRIVATE DependencyInjection.cpp)
+
+add_executable (IOIntervalTest)
+target_compile_features(IOIntervalTest PRIVATE cxx_std_17)
+target_link_libraries(IOIntervalTest PRIVATE OssianCore spdlog::spdlog signalrclient mimalloc)
+target_sources(IOIntervalTest PRIVATE "IOIntervalTest.cpp" ../src/OnlineDebug.cpp)
