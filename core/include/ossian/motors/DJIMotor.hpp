@@ -1,4 +1,4 @@
-#ifndef OSSIAN_CORE_MOTORS_DJI_MOTOR
+ï»¿#ifndef OSSIAN_CORE_MOTORS_DJI_MOTOR
 #define OSSIAN_CORE_MOTORS_DJI_MOTOR
 
 #include <mutex>
@@ -11,7 +11,7 @@
 namespace ossian
 {
 
-//ÏÂ±êË³ĞòÓëMotorPositionÃ¶¾ÙÀïµÄË³ĞòÏàÍ¬
+//ä¸‹æ ‡é¡ºåºä¸MotorPositionæšä¸¾é‡Œçš„é¡ºåºç›¸åŒ
 template<size_t NumMotors>
 struct MultipleMotorsStatus
 {

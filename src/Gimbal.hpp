@@ -62,7 +62,9 @@ public:
 
 		m_MotorMsgCheck[position] = true;
 		if (!(m_MotorMsgCheck[Pitch] && m_MotorMsgCheck[Yaw]))
+		{
 			return;
+		}
 
 		m_IOData->Set(m_MotorsStatus);
 
@@ -72,7 +74,9 @@ public:
 	void SendVoltageToMotors(const std::array<double, kNumGimbalMotors>& currentSend)
 	{
 		for (size_t i = 0; i < kNumGimbalMotors; ++i)
+		{
 			m_Motors[i]->SetVoltage(currentSend[i]);
+		}
 		m_Motors[Pitch]->Writer()->PackAndSend();
 	}
 

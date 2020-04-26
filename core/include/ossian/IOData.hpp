@@ -217,9 +217,6 @@ private:
 template <typename Mutex, typename ...DataModelTypes>
 class IODataServiceBuilder
 {
-	template <int N, typename... Ts>
-	using NThTypeOf = typename std::tuple_element<N, std::tuple<Ts...>>::type;
-
 	ApplicationBuilder& m_AppBuilder;
 public:
 	IODataServiceBuilder(ApplicationBuilder& appBuilder): m_AppBuilder(appBuilder)

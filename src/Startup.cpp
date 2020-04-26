@@ -97,6 +97,9 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOWorker>();
 	app.AddExecutable<IOPeeker<0>>();
 	app.AddExecutable<IOPeeker<1>>();
+
+	app.AddExecutable<ChassisCtrlTask>();
+	app.AddExecutable<GimbalCtrlTask>();
 	
 	//app.AddService<ossian::IExecutable, CameraPeeker>();
 }
