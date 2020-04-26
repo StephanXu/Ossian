@@ -31,7 +31,7 @@ void Gun::FricModeSet()
 			m_FricMode = FricMode::Disable; break;
 		}
 	}
-	else if (m_GunSensorValues.gimbalInputSrc == Gimbal::GimbalInputSrc::Disable)
+	else if (m_GunSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable)
 		m_FricMode = FricMode::Disable;
 	else
 		m_FricMode = FricMode::Disable;

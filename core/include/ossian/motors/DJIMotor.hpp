@@ -11,6 +11,7 @@
 namespace ossian
 {
 
+//下标顺序与MotorPosition枚举里的顺序相同
 template<size_t NumMotors>
 struct MultipleMotorsStatus
 {

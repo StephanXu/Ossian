@@ -170,7 +170,7 @@ public:
 		ossian::IOData<RemoteStatus>* remote,
 		ICapacitor* capacitor,
 		Chassis* chassis,
-		Gimbal* gimbal,
+		GimbalCtrlTask* gimbalCtrlTask,
 		Utils::ConfigLoader* config,
 		ossian::IOData<PowerHeatData>* powerHeatDataListener))
 
@@ -178,7 +178,7 @@ public:
 		  , m_RC(remote)
 		  , m_SpCap(capacitor)
 		  , m_Chassis(chassis)
-		  , m_Gimbal(gimbal)
+		  , m_GimbalCtrlTask(gimbalCtrlTask)
 		  , m_Config(config)
 		  , m_RefereePowerHeatDataListener(powerHeatDataListener)
 	{
@@ -248,11 +248,11 @@ public:
 
 	void UpdateChassisSensorFeedback()
 	{
-		m_ChassisSensorValues.motors = m_Motors->Get();
+		m_ChassisSensorValues.motors = m_Motors->WaitNextValue();
 		m_ChassisSensorValues.rc     = m_RC->Get();
 		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
-		//m_ChassisSensorValues.relativeAngle = m_Gimbal->RelativeAngleToChassis();
+		//m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000; //v
@@ -283,8 +283,6 @@ public:
 	{
 		while (true)
 		{
-			auto motorStatus{ m_Motors->WaitNextValue() };
-			
 			UpdateChassisSensorFeedback();
 			if (m_FlagInitChassis)
 				InitChassis();
@@ -311,7 +309,7 @@ private:
 	ossian::IOData<RemoteStatus>* m_RC; //遥控器
 	ossian::IOData<ChassisMotorsModel>* m_Motors;
 	ICapacitor* m_SpCap;
-	Gimbal* m_Gimbal;
+	GimbalCtrlTask* m_GimbalCtrlTask;
 	Chassis* m_Chassis;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 
@@ -319,7 +317,7 @@ private:
 
 	struct ChassisSensorFeedback
 	{
-		ossian::MultipleMotorsStatus<kNumChassisMotors> motors;
+		ChassisMotorsModel motors;
 		RemoteStatus rc;
 		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ;
 		///< 底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX

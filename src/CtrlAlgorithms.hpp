@@ -7,7 +7,6 @@
 #include <array>
 #include <Eigen/Dense>
 
-using hrClock = std::chrono::high_resolution_clock;
 // 限幅函数
 template<typename T>
 inline T Clamp(T value, const T& lowerBnd, const T& upperBnd)

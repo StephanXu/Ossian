@@ -1,22 +1,22 @@
 ﻿
 #include "Gimbal.hpp"
 
-std::array<double, 5> Gimbal::PIDAngleEcdPitchParams;
-std::array<double, 5> Gimbal::PIDAngleGyroPitchParams;
-std::array<double, 5> Gimbal::PIDAngleSpeedPitchParams;
-std::array<double, 5> Gimbal::PIDAngleEcdYawParams;
-std::array<double, 5> Gimbal::PIDAngleGyroYawParams;
-std::array<double, 5> Gimbal::PIDAngleSpeedYawParams;
+std::array<double, 5> GimbalCtrlTask::PIDAngleEcdPitchParams;
+std::array<double, 5> GimbalCtrlTask::PIDAngleGyroPitchParams;
+std::array<double, 5> GimbalCtrlTask::PIDAngleSpeedPitchParams;
+std::array<double, 5> GimbalCtrlTask::PIDAngleEcdYawParams;
+std::array<double, 5> GimbalCtrlTask::PIDAngleGyroYawParams;
+std::array<double, 5> GimbalCtrlTask::PIDAngleSpeedYawParams;
 
 
 
-void Gimbal::GimbalCtrlSrcSet()
+void GimbalCtrlTask::GimbalCtrlSrcSet()
 {
 	SPDLOG_INFO("@FlagInitGimbal=[$flag={}]", static_cast<int>(m_FlagInitGimbal));
 	if (m_FlagInitGimbal)
 	{
-		double errorPitch = RelativeEcdToRad(m_Motors[Pitch]->Get().m_Encoding, kPitchMidEcd);
-		double errorYaw = RelativeEcdToRad(m_Motors[Yaw]->Get().m_Encoding, kYawMidEcd);
+		double errorPitch = RelativeEcdToRad(m_GimbalSensorValues.motors.m_Encoding[Pitch], kPitchMidEcd);
+		double errorYaw = RelativeEcdToRad(m_GimbalSensorValues.motors.m_Encoding[Yaw], kYawMidEcd);
 		if (/*fabs(errorPitch) < 0.1 &&*/ fabs(errorYaw) < 0.1) 
 		{
 			SPDLOG_TRACE("Gimbal Init Done.");
@@ -26,7 +26,7 @@ void Gimbal::GimbalCtrlSrcSet()
 			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
 			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
 
-			m_LastEcdTimeStamp.fill(hrClock::time_point());
+			m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 			m_PIDAngleEcd[Pitch].Reset();
 			m_PIDAngleGyro[Pitch].Reset();
 			m_PIDAngleSpeed[Pitch].Reset();
@@ -61,7 +61,7 @@ void Gimbal::GimbalCtrlSrcSet()
 
 }
 
-void Gimbal::GimbalCtrlInputProc()
+void GimbalCtrlTask::GimbalCtrlInputProc()
 {
 	if (m_GimbalCtrlSrc == RC)
 	{
@@ -74,10 +74,10 @@ void Gimbal::GimbalCtrlInputProc()
 
 
 //遥控器：绝对量控制  [TODO]鼠标：增量控制
-void Gimbal::GimbalExpAngleSet(MotorPosition position)
+void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 {
-	double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Get().m_Encoding, position == Pitch ? kPitchMidEcd : 
-		kYawMidEcd);
+	double curEcdAngle = RelativeEcdToRad(m_GimbalSensorValues.motors.m_Encoding[position], position == Pitch ?
+		kPitchMidEcd : kYawMidEcd);
 	if (m_GimbalCtrlSrc == Disable)
 		return;
 	else if (m_GimbalCtrlSrc == RC)
@@ -116,7 +116,7 @@ void Gimbal::GimbalExpAngleSet(MotorPosition position)
 	
 }
 
-void Gimbal::GimbalCtrl(MotorPosition position)
+void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 {
 	if (m_GimbalCtrlSrc == Disable)
 		m_CurrentSend.fill(0);
@@ -145,7 +145,7 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 		else if (m_CurGimbalAngleMode == Encoding)
 		{
 			//[TODO]用电机转速rpm换算出云台角速度
-			double curEcdAngle = RelativeEcdToRad(m_Motors[position]->Get().m_Encoding, position == Pitch ?
+			double curEcdAngle = RelativeEcdToRad(m_GimbalSensorValues.motors.m_Encoding[position], position == Pitch ?
 				kPitchMidEcd : kYawMidEcd);
 			/*//初始时刻，无法通过差分计算出角速度 
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
@@ -186,4 +186,6 @@ void Gimbal::GimbalCtrl(MotorPosition position)
 
 		}
 	}
+
+	m_Gimbal->SendVoltageToMotors(m_CurrentSend);
 }
