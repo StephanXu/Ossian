@@ -55,6 +55,7 @@ target_link_libraries(Ossian
             "$<$<BOOL:${CUDA_FOUND}>:${CUDA_LIBRARIES}>"
             OssianCore
             Eigen3::Eigen
+            -lprofiler
         )
 
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
@@ -65,7 +66,6 @@ target_compile_options(Ossian
         PRIVATE
             "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused;-ggdb;-g3>>"
             "$<${msvc_cxx}:$<$<CONFIG:Debug>:-W3>>"
-            "-pg"
         )
 target_link_options(Ossian
         PRIVATE

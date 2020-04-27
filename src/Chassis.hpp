@@ -68,12 +68,6 @@ public:
 	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor3508Mt>& motor,
 	                      MotorPosition position) -> void
 	{
-		static std::chrono::high_resolution_clock::time_point exitTimestamp = std::chrono::high_resolution_clock::now();
-		auto intervalExit = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() -
-			exitTimestamp).count();
-		if (intervalExit > 10)
-			std::exit(0);
-
 		const auto status = motor->GetRef();
 		motor->Lock();
 		m_MotorsStatus.m_RPM[position]      = status.m_RPM;
@@ -178,7 +172,7 @@ public:
 		ossian::IOData<RemoteStatus>* remote,
 		ICapacitor* capacitor,
 		Chassis* chassis,
-		GimbalCtrlTask* gimbalCtrlTask,
+		/*GimbalCtrlTask* gimbalCtrlTask,*/
 		Utils::ConfigLoader* config,
 		ossian::IOData<PowerHeatData>* powerHeatDataListener))
 
@@ -186,7 +180,7 @@ public:
 		  , m_RCListener(remote)
 		  , m_SpCap(capacitor)
 		  , m_Chassis(chassis)
-		  , m_GimbalCtrlTask(gimbalCtrlTask)
+		  /*, m_GimbalCtrlTask(gimbalCtrlTask)*/
 		  , m_Config(config)
 		  , m_RefereePowerHeatDataListener(powerHeatDataListener)
 	{
@@ -325,7 +319,7 @@ private:
 	ossian::IOData<RemoteStatus>* m_RCListener; //遥控器
 	ossian::IOData<ChassisMotorsModel>* m_MotorsListener;
 	ICapacitor* m_SpCap;
-	GimbalCtrlTask* m_GimbalCtrlTask;
+	/*GimbalCtrlTask* m_GimbalCtrlTask;*/
 	Chassis* m_Chassis;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 
