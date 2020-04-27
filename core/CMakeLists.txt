@@ -30,6 +30,7 @@ target_link_libraries(OssianCore
 			protobuf::libprotobuf
 			mimalloc
 			Boost::boost
+			-lprofiler
 		)
 
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")

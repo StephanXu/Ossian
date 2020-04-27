@@ -12,14 +12,11 @@ static void sighandler(int sig_no)
 
 int main()
 {
-	std::signal(SIGTERM, sighandler);
-
 	ProfilerStart("Ossian.prof");
+	std::signal(SIGTERM, sighandler);
 	ossian::ApplicationBuilder()
 		.UseStartup<Startup>()
 		.Realization()
 		.Run();
 	ProfilerStop();
-
-	return 0;
 }

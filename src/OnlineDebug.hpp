@@ -29,7 +29,7 @@ class SignalRLogger : public signalr::log_writer
 	std::shared_ptr<spdlog::logger> m_Logger;
 public:
 	SignalRLogger()
-		:m_Logger(spdlog::basic_logger_mt("SignalRLogger", "OnlineDebug.log"))
+		: m_Logger(spdlog::basic_logger_mt("SignalRLogger", "OnlineDebug.log"))
 	{
 	}
 
@@ -45,7 +45,7 @@ public:
 /**
  * @brief RPC hub (for server calling client).
  */
-class OnlineDebugHub :public BaseHub
+class OnlineDebugHub : public BaseHub
 {
 public:
 	OnlineDebugHub() = delete;
@@ -60,7 +60,7 @@ public:
  * 
  * @tparam Mutex Mutex type.
  */
-template<typename Mutex>
+template <typename Mutex>
 class online_logger_sink : public spdlog::sinks::base_sink<Mutex>
 {
 	OnlineDebugHub& m_Hub;
@@ -68,8 +68,8 @@ class online_logger_sink : public spdlog::sinks::base_sink<Mutex>
 	std::string m_LogId;
 public:
 	online_logger_sink(OnlineDebugHub& onlineDebugHub, std::string logId)
-		:m_Hub(onlineDebugHub)
-		, m_LogId(logId)
+		: m_Hub(onlineDebugHub)
+		  , m_LogId(logId)
 	{
 	}
 
@@ -83,7 +83,10 @@ protected:
 
 	void flush_() override
 	{
-		m_Hub.Invoke("AddLog", m_LogId, m_Logs);
+		std::thread([this, logs = m_Logs]()
+		{
+			m_Hub.Invoke("AddLog", m_LogId, logs);
+		}).detach();
 		m_Logs.clear();
 	}
 };
@@ -111,11 +114,12 @@ public:
 	 */
 	auto Connect(std::string url)
 	{
-		m_Hub.reset(new OnlineDebugHub{ std::move(
-			signalr::hub_connection_builder::create(url)
-			   .with_logging(std::make_shared<SignalRLogger>(), signalr::trace_level::all)
-			   .build())
-			});
+		m_Hub.reset(new OnlineDebugHub{
+			std::move(
+				signalr::hub_connection_builder::create(url)
+				.with_logging(std::make_shared<SignalRLogger>(), signalr::trace_level::errors)
+				.build())
+		});
 		m_Valid = true;
 	}
 
@@ -127,8 +131,8 @@ public:
 	 * @param logDescription The description to display on online board.
 	 */
 	auto StartLogging(std::string loggerName,
-					  std::string logName, 
-					  std::string logDescription)
+	                  std::string logName,
+	                  std::string logDescription)
 	{
 		if (!m_Valid)
 		{
@@ -137,16 +141,16 @@ public:
 
 		std::promise<std::string> waitLogId;
 		m_Hub->Invoke("CreateLog", logName, logDescription)
-			.Then<std::string>(
-				[&waitLogId](const std::string& id, std::exception_ptr)
-				{
-					waitLogId.set_value(std::string{ id });
-				});
-		auto distSink = std::make_shared<spdlog::sinks::dist_sink_mt>();
-		auto stdSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+		     .Then<std::string>(
+			     [&waitLogId](const std::string& id, std::exception_ptr)
+			     {
+				     waitLogId.set_value(std::string{id});
+			     });
+		auto distSink   = std::make_shared<spdlog::sinks::dist_sink_mt>();
+		auto stdSink    = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 		auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, waitLogId.get_future().get());
 
-		distSink->add_sink(stdSink);
+		//distSink->add_sink(stdSink);
 		distSink->add_sink(onlineSink);
 
 		auto logger = std::make_shared<spdlog::logger>(loggerName, distSink);
@@ -155,13 +159,13 @@ public:
 		spdlog::register_logger(logger);
 		spdlog::set_default_logger(logger);
 		std::thread([logger]()
-					{
-						while (true)
-						{
-							std::this_thread::sleep_for(std::chrono::milliseconds(30));
-							logger->flush();
-						}
-					}).detach();
+		{
+			while (true)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+				logger->flush();
+			}
+		}).detach();
 	}
 };
 

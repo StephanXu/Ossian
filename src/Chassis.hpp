@@ -33,7 +33,7 @@ public:
 	//俯视，左前，左后，右后，右前，逆时针
 	enum MotorPosition
 	{
-		LF=0,
+		LF = 0,
 		LR,
 		RR,
 		RF
@@ -43,16 +43,16 @@ public:
 		ossian::MotorManager* motorManager,
 		ossian::IOData<ChassisMotorsModel>* ioData))
 		: m_MotorManager(motorManager)
-		  , m_MotorsStatus()
-		  , m_IOData(ioData)
+		, m_MotorsStatus()
+		, m_IOData(ioData)
 	{
 		m_MotorMsgCheck.fill(false);
 	}
 
 	auto AddMotor(const MotorPosition position,
-	              const std::string location,
-	              const unsigned int motorId,
-	              const unsigned int writerCanId) -> void
+				  const std::string location,
+				  const unsigned int motorId,
+				  const unsigned int writerCanId) -> void
 	{
 		m_Motors[position] =
 			m_MotorManager->AddMotor<ossian::DJIMotor3508Mt>(
@@ -66,11 +66,11 @@ public:
 	}
 
 	auto MotorReceiveProc(const std::shared_ptr<ossian::DJIMotor3508Mt>& motor,
-	                      MotorPosition position) -> void
+						  MotorPosition position) -> void
 	{
 		const auto status = motor->GetRef();
 		motor->Lock();
-		m_MotorsStatus.m_RPM[position]      = status.m_RPM;
+		m_MotorsStatus.m_RPM[position] = status.m_RPM;
 		m_MotorsStatus.m_Encoding[position] = status.m_Encoding;
 		motor->UnLock();
 
@@ -81,7 +81,7 @@ public:
 		}
 
 		m_IOData->Set(m_MotorsStatus);
-		
+
 		m_MotorMsgCheck.fill(false);
 	}
 
@@ -109,33 +109,33 @@ public:
 	static constexpr double kCtrlFreq = 125; //hz
 
 	//麦轮运动
-	static constexpr double kWheelRadius              = 76.0 / 1000.0;  ///< m
-	static constexpr double kWheelXn                  = 175.0 / 1000.0; ///< m
-	static constexpr double kWheelYn                  = 232.5 / 1000;   ///< m
-	static constexpr double kWheelSpeedLimit          = 225;            ///< 单个麦轮的最大转速rpm
+	static constexpr double kWheelRadius = 76.0 / 1000.0;  ///< m
+	static constexpr double kWheelXn = 175.0 / 1000.0; ///< m
+	static constexpr double kWheelYn = 232.5 / 1000;   ///< m
+	static constexpr double kWheelSpeedLimit = 225;            ///< 单个麦轮的最大转速rpm
 	static constexpr double kWheelSpeedToMotorRPMCoef = 11.875;
 	//static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
 
 	//底盘功率控制
 	static constexpr double kBufferTotalCurrentLimit = 16000;
-	static constexpr double kPowerTotalCurrentLimit  = 20000;
-	static constexpr double kSpCapWarnVoltage        = 12;
+	static constexpr double kPowerTotalCurrentLimit = 20000;
+	static constexpr double kSpCapWarnVoltage = 12;
 
 	//遥控器解析
-	static constexpr size_t kChassisXChannel    = 1; ///< 控制底盘 前后 速度的遥控器通道
-	static constexpr size_t kChassisYChannel    = 0; ///< 控制底盘 左右 速度的遥控器通道
-	static constexpr size_t kChassisZChannel    = 2; ///< 控制底盘 旋转 速度的遥控器通道 仅当使用Openloop_Z模式时可用
+	static constexpr size_t kChassisXChannel = 1; ///< 控制底盘 前后 速度的遥控器通道
+	static constexpr size_t kChassisYChannel = 0; ///< 控制底盘 左右 速度的遥控器通道
+	static constexpr size_t kChassisZChannel = 2; ///< 控制底盘 旋转 速度的遥控器通道 仅当使用Openloop_Z模式时可用
 	static constexpr size_t kChassisModeChannel = 0; ///< 选择底盘状态的开关通道
 
-	static constexpr uint8_t kRCSwUp   = 1;
-	static constexpr uint8_t kRCSwMid  = 3;
+	static constexpr uint8_t kRCSwUp = 1;
+	static constexpr uint8_t kRCSwMid = 3;
 	static constexpr uint8_t kRCSwDown = 2;
 
 	static constexpr int16_t kChassisRCDeadband = 10;     ///< 摇杆死区
-	static constexpr double kChassisVxRCSen     = 0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
-	static constexpr double kChassisVyRCSen     = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
-	static constexpr double kChassisWzRCSen     = -0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
-	static constexpr double kChassisCtrlPeriod  = 0.008;  //底盘控制周期 s
+	static constexpr double kChassisVxRCSen = 0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
+	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
+	static constexpr double kChassisWzRCSen = -0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+	static constexpr double kChassisCtrlPeriod = 0.008;  //底盘控制周期 s
 
 	//底盘运动
 	static constexpr double kChassisVxLimit = 3.5; ///< m/s
@@ -151,7 +151,7 @@ public:
 	//俯视，左前，左后，右后，右前，逆时针
 	enum MotorPosition
 	{
-		LF=0,
+		LF = 0,
 		LR,
 		RR,
 		RF
@@ -161,28 +161,28 @@ public:
 	{
 		Disable, ///< 失能
 		Follow_Gimbal_Yaw, ///< 跟随云台
-		
+
 		//Follow_Chassis_Yaw,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
-		
+
 		Top, ///< 小陀螺
 		Openloop_Z ///< 单独调试底盘
 	};
 
 	OSSIAN_SERVICE_SETUP(ChassisCtrlTask(ossian::IOData<ChassisMotorsModel>* motors,
-		ossian::IOData<RemoteStatus>* remote,
-		ICapacitor* capacitor,
-		Chassis* chassis,
-		/*GimbalCtrlTask* gimbalCtrlTask,*/
-		Utils::ConfigLoader* config,
-		ossian::IOData<PowerHeatData>* powerHeatDataListener))
+										 ossian::IOData<RemoteStatus>* remote,
+										 ICapacitor* capacitor,
+										 Chassis* chassis,
+										 /*GimbalCtrlTask* gimbalCtrlTask,*/
+										 Utils::ConfigLoader* config,
+										 ossian::IOData<PowerHeatData>* powerHeatDataListener))
 
 		: m_MotorsListener(motors)
-		  , m_RCListener(remote)
-		  , m_SpCap(capacitor)
-		  , m_Chassis(chassis)
-		  /*, m_GimbalCtrlTask(gimbalCtrlTask)*/
-		  , m_Config(config)
-		  , m_RefereePowerHeatDataListener(powerHeatDataListener)
+		, m_RCListener(remote)
+		, m_SpCap(capacitor)
+		, m_Chassis(chassis)
+		/*, m_GimbalCtrlTask(gimbalCtrlTask)*/
+		, m_Config(config)
+		, m_RefereePowerHeatDataListener(powerHeatDataListener)
 	{
 		using OssianConfig::Configuration;
 		PIDWheelSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->kp();
@@ -197,7 +197,7 @@ public:
 		PIDChassisAngleParams[3] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->thout();
 		PIDChassisAngleParams[4] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->thiout();
 
-		kTopWz        = m_Config->Instance<Configuration>()->mutable_chassis()->ktopwz();
+		kTopWz = m_Config->Instance<Configuration>()->mutable_chassis()->ktopwz();
 		kVxFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->kvxfiltercoef();
 		kVyFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->kvyfiltercoef();
 
@@ -250,7 +250,7 @@ public:
 
 	void UpdateChassisSensorFeedback()
 	{
-		m_ChassisSensorValues.rc     = m_RCListener->Get();
+		m_ChassisSensorValues.rc = m_RCListener->Get();
 		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
 		//m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();
@@ -282,16 +282,23 @@ public:
 
 	auto ExecuteProc() -> void override
 	{
+		using Clock = std::chrono::high_resolution_clock;
+		using TimeStamp = Clock::time_point;
+		
+		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			static std::chrono::high_resolution_clock::time_point lastTimestamp = std::chrono::high_resolution_clock::now();
-			m_MotorsStatus = m_MotorsListener->WaitNextValue();
+			while (12000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			{
+				std::this_thread::yield();
+			}
+			SPDLOG_INFO("@Interval=[$t={}]",
+						std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);
 			
+			lastTime = Clock::now();
+			m_MotorsStatus = m_MotorsListener->Get();
+
 			UpdateChassisSensorFeedback();
-			double interval = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() -
-				lastTimestamp).count() / 1000.0;
-			lastTimestamp = std::chrono::high_resolution_clock::now();
-			SPDLOG_INFO("@Interval=[$t={}]", interval);
 
 			if (m_FlagInitChassis)
 				InitChassis();
@@ -310,7 +317,6 @@ public:
 				m_SpCap->SetPower(m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower);
 				lastSendSpCapTimestamp = hrClock::now();
 			}*/
-			
 		}
 	}
 

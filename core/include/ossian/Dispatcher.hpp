@@ -58,7 +58,6 @@ private:
      */
     explicit Dispatcher(DI::Injector &&injector);
 
-    ThreadPool m_ThreadPool;
     DI::Injector m_Injector;
 };
 
