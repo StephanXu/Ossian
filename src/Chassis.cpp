@@ -72,6 +72,7 @@ void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 
 void ChassisCtrlTask::RCToChassisSpeed()
 {
+	//m_ChassisSensorValues.rc.ch[kChassisXChannel] = 200;
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;		// m/s
 	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * kChassisVyRCSen;       // m/s
 	if (m_CurChassisMode == Openloop_Z)
@@ -125,6 +126,7 @@ void ChassisCtrlTask::ChassisCtrl()
 							m_MotorsStatus.m_RPM[i],
 							i,
 							m_CurrentSend[i]);
+			//m_PIDChassisSpeed[i].PrintDetails(i);
 		}
 	}
 	m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
@@ -134,7 +136,6 @@ void ChassisCtrlTask::ChassisCtrl()
 
 	/*for (size_t i = 0; i < m_Motors.size(); ++i)
 		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
-	
 	m_Chassis->SendCurrentToMotors(m_CurrentSend);
 }
 

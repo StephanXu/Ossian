@@ -20,7 +20,7 @@ class Gun
 {
 public:
 	//射击pid控制频率
-	static constexpr double kCtrlFreq = 125;   //hz
+	static constexpr double kCtrlItv = 12;   //ms
 
 	//摩擦轮转速期望rpm [TODO]实验得出不同等级下的射击初速度上限所对应的摩擦轮转速期望
 	static int16_t kFricSpeed12;
@@ -54,7 +54,7 @@ public:
 
 	enum MotorPosition
 	{
-		FricBelow, FricUpper, Feed
+		FricBelow=0, FricUpper, Feed
 	};
 
 	enum FricMode
@@ -115,11 +115,11 @@ public:
 
 		PIDController pidFricSpeed;
 		pidFricSpeed.SetParams(PIDFricSpeedParams);
-		pidFricSpeed.SetkCtrlFreq(kCtrlFreq);
+		pidFricSpeed.SetCtrlPeriod(kCtrlItv);
 		m_PIDFricSpeed.fill(pidFricSpeed);
 
 		m_PIDFeedSpeed.SetParams(PIDFeedSpeedParams);
-		m_PIDFeedSpeed.SetkCtrlFreq(kCtrlFreq);
+		m_PIDFeedSpeed.SetCtrlPeriod(kCtrlItv);
 
 	}
 

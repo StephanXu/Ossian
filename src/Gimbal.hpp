@@ -23,9 +23,14 @@ class Gimbal : public ossian::IODataBuilder<std::mutex, GimbalMotorsModel>
 public:
 	enum MotorPosition
 	{
-		Pitch, Yaw
+		Pitch=0, Yaw
 	};
-	
+
+	enum GimbalInputSrc
+	{
+		Disable, Init, RC, Mouse, Aimbot, Windmill
+	};
+
 	OSSIAN_SERVICE_SETUP(Gimbal(
 		ossian::MotorManager* motorManager,
 		ossian::IOData<GimbalMotorsModel>* ioData))
@@ -58,6 +63,8 @@ public:
 		motor->Lock();
 		m_MotorsStatus.m_RPM[position] = status.m_RPM;
 		m_MotorsStatus.m_Encoding[position] = status.m_Encoding;
+		if (position == Yaw)
+			m_YawEcd = status.m_Encoding;
 		motor->UnLock();
 
 		m_MotorMsgCheck[position] = true;
@@ -80,6 +87,13 @@ public:
 		m_Motors[Pitch]->Writer()->PackAndSend();
 	}
 
+	double RelativeAngleToChassis() 
+	{ 
+		static constexpr uint16_t kYawMidEcd = 5504;
+		return -RelativeEcdToRad(m_YawEcd.load(), kYawMidEcd); //[TODO]负号？
+	} 
+
+
 private:
 	ossian::MotorManager* m_MotorManager;  	
 	std::array<std::shared_ptr<ossian::DJIMotor6020Mt>, kNumGimbalMotors> m_Motors;
@@ -87,13 +101,14 @@ private:
 	ossian::IOData<GimbalMotorsModel>* m_IOData;
 
 	std::array<bool, kNumGimbalMotors> m_MotorMsgCheck;
+	std::atomic<uint16_t> m_YawEcd;
 };
 
 class GimbalCtrlTask : public ossian::IExecutable
 {
 public:
 	//云台pid控制频率
-	static constexpr double kCtrlFreq = 500;   //hz
+	static constexpr double kCtrlItv = 12;   //ms
 
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
@@ -205,26 +220,26 @@ public:
 		m_FlagInitGimbal = true;
 
 		m_PIDAngleEcd[Pitch].SetParams(PIDAngleEcdPitchParams);
-		m_PIDAngleEcd[Pitch].SetkCtrlFreq(kCtrlFreq);
+		m_PIDAngleEcd[Pitch].SetCtrlPeriod(kCtrlItv);
 		m_PIDAngleEcd[Pitch].SetFlagAngleLoop();
 
 		m_PIDAngleGyro[Pitch].SetParams(PIDAngleGyroPitchParams);
-		m_PIDAngleGyro[Pitch].SetkCtrlFreq(kCtrlFreq);
+		m_PIDAngleGyro[Pitch].SetCtrlPeriod(kCtrlItv);
 		m_PIDAngleGyro[Pitch].SetFlagAngleLoop();
 
 		m_PIDAngleSpeed[Pitch].SetParams(PIDAngleSpeedPitchParams);
-		m_PIDAngleSpeed[Pitch].SetkCtrlFreq(kCtrlFreq);
+		m_PIDAngleSpeed[Pitch].SetCtrlPeriod(kCtrlItv);
 
 		m_PIDAngleEcd[Yaw].SetParams(PIDAngleEcdYawParams);
-		m_PIDAngleEcd[Yaw].SetkCtrlFreq(kCtrlFreq);
+		m_PIDAngleEcd[Yaw].SetCtrlPeriod(kCtrlItv);
 		m_PIDAngleEcd[Yaw].SetFlagAngleLoop();
 
 		m_PIDAngleGyro[Yaw].SetParams(PIDAngleGyroYawParams);
-		m_PIDAngleGyro[Yaw].SetkCtrlFreq(kCtrlFreq);
+		m_PIDAngleGyro[Yaw].SetCtrlPeriod(kCtrlItv);
 		m_PIDAngleGyro[Yaw].SetFlagAngleLoop();
 
 		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
-		m_PIDAngleSpeed[Yaw].SetkCtrlFreq(kCtrlFreq);
+		m_PIDAngleSpeed[Yaw].SetCtrlPeriod(kCtrlItv);
 
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_CurrentSend.fill(0);
@@ -238,7 +253,6 @@ public:
 
 	void UpdateGimbalSensorFeedback()
 	{
-		m_YawEcd = m_GimbalSensorValues.motors.m_Encoding[Yaw];
 		m_GimbalSensorValues.rc = m_RCListener->Get();
 		m_GimbalSensorValues.imu = m_GyroListener->Get();
 		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
@@ -267,7 +281,6 @@ public:
 
 	}
 
-	double RelativeAngleToChassis() { return -RelativeEcdToRad(m_YawEcd.load(), kYawMidEcd); } //[TODO]负号？
 
 	//设置云台角度输入来源
 	void GimbalCtrlSrcSet();
@@ -283,9 +296,22 @@ public:
 
 	auto ExecuteProc() -> void override
 	{
+		using Clock = std::chrono::high_resolution_clock;
+		using TimeStamp = Clock::time_point;
+
+		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			m_MotorsStatus = m_MotorsListener->WaitNextValue();
+			while (5000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			{
+				std::this_thread::yield();
+			}
+			/*SPDLOG_INFO("@Interval=[$t={}]",
+				std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
+
+			lastTime = Clock::now();
+
+			m_MotorsStatus = m_MotorsListener->Get();
 
 			UpdateGimbalSensorFeedback();
 
@@ -320,7 +346,6 @@ private:
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
 
-	std::atomic<uint16_t> m_YawEcd;
 	bool m_FlagInitGimbal;
 
 	std::array<double, kNumGimbalMotors> m_AngleInput;

@@ -106,7 +106,7 @@ class ChassisCtrlTask : public ossian::IExecutable
 {
 public:
 	//底盘pid控制频率
-	static constexpr double kCtrlFreq = 125; //hz
+	static constexpr double kCtrlItv = 12; //ms
 
 	//麦轮运动
 	static constexpr double kWheelRadius = 76.0 / 1000.0;  ///< m
@@ -172,7 +172,7 @@ public:
 										 ossian::IOData<RemoteStatus>* remote,
 										 ICapacitor* capacitor,
 										 Chassis* chassis,
-										 /*GimbalCtrlTask* gimbalCtrlTask,*/
+										 Gimbal* gimbal,
 										 Utils::ConfigLoader* config,
 										 ossian::IOData<PowerHeatData>* powerHeatDataListener))
 
@@ -180,7 +180,7 @@ public:
 		, m_RCListener(remote)
 		, m_SpCap(capacitor)
 		, m_Chassis(chassis)
-		/*, m_GimbalCtrlTask(gimbalCtrlTask)*/
+		, m_Gimbal(gimbal)
 		, m_Config(config)
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
 	{
@@ -218,11 +218,11 @@ public:
 
 		PIDController pidWheelSpeed;
 		pidWheelSpeed.SetParams(PIDWheelSpeedParams);
-		pidWheelSpeed.SetkCtrlFreq(kCtrlFreq);
+		pidWheelSpeed.SetCtrlPeriod(kCtrlItv);
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
-		m_PIDChassisAngle.SetkCtrlFreq(kCtrlFreq);
+		m_PIDChassisAngle.SetCtrlPeriod(kCtrlItv);
 		m_PIDChassisAngle.SetFlagAngleLoop();
 		/*m_RC->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
@@ -292,8 +292,8 @@ public:
 			{
 				std::this_thread::yield();
 			}
-			SPDLOG_INFO("@Interval=[$t={}]",
-						std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);
+			/*SPDLOG_INFO("@Interval=[$t={}]",
+						std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
 			
 			lastTime = Clock::now();
 			m_MotorsStatus = m_MotorsListener->Get();
@@ -325,7 +325,7 @@ private:
 	ossian::IOData<RemoteStatus>* m_RCListener; //遥控器
 	ossian::IOData<ChassisMotorsModel>* m_MotorsListener;
 	ICapacitor* m_SpCap;
-	/*GimbalCtrlTask* m_GimbalCtrlTask;*/
+	Gimbal* m_Gimbal;
 	Chassis* m_Chassis;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 

@@ -106,13 +106,14 @@ public:
 		if (params[4] >= 0)
 			m_ThresIntegral = params[4];
 	}
-	void SetkCtrlFreq(const double& freq)
+	void SetCtrlPeriod(const double& t)
 	{
-		m_CtrlInterval = 1000.0 / freq;  //ms
+		m_CtrlInterval = t;  //ms
 	}
 	void SetFlagAngleLoop()
 	{
 		m_FlagAngleLoop = true;
+		m_DeadValue = 0.01;
 	}
 	void SetDeadBand(const double& db)
 	{
@@ -131,23 +132,27 @@ public:
 		//m_LastTimestamp = hrClock::time_point();
 	}
 
+	void PrintDetails(int index)
+	{
+		SPDLOG_INFO("@PIDDetails{}=[$pout{}={},$iout{}={},$dout{}={}]", index, index, m_POut, index, m_IOut, index, m_DOut);
+	}
+
 	double Calc(double expectation, double feedback)
 	{
 		/*double interval = (m_LastTimestamp.time_since_epoch().count() == 0 ?
 			1 : std::chrono::duration<double, std::milli>(curTimestamp - m_LastTimestamp).count());   // ms
 		m_LastTimestamp = curTimestamp; */
-		double ki = m_Ki * m_CtrlInterval;
-		double kd = m_Kd / m_CtrlInterval;
+		static const double ki = m_Ki * m_CtrlInterval;
+		static const double kd = m_Kd / m_CtrlInterval;
 
 		//double error = m_Expectation - feedback;
 		double error = expectation - feedback;
 		if (m_FlagAngleLoop)
-		{
 			error = ClampLoop(error, -M_PI, M_PI);  //角度环，角度误差范围限制
-			error = DeadbandLimit(error, 0.01);
-		}
-			
-		double output = 0.0;
+
+		error = DeadbandLimit(error, m_DeadValue);
+		m_POut = m_Kp * error;
+
 		//积分分离法：如果误差超过 ±m_ThresError1 范围，则积分清零
 		if (fabs(error) >= m_ThresError1)
 			m_Integral = 0.0;
@@ -156,18 +161,15 @@ public:
 			m_Integral += error;
 		//将积分做限幅处理
 		m_Integral = Clamp( m_Integral, -m_ThresIntegral, m_ThresIntegral);
-		//SPDLOG_INFO("@PIDInterval=[$interval={}]", interval);
-		//SPDLOG_INFO("@Integral=[$i={}]", m_Integral);
-		output = m_Kp * error + ki * m_Integral + kd * (error - m_LastError);
 
-		if (output > 0)
-			output += m_DeadValue;
-		else if (output < 0)
-			output += -m_DeadValue;
+		m_IOut = ki * m_Integral;
+		m_DOut = kd * (error - m_LastError);
+		m_PIDOut = m_POut + m_IOut + m_DOut;
 
 		m_LastError = error;
 		//将pid输出做限幅处理
-		return Clamp(output, -m_ThresOutput, m_ThresOutput);
+		m_PIDOut = Clamp(m_PIDOut, -m_ThresOutput, m_ThresOutput);
+		return m_PIDOut;
 	}
 
 private:
@@ -176,9 +178,11 @@ private:
 	double m_LastError, /*m_Expectation,*/ m_Integral;
 	double m_ThresError1, m_ThresError2;  //ThresError1 > ThresError2
 	double m_ThresIntegral, m_ThresOutput;
-	double m_DeadValue; //死区：PID输出小于此值，执行机构没反应
+	double m_DeadValue; 
 	bool m_FlagAngleLoop;
 	double m_CtrlInterval;  //ms
+
+	double m_POut, m_IOut, m_DOut, m_PIDOut;  //用于Debug
 };
 
 class KalmanFilter
