@@ -58,6 +58,7 @@ inline double RelativeEcdToRad(const uint16_t& ecd, const uint16_t& ecdMid)
 		relativeEcd += kEcdRange;
 	return relativeEcd * kMotorEcdToRadCoef;
 }
+
 // out = k / (k + T) * out + T / (k + T) * in
 // 一阶低通滤波器
 class FirstOrderFilter   
@@ -113,7 +114,7 @@ public:
 	void SetFlagAngleLoop()
 	{
 		m_FlagAngleLoop = true;
-		m_DeadValue = 0.01;
+		m_DeadValue = 0.001;
 	}
 	void SetDeadBand(const double& db)
 	{

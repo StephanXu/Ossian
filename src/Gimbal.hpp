@@ -66,23 +66,22 @@ public:
 		if (position == Yaw)
 			m_YawEcd = status.m_Encoding;
 		motor->UnLock();
-
+		//SPDLOG_INFO("@Single6020=[$rpm={}]", status.m_RPM);
 		m_MotorMsgCheck[position] = true;
 		if (!(m_MotorMsgCheck[Pitch] && m_MotorMsgCheck[Yaw]))
 		{
 			return;
 		}
-
 		m_IOData->Set(m_MotorsStatus);
 
 		m_MotorMsgCheck.fill(false);
 	}
 
-	void SendVoltageToMotors(const std::array<double, kNumGimbalMotors>& currentSend)
+	void SendVoltageToMotors(const std::array<double, kNumGimbalMotors>& voltageSend)
 	{
 		for (size_t i = 0; i < kNumGimbalMotors; ++i)
 		{
-			m_Motors[i]->SetVoltage(currentSend[i]);
+			m_Motors[i]->SetVoltage(voltageSend[i]);
 		}
 		m_Motors[Pitch]->Writer()->PackAndSend();
 	}
@@ -108,7 +107,7 @@ class GimbalCtrlTask : public ossian::IExecutable
 {
 public:
 	//云台pid控制频率
-	static constexpr double kCtrlItv = 12;   //ms
+	static constexpr double kCtrlItv = 5;   //ms
 
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
@@ -134,7 +133,7 @@ public:
 
 	//遥控器解析
 	static constexpr int16_t kGimbalRCDeadband = 10; //摇杆死区
-	static constexpr size_t kYawChannel = 2;
+	static constexpr size_t kYawChannel = 4;
 	static constexpr size_t kPitchChannel = 3;
 	static constexpr size_t kGimbalModeChannel = 1; //选择云台状态的开关通道
 
@@ -242,11 +241,14 @@ public:
 		m_PIDAngleSpeed[Yaw].SetCtrlPeriod(kCtrlItv);
 
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
-		m_CurrentSend.fill(0);
+		m_VoltageSend.fill(0);
 
 		/*m_GyroListener->AddOnChange([](const GyroModel& value) {
 			SPDLOG_INFO("@GyroOnChange=[$roll={},$pitch={},$yaw={}]",
-				value.m_Roll, value.m_Pitch, value.m_Yaw); });*/
+				value.m_Wx, value.m_Wy, value.m_Wz); });*/
+
+		//m_VoltageSetFilters[Pitch].SetState(0.09, 0.002);
+		//m_VoltageSetFilters[Yaw].SetState(0.09, 0.002);
 	}
 
 	GimbalInputSrc GimbalCtrlSrc() { return m_GimbalCtrlSrc.load(); }
@@ -254,13 +256,16 @@ public:
 	void UpdateGimbalSensorFeedback()
 	{
 		m_GimbalSensorValues.rc = m_RCListener->Get();
+		m_GimbalSensorValues.relativeAngle[Pitch] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Pitch], kPitchMidEcd);
+		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawMidEcd);
+
 		m_GimbalSensorValues.imu = m_GyroListener->Get();
 		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
 		std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
 		m_GimbalSensorValues.imu.m_Pitch = -m_GimbalSensorValues.imu.m_Pitch;
 		//gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
-		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wz
-			- sin(m_GimbalSensorValues.imu.m_Pitch) * m_GimbalSensorValues.imu.m_Wx;
+		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wz
+			- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wx;
 
 		/*SPDLOG_INFO("@IMUAngle=[$GRoll={},$GPitch={},$GYaw={}]",
 			m_GimbalSensorValues.imu.m_Roll,
@@ -340,7 +345,7 @@ private:
 
 	struct GimbalSensorFeedback
 	{
-		GimbalMotorsModel motors;
+		double relativeAngle[kNumGimbalMotors];
 		RemoteStatus rc;	 //遥控器数据
 		GyroModel imu;
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
@@ -359,7 +364,9 @@ private:
 
 	//设定角度--->旋转角速度  旋转角速度-->6020控制电压
 	std::array<PIDController, kNumGimbalMotors> m_PIDAngleEcd, m_PIDAngleGyro, m_PIDAngleSpeed;
-	std::array<double, kNumGimbalMotors> m_CurrentSend;
+	std::array<double, kNumGimbalMotors> m_VoltageSend;
+
+	//std::array<FirstOrderFilter, kNumGimbalMotors> m_VoltageSetFilters;
 };
 
 

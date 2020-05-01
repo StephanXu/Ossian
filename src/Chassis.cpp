@@ -96,7 +96,7 @@ void ChassisCtrlTask::ChassisModeSet()
 	case kRCSwMid:
 		m_CurChassisMode = Disable; break; 
 	case kRCSwDown:
-		m_CurChassisMode = Top; break;   //Top
+		m_CurChassisMode = Disable; break;   //Top
 	default:
 		m_CurChassisMode = Disable; break;
 	}
