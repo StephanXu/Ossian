@@ -45,7 +45,6 @@ target_include_directories(Ossian
         )
 target_link_libraries(Ossian
         PRIVATE
-            signalrclient
             HKCamera
             spdlog::spdlog
             fmt::fmt
@@ -55,7 +54,7 @@ target_link_libraries(Ossian
             "$<$<BOOL:${CUDA_FOUND}>:${CUDA_LIBRARIES}>"
             OssianCore
             Eigen3::Eigen
-            -lprofiler
+            "$<$<BOOL:${ENABLE_GPERF}>:-lprofiler>"
         )
 
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
@@ -77,4 +76,5 @@ target_compile_definitions(Ossian
         PRIVATE 
             "$<$<BOOL:${CUDA_FOUND}>:WITH_CUDA>"
             "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE"
+            "$<$<BOOL:${ENABLE_GPERF}>:ENABLE_GPERF>"
         )

@@ -1,0 +1,26 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "Logger.Protos";
+
+package OssianConfig;
+
+message CreateLogRequest {
+	string name = 1;
+	string description = 2;
+}
+
+message CreateLogResponse {
+	string logId = 1;
+}
+
+message AddLogRequest {
+	string logId = 1;
+	repeated string log = 2;
+}
+
+message AddLogResponse{}
+
+service OnlineLogService{
+	rpc CreateLog(CreateLogRequest) returns (CreateLogResponse){}
+	rpc AddLog(AddLogRequest) returns (AddLogResponse){}
+}

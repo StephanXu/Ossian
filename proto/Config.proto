@@ -1,5 +1,7 @@
-syntax = "proto3";
+ï»¿syntax = "proto3";
 //option optimize_for = LITE_RUNTIME;
+
+option csharp_namespace = "Logger.Protos";
 
 package OssianConfig;
 
@@ -7,17 +9,17 @@ message SerialPort {
 	string portName = 1;
 	int32 baudrate = 2;
 	enum Parity {
-		NoParity = 0; // ÎŞĞ£Ñé
-		OddParity = 1; // ÆæĞ£Ñé
-		EvenParity = 2; // Å¼Ğ£Ñé
-		MarkParity = 3; // ±ê¼ÇĞ£Ñé
+		NoParity = 0; // æ— æ ¡éªŒ
+		OddParity = 1; // å¥‡æ ¡éªŒ
+		EvenParity = 2; // å¶æ ¡éªŒ
+		MarkParity = 3; // æ ‡è®°æ ¡éªŒ
 	}
 	Parity parity = 3;
 	int32 dataBit = 4;
 	enum StopBit {
-		OneStopBit = 0; // 1Î»Í£Ö¹Î»
-		One5StopBits = 1; // 1.5Î»Í£Ö¹Î»
-		TwoStopBits = 2; // 2Î»Í£Ö¹Î»
+		OneStopBit = 0; // 1ä½åœæ­¢ä½
+		One5StopBits = 1; // 1.5ä½åœæ­¢ä½
+		TwoStopBits = 2; // 2ä½åœæ­¢ä½
 	}
 	StopBit stopBit = 5;
 	bool synchronize = 6;
@@ -36,8 +38,8 @@ message TestVideoSource {
 
 message Aimbot {
 	enum EnemyColor {
-		Blue = 0; // À¶É«µĞÈË
-		Red = 2; // ºìÉ«µĞÈË
+		Blue = 0; // è“è‰²æ•Œäºº
+		Red = 2; // çº¢è‰²æ•Œäºº
 	}
 	EnemyColor enemyColor = 1;
 
@@ -123,4 +125,18 @@ message Configuration {
 	 PIDParams pidAngleSpeedYaw = 16;
 	 PIDParams pidFricSpeed = 17;
 	 PIDParams pidFeedSpeed = 18;
+}
+
+message GetConfigurationRequest{}
+
+message ArchiveConfigurationRequest{
+	string logId = 1;
+	Configuration config = 2;
+}
+
+message ArchiveConfigurationResponse{}
+
+service ConfigurationService {
+	rpc GetConfiguration(GetConfigurationRequest) returns (Configuration){}
+	rpc ArchiveConfiguration(ArchiveConfigurationRequest) returns (ArchiveConfigurationResponse){}
 }

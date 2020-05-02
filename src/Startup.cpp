@@ -27,12 +27,12 @@ Startup::Startup()
 	spdlog::set_default_logger(console);
 	spdlog::set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
 	spdlog::set_level(spdlog::level::trace);
-	
+
 	SPDLOG_INFO("MI_VERSION: {}", mi_version());
 
 	// Load configuration
 	Utils::ConfigLoader config;
-	config.LoadConfigFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
+	config.LoadConfigFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 443, "/api/argument");
 	m_Config = *config.Instance<OssianConfig::Configuration>();
 }
 
@@ -41,12 +41,13 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Utils::ConfigLoader>()
 	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
 	app.AddService<OnlineDebug>(
-		[](OnlineDebug& option)
+		[config=m_Config](OnlineDebug& option)
 		{
-			option.Connect("http://ossian.mrxzh.com/logger");
-			option.StartLogging("OnlineLog",
-			                    "OssianLog",
-			                    "A piece of log.");
+			option.Connect("rpc.mrxzh.com");
+			option.StartLoggingAndArchiveLog("OnlineLog",
+			                                 "OssianLog",
+			                                 "A piece of log.",
+			                                 config);
 		});
 
 	app.AddService<ossian::CANManager>();
@@ -100,6 +101,6 @@ void Startup::ConfigPipeline(AppBuilder& app)
 
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
-	
+
 	//app.AddService<ossian::IExecutable, CameraPeeker>();
 }

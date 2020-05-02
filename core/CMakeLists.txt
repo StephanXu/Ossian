@@ -21,6 +21,7 @@ find_package(ZLIB REQUIRED)
 find_package(mimalloc 1.6 REQUIRED)
 find_package(Boost REQUIRED)
 
+target_compile_definitions(OssianCore PUBLIC __linux__)
 target_compile_features(OssianCore PUBLIC cxx_std_17)
 target_link_libraries(OssianCore
 		PRIVATE
@@ -30,7 +31,7 @@ target_link_libraries(OssianCore
 			protobuf::libprotobuf
 			mimalloc
 			Boost::boost
-			-lprofiler
+			"$<$<BOOL:${ENABLE_GPERF}>:-lprofiler>"
 		)
 
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
@@ -48,4 +49,5 @@ target_link_options(OssianCore
 target_compile_definitions(OssianCore
         PUBLIC 
             "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE"
+			"$<$<BOOL:${ENABLE_GPERF}>:ENABLE_GPERF>"
         )
