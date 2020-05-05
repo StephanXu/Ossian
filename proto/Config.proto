@@ -78,6 +78,7 @@ message Chassis {
 	 double kTopWz = 1;
 	 double kVxFilterCoef = 2;
 	 double kVyFilterCoef = 3;
+	 double kRPMFdbFilterCoef = 4;
 } 
 
 message Gimbal {

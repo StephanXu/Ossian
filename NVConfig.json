@@ -55,7 +55,8 @@
   "chassis": {
     "kTopWz": 3,
     "kVxFilterCoef": 0.17,
-    "kVyFilterCoef": 0.33
+    "kVyFilterCoef": 0.33,
+    "kRPMFdbFilterCoef": 0.1
   },
   "gimbal": {
 

@@ -5,6 +5,7 @@
 double ChassisCtrlTask::kTopWz = 0;
 double ChassisCtrlTask::kVxFilterCoef = 0;
 double ChassisCtrlTask::kVyFilterCoef = 0;
+double ChassisCtrlTask::kRPMFdbFilterCoef = 0;
 std::array<double, 5> ChassisCtrlTask::PIDWheelSpeedParams;
 std::array<double, 5> ChassisCtrlTask::PIDChassisAngleParams;
 
@@ -63,6 +64,7 @@ void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 
 	double totalCurrent = 0;
 	std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [&totalCurrent](double x) {totalCurrent += fabs(x); });
+	SPDLOG_INFO("@PowerCtrl=[$flagPC={}]", static_cast<int>(totalCurrent > limitCurrent));
 	if (totalCurrent > limitCurrent)
 	{
 		double scaleCurrent = limitCurrent / totalCurrent;
@@ -72,7 +74,7 @@ void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 
 void ChassisCtrlTask::RCToChassisSpeed()
 {
-	//m_ChassisSensorValues.rc.ch[kChassisXChannel] = 200;
+	m_ChassisSensorValues.rc.ch[kChassisXChannel] = 600;
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;		// m/s
 	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * kChassisVyRCSen;       // m/s
 	if (m_CurChassisMode == Openloop_Z)
@@ -80,8 +82,8 @@ void ChassisCtrlTask::RCToChassisSpeed()
 	//[TODO] 键盘操作
 
 	//一阶低通滤波代替斜坡函数作为底盘速度输入
-	m_VxSet = m_FOFilterVX.Calc(vxChannelSet);//0.167
-	m_VySet = m_FOFilterVY.Calc(vyChannelSet);//0.333
+	m_VxSet = m_RCInputFilters[0].Calc(vxChannelSet);//0.167
+	m_VySet = m_RCInputFilters[1].Calc(vyChannelSet);//0.333
 
 	m_VxSet = DeadbandLimit(m_VxSet, kChassisRCDeadband * kChassisVxRCSen);
 	m_VySet = DeadbandLimit(m_VySet, kChassisRCDeadband * kChassisVyRCSen);
@@ -111,9 +113,9 @@ void ChassisCtrlTask::ChassisCtrl()
 		CalcWheelSpeedTarget();
 		for (size_t i = 0; i < kNumChassisMotors; ++i)
 		{
-			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
-				m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
-				m_MotorsStatus.m_RPM[i]);
+			double set = m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef;
+			double get = m_RPMFdbFilters[i].Calc(m_MotorsStatus.m_RPM[i]);
+			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(set, get);
 			//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
 			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
@@ -121,9 +123,9 @@ void ChassisCtrlTask::ChassisCtrl()
 			SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
 							i,
 							i,
-							m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, 
+							set, 
 							i,
-							m_MotorsStatus.m_RPM[i],
+							get,
 							i,
 							m_CurrentSend[i]);
 			//m_PIDChassisSpeed[i].PrintDetails(i);

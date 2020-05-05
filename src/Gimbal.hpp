@@ -106,17 +106,14 @@ private:
 class GimbalCtrlTask : public ossian::IExecutable
 {
 public:
-	//云台pid控制频率
-	static constexpr double kCtrlItv = 5;   //ms
-
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
 	static constexpr uint16_t kPitchMinEcd = 4176;
 	static constexpr uint16_t kPitchMaxEcd = 5715;
 	static constexpr uint16_t kPitchMidEcd = 4705;
 
-	static constexpr uint16_t kYawMinEcd = 7552;
-	static constexpr uint16_t kYawMaxEcd = 3456;
+	static constexpr uint16_t kYawMinEcd = 3456;
+	static constexpr uint16_t kYawMaxEcd = 7552;
 	static constexpr uint16_t kYawMidEcd = 5504;
 
 	//最大最小的 相对（中值的）角度
@@ -219,26 +216,20 @@ public:
 		m_FlagInitGimbal = true;
 
 		m_PIDAngleEcd[Pitch].SetParams(PIDAngleEcdPitchParams);
-		m_PIDAngleEcd[Pitch].SetCtrlPeriod(kCtrlItv);
 		m_PIDAngleEcd[Pitch].SetFlagAngleLoop();
 
 		m_PIDAngleGyro[Pitch].SetParams(PIDAngleGyroPitchParams);
-		m_PIDAngleGyro[Pitch].SetCtrlPeriod(kCtrlItv);
 		m_PIDAngleGyro[Pitch].SetFlagAngleLoop();
 
 		m_PIDAngleSpeed[Pitch].SetParams(PIDAngleSpeedPitchParams);
-		m_PIDAngleSpeed[Pitch].SetCtrlPeriod(kCtrlItv);
 
 		m_PIDAngleEcd[Yaw].SetParams(PIDAngleEcdYawParams);
-		m_PIDAngleEcd[Yaw].SetCtrlPeriod(kCtrlItv);
 		m_PIDAngleEcd[Yaw].SetFlagAngleLoop();
 
 		m_PIDAngleGyro[Yaw].SetParams(PIDAngleGyroYawParams);
-		m_PIDAngleGyro[Yaw].SetCtrlPeriod(kCtrlItv);
 		m_PIDAngleGyro[Yaw].SetFlagAngleLoop();
 
 		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
-		m_PIDAngleSpeed[Yaw].SetCtrlPeriod(kCtrlItv);
 
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);

@@ -143,8 +143,8 @@ public:
 		/*double interval = (m_LastTimestamp.time_since_epoch().count() == 0 ?
 			1 : std::chrono::duration<double, std::milli>(curTimestamp - m_LastTimestamp).count());   // ms
 		m_LastTimestamp = curTimestamp; */
-		static const double ki = m_Ki * m_CtrlInterval;
-		static const double kd = m_Kd / m_CtrlInterval;
+		/*static const double ki = m_Ki * m_CtrlInterval;
+		static const double kd = m_Kd / m_CtrlInterval;*/
 
 		//double error = m_Expectation - feedback;
 		double error = expectation - feedback;
@@ -163,8 +163,8 @@ public:
 		//将积分做限幅处理
 		m_Integral = Clamp( m_Integral, -m_ThresIntegral, m_ThresIntegral);
 
-		m_IOut = ki * m_Integral;
-		m_DOut = kd * (error - m_LastError);
+		m_IOut = m_Ki * m_Integral;
+		m_DOut = m_Kd * (error - m_LastError);
 		m_PIDOut = m_POut + m_IOut + m_DOut;
 
 		m_LastError = error;

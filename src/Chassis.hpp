@@ -105,9 +105,6 @@ private:
 class ChassisCtrlTask : public ossian::IExecutable
 {
 public:
-	//底盘pid控制频率
-	static constexpr double kCtrlItv = 12; //ms
-
 	//麦轮运动
 	static constexpr double kWheelRadius = 76.0 / 1000.0;  ///< m
 	static constexpr double kWheelXn = 175.0 / 1000.0; ///< m
@@ -117,8 +114,8 @@ public:
 	//static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
 
 	//底盘功率控制
-	static constexpr double kBufferTotalCurrentLimit = 16000;
-	static constexpr double kPowerTotalCurrentLimit = 20000;
+	static constexpr double kBufferTotalCurrentLimit = 45000;
+	static constexpr double kPowerTotalCurrentLimit = 50000;
 	static constexpr double kSpCapWarnVoltage = 12;
 
 	//遥控器解析
@@ -135,11 +132,11 @@ public:
 	static constexpr double kChassisVxRCSen = 0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
 	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
 	static constexpr double kChassisWzRCSen = -0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
-	static constexpr double kChassisCtrlPeriod = 0.008;  //底盘控制周期 s
+	static constexpr double kChassisCtrlPeriod = 0.012;  //底盘控制周期s，用于低通滤波器
 
 	//底盘运动
-	static constexpr double kChassisVxLimit = 3.5; ///< m/s
-	static constexpr double kChassisVyLimit = 1.5; ///< m/s
+	static constexpr double kChassisVxLimit = 4.5; ///< m/s
+	static constexpr double kChassisVyLimit = 3.5; ///< m/s
 	static double kTopWz;                          ///< 底盘陀螺旋转速度 rad/s
 
 	//pid参数 [TODO]底盘旋转角速度闭环
@@ -147,6 +144,7 @@ public:
 	static std::array<double, 5> PIDChassisAngleParams;
 
 	static double kVxFilterCoef, kVyFilterCoef;
+	static double kRPMFdbFilterCoef;
 
 	//俯视，左前，左后，右后，右前，逆时针
 	enum MotorPosition
@@ -200,6 +198,7 @@ public:
 		kTopWz = m_Config->Instance<Configuration>()->mutable_chassis()->ktopwz();
 		kVxFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->kvxfiltercoef();
 		kVyFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->kvyfiltercoef();
+		kRPMFdbFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->krpmfdbfiltercoef();
 
 		double coef = kWheelXn + kWheelYn;
 		m_WheelKinematicMat << 1, -1, -coef,
@@ -213,34 +212,34 @@ public:
 
 		m_FlagInitChassis = true;
 
-		m_FOFilterVX.SetState(kVxFilterCoef, kChassisCtrlPeriod);
-		m_FOFilterVY.SetState(kVyFilterCoef, kChassisCtrlPeriod);
+		m_RCInputFilters[0].SetState(kVxFilterCoef, kChassisCtrlPeriod);
+		m_RCInputFilters[1].SetState(kVyFilterCoef, kChassisCtrlPeriod);
+		FirstOrderFilter rpmFdbFilter(kRPMFdbFilterCoef, kChassisCtrlPeriod);
+		m_RPMFdbFilters.fill(rpmFdbFilter);
 
 		PIDController pidWheelSpeed;
 		pidWheelSpeed.SetParams(PIDWheelSpeedParams);
-		pidWheelSpeed.SetCtrlPeriod(kCtrlItv);
 		m_PIDChassisSpeed.fill(pidWheelSpeed);
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
-		m_PIDChassisAngle.SetCtrlPeriod(kCtrlItv);
 		m_PIDChassisAngle.SetFlagAngleLoop();
 		/*m_RC->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
-				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
+				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});*/
 
 		m_RefereePowerHeatDataListener->AddOnChange([](const PowerHeatData& value) {
 			SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
 				value.m_ChassisPower,
 				value.m_ChassisPowerBuffer,
-				80); });*/
+				80); });
 	}
 
 	void InitChassis()
 	{
 		m_AngleSet = 0;
 
-		m_FOFilterVX.Reset();
-		m_FOFilterVY.Reset();
+		std::for_each(m_RCInputFilters.begin(), m_RCInputFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
+		std::for_each(m_RPMFdbFilters.begin(), m_RPMFdbFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 
 		std::for_each(m_PIDChassisSpeed.begin(), m_PIDChassisSpeed.end(), [](PIDController& x) { x.Reset(); });
 		m_PIDChassisAngle.Reset();
@@ -352,7 +351,8 @@ private:
 	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
 	std::array<double, kNumChassisMotors> m_CurrentSend;
 
-	FirstOrderFilter m_FOFilterVX, m_FOFilterVY;
+	std::array<FirstOrderFilter, 2> m_RCInputFilters;
+	std::array<FirstOrderFilter, 4> m_RPMFdbFilters;
 	PIDController m_PIDChassisAngle;                                ///< 底盘要旋转的角度--->底盘旋转角速度  底盘跟随角度环
 	std::array<PIDController, kNumChassisMotors> m_PIDChassisSpeed; ///< 麦轮转速--->3508电流
 };

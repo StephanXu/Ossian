@@ -19,9 +19,6 @@ using hrClock = std::chrono::high_resolution_clock;
 class Gun
 {
 public:
-	//射击pid控制频率
-	static constexpr double kCtrlItv = 12;   //ms
-
 	//摩擦轮转速期望rpm [TODO]实验得出不同等级下的射击初速度上限所对应的摩擦轮转速期望
 	static int16_t kFricSpeed12;
 	static int16_t kFricSpeed15;
@@ -115,11 +112,9 @@ public:
 
 		PIDController pidFricSpeed;
 		pidFricSpeed.SetParams(PIDFricSpeedParams);
-		pidFricSpeed.SetCtrlPeriod(kCtrlItv);
 		m_PIDFricSpeed.fill(pidFricSpeed);
 
 		m_PIDFeedSpeed.SetParams(PIDFeedSpeedParams);
-		m_PIDFeedSpeed.SetCtrlPeriod(kCtrlItv);
 
 	}
 

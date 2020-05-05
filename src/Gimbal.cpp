@@ -12,7 +12,7 @@ std::array<double, 5> GimbalCtrlTask::PIDAngleSpeedYawParams;
 
 void GimbalCtrlTask::GimbalCtrlSrcSet()
 {
-	SPDLOG_INFO("@FlagInitGimbal=[$flag={}]", static_cast<int>(m_FlagInitGimbal));
+	//SPDLOG_INFO("@FlagInitGimbal=[$flagIG={}]", static_cast<int>(m_FlagInitGimbal));
 	if (m_FlagInitGimbal)
 	{
 		if (fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.1 
@@ -157,7 +157,7 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
 			//double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
 
-			//[TODO] 检查maxminRelativeAngle[Yaw]是否正确 --- 角度环set抖动
+			//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
 			double angleSpeedSet;
 			if (position == Yaw)
 			{
