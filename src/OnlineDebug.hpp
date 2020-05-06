@@ -132,7 +132,7 @@ public:
 	 */
 	auto StartLogging(std::string loggerName,
 	                  std::string logName,
-	                  std::string logDescription)
+	                  std::string logDescription) const -> std::string
 	{
 		if (!m_Valid)
 		{
@@ -146,9 +146,11 @@ public:
 			     {
 				     waitLogId.set_value(std::string{id});
 			     });
-		auto distSink   = std::make_shared<spdlog::sinks::dist_sink_mt>();
-		auto stdSink    = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-		auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, waitLogId.get_future().get());
+		auto distSink = std::make_shared<spdlog::sinks::dist_sink_mt>();
+		auto stdSink  = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+
+		auto logId      = waitLogId.get_future().get();
+		auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, logId);
 
 		//distSink->add_sink(stdSink);
 		distSink->add_sink(onlineSink);
@@ -166,6 +168,17 @@ public:
 				logger->flush();
 			}
 		}).detach();
+
+		return logId;
+	}
+
+	auto StartLoggingAndArchiveConfiguration(std::string loggerName,
+	                                         std::string logName,
+	                                         std::string logDescription,
+	                                         std::string configuration)
+	{
+		auto logId = StartLogging(loggerName, logName, logDescription);
+		m_Hub->Invoke("ArchiveConfiguration", logId, configuration);
 	}
 };
 

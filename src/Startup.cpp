@@ -27,7 +27,7 @@ Startup::Startup()
 	spdlog::set_default_logger(console);
 	spdlog::set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
 	spdlog::set_level(spdlog::level::trace);
-	
+
 	SPDLOG_INFO("MI_VERSION: {}", mi_version());
 
 	// Load configuration
@@ -41,12 +41,19 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Utils::ConfigLoader>()
 	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
 	app.AddService<OnlineDebug>(
-		[](OnlineDebug& option)
+		[config = m_Config](OnlineDebug& option)
 		{
+			std::string configuration;
+			google::protobuf::util::JsonOptions opt;
+			opt.always_print_primitive_fields = true;
+			opt.add_whitespace                = true;
+			google::protobuf::util::MessageToJsonString(config, &configuration, opt);
+
 			option.Connect("http://ossian.mrxzh.com/logger");
-			option.StartLogging("OnlineLog",
-			                    "OssianLog",
-			                    "A piece of log.");
+			option.StartLoggingAndArchiveConfiguration("OnlineLog",
+			                                           "OssianLog",
+			                                           "A piece of log.",
+			                                           configuration);
 		});
 
 	app.AddService<ossian::CANManager>();
@@ -100,6 +107,6 @@ void Startup::ConfigPipeline(AppBuilder& app)
 
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
-	
+
 	//app.AddService<ossian::IExecutable, CameraPeeker>();
 }
