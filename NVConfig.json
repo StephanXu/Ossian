@@ -56,10 +56,10 @@
     "kTopWz": 3,
     "kVxFilterCoef": 0.17,
     "kVyFilterCoef": 0.33,
-    "kRPMFdbFilterCoef": 0.1
+    "kRPMFdbFilterCoef": 0.25
   },
   "gimbal": {
-
+    "kAngleSpeedFilterCoef": 0.25
   },
   "gun": {
     "kFricSpeed12": 600,

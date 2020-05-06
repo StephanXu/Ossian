@@ -149,6 +149,9 @@ public:
 	static std::array<double, 5> PIDAngleGyroYawParams;
 	static std::array<double, 5> PIDAngleSpeedYawParams;
 
+	static constexpr double kGimbalCtrlPeriod = 0.003;
+	static double kAngleSpeedFilterCoef;
+
 	enum GimbalAngleMode
 	{
 		Gyro, Encoding
@@ -212,6 +215,8 @@ public:
 		PIDAngleSpeedYawParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->thout();
 		PIDAngleSpeedYawParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->thiout();
 
+		kAngleSpeedFilterCoef = m_Config->Instance<Configuration>()->mutable_gimbal()->kanglespeedfiltercoef();
+
 		m_GimbalCtrlSrc = Init;
 		m_FlagInitGimbal = true;
 
@@ -230,6 +235,9 @@ public:
 		m_PIDAngleGyro[Yaw].SetFlagAngleLoop();
 
 		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
+
+		FirstOrderFilter angleSpeedFilter(kAngleSpeedFilterCoef, kGimbalCtrlPeriod);
+		m_AngleSpeedFilters.fill(angleSpeedFilter);
 
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);
@@ -298,7 +306,7 @@ public:
 		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			while (5000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			while (3000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 			}
@@ -348,6 +356,7 @@ private:
 	std::array<double, kNumGimbalMotors> m_LastEcdAngle;
 	std::array<std::chrono::high_resolution_clock::time_point, kNumGimbalMotors> m_LastEcdTimeStamp;
 
+	std::array<FirstOrderFilter, kNumGimbalMotors> m_AngleSpeedFilters;
 	/*double m_YawAdd, m_PitchAdd; //角度增量rad
 	double m_LastYaw, m_LastPitch;*/
 	std::array<double, kNumGimbalMotors> m_GyroAngleSet; //累加 陀螺仪模式

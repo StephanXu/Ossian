@@ -64,7 +64,6 @@ void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 
 	double totalCurrent = 0;
 	std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [&totalCurrent](double x) {totalCurrent += fabs(x); });
-	SPDLOG_INFO("@PowerCtrl=[$flagPC={}]", static_cast<int>(totalCurrent > limitCurrent));
 	if (totalCurrent > limitCurrent)
 	{
 		double scaleCurrent = limitCurrent / totalCurrent;
@@ -74,7 +73,6 @@ void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 
 void ChassisCtrlTask::RCToChassisSpeed()
 {
-	m_ChassisSensorValues.rc.ch[kChassisXChannel] = 600;
 	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;		// m/s
 	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * kChassisVyRCSen;       // m/s
 	if (m_CurChassisMode == Openloop_Z)

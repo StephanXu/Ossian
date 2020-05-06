@@ -8,7 +8,7 @@ std::array<double, 5> GimbalCtrlTask::PIDAngleEcdYawParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleGyroYawParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleSpeedYawParams;
 
-
+double GimbalCtrlTask::kAngleSpeedFilterCoef = 0;
 
 void GimbalCtrlTask::GimbalCtrlSrcSet()
 {
@@ -67,7 +67,7 @@ void GimbalCtrlTask::GimbalCtrlInputProc()
 		//遥控器传来的角度期望rad
 		m_AngleInput[Pitch] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kPitchChannel], kGimbalRCDeadband) * kPitchRCSen; 
 		m_AngleInput[Yaw] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kYawChannel], kGimbalRCDeadband) * kYawRCSen; 
-		SPDLOG_INFO("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
+		//SPDLOG_INFO("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
 	}
 }
 
@@ -103,7 +103,7 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 			m_EcdAngleSet[position] += angleInput;
 			m_EcdAngleSet[position] = Clamp(m_EcdAngleSet[position], kMinRelativeAngle[position], 
 											kMaxRelativeAngle[position]);
-			SPDLOG_INFO("@RelativeAngleYaw=[$min={},$max={}]", kMinRelativeAngle[Yaw], kMaxRelativeAngle[Yaw]);
+			//SPDLOG_INFO("@RelativeAngleYaw=[$min={},$max={}]", kMinRelativeAngle[Yaw], kMaxRelativeAngle[Yaw]);
 		}
 	}
 	else if (m_GimbalCtrlSrc == Init)
@@ -158,28 +158,20 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 			//double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
 
 			//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
-			double angleSpeedSet;
-			if (position == Yaw)
-			{
-				angleSpeedSet = 3;
-				
-			}
-			else if (position == Pitch)
-			{
-				angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
-			}
+			double angleSpeedSet = 3;
 			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_Wy : m_GimbalSensorValues.imu.m_Wz);
-			m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
+			gyroSpeed = m_AngleSpeedFilters[position].Calc(gyroSpeed);
+			m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet*1000, gyroSpeed*1000);
 
 			/*m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
 			m_LastEcdAngle[position] = curEcdAngle;*/
 
-			SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={}]",
+			/*SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={}]",
 				position, 
 				position,
 				m_EcdAngleSet[position],
 				position,
-				curEcdAngle);
+				curEcdAngle);*/
 			SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={},$pidoutAS{}={}]",
 				position,
 				position,

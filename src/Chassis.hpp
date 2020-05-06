@@ -352,7 +352,7 @@ private:
 	std::array<double, kNumChassisMotors> m_CurrentSend;
 
 	std::array<FirstOrderFilter, 2> m_RCInputFilters;
-	std::array<FirstOrderFilter, 4> m_RPMFdbFilters;
+	std::array<FirstOrderFilter, kNumChassisMotors> m_RPMFdbFilters;
 	PIDController m_PIDChassisAngle;                                ///< 底盘要旋转的角度--->底盘旋转角速度  底盘跟随角度环
 	std::array<PIDController, kNumChassisMotors> m_PIDChassisSpeed; ///< 麦轮转速--->3508电流
 };
