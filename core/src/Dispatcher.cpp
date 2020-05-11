@@ -1,6 +1,8 @@
 #include <spdlog/spdlog.h>
 #include <mimalloc.h>
+#ifdef ENABLE_GPERF
 #include <gperftools/profiler.h>
+#endif
 
 #include "ossian/Dispatcher.hpp"
 #include "ossian/Pipeline.hpp"
@@ -23,7 +25,9 @@ void Dispatcher::Run()
 	{
 		threads.emplace_back([item]()
 		{
+#ifdef ENABLE_GPERF
 			ProfilerRegisterThread();
+#endif
 			item->ExecuteProc();
 		});
 	}
