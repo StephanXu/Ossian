@@ -13,6 +13,7 @@
 #include "Capacitor.hpp"
 #include "Referee.hpp"
 #include "Gyro.hpp"
+#include "GyroA204.hpp"
 #include "IOPeeker.hpp"
 #include "CameraPeeker.hpp"
 
@@ -81,7 +82,11 @@ void Startup::ConfigServices(AppBuilder& app)
 		{
 			option.AddGyro("/dev/ttyUSB0");
 		});
-
+	app.AddService<GyroA204Mt>(
+		[](GyroA204Mt& option)
+		{
+			option.Add("can0", 0x403);
+		});
 	app.AddService<Chassis>(
 		[](Chassis& option)
 		{

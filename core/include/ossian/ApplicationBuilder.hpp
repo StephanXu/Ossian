@@ -34,7 +34,7 @@ template <typename BuilderType>
 class CustomBuilder
 {
 public:
-	using OssianServiceBuilderType = BuilderType;
+	using _OssianServiceBuilderType = BuilderType;
 };
 
 class DefaultServiceBuilder
@@ -100,13 +100,13 @@ public:
 
 
 template <class InterfaceType, class ServiceType>
-using IsNeedBaseServiceBuilder = std::is_constructible<typename ServiceType::OssianServiceBuilderType,
+using IsNeedBaseServiceBuilder = std::is_constructible<typename ServiceType::_OssianServiceBuilderType,
                                                        ApplicationBuilder&,
                                                        BaseServiceBuilder<InterfaceType, ServiceType>&>;
 
 template <class ServiceType>
 using IsValidCustomServiceBuilder = std::is_base_of<
-	CustomBuilder<typename ServiceType::OssianServiceBuilderType>, ServiceType>;
+	CustomBuilder<typename ServiceType::_OssianServiceBuilderType>, ServiceType>;
 
 /**
  * Custom builder without BaseServiceBuilder
@@ -117,13 +117,13 @@ class ServiceBuilder<InterfaceType,
                      ServiceType,
                      std::enable_if_t<IsValidCustomServiceBuilder<ServiceType>::value &&
                                       !IsNeedBaseServiceBuilder<InterfaceType, ServiceType>::value>>
-	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::OssianServiceBuilderType
+	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::_OssianServiceBuilderType
 {
 public:
 	ServiceBuilder(ApplicationBuilder& DIConfig,
 	               std::function<void(ServiceType&)> configureProc)
 		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
-		  , ServiceType::OssianServiceBuilderType(DIConfig)
+		  , ServiceType::_OssianServiceBuilderType(DIConfig)
 	{
 	}
 };
@@ -137,13 +137,13 @@ class ServiceBuilder<InterfaceType,
                      ServiceType,
                      std::enable_if_t<IsValidCustomServiceBuilder<ServiceType>::value &&
                                       IsNeedBaseServiceBuilder<InterfaceType, ServiceType>::value>>
-	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::OssianServiceBuilderType
+	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::_OssianServiceBuilderType
 {
 public:
 	ServiceBuilder(ApplicationBuilder& DIConfig,
 	               std::function<void(ServiceType&)> configureProc)
 		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
-		  , ServiceType::OssianServiceBuilderType(DIConfig, *this)
+		  , ServiceType::_OssianServiceBuilderType(DIConfig, *this)
 	{
 	}
 };
@@ -159,8 +159,8 @@ public:
 	ApplicationBuilder(const ApplicationBuilder& dispatcher)  = delete;
 	ApplicationBuilder(const ApplicationBuilder&& dispatcher) = delete;
 
-	template<typename TStartup, class...Args>
-	auto UseStartup(Args...args) -> ApplicationBuilder&
+	template <typename TStartup, class...Args>
+	auto UseStartup(Args ...args) -> ApplicationBuilder&
 	{
 		static_assert(std::is_base_of<IStartup, TStartup>::value, "TStartup should derived from ossian::IStartup.");
 		m_Startup = std::make_unique<TStartup>(args...);
@@ -168,7 +168,7 @@ public:
 		m_Startup->ConfigPipeline(*this);
 		return *this;
 	}
-	
+
 	/**
 	 * @brief 注册一项服务
 	 * @tparam ServiceType 服务类型
@@ -198,8 +198,8 @@ public:
 	{
 	})
 	{
-		static_assert(std::is_base_of<IExecutable, ExecutableType>::value, 
-					  "ExecutableType should derived from ossian::IExecutable");
+		static_assert(std::is_base_of<IExecutable, ExecutableType>::value,
+			"ExecutableType should derived from ossian::IExecutable");
 		return AddService<IExecutable, ExecutableType>(configProc);
 	}
 
@@ -248,7 +248,6 @@ private:
 	DI::DIConfiguration m_DIConfig;
 	std::unique_ptr<IStartup> m_Startup;
 };
-
 } // namespace ossian
 
 #endif // OSSIAN_CORE_CONFIG

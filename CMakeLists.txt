@@ -24,7 +24,7 @@ target_sources(Ossian
         PRIVATE
             src/Aimbot.cpp
             src/ColorFilter.cpp
-            src/main.cpp
+            src/Main.cpp
             src/Startup.cpp
             src/Utils.cpp
             src/WindmillDetection.cpp
@@ -37,7 +37,8 @@ target_sources(Ossian
             src/Referee.cpp
             src/Gyro.cpp
             src/IOPeeker.cpp
-            src/CameraPeeker.cpp)
+            src/CameraPeeker.cpp
+            src/GyroA204.cpp)
 target_include_directories(Ossian
         PRIVATE
             src
