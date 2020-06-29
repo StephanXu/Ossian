@@ -14,6 +14,7 @@
 #include "Referee.hpp"
 #include "Gyro.hpp"
 #include "GyroA204.hpp"
+#include "TOFNooploop.hpp"
 #include "IOPeeker.hpp"
 #include "CameraPeeker.hpp"
 
