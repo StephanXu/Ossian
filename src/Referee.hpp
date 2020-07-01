@@ -454,7 +454,7 @@ public:
 	{
 		using namespace ossian::UARTProperties;
 		m_UARTManager->AddDevice(location,
-		                         Baudrate::R115200,
+		                         115200,
 		                         FlowControl::FlowControlNone,
 		                         DataBits::DataBits8,
 		                         StopBits::StopBits1,

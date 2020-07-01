@@ -1,5 +1,6 @@
 ﻿#include "ossian/io/UART.hpp"
-
+#include <sys/ioctl.h>
+#include <linux/serial.h>
 #ifdef __linux__
 #include <termios.h>
 #include <fcntl.h> 
@@ -16,7 +17,7 @@ namespace ossian
 
 UARTBus::UARTBus(UARTManager* manager,
 				 std::string const& location,
-				 const UARTProperties::Baudrate baudrate,
+				 const unsigned long baudrate,
 				 const UARTProperties::FlowControl flowctrl,
 				 const UARTProperties::DataBits databits,
 				 const UARTProperties::StopBits stopbits,
@@ -50,15 +51,14 @@ bool UARTBus::Open()
 	if (fd < 0)
 	{
 		throw std::runtime_error("Device open failed! Location: "+m_Location);
-		return false;
 	}
 	// 指定波特率
 	tcgetattr(fd, &opt);
 	opt.c_cc[VMIN] = 0;
 	opt.c_cc[VTIME] = 0;
-	ClearFlag(opt.c_cflag, CIBAUD);
-	cfsetispeed(&opt, m_Baudrate);
-	cfsetospeed(&opt, m_Baudrate);
+	ClearFlag(opt.c_cflag, CBAUD | CBAUDEX);
+	cfsetispeed(&opt, B0); // 此处波特率无效，后续使用serial_struct实现自定义波特率的设置
+	cfsetospeed(&opt, B0);
 	SetFlag(opt.c_cflag, CLOCAL | CREAD); // 必须开启
 	ClearFlag(opt.c_cflag, CSIZE);
 	SetFlag(opt.c_cflag, m_DataBits); // 数据位设置
@@ -100,12 +100,32 @@ bool UARTBus::Open()
 	}
 	ClearFlag(opt.c_lflag, ICANON | ECHO | ECHOE | ISIG);
 	ClearFlag(opt.c_iflag, BRKINT | ICRNL | INPCK | ISTRIP | IXON); // exp
+
+	serial_struct serial;
+	if (ioctl(fd, TIOCGSERIAL, &serial))
+	{
+		m_IsOpened = false;
+		throw std::runtime_error("Failed TIOCGSERIAL! Location: " + m_Location);
+	}
+	serial.flags &= ~ASYNC_SPD_MASK;
+	serial.flags |= ASYNC_SPD_CUST;
+	serial.custom_divisor = (serial.baud_base + (m_Baudrate / 2)) / m_Baudrate;
+	const unsigned long closestBaudrate = serial.baud_base / serial.custom_divisor;
+	if (closestBaudrate < m_Baudrate * 98 / 100 || closestBaudrate > m_Baudrate * 102 / 100)
+	{
+		SPDLOG_INFO("Cannot set serial port speed to {}. Closest possible is {}\n", m_Baudrate, closestBaudrate);
+	}
+	if (ioctl(fd, TIOCSSERIAL, &serial))
+	{
+		m_IsOpened = false;
+		throw std::runtime_error("Failed TIOCSSERIAL! Location: " + m_Location);
+	}
 	if (tcsetattr(fd, TCSANOW, &opt) < 0)
 	{
-		throw std::runtime_error("Device attribute failed to set! Location: " + m_Location);
 		m_IsOpened = false;
-		return false;
+		throw std::runtime_error("Device attribute failed to set! Location: " + m_Location);
 	}
+	
 	tcflush(fd, TCIOFLUSH);
 	m_FD = fd;
 	m_IsOpened = true;
@@ -143,7 +163,7 @@ void UARTBus::Read() const
 			}
 			break;//跳出接收循环
 		}
-		size_t length = nbytes;
+		const size_t length = nbytes;
 		std::shared_ptr<uint8_t[]> buffer(new uint8_t[length]());
 		memcpy(buffer.get(), buf, length);
 		m_Device->Invoke(length, std::move(buffer));
@@ -157,9 +177,9 @@ void UARTBus::WriteRaw(size_t length, const uint8_t* data) const
 		static std::mutex writeMutex;
 		{
 			std::lock_guard<std::mutex> writeLock(writeMutex);
-			while (1)
+			while (true)
 			{
-				const int bytes = write(m_FD, data, sizeof(uint8_t) * length);
+				const auto bytes = write(m_FD, data, sizeof(uint8_t) * length);
 				if ((bytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待处理
 				{
 					continue;//继续接收数据
@@ -194,7 +214,7 @@ AddBus(location,
 	  */
 
 UARTBus* UARTManager::AddBus(std::string const& location,
-                             const UARTProperties::Baudrate baudrate,
+                             const unsigned long baudrate,
                              const UARTProperties::FlowControl flowctrl,
                              const UARTProperties::DataBits databits,
                              const UARTProperties::StopBits stopbits,
@@ -223,7 +243,7 @@ void UARTManager::WriteTo(const UARTDevice* device, const size_t length, const u
 }
 
 std::shared_ptr<UARTDevice> UARTManager::AddDevice(std::string const& location,
-												   const UARTProperties::Baudrate baudrate,
+												   const unsigned long baudrate,
 												   const UARTProperties::FlowControl flowctrl,
 												   const UARTProperties::DataBits databits,
 												   const UARTProperties::StopBits stopbits,

@@ -22,40 +22,6 @@ namespace ossian
 {
 namespace UARTProperties
 {
-enum Baudrate
-{
-	R0 = 0000000,
-	R50 = 0000001,
-	R75 = 0000002,
-	R110 = 0000003,
-	R134 = 0000004,
-	R150 = 0000005,
-	R200 = 0000006,
-	R300 = 0000007,
-	R600 = 0000010,
-	R1200 = 0000011,
-	R1800 = 0000012,
-	R2400 = 0000013,
-	R4800 = 0000014,
-	R9600 = 0000015,
-	R19200 = 0000016,
-	R38400 = 0000017,
-	R57600 = 0010001,
-	R115200 = 0010002,
-	R230400 = 0010003,
-	R460800 = 0010004,
-	R500000 = 0010005,
-	R576000 = 0010006,
-	R921600 = 0010007,
-	R1000000 = 0010010,
-	R1152000 = 0010011,
-	R1500000 = 0010012,
-	R2000000 = 0010013,
-	R2500000 = 0010014,
-	R3000000 = 0010015,
-	R3500000 = 0010016,
-	R4000000 = 0010017
-};
 
 enum DataBits
 {
@@ -96,7 +62,7 @@ public:
 	UARTBus() = delete;
 	explicit UARTBus(UARTManager* manager,
 	                 std::string const& location,
-	                 const UARTProperties::Baudrate baudrate,
+	                 const unsigned long baudrate,
 	                 const UARTProperties::FlowControl flowctrl,
 	                 const UARTProperties::DataBits databits,
 	                 const UARTProperties::StopBits stopbits,
@@ -120,7 +86,7 @@ private:
 	FileDescriptor m_FD;
 	std::string m_Location;
 
-	UARTProperties::Baudrate m_Baudrate;
+	unsigned long m_Baudrate;
 	UARTProperties::FlowControl m_FlowCtrl;
 	UARTProperties::DataBits m_DataBits;
 	UARTProperties::StopBits m_StopBits;
@@ -179,7 +145,7 @@ public:
 
 	void WriteTo(const UARTDevice* device, const size_t length, const uint8_t* data);
 	std::shared_ptr<UARTDevice> AddDevice(std::string const& location,
-	                                      const UARTProperties::Baudrate baudrate,
+	                                      const unsigned long baudrate,
 	                                      const UARTProperties::FlowControl flowctrl,
 	                                      const UARTProperties::DataBits databits,
 	                                      const UARTProperties::StopBits stopbits,
@@ -192,7 +158,7 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<UARTBus>> m_BusMap;
 
 	UARTBus* AddBus(std::string const& location,
-	                const UARTProperties::Baudrate baudrate,
+	                const unsigned long baudrate,
 	                const UARTProperties::FlowControl flowctrl,
 	                const UARTProperties::DataBits databits,
 	                const UARTProperties::StopBits stopbits,

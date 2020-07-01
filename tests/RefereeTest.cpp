@@ -18,7 +18,7 @@ int main()
 	auto mgr = std::make_shared<ossian::UARTManager>(&listener);
 	using namespace ossian::UARTProperties;
 	mgr->AddDevice("/dev/ttyTHS2",
-	               Baudrate::R115200,
+	               115200,
 	               FlowControl::FlowControlNone,
 	               DataBits::DataBits8,
 	               StopBits::StopBits1,
