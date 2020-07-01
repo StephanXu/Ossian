@@ -72,7 +72,7 @@ void Startup::ConfigServices(AppBuilder& app)
 		[](RemoteMt& option)
 		{
 			option.Add("/dev/ttyTHS2",
-			           ossian::UARTProperties::R115200,
+					   100000,
 			           ossian::UARTProperties::FlowControlNone,
 			           ossian::UARTProperties::DataBits8,
 			           ossian::UARTProperties::StopBits1,
