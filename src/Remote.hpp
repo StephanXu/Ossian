@@ -16,8 +16,10 @@
 #include <ossian/io/UART.hpp>
 #include <ossian/MultiThread.hpp>
 #include <ossian/IOData.hpp>
+#include <ossian/GeneralIO.hpp>
 
 #include <mutex>
+#include <cstring>
 
 /**
  * @brief Remote controller I/O data model
@@ -29,84 +31,38 @@ struct RemoteStatus
 
 	/* left and right lever information */
 	uint8_t sw[2];
-};
 
-/**
- * @brief Remote controller service interface
- */
-class IRemote
-{
-public:
-	virtual ~IRemote() = default;
-
-	/**
-	 * @brief Initialize remote controller.
-	 * 
-	 * @param location The location of remote controller. (e.g. /dev/ttyTHS2)
-	 */
-	virtual auto AddRemote(std::string location) -> void = 0;
-};
-
-/**
- * @brief Remote IO service
- * 
- * @tparam std::mutex Mutex type
- */
-template <typename Mutex = std::mutex>
-class Remote final : public IRemote, public ossian::IODataBuilder<Mutex, RemoteStatus>
-{
-	ossian::IOData<RemoteStatus>* m_IOData;
-	ossian::UARTManager* m_UARTManager;
-	RemoteStatus m_Status;
-	Mutex m_Mutex;
-public:
-	OSSIAN_SERVICE_SETUP(Remote(ossian::UARTManager* uartManager,
-		ossian::IOData<RemoteStatus>* ioData))
-		: m_UARTManager(uartManager), m_IOData(ioData)
+	static auto Parse(RemoteStatus& outModel,
+	                  const uint8_t* buffer,
+	                  const size_t bufferSize) -> void
 	{
-	}
+		outModel.ch[0] = (buffer[0] | buffer[1] << 8) & 0x07FF;
+		outModel.ch[0] -= 1024;
+		outModel.ch[1] = (buffer[1] >> 3 | buffer[2] << 5) & 0x07FF;
+		outModel.ch[1] -= 1024;
+		outModel.ch[2] = (buffer[2] >> 6 | buffer[3] << 2 | buffer[4] << 10) & 0x07FF;
+		outModel.ch[2] -= 1024;
+		outModel.ch[3] = (buffer[4] >> 1 | buffer[5] << 7) & 0x07FF;
+		outModel.ch[3] -= 1024;
 
-	virtual ~Remote() = default;
+		outModel.ch[4] = (buffer[16] | buffer[17] << 8) & 0x7FF;
+		outModel.ch[4] -= 1024;
 
-	auto AddRemote(std::string location) -> void override
-	{
-		using namespace ossian::UARTProperties;
-		m_UARTManager->AddDevice(location,
-		                         R115200,
-		                         FlowControlNone,
-		                         DataBits8,
-		                         StopBits1,
-		                         ParityNone)
-		             ->SetCallback(
-			             [this](const std::shared_ptr<ossian::BaseDevice>& device, const size_t length,
-			                    const uint8_t* data)
-			             {
-				             const size_t packSize  = 54;
-				             const uint8_t* readPtr = {data + length - packSize};
-				             while (readPtr - data >= 0 &&
-				                    ('C' != readPtr[0] || 'H' != readPtr[1] || '1' != readPtr[2]))
-				             {
-					             --readPtr;
-				             }
-				             if (readPtr < data)
-				             {
-					             SPDLOG_WARN("Remote: Incomplete data.");
-					             return;
-				             }
-				             SPDLOG_TRACE("Remote Receive: {}", length);
-				             sscanf(reinterpret_cast<const char*>(readPtr),
-				                    "CH1:%d,CH2:%d,CH3:%d,CH4:%d,CH5:%d,S1:%d,S2:%d",
-				                    &m_Status.ch[0],
-				                    &m_Status.ch[1],
-				                    &m_Status.ch[2],
-				                    &m_Status.ch[3],
-				                    &m_Status.ch[4],
-				                    &m_Status.sw[0],
-				                    &m_Status.sw[1]);
-				             m_IOData->Set(m_Status);
-			             });
+		outModel.sw[0] = ((buffer[5] >> 4) & 0x000C) >> 2;
+		outModel.sw[1] = (buffer[5] >> 4) & 0x0003;
+		if ((abs(outModel.ch[0]) > 660) ||
+		    (abs(outModel.ch[1]) > 660) ||
+		    (abs(outModel.ch[2]) > 660) ||
+		    (abs(outModel.ch[3]) > 660) ||
+		    (abs(outModel.ch[4]) > 660))
+		{
+			memset(&outModel, 0, sizeof(RemoteStatus));
+		}
 	}
 };
+
+template<typename Mutex>
+using Remote = ossian::GeneralIO<RemoteStatus, ossian::UARTManager, Mutex>;
 
 using RemoteMt = Remote<std::mutex>;
 using RemoteSt = Remote<ossian::null_mutex>;

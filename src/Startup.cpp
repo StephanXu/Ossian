@@ -67,10 +67,15 @@ void Startup::ConfigServices(AppBuilder& app)
 		{
 			option.AddReferee("/dev/ttyUSB1");
 		});
-	app.AddService<IRemote, RemoteMt>(
-		[](IRemote& option)
+	app.AddService<RemoteMt>(
+		[](RemoteMt& option)
 		{
-			option.AddRemote("/dev/ttyTHS2");
+			option.Add("/dev/ttyTHS2",
+			           ossian::UARTProperties::R115200,
+			           ossian::UARTProperties::FlowControlNone,
+			           ossian::UARTProperties::DataBits8,
+			           ossian::UARTProperties::StopBits1,
+			           ossian::UARTProperties::ParityNone);
 		});
 	app.AddService<ICapacitor, CapacitorMt>(
 		[](ICapacitor& option)
