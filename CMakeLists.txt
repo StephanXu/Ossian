@@ -38,7 +38,8 @@ target_sources(Ossian
             src/Gyro.cpp
             src/IOPeeker.cpp
             src/CameraPeeker.cpp
-            src/GyroA204.cpp)
+            src/GyroA204.cpp
+            src/TOFNooploop.cpp)
 target_include_directories(Ossian
         PRIVATE
             src
