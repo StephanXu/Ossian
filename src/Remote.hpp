@@ -54,14 +54,17 @@ struct RemoteStatus
 		    (abs(outModel.ch[1]) > 660) ||
 		    (abs(outModel.ch[2]) > 660) ||
 		    (abs(outModel.ch[3]) > 660) ||
-		    (abs(outModel.ch[4]) > 660))
+		    (abs(outModel.ch[4]) > 660) ||
+		    outModel.sw[0] == 0 ||
+		    outModel.sw[1] == 0)
 		{
 			memset(&outModel, 0, sizeof(RemoteStatus));
+			throw ossian::GeneralIOParseFailed{ "Remote parse failed" };
 		}
 	}
 };
 
-template<typename Mutex>
+template <typename Mutex>
 using Remote = ossian::GeneralIO<RemoteStatus, ossian::UARTManager, Mutex>;
 
 using RemoteMt = Remote<std::mutex>;

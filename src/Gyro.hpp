@@ -62,7 +62,7 @@ public:
 			throw std::runtime_error("UARTManager is null");
 		}
 		auto dev = m_UARTManager->AddDevice(location,
-		                                    ossian::UARTProperties::R230400,
+		                                    230400,
 		                                    ossian::UARTProperties::FlowControlNone,
 		                                    ossian::UARTProperties::DataBits8,
 		                                    ossian::UARTProperties::StopBits1,
@@ -151,7 +151,7 @@ public:
 				m_DataListener->Set(model);
 			});
 		//const uint8_t command[] = {'A', 'T', '+', 'E', 'T', '\n'};
-		const uint8_t command[] = { 0xff,0xaa,0x63,0,0x00 };
+		const uint8_t command[] = {0xff, 0xaa, 0x63, 0, 0x00};
 		dev->WriteRaw(5, command);
 	}
 

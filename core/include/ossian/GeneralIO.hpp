@@ -11,7 +11,6 @@
 
 namespace ossian
 {
-
 //template <typename ModelType,
 //          typename IOManagerType,
 //          typename Mutex>
@@ -40,6 +39,14 @@ namespace ossian
 //};
 
 
+class GeneralIOParseFailed : public std::runtime_error
+{
+public:
+	GeneralIOParseFailed(std::string message) : std::runtime_error(message)
+	{
+	}
+};
+
 template <typename ModelType,
           typename IOManagerType,
           typename Mutex=std::mutex>
@@ -66,9 +73,16 @@ public:
 			       const size_t length,
 			       const uint8_t* data)
 			{
-				ModelType model;
-				ModelType::Parse(model, data, length);
-				m_IOData->Set(model);
+				try
+				{
+					ModelType model;
+					ModelType::Parse(model, data, length);
+					m_IOData->Set(model);
+				}
+				catch (GeneralIOParseFailed& err)
+				{
+					SPDLOG_WARN("GeneralIOParseFailed: {}", err.what());
+				}
 			});
 	}
 };

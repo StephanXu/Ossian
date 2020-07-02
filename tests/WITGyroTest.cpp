@@ -26,7 +26,7 @@ int main()
 	IOListener listener;
 	auto mgr = std::make_shared<UARTManager>(&listener);
 	auto dev = mgr->AddDevice("/dev/ttyUSB1",
-				   UARTProperties::R230400,
+				   230400,
 				   UARTProperties::FlowControlNone,
 				   UARTProperties::DataBits8,
 				   UARTProperties::StopBits1,
