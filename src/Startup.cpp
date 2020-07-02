@@ -76,7 +76,7 @@ void Startup::ConfigServices(AppBuilder& app)
 			           ossian::UARTProperties::FlowControlNone,
 			           ossian::UARTProperties::DataBits8,
 			           ossian::UARTProperties::StopBits1,
-			           ossian::UARTProperties::ParityNone);
+			           ossian::UARTProperties::ParityEven);
 		});
 	app.AddService<ICapacitor, CapacitorMt>(
 		[](ICapacitor& option)
