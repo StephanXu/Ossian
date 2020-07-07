@@ -1,20 +1,16 @@
 ﻿#include "ossian/io/UART.hpp"
+
+#ifdef __linux__
 #include <sys/ioctl.h>
 #include <linux/serial.h>
-#ifdef __linux__
 #include <termios.h>
 #include <fcntl.h> 
-#include <sys/socket.h>
-#include <net/if.h>
-#include <unistd.h>
 #include <mutex>
 #include <cstring>
-
 #include <spdlog/spdlog.h>
 namespace ossian
 {
 // UARTBus
-
 UARTBus::UARTBus(UARTManager* manager,
 				 std::string const& location,
 				 const unsigned long baudrate,
@@ -50,15 +46,15 @@ bool UARTBus::Open()
 	fd = open(m_Location.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
 	if (fd < 0)
 	{
-		throw std::runtime_error("Device open failed! Location: "+m_Location);
+		throw UARTInitializeFailed("Device open failed! Insufficient permission or device not exist! Location: "+m_Location);
 	}
 	// 指定波特率
 	tcgetattr(fd, &opt);
 	opt.c_cc[VMIN] = 0;
 	opt.c_cc[VTIME] = 0;
 	ClearFlag(opt.c_cflag, CBAUD | CBAUDEX);
-	cfsetispeed(&opt, B0); // 此处波特率无效，后续使用serial_struct实现自定义波特率的设置
-	cfsetospeed(&opt, B0);
+	cfsetispeed(&opt, B38400); // 此处波特率无效，后续使用serial_struct实现自定义波特率的设置
+	cfsetospeed(&opt, B38400);
 	SetFlag(opt.c_cflag, CLOCAL | CREAD); // 必须开启
 	ClearFlag(opt.c_cflag, CSIZE);
 	SetFlag(opt.c_cflag, m_DataBits); // 数据位设置
@@ -92,40 +88,58 @@ bool UARTBus::Open()
 		break;
 	case UARTProperties::FlowControlHardware:
 		SetFlag(opt.c_cflag, CRTSCTS);
-		throw std::runtime_error("Hardware flow control not supported");
+		throw UARTInitializeFailed("Hardware flow control not supported!");
 	case UARTProperties::FlowControlSoftware:
 		ClearFlag(opt.c_cflag, CRTSCTS);
 		ClearFlag(opt.c_cflag, IXON | IXOFF | IXANY);
-		throw std::runtime_error("Software flow control not supported");
+		throw UARTInitializeFailed("Software flow control not supported!");
 	}
 	ClearFlag(opt.c_lflag, ICANON | ECHO | ECHOE | ISIG);
 	ClearFlag(opt.c_iflag, BRKINT | ICRNL | INPCK | ISTRIP | IXON); // exp
-
-	serial_struct serial;
-	if (ioctl(fd, TIOCGSERIAL, &serial))
+	try
 	{
-		m_IsOpened = false;
-		throw std::runtime_error("Failed TIOCGSERIAL! Location: " + m_Location);
+		serial_struct serial;
+		if (ioctl(fd, TIOCGSERIAL, &serial))
+		{
+			m_IsOpened = false;
+			throw UARTInitializeFailed("TIOCGSERIAL failed! Location: " + m_Location);
+		}
+		serial.flags &= ~ASYNC_SPD_MASK;
+		serial.flags |= ASYNC_SPD_CUST;
+		serial.custom_divisor = (serial.baud_base + (m_Baudrate / 2)) / m_Baudrate;
+		const unsigned long closestBaudrate = serial.baud_base / serial.custom_divisor;
+		if(closestBaudrate == 0 || serial.baud_base == 0)
+		{
+			throw UARTInitializeFailed("Invalid baudrate.");
+		}
+		if (closestBaudrate < m_Baudrate * 98 / 100 || closestBaudrate > m_Baudrate * 102 / 100)
+		{
+			SPDLOG_WARN("Cannot set serial port speed to {}. Closest possible is {}.", m_Baudrate, closestBaudrate);
+		}
+		if (ioctl(fd, TIOCSSERIAL, &serial))
+		{
+			m_IsOpened = false;
+			throw UARTInitializeFailed("TIOCSSERIAL failed! Location: " + m_Location);
+		}
+		SPDLOG_INFO("setting baudrate:{} base:{}, divisor:{}", m_Baudrate, serial.baud_base, serial.custom_divisor);
 	}
-	serial.flags &= ~ASYNC_SPD_MASK;
-	serial.flags |= ASYNC_SPD_CUST;
-	serial.custom_divisor = (serial.baud_base + (m_Baudrate / 2)) / m_Baudrate;
-	const unsigned long closestBaudrate = serial.baud_base / serial.custom_divisor;
-	if (closestBaudrate < m_Baudrate * 98 / 100 || closestBaudrate > m_Baudrate * 102 / 100)
+	catch(const UARTInitializeFailed& err)
 	{
-		SPDLOG_INFO("Cannot set serial port speed to {}. Closest possible is {}\n", m_Baudrate, closestBaudrate);
-	}
-	if (ioctl(fd, TIOCSSERIAL, &serial))
-	{
-		m_IsOpened = false;
-		throw std::runtime_error("Failed TIOCSSERIAL! Location: " + m_Location);
+		auto baudrateFlag = UARTProperties::Baudrate.find(m_Baudrate);
+		if(baudrateFlag == UARTProperties::Baudrate.end())
+		{
+			m_IsOpened = false;
+			throw UARTInitializeFailed("Failed to set baudrate!");
+		}
+		ClearFlag(opt.c_cflag, CBAUD);
+		cfsetispeed(&opt, baudrateFlag->second);
+		cfsetospeed(&opt, baudrateFlag->second);
 	}
 	if (tcsetattr(fd, TCSANOW, &opt) < 0)
 	{
 		m_IsOpened = false;
-		throw std::runtime_error("Device attribute failed to set! Location: " + m_Location);
+		throw UARTInitializeFailed("Device attribute failed to set! Location: " + m_Location);
 	}
-	
 	tcflush(fd, TCIOFLUSH);
 	m_FD = fd;
 	m_IsOpened = true;
@@ -206,7 +220,7 @@ UARTManager::UARTManager(IOListener* listener)
 
 /* 使用样例
 AddBus(location,
-      UARTProperties::Baudrate::R115200,
+      UARTProperties::::R115200,
       UARTProperties::FlowControl::FlowControlNone,
       UARTProperties::DataBits::DataBits8,
       UARTProperties::StopBits::StopBits1,
