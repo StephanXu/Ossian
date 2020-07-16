@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.13.0)
 
 project(Ossian VERSION 1.0)
 
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
 add_executable(Ossian)
 
 find_package(OpenCV REQUIRED)
