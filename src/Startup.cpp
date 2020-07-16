@@ -66,7 +66,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IReferee, RefereeAllMessagesMt>(
 		[](IReferee& option)
 		{
-			option.AddReferee("/dev/ttyUSB1");
+			//option.AddReferee("/dev/ttyUSB1");
 		});
 	app.AddService<RemoteMt>(
 		[](RemoteMt& option)
@@ -86,7 +86,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IGyro, GyroMt>(
 		[](IGyro& option)
 		{
-			option.AddGyro("/dev/ttyUSB0");
+			//option.AddGyro("/dev/ttyUSB0");
 		});
 	app.AddService<GyroA204Mt>(
 		[](GyroA204Mt& option)
@@ -117,7 +117,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOPeeker<1>>();
 
 	app.AddExecutable<ChassisCtrlTask>();
-	app.AddExecutable<GimbalCtrlTask>();
+	//app.AddExecutable<GimbalCtrlTask>();
 
 	//app.AddService<ossian::IExecutable, CameraPeeker>();
 }

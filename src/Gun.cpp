@@ -1,25 +1,25 @@
 
 #include "Gun.hpp"
 
-int16_t Gun::kFricSpeed12 = 0;
-int16_t Gun::kFricSpeed15 = 0;
-int16_t Gun::kFricSpeed18 = 0;
-int16_t Gun::kFricSpeed30 = 0;
+int16_t FricCtrlTask::kFricSpeed12 = 0;
+int16_t FricCtrlTask::kFricSpeed15 = 0;
+int16_t FricCtrlTask::kFricSpeed18 = 0;
+int16_t FricCtrlTask::kFricSpeed30 = 0;
 
-int16_t Gun::kFeedNormalRPM = 0;
-int16_t Gun::kFeedSemiRPM = 0;
-int16_t Gun::kFeedBurstRPM = 0;
-int16_t Gun::kFeedAutoRPM = 0;
+int16_t FeedCtrlTask::kFeedNormalRPM = 0;
+int16_t FeedCtrlTask::kFeedSemiRPM = 0;
+int16_t FeedCtrlTask::kFeedBurstRPM = 0;
+int16_t FeedCtrlTask::kFeedAutoRPM = 0;
 
-std::array<double, 5> Gun::PIDFricSpeedParams;
-std::array<double, 5> Gun::PIDFeedSpeedParams;
+std::array<double, 5> FricCtrlTask::PIDFricSpeedParams;
+std::array<double, 5> FeedCtrlTask::PIDFeedSpeedParams;
 
-void Gun::FricModeSet()
+void FricCtrlTask::FricModeSet()
 {
 	static uint8_t lastSw = kRCSwUp;
 
 	//遥控器右侧开关上拨一次，开启摩擦轮；再上拨一次，关闭摩擦轮
-	if (m_GunSensorValues.rc.sw[kShootModeChannel] == kRCSwUp && lastSw != kRCSwUp)
+	if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp && lastSw != kRCSwUp)
 	{
 		switch (m_FricMode)
 		{
@@ -31,22 +31,22 @@ void Gun::FricModeSet()
 			m_FricMode = FricMode::Disable; break;
 		}
 	}
-	else if (m_GunSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable)
+	else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable)
 		m_FricMode = FricMode::Disable;
 	else
 		m_FricMode = FricMode::Disable;
 
-	lastSw = m_GunSensorValues.rc.sw[kShootModeChannel];
+	lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
 }
 
 //[TODO] 读取场地加成RFID状态，叠加射击速度加成
-void Gun::FricExpSpeedSet()
+void FricCtrlTask::FricExpSpeedSet()
 {
 	if (m_FricMode == FricMode::Disable)
 		m_FricSpeedSet = 0;
 	else if (m_FricMode == FricMode::Enable)
 	{
-		switch (m_GunSensorValues.shooter_heat0_speed_limit)
+		switch (m_FricSensorValues.shooter_heat0_speed_limit)
 		{
 		case 12:
 			m_FricSpeedSet = kFricSpeed12; break;
@@ -62,37 +62,34 @@ void Gun::FricExpSpeedSet()
 	}
 }
 
-void Gun::FricCtrl()
+void FricCtrlTask::FricCtrl()
 {
-	double currentFricBelow = 0, currentFricUpper = 0;
-
+	static std::array<double, kNumGunFricMotors> currentSend{};
 	if (m_FricMode == FricMode::Disable)
-		currentFricBelow = currentFricUpper = 0;
+		currentSend.fill(0);
 	else
 	{
-		currentFricBelow = m_PIDFricSpeed[FricBelow].Calc(m_FricSpeedSet, m_MotorsFric[FricBelow]->Get().m_RPM);
-		currentFricUpper = m_PIDFricSpeed[FricUpper].Calc(-m_FricSpeedSet, m_MotorsFric[FricUpper]->Get().m_RPM);
+		currentSend[FricBelow] = m_PIDFricSpeed[FricBelow].Calc(m_FricSpeedSet, m_FricMotorsStatus.m_RPM[FricBelow]);
+		currentSend[FricUpper] = m_PIDFricSpeed[FricUpper].Calc(-m_FricSpeedSet, m_FricMotorsStatus.m_RPM[FricUpper]);
 	}
-	m_MotorsFric[FricBelow]->SetVoltage(currentFricBelow);
-	m_MotorsFric[FricUpper]->SetVoltage(currentFricUpper);
-	m_MotorsFric[FricBelow]->Writer()->PackAndSend();
+
+	m_Gun->SendCurrentToMotorsFric(currentSend);
 }
 
 //[TODO] 鼠标键盘射击逻辑
-void Gun::FeedModeSet()
+void FeedCtrlTask::FeedModeSet()
 {
 	//若超热量则拨弹轮停转
-	bool overheat = m_CurBulletShotNum.load() >= (m_GunSensorValues.refereeRobotStatus.m_Shooter17HeatLimit
-		- m_GunSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet;
+	bool overheat = m_CurBulletShotNum.load() >= (m_FeedSensorValues.refereeRobotStatus.m_Shooter17HeatLimit
+		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet;
 	
-	if (m_FricMode == FricMode::Disable)
-		m_FeedMode = FeedMode::Stop;
-	else if (overheat)
+	//若摩擦轮停转，则拨弹轮停转
+	if (overheat || m_FricCtrlTask->Stopped())
 		m_FeedMode = FeedMode::Stop;
 	else
 	{
 		//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
-		int16_t thumbWheelValue = DeadbandLimit(m_GunSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
+		int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
 		if (thumbWheelValue < 0)
 			m_FeedMode = FeedMode::Semi;
 		else if (thumbWheelValue == 0)
@@ -102,28 +99,27 @@ void Gun::FeedModeSet()
 	}
 	
 	//若卡弹则拨弹轮反转
-	bool jammed = m_FeedMode != FeedMode::Stop && m_MotorFeed->Get().m_RPM < kFeedJamRPM;
+	bool jammed = m_FeedMode != FeedMode::Stop && m_FeedMotorStatus.m_RPM[Feed] < kFeedJamRPM;
 	if (jammed)
 		m_FeedMode = FeedMode::Reverse; 
 }
 
-void Gun::FeedRotateCtrl(bool stop, int rpmSet, bool reverse)
+void FeedCtrlTask::FeedRotateCtrl(bool stop, int rpmSet, bool reverse)
 {
 	double current = 0;
 	if (stop)
 		current = 0;
 	else
 	{
-		current = m_PIDFeedSpeed.Calc(rpmSet, m_MotorFeed->Get().m_RPM);
+		current = m_PIDFeedSpeed.Calc(rpmSet, m_FeedMotorStatus.m_RPM[Feed]);
 		if (reverse)
 			current *= -1;
 	}
-	 
-	m_MotorFeed->SetVoltage(current);
-	m_MotorFeed->Writer()->PackAndSend();
+	
+	m_Gun->SendCurrentToMotorFeed(current);
 }
 
-void Gun::AutoReloadCtrl()
+void FeedCtrlTask::AutoReloadCtrl()
 {
 	while (!MicroSwitchStatus())
 		FeedRotateCtrl(false, kFeedNormalRPM);
@@ -135,7 +131,7 @@ void Gun::AutoReloadCtrl()
  * 由于自动补弹的作用，进入此函数时，微动开关处有弹
  * 拨弹轮转动--->微动开关检测到弹丸离开--->拨弹轮转动送弹--->微动开关检测有弹丸--->拨弹轮停
  */
-void Gun::SingleShotCtrl(int rpmSet)
+void FeedCtrlTask::SingleShotCtrl(int rpmSet)
 {
 	while (MicroSwitchStatus())
 		FeedRotateCtrl(false, rpmSet);
@@ -143,7 +139,7 @@ void Gun::SingleShotCtrl(int rpmSet)
 	AutoReloadCtrl();
 }
 
-void Gun::FeedCtrl()
+void FeedCtrlTask::FeedCtrl()
 {
 	static hrClock::time_point lastShootTimestamp;
 	long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(

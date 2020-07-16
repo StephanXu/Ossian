@@ -6,6 +6,7 @@
 #include "CtrlAlgorithms.hpp"
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
+#include "GyroA204.hpp"
 #include "Gyro.hpp"
 
 #include <chrono>
@@ -176,7 +177,7 @@ public:
 		, m_RCListener(remote)
 		, m_Gimbal(gimbal)
 		, m_Config(config)
-		, m_GyroListener(gyroListener)
+		, m_GyroA204Listener(gyroListener)
 	{
 		using OssianConfig::Configuration;
 		PIDAngleEcdPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->kp();
@@ -258,13 +259,13 @@ public:
 		m_GimbalSensorValues.relativeAngle[Pitch] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Pitch], kPitchMidEcd);
 		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawMidEcd);
 
-		m_GimbalSensorValues.imu = m_GyroListener->Get();
-		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
-		std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
-		m_GimbalSensorValues.imu.m_Pitch = -m_GimbalSensorValues.imu.m_Pitch;
-		//gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
-		m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wz
-			- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wx;
+		m_GimbalSensorValues.imu = m_GyroA204Listener->Get();
+		//std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
+		//std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
+		//m_GimbalSensorValues.imu.m_Pitch = -m_GimbalSensorValues.imu.m_Pitch;
+		////gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
+		//m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wz
+		//	- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wx;
 
 		/*SPDLOG_INFO("@IMUAngle=[$GRoll={},$GPitch={},$GYaw={}]",
 			m_GimbalSensorValues.imu.m_Roll,
@@ -336,7 +337,7 @@ private:
 	Utils::ConfigLoader* m_Config;
 	Gimbal* m_Gimbal;
 	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
-	ossian::IOData<GyroModel>* m_GyroListener;
+	ossian::IOData<GyroModel>* m_GyroA204Listener;
 
 	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
 	std::atomic<GimbalInputSrc> m_GimbalCtrlSrc;
