@@ -7,7 +7,6 @@
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
 #include "GyroA204.hpp"
-#include "Gyro.hpp"
 
 #include <chrono>
 #include <array>
@@ -172,12 +171,14 @@ public:
 		ossian::IOData<RemoteStatus>* remote,
 		Gimbal* gimbal,
 		Utils::ConfigLoader* config,
-		ossian::IOData<GyroModel>* gyroListener))
+		ossian::IOData<GyroA204Status<GyroType::Pitch>>* gyroPitchListener,
+		ossian::IOData<GyroA204Status<GyroType::Yaw>>* gyroYawListener))
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
 		, m_Gimbal(gimbal)
 		, m_Config(config)
-		, m_GyroA204Listener(gyroListener)
+		, m_GyroA204PitchListener(gyroPitchListener)
+		, m_GyroA204YawListener(gyroYawListener)
 	{
 		using OssianConfig::Configuration;
 		PIDAngleEcdPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->kp();
@@ -243,6 +244,9 @@ public:
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);
 
+		m_GyroA204YawListener->AddOnChange([](const GyroA204Status<GyroType::Yaw>& value) {
+			SPDLOG_INFO("@ImuYaw=[$ZAngle={},$ZSpeed={}]",
+				value.m_ZAxisAngle, value.m_ZAxisSpeed); });
 		/*m_GyroListener->AddOnChange([](const GyroModel& value) {
 			SPDLOG_INFO("@GyroOnChange=[$roll={},$pitch={},$yaw={}]",
 				value.m_Wx, value.m_Wy, value.m_Wz); });*/
@@ -259,7 +263,8 @@ public:
 		m_GimbalSensorValues.relativeAngle[Pitch] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Pitch], kPitchMidEcd);
 		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawMidEcd);
 
-		m_GimbalSensorValues.imu = m_GyroA204Listener->Get();
+		m_GimbalSensorValues.imuPitch = m_GyroA204PitchListener->Get();
+		m_GimbalSensorValues.imuYaw = m_GyroA204YawListener->Get();
 		//std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
 		//std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
 		//m_GimbalSensorValues.imu.m_Pitch = -m_GimbalSensorValues.imu.m_Pitch;
@@ -337,8 +342,9 @@ private:
 	Utils::ConfigLoader* m_Config;
 	Gimbal* m_Gimbal;
 	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
-	ossian::IOData<GyroModel>* m_GyroA204Listener;
-
+	ossian::IOData<GyroA204Status<GyroType::Pitch>>* m_GyroA204PitchListener;
+	ossian::IOData<GyroA204Status<GyroType::Yaw>>* m_GyroA204YawListener;
+	
 	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
 	std::atomic<GimbalInputSrc> m_GimbalCtrlSrc;
 	GimbalMotorsModel m_MotorsStatus;
@@ -347,7 +353,8 @@ private:
 	{
 		double relativeAngle[kNumGimbalMotors];
 		RemoteStatus rc;	 //遥控器数据
-		GyroModel imu;
+		GyroA204Status<GyroType::Pitch> imuPitch;
+		GyroA204Status<GyroType::Yaw> imuYaw;
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
 

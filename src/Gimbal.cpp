@@ -22,8 +22,8 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 			m_CurGimbalAngleMode = Encoding;
 			m_EcdAngleSet[Pitch] = 0;
 			m_EcdAngleSet[Yaw] = 0;
-			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
-			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
+			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imuPitch.m_ZAxisAngle;
+			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imuYaw.m_ZAxisAngle;
 
 			/*m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 			m_PIDAngleEcd[Pitch].Reset();
@@ -83,7 +83,7 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 		double angleInput = m_AngleInput[position]; 
 		if (m_CurGimbalAngleMode == Gyro)
 		{
-			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw); 
+			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle); 
 			double errorAngle = ClampLoop(m_GyroAngleSet[position] - gyro, -M_PI, M_PI); 
 			//判断会不会越过限位
 			if (curEcdAngle + errorAngle + angleInput > kMaxRelativeAngle[position])
@@ -122,8 +122,8 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 	{
 		if (m_CurGimbalAngleMode == Gyro)
 		{
-			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw);
-			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_Wy : m_GimbalSensorValues.imu.m_Wz);
+			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle);
+			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
 			double angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
 			m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
 
@@ -159,8 +159,9 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 
 			//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
 			double angleSpeedSet = 3;
-			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_Wy : m_GimbalSensorValues.imu.m_Wz);
-			gyroSpeed = m_AngleSpeedFilters[position].Calc(gyroSpeed);
+			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : 
+				m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
+			//gyroSpeed = m_AngleSpeedFilters[position].Calc(gyroSpeed);
 			m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet*1000, gyroSpeed*1000);
 
 			/*m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
@@ -181,8 +182,6 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 				position,
 				m_VoltageSend[position]/10000.0);*/
 
-			//SPDLOG_INFO("@YawRpm=[$rpm={}]",)
-			m_VoltageSend[position] = 15000;
 		}
 	}
 	
