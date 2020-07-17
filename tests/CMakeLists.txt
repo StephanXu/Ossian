@@ -10,7 +10,7 @@ test_target(
 test_target(
 	NAME WITGyroTest
 	SRCS "WITGyroTest.cpp"
-	LIBS OssianCore spdlog::spdlog
+	LIBS OssianCore spdlog::spdlog mimalloc
 )
 
 test_target(

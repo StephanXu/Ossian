@@ -58,11 +58,10 @@ public:
 			adValue.m_Buf[0]      = data[4];
 			adValue.m_Buf[1]      = data[5];
 
-			m_IOData->Lock();
-			auto& model        = m_IOData->GetRef();
+			auto model         = m_IOData->Get();
 			model.m_ZAxisAngle = zRotateAngle.m_Value;
 			model.m_AdValue    = adValue.m_Value;
-			m_IOData->UnLock();
+			m_IOData->Set(model);
 		};
 
 		auto speedProc = [this](const std::shared_ptr<ossian::BaseDevice>& device,
@@ -86,12 +85,11 @@ public:
 			yOriginal.m_Buf[0]    = data[6];
 			yOriginal.m_Buf[1]    = data[7];
 
-			m_IOData->Lock();
-			auto& model        = m_IOData->GetRef();
+			auto model         = m_IOData->Get();
 			model.m_ZAxisSpeed = zRotateAngle.m_Value;
 			model.m_XAxisSpeed = xOriginal.m_Value;
 			model.m_YAxisSpeed = yOriginal.m_Value;
-			m_IOData->UnLock();
+			m_IOData->Set(model);
 		};
 
 		m_CANManager->AddDevice(location, angleId)->SetCallback(angleProc);
@@ -118,10 +116,10 @@ private:
 	};
 };
 
-template<GyroType Gt>
+template <GyroType Gt>
 using GyroA204Mt = GyroA204<std::mutex, Gt>;
 
-template<GyroType Gt>
+template <GyroType Gt>
 using GyroA204St = GyroA204<ossian::null_mutex, Gt>;
 
 #endif // OSSIAN_GYRO_A204
