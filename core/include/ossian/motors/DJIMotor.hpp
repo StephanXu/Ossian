@@ -19,6 +19,13 @@ struct MultipleMotorsStatus
 	int16_t m_RPM[NumMotors];
 };
 
+#define OSSIAN_MULTIPLE_MOTORS_STATUS(n) \
+	struct \
+	{ \
+		uint16_t m_Encoding[n]; \
+		int16_t m_RPM[n]; \
+	} \
+
 #pragma pack(push,1)
 
 struct ReceiveModel3508
