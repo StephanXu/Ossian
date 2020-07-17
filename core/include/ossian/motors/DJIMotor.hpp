@@ -19,12 +19,12 @@ struct MultipleMotorsStatus
 	int16_t m_RPM[NumMotors];
 };
 
-#define OSSIAN_MULTIPLE_MOTORS_STATUS(n) \
-	struct \
+#define OSSIAN_MULTIPLE_MOTORS_STATUS(name, n) \
+	struct name\
 	{ \
 		uint16_t m_Encoding[n]; \
 		int16_t m_RPM[n]; \
-	} \
+	}
 
 #pragma pack(push,1)
 

@@ -88,10 +88,15 @@ void Startup::ConfigServices(AppBuilder& app)
 		{
 			//option.AddGyro("/dev/ttyUSB0");
 		});
-	app.AddService<GyroA204Mt>(
-		[](GyroA204Mt& option)
+	app.AddService<GyroA204Mt<GyroType::Yaw>>(
+		[](GyroA204Mt<GyroType::Yaw>& option)
 		{
-			option.Add("can0", 0x403);
+			option.Add("can0", 0x402, 0x403);
+		});
+	app.AddService<GyroA204Mt<GyroType::Pitch>>(
+		[](GyroA204Mt<GyroType::Pitch>& option)
+		{
+			option.Add("can1", 0x402, 0x403);
 		});
 	app.AddService<Chassis>(
 		[](Chassis& option)
