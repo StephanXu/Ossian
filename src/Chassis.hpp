@@ -25,7 +25,7 @@
 //底盘电机数量
 constexpr size_t kNumChassisMotors = 4;
 
-using ChassisMotorsModel = ossian::MultipleMotorsStatus<kNumChassisMotors>;
+OSSIAN_MULTIPLE_MOTORS_STATUS(ChassisMotorsModel, kNumChassisMotors);
 
 class Chassis : public ossian::IODataBuilder<std::mutex, ChassisMotorsModel>
 {

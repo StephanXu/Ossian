@@ -4,7 +4,7 @@
 int16_t FricCtrlTask::kFricSpeed12 = 0;
 int16_t FricCtrlTask::kFricSpeed15 = 0;
 int16_t FricCtrlTask::kFricSpeed18 = 0;
-int16_t FricCtrlTask::kFricSpeed30 = 0;
+int16_t FricCtrlTask::kFricSpeed30 = 500;
 
 int16_t FeedCtrlTask::kFeedNormalRPM = 0;
 int16_t FeedCtrlTask::kFeedSemiRPM = 0;
@@ -31,8 +31,9 @@ void FricCtrlTask::FricModeSet()
 			m_FricMode = FricMode::Disable; break;
 		}
 	}
-	else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable)
-		m_FricMode = FricMode::Disable;
+	//如果云台失能，则摩擦轮也失能
+	/*else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable)
+		m_FricMode = FricMode::Disable;*/
 	else
 		m_FricMode = FricMode::Disable;
 

@@ -17,7 +17,7 @@
 //云台电机数量
 constexpr size_t kNumGimbalMotors = 2;
 
-using GimbalMotorsModel = ossian::MultipleMotorsStatus<kNumGimbalMotors>;
+OSSIAN_MULTIPLE_MOTORS_STATUS(GimbalMotorsModel, kNumGimbalMotors);
 
 class Gimbal : public ossian::IODataBuilder<std::mutex, GimbalMotorsModel>
 {

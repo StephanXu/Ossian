@@ -15,12 +15,12 @@
 #include <array>
 #include <atomic>
 
-constexpr size_t kNumGunFricMotorsFake = 3;
+//constexpr size_t kNumGunFricMotorsFake = 3;
 constexpr size_t kNumGunFricMotors = 2; 
 constexpr size_t kNumGunFeedMotors = 1;
 
-using GunFricMotorsModel = ossian::MultipleMotorsStatus<kNumGunFricMotorsFake>;
-using GunFeedMotorsModel = ossian::MultipleMotorsStatus<kNumGunFeedMotors>;
+OSSIAN_MULTIPLE_MOTORS_STATUS(GunFricMotorsModel, kNumGunFricMotors);
+OSSIAN_MULTIPLE_MOTORS_STATUS(GunFeedMotorsModel, kNumGunFeedMotors);
 
 using hrClock = std::chrono::high_resolution_clock;
 class Gun : public ossian::IODataBuilder<std::mutex, GunFricMotorsModel, GunFeedMotorsModel>
@@ -166,10 +166,7 @@ public:
 	
 	OSSIAN_SERVICE_SETUP(FricCtrlTask(ossian::IOData<RemoteStatus>* remote,
 		GimbalCtrlTask* gimbalCtrlTask,
-		Utils::ConfigLoader* config,
-		ossian::IOData<PowerHeatData>* powerHeatDataListener,
-		ossian::IOData<RobotStatus>* robotStatusListener,
-		ossian::IOData<ShootData>* shootDataListener))
+		Utils::ConfigLoader* config))
 		: m_RCListener(remote)
 		, m_GimbalCtrlTask(gimbalCtrlTask)
 		, m_Config(config)

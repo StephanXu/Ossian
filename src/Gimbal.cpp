@@ -172,17 +172,19 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 				m_EcdAngleSet[position],
 				position,
 				curEcdAngle);*/
-			SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={},$pidoutAS{}={}]",
+			/*SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={},$pidoutAS{}={}]",
 				position,
 				position,
 				angleSpeedSet,
 				position,
 				gyroSpeed,
 				position,
-				m_VoltageSend[position]/10000.0);
+				m_VoltageSend[position]/10000.0);*/
 
+			//SPDLOG_INFO("@YawRpm=[$rpm={}]",)
+			m_VoltageSend[position] = 15000;
 		}
 	}
-
+	
 	m_Gimbal->SendVoltageToMotors(m_VoltageSend);
 }
