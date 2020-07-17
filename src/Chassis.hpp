@@ -223,9 +223,9 @@ public:
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
 		m_PIDChassisAngle.SetFlagAngleLoop();
-		/*m_RC->AddOnChange([](const RemoteStatus& value) {
+		m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
-				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});*/
+				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
 
 		m_RefereePowerHeatDataListener->AddOnChange([](const PowerHeatData& value) {
 			SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
@@ -250,7 +250,7 @@ public:
 	void UpdateChassisSensorFeedback()
 	{
 		m_ChassisSensorValues.rc = m_RCListener->Get();
-		SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
+		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
 		//m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();
 

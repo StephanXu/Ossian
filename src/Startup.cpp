@@ -66,12 +66,12 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IReferee, RefereeAllMessagesMt>(
 		[](IReferee& option)
 		{
-			//option.AddReferee("/dev/ttyUSB1");
+			option.AddReferee("/dev/ttyTHS2");
 		});
 	app.AddService<RemoteMt>(
 		[](RemoteMt& option)
 		{
-			option.Add("/dev/ttyTHS2",
+			option.Add("/dev/ttyUSB0",
 					   100000,
 			           ossian::UARTProperties::FlowControlNone,
 			           ossian::UARTProperties::DataBits8,
