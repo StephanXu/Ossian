@@ -184,6 +184,6 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 
 		}
 	}
-	
+	m_VoltageSend.fill(0);
 	m_Gimbal->SendVoltageToMotors(m_VoltageSend);
 }

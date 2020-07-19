@@ -50,16 +50,17 @@ public:
 		const unsigned int motorId,
 		const unsigned int writerCanId)->void
 	{
-		if (position == FricBelow || position == FricUpper)
+		if (position == FricBelow || position == FricUpper) {
 			m_MotorsFric[position] =
-			m_MotorManager->AddMotor<ossian::DJIMotor3508Mt>(
-				location,
-				m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508WriterMt>(location, writerCanId),
-				[this, position](const std::shared_ptr<ossian::DJIMotor3508Mt>& motor)
-				{
-					MotorFricReceiveProc(motor, position);
-				},
-				motorId);
+				m_MotorManager->AddMotor<ossian::DJIMotor3508Mt>(
+					location,
+					m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508WriterMt>(location, writerCanId),
+					[this, position](const std::shared_ptr<ossian::DJIMotor3508Mt>& motor)
+			{
+				MotorFricReceiveProc(motor, position);
+			},
+					motorId);
+		}
 		else if (position == Feed)
 			m_MotorFeed =
 				m_MotorManager->AddMotor<ossian::DJIMotor2006Mt>(
@@ -142,7 +143,7 @@ public:
 
 	//遥控器解析
 	static constexpr int16_t kGunRCDeadband = 50; //拨轮死区
-	static constexpr size_t kShootModeChannel = 4;
+	static constexpr size_t kShootModeChannel = 1;
 
 	static constexpr uint8_t kRCSwUp = 1;
 	static constexpr uint8_t kRCSwMid = 3;
@@ -166,10 +167,14 @@ public:
 	
 	OSSIAN_SERVICE_SETUP(FricCtrlTask(ossian::IOData<RemoteStatus>* remote,
 		GimbalCtrlTask* gimbalCtrlTask,
-		Utils::ConfigLoader* config))
+		Utils::ConfigLoader* config,
+		Gun* gun,
+		ossian::IOData<GunFricMotorsModel>* motorsFricListener))
 		: m_RCListener(remote)
 		, m_GimbalCtrlTask(gimbalCtrlTask)
 		, m_Config(config)
+		, m_Gun(gun)
+		, m_MotorsFricListener(motorsFricListener)
 	{
 		using OssianConfig::Configuration;
 		PIDFricSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->kp();
@@ -188,6 +193,10 @@ public:
 		PIDController pidFricSpeed;
 		pidFricSpeed.SetParams(PIDFricSpeedParams);
 		m_PIDFricSpeed.fill(pidFricSpeed);
+
+		m_RCListener->AddOnChange([](const RemoteStatus& value) {
+			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
+				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]); });
 	}
 
 	void InitFric()
@@ -311,6 +320,8 @@ public:
 		GimbalCtrlTask* gimbalCtrlTask,
 		FricCtrlTask* fricCtrlTask,
 		Utils::ConfigLoader* config,
+		Gun* gun,
+		ossian::IOData<GunFeedMotorsModel>* motorFeedListener,
 		ossian::IOData<PowerHeatData>* powerHeatDataListener,
 		ossian::IOData<RobotStatus>* robotStatusListener,
 		ossian::IOData<ShootData>* shootDataListener))
@@ -318,6 +329,8 @@ public:
 		, m_GimbalCtrlTask(gimbalCtrlTask)
 		, m_FricCtrlTask(fricCtrlTask)
 		, m_Config(config)
+		, m_Gun(gun)
+		, m_MotorFeedListener(motorFeedListener)
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
 		, m_RefereeRobotStatusListener(robotStatusListener)
 		, m_RefereeShootDataListener(shootDataListener)

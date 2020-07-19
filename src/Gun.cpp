@@ -4,7 +4,7 @@
 int16_t FricCtrlTask::kFricSpeed12 = 0;
 int16_t FricCtrlTask::kFricSpeed15 = 0;
 int16_t FricCtrlTask::kFricSpeed18 = 0;
-int16_t FricCtrlTask::kFricSpeed30 = 500;
+int16_t FricCtrlTask::kFricSpeed30 = 0;
 
 int16_t FeedCtrlTask::kFeedNormalRPM = 0;
 int16_t FeedCtrlTask::kFeedSemiRPM = 0;
@@ -34,8 +34,6 @@ void FricCtrlTask::FricModeSet()
 	//如果云台失能，则摩擦轮也失能
 	/*else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable)
 		m_FricMode = FricMode::Disable;*/
-	else
-		m_FricMode = FricMode::Disable;
 
 	lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
 }
@@ -70,10 +68,17 @@ void FricCtrlTask::FricCtrl()
 		currentSend.fill(0);
 	else
 	{
-		currentSend[FricBelow] = m_PIDFricSpeed[FricBelow].Calc(m_FricSpeedSet, m_FricMotorsStatus.m_RPM[FricBelow]);
-		currentSend[FricUpper] = m_PIDFricSpeed[FricUpper].Calc(-m_FricSpeedSet, m_FricMotorsStatus.m_RPM[FricUpper]);
+		currentSend[FricBelow] = m_PIDFricSpeed[FricBelow].Calc(-m_FricSpeedSet, m_FricMotorsStatus.m_RPM[FricBelow]);
+		currentSend[FricUpper] = m_PIDFricSpeed[FricUpper].Calc(m_FricSpeedSet, m_FricMotorsStatus.m_RPM[FricUpper]);
 	}
-
+	SPDLOG_INFO("@PIDFricBelow=[$setFB={},$getFB={},$pidoutFB={}]",
+		-m_FricSpeedSet,
+		m_FricMotorsStatus.m_RPM[FricBelow],
+		currentSend[FricBelow]);
+	SPDLOG_INFO("@PIDFricUpper=[$setFU={},$getFU={},$pidoutFU={}]",
+		m_FricSpeedSet,
+		m_FricMotorsStatus.m_RPM[FricUpper],
+		currentSend[FricUpper]);
 	m_Gun->SendCurrentToMotorsFric(currentSend);
 }
 
