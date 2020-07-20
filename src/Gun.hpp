@@ -364,6 +364,7 @@ public:
 		m_FeedMode = FeedMode::Stop;
 		m_PIDFeedSpeed.Reset();
 		m_CurBulletShotNum = 0;
+		m_LastShootTimestamp = hrClock::time_point()
 
 		m_FlagInitFeed = false;
 	}
@@ -446,6 +447,7 @@ private:
 	} m_FeedSensorValues;
 
 	bool m_FlagInitFeed;
+	hrClock::time_point m_LastShootTimestamp;
 	std::atomic<int> m_CurBulletShotNum; //在热量持续上升的过程中，累积打出的子弹数
 	PIDController m_PIDFeedSpeed;
 };

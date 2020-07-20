@@ -127,10 +127,11 @@ void FeedCtrlTask::FeedRotateCtrl(bool stop, int rpmSet, bool reverse)
 
 void FeedCtrlTask::AutoReloadCtrl()
 {
-	while (!MicroSwitchStatus())
+	//如果光电管处无弹，则控制拨弹轮补弹
+	if (!MicroSwitchStatus())
 		FeedRotateCtrl(false, kFeedNormalRPM);
-
-	FeedRotateCtrl(true);
+	else //否则，拨弹轮停止
+		FeedRotateCtrl(true);
 }
 
 /**
@@ -139,15 +140,15 @@ void FeedCtrlTask::AutoReloadCtrl()
  */
 void FeedCtrlTask::SingleShotCtrl(int rpmSet)
 {
-	while (MicroSwitchStatus())
+	//如果光电管处有弹，则控制拨弹轮送弹
+	if (MicroSwitchStatus())
 		FeedRotateCtrl(false, rpmSet);
-	
-	AutoReloadCtrl();
+	else //否则，控制拨弹轮补弹
+		AutoReloadCtrl();
 }
 
 void FeedCtrlTask::FeedCtrl()
 {
-	static hrClock::time_point lastShootTimestamp;
 	long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
 						 hrClock::now() - lastShootTimestamp).count();
 	
@@ -159,19 +160,27 @@ void FeedCtrlTask::FeedCtrl()
 		FeedRotateCtrl(false, kFeedNormalRPM, true);
 	else if (m_FeedMode == FeedMode::Semi)
 	{
-		if (interval >= 1000)  //单发间隔1s
+		if (interval >= 1000 || m_LastShootTimestamp == hrClock::time_point())  //单发间隔1s
 		{
 			SingleShotCtrl(kFeedSemiRPM);
-			lastShootTimestamp = hrClock::now();
+			m_LastShootTimestamp = hrClock::now();
 		}
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		if (interval >= 1000) // 三连发间隔1s
+		if (interval >= 1000 || m_LastShootTimestamp == hrClock::time_point()) // 三连发间隔1s
 		{
-			for (int cnt = 0; cnt < kBurstBulletNum; ++cnt)
+			if (cnt < kBurstBulletNum)
+			{
 				SingleShotCtrl(kFeedBurstRPM);
-			lastShootTimestamp = hrClock::now();
+				++cnt;
+			}
+			else
+			{
+				cnt = 0;
+				m_LastShootTimestamp = hrClock::now();
+			}
+				
 		}
 	}
 	else if (m_FeedMode == FeedMode::Auto)
