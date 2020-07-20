@@ -10,7 +10,7 @@
 #include "Remote.hpp"
 #include "Gimbal.hpp"
 #include "Referee.hpp"
-
+#include "Phototube.hpp"
 #include <chrono>
 #include <array>
 #include <atomic>
@@ -56,9 +56,9 @@ public:
 					location,
 					m_MotorManager->GetOrAddWriter<ossian::DJIMotor3508WriterMt>(location, writerCanId),
 					[this, position](const std::shared_ptr<ossian::DJIMotor3508Mt>& motor)
-			{
-				MotorFricReceiveProc(motor, position);
-			},
+					{
+						MotorFricReceiveProc(motor, position);
+					},
 					motorId);
 		}
 		else if (position == Feed)
@@ -95,10 +95,10 @@ public:
 	{
 		const auto status = motor->GetRef();
 		motor->Lock();
-		m_FeedMotorsStatus.m_RPM[position] = status.m_RPM;
-		m_FeedMotorsStatus.m_Encoding[position] = status.m_Encoding;
+		m_FeedMotorsStatus.m_RPM[0] = status.m_RPM;
+		m_FeedMotorsStatus.m_Encoding[0] = status.m_Encoding;
 		motor->UnLock();
-
+		
 		m_FeedMotorsData->Set(m_FeedMotorsStatus);
 	}
 	
@@ -194,6 +194,9 @@ public:
 		pidFricSpeed.SetParams(PIDFricSpeedParams);
 		m_PIDFricSpeed.fill(pidFricSpeed);
 
+		FirstOrderFilter rpmFdbFilter(0.25, 0.003);
+		m_RPMFdbFilters.fill(rpmFdbFilter);
+
 		m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
 				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]); });
@@ -204,6 +207,7 @@ public:
 		m_FricMode = FricMode::Disable;
 
 		std::for_each(m_PIDFricSpeed.begin(), m_PIDFricSpeed.end(), [](PIDController& x) {x.Reset(); });
+		std::for_each(m_RPMFdbFilters.begin(), m_RPMFdbFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 
 		m_FlagInitFric = false;
 	}
@@ -217,8 +221,8 @@ public:
 	bool Stopped() 
 	{ 
 		return (m_FricMode == FricMode::Disable
-			|| m_FricMotorsStatus.m_RPM[FricBelow] < kFricLowSpeed
-			|| m_FricMotorsStatus.m_RPM[FricUpper] < kFricLowSpeed);
+			|| std::abs(m_FricMotorsStatus.m_RPM[FricBelow]) < kFricLowSpeed
+			|| std::abs(m_FricMotorsStatus.m_RPM[FricUpper]) < kFricLowSpeed);
 	}
 
 	void FricModeSet();
@@ -278,6 +282,7 @@ private:
 
 	int16_t m_FricSpeedSet;
 	std::array<PIDController, 2> m_PIDFricSpeed;
+	std::array<FirstOrderFilter, kNumGunFricMotors> m_RPMFdbFilters;
 };
 
 class FeedCtrlTask : public ossian::IExecutable
@@ -324,7 +329,8 @@ public:
 		ossian::IOData<GunFeedMotorsModel>* motorFeedListener,
 		ossian::IOData<PowerHeatData>* powerHeatDataListener,
 		ossian::IOData<RobotStatus>* robotStatusListener,
-		ossian::IOData<ShootData>* shootDataListener))
+		ossian::IOData<ShootData>* shootDataListener,
+		ossian::IOData<PhototubeStatus>* phototubeListener))
 		: m_RCListener(remote)
 		, m_GimbalCtrlTask(gimbalCtrlTask)
 		, m_FricCtrlTask(fricCtrlTask)
@@ -334,6 +340,7 @@ public:
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
 		, m_RefereeRobotStatusListener(robotStatusListener)
 		, m_RefereeShootDataListener(shootDataListener)
+		, m_PhototubeListener(phototubeListener)
 	{
 		using OssianConfig::Configuration;
 
@@ -348,6 +355,10 @@ public:
 		kFeedBurstRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedburstrpm();
 		kFeedAutoRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedautorpm();
 
+		/*m_PhototubeListener->AddOnChange([this](const PhototubeStatus& value)
+		{
+			SPDLOG_INFO("@Phototube=[$status_pt={}]", value.m_Status);
+		});*/
 		//如果射击数据（0x0207）有更新，则累加已发射的子弹数
 		m_RefereeShootDataListener->AddOnChange([this](const ShootData& value)
 		{
@@ -356,7 +367,7 @@ public:
 		m_FlagInitFeed = true;
 
 		m_PIDFeedSpeed.SetParams(PIDFeedSpeedParams);
-
+		m_RPMFdbFilter.SetState(0.25, 0.003);
 	}
 
 	void InitFeed()
@@ -364,7 +375,8 @@ public:
 		m_FeedMode = FeedMode::Stop;
 		m_PIDFeedSpeed.Reset();
 		m_CurBulletShotNum = 0;
-		m_LastShootTimestamp = hrClock::time_point()
+		m_LastShootTimestamp = hrClock::time_point();
+		m_RPMFdbFilter.Reset();
 
 		m_FlagInitFeed = false;
 	}
@@ -375,6 +387,7 @@ public:
 
 		m_FeedSensorValues.rc = m_RCListener->Get();
 		m_FeedSensorValues.gimbalInputSrc = m_GimbalCtrlTask->GimbalCtrlSrc();  //[TODO] 增加对自瞄模式射击的处理
+		m_FeedSensorValues.phototubeStatus = m_PhototubeListener->Get();
 
 		m_FeedSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_FeedSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();
@@ -384,8 +397,6 @@ public:
 			m_CurBulletShotNum = 0;
 		lastHeat = m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat;
 	}
-
-	bool MicroSwitchStatus() { return false; } //获取枪口微动开关 or 光电对管的状态
 
 	void FeedModeSet();
 
@@ -431,6 +442,8 @@ private:
 	ossian::IOData<RobotStatus>* m_RefereeRobotStatusListener;
 	ossian::IOData<ShootData>* m_RefereeShootDataListener;
 	ossian::IOData<GunFeedMotorsModel>* m_MotorFeedListener;
+	ossian::IOData<PhototubeStatus>* m_PhototubeListener;
+
 	GimbalCtrlTask* m_GimbalCtrlTask;
 	FricCtrlTask* m_FricCtrlTask;
 	Gun* m_Gun;
@@ -443,6 +456,7 @@ private:
 		GimbalCtrlTask::GimbalInputSrc gimbalInputSrc;
 		PowerHeatData refereePowerHeatData;
 		RobotStatus refereeRobotStatus;
+		PhototubeStatus phototubeStatus;
 		//double refereeCurHeat, refereeHeatLimit;
 	} m_FeedSensorValues;
 
@@ -450,6 +464,7 @@ private:
 	hrClock::time_point m_LastShootTimestamp;
 	std::atomic<int> m_CurBulletShotNum; //在热量持续上升的过程中，累积打出的子弹数
 	PIDController m_PIDFeedSpeed;
+	FirstOrderFilter m_RPMFdbFilter;
 };
 
 #endif // OSSIAN_GUN_HPP

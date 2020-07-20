@@ -68,7 +68,10 @@ void FricCtrlTask::FricCtrl()
 		currentSend.fill(0);
 	else
 	{
-		currentSend[FricBelow] = m_PIDFricSpeed[FricBelow].Calc(-m_FricSpeedSet, m_FricMotorsStatus.m_RPM[FricBelow]);
+		currentSend[FricBelow] = m_RPMFdbFilters[FricBelow].Calc(m_FricMotorsStatus.m_RPM[FricBelow]);
+		currentSend[FricBelow] = m_PIDFricSpeed[FricBelow].Calc(-m_FricSpeedSet, currentSend[FricBelow]);
+
+		currentSend[FricUpper] = m_RPMFdbFilters[FricUpper].Calc(m_FricMotorsStatus.m_RPM[FricUpper]);
 		currentSend[FricUpper] = m_PIDFricSpeed[FricUpper].Calc(m_FricSpeedSet, m_FricMotorsStatus.m_RPM[FricUpper]);
 	}
 	SPDLOG_INFO("@PIDFricBelow=[$setFB={},$getFB={},$pidoutFB={}]",
@@ -90,7 +93,7 @@ void FeedCtrlTask::FeedModeSet()
 		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet;
 	
 	//若摩擦轮停转，则拨弹轮停转
-	if (overheat || m_FricCtrlTask->Stopped())
+	if (/*overheat || */m_FricCtrlTask->Stopped())
 		m_FeedMode = FeedMode::Stop;
 	else
 	{
@@ -105,30 +108,34 @@ void FeedCtrlTask::FeedModeSet()
 	}
 	
 	//若卡弹则拨弹轮反转
-	bool jammed = m_FeedMode != FeedMode::Stop && m_FeedMotorStatus.m_RPM[Feed] < kFeedJamRPM;
+	/*bool jammed = m_FeedMode != FeedMode::Stop && m_FeedMotorStatus.m_RPM[Feed] < kFeedJamRPM;
 	if (jammed)
-		m_FeedMode = FeedMode::Reverse; 
+		m_FeedMode = FeedMode::Reverse; */
 }
 
 void FeedCtrlTask::FeedRotateCtrl(bool stop, int rpmSet, bool reverse)
 {
 	double current = 0;
+	double get = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
 	if (stop)
 		current = 0;
 	else
 	{
-		current = m_PIDFeedSpeed.Calc(rpmSet, m_FeedMotorStatus.m_RPM[Feed]);
+		current = m_PIDFeedSpeed.Calc(rpmSet, get);
 		if (reverse)
 			current *= -1;
 	}
-	
+	SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={}]",
+		rpmSet,
+		get,
+		current);
 	m_Gun->SendCurrentToMotorFeed(current);
 }
 
 void FeedCtrlTask::AutoReloadCtrl()
 {
 	//如果光电管处无弹，则控制拨弹轮补弹
-	if (!MicroSwitchStatus())
+	if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::NO_BULLET)
 		FeedRotateCtrl(false, kFeedNormalRPM);
 	else //否则，拨弹轮停止
 		FeedRotateCtrl(true);
@@ -141,7 +148,7 @@ void FeedCtrlTask::AutoReloadCtrl()
 void FeedCtrlTask::SingleShotCtrl(int rpmSet)
 {
 	//如果光电管处有弹，则控制拨弹轮送弹
-	if (MicroSwitchStatus())
+	if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::HAS_BULLET)
 		FeedRotateCtrl(false, rpmSet);
 	else //否则，控制拨弹轮补弹
 		AutoReloadCtrl();
@@ -149,8 +156,9 @@ void FeedCtrlTask::SingleShotCtrl(int rpmSet)
 
 void FeedCtrlTask::FeedCtrl()
 {
+	static int shootCnt = 0;
 	long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-						 hrClock::now() - lastShootTimestamp).count();
+						 hrClock::now() - m_LastShootTimestamp).count();
 	
 	if (m_FeedMode == FeedMode::Stop)
 		FeedRotateCtrl(true);
@@ -170,14 +178,14 @@ void FeedCtrlTask::FeedCtrl()
 	{
 		if (interval >= 1000 || m_LastShootTimestamp == hrClock::time_point()) // 三连发间隔1s
 		{
-			if (cnt < kBurstBulletNum)
+			if (shootCnt < kBurstBulletNum)
 			{
 				SingleShotCtrl(kFeedBurstRPM);
-				++cnt;
+				++shootCnt;
 			}
 			else
 			{
-				cnt = 0;
+				shootCnt = 0;
 				m_LastShootTimestamp = hrClock::now();
 			}
 				

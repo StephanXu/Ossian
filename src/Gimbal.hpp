@@ -244,12 +244,12 @@ public:
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);
 
-		m_GyroA204YawListener->AddOnChange([](const GyroA204Status<GyroType::Yaw>& value) {
+		/*m_GyroA204YawListener->AddOnChange([](const GyroA204Status<GyroType::Yaw>& value) {
 			SPDLOG_INFO("@ImuYaw=[$ZAngleYaw={},$ZSpeedYaw={}]",
 				value.m_ZAxisAngle, value.m_ZAxisSpeed); });
 		m_GyroA204PitchListener->AddOnChange([](const GyroA204Status<GyroType::Pitch>& value) {
 			SPDLOG_INFO("@ImuPitch=[$ZAnglePitch={},$ZSpeedPitch={}]",
-				value.m_ZAxisAngle, value.m_ZAxisSpeed); });
+				value.m_ZAxisAngle, value.m_ZAxisSpeed); });*/
 		/*m_GyroListener->AddOnChange([](const GyroModel& value) {
 			SPDLOG_INFO("@GyroOnChange=[$roll={},$pitch={},$yaw={}]",
 				value.m_Wx, value.m_Wy, value.m_Wz); });*/

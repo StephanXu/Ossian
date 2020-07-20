@@ -8,10 +8,12 @@
 #include "Aimbot.hpp"
 #include "Chassis.hpp"
 #include "Gimbal.hpp"
+#include "Gun.hpp"
 #include "OnlineDebug.hpp"
 #include "Remote.hpp"
 #include "Capacitor.hpp"
 #include "Referee.hpp"
+#include "Phototube.hpp"
 #include "Gyro.hpp"
 #include "GyroA204.hpp"
 #include "TOFNooploop.hpp"
@@ -98,6 +100,11 @@ void Startup::ConfigServices(AppBuilder& app)
 		{
 			option.Add("can1", 0x402, 0x403);
 		});
+	app.AddService<PhototubeMt>(
+		[](PhototubeMt& option)
+		{
+			option.Add("can0", 0x300);
+		});
 	app.AddService<Chassis>(
 		[](Chassis& option)
 		{
@@ -112,6 +119,13 @@ void Startup::ConfigServices(AppBuilder& app)
 			option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 7, 0x2ff);
 			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 6, 0x2ff);
 		});
+	app.AddService<Gun>(
+		[](Gun& option)
+		{
+			option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 2, 0x200);
+			option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 1, 0x200);
+			option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);
+		});
 	//app.AddService<Aimbot>();
 }
 
@@ -123,6 +137,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
-
+	app.AddExecutable<FricCtrlTask>();
+	app.AddExecutable<FeedCtrlTask>();
 	//app.AddService<ossian::IExecutable, CameraPeeker>();
 }
