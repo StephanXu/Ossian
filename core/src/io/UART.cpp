@@ -121,7 +121,8 @@ bool UARTBus::Open()
 			m_IsOpened = false;
 			throw UARTInitializeFailed("TIOCSSERIAL failed! Location: " + m_Location);
 		}
-		SPDLOG_INFO("setting baudrate:{} base:{}, divisor:{}", m_Baudrate, serial.baud_base, serial.custom_divisor);
+		SPDLOG_INFO("setting baudrate for {} :{} base:{}, divisor:{}", 
+					m_Location, m_Baudrate, serial.baud_base, serial.custom_divisor);
 	}
 	catch(const UARTInitializeFailed& err)
 	{
@@ -129,7 +130,7 @@ bool UARTBus::Open()
 		if(baudrateFlag == UARTProperties::Baudrate.end())
 		{
 			m_IsOpened = false;
-			throw UARTInitializeFailed("Failed to set baudrate!");
+			throw UARTInitializeFailed("Failed to set baudrate! Location: " + m_Location);
 		}
 		ClearFlag(opt.c_cflag, CBAUD);
 		cfsetispeed(&opt, baudrateFlag->second);
