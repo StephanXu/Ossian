@@ -19,7 +19,8 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 			&& fabs(m_GimbalSensorValues.relativeAngle[Yaw]) < 0.1)
 		{
 			SPDLOG_TRACE("Gimbal Init Done.");
-			m_CurGimbalAngleMode = Encoding;
+			m_CurGimbalAngleMode[Pitch] = Encoding;
+			m_CurGimbalAngleMode[Yaw] = Gyro;
 			m_EcdAngleSet[Pitch] = 0;
 			m_EcdAngleSet[Yaw] = 0;
 			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imuPitch.m_ZAxisAngle;
@@ -41,7 +42,8 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 			m_GimbalCtrlSrc = Init;
 			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwUp)
 				m_GimbalCtrlSrc = Disable;
-			m_CurGimbalAngleMode = Encoding;
+			m_CurGimbalAngleMode.fill(Encoding);
+
 			return;
 		}
 	}
@@ -81,7 +83,7 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 	else if (m_GimbalCtrlSrc == RC)
 	{
 		double angleInput = m_AngleInput[position]; 
-		if (m_CurGimbalAngleMode == Gyro)
+		if (m_CurGimbalAngleMode[position] == Gyro)
 		{
 			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle); 
 			double errorAngle = ClampLoop(m_GyroAngleSet[position] - gyro, -M_PI, M_PI); 
@@ -98,7 +100,7 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 			}
 			m_GyroAngleSet[position] = ClampLoop(m_GyroAngleSet[position] + angleInput, -M_PI, M_PI);
 		}
-		else if (m_CurGimbalAngleMode == Encoding)
+		else if (m_CurGimbalAngleMode[position] == Encoding)
 		{
 			m_EcdAngleSet[position] += angleInput;
 			m_EcdAngleSet[position] = Clamp(m_EcdAngleSet[position], kMinRelativeAngle[position], 
@@ -120,31 +122,26 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 		m_VoltageSend.fill(0);
 	else if (m_GimbalCtrlSrc == RC || m_GimbalCtrlSrc == Init)
 	{
-		if (m_CurGimbalAngleMode == Gyro)
+		double angleSpeedSet;
+		double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
+
+		if (m_CurGimbalAngleMode[position] == Gyro)
 		{
 			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle);
-			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
-			double angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
-			m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
+			angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
 
-			SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={}]",
+			SPDLOG_INFO("@pidAngle{}=[$SetAG{}={},$GetAG{}={}]",
 				position,
 				position,
 				m_GyroAngleSet[position],
 				position,
 				gyro);
-			SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
-				position,
-				position,
-				angleSpeedSet,
-				position,
-				gyroSpeed);
 		}
-		else if (m_CurGimbalAngleMode == Encoding)
+		else if (m_CurGimbalAngleMode[position] == Encoding)
 		{
 			//[TODO]用电机转速rpm换算出云台角速度
 			double curEcdAngle = m_GimbalSensorValues.relativeAngle[position];
-			/*//初始时刻，无法通过差分计算出角速度 
+			/*//初始时刻，无法通过差分计算出角速度
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
 			{
 				m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
@@ -153,36 +150,26 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 			}
 			double interval = std::chrono::duration_cast<std::chrono::microseconds>(m_Motors[position]->TimeStamp() -
 				m_LastEcdTimeStamp[position]).count() / 1000000.0;
-			
+
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
-			//double angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
-
+			angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
+			SPDLOG_INFO("@pidAngle{}=[$SetAG{}={},$GetAG{}={}]",
+			position,
+			position,
+			m_EcdAngleSet[position],
+			position,
+			curEcdAngle);
 			//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
-			double angleSpeedSet = 3;
-			double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : 
-				m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
-			//gyroSpeed = m_AngleSpeedFilters[position].Calc(gyroSpeed);
-			m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet*1000, gyroSpeed*1000);
-
-			/*m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
-			m_LastEcdAngle[position] = curEcdAngle;*/
-
-			/*SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={}]",
-				position, 
-				position,
-				m_EcdAngleSet[position],
-				position,
-				curEcdAngle);*/
-			/*SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={},$pidoutAS{}={}]",
-				position,
-				position,
-				angleSpeedSet,
-				position,
-				gyroSpeed,
-				position,
-				m_VoltageSend[position]/10000.0);*/
-
 		}
+
+		m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
+		
+		/*SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
+			position,
+			position,
+			angleSpeedSet,
+			position,
+			gyroSpeed);*/
 	}
 	m_VoltageSend.fill(0);
 	m_Gimbal->SendVoltageToMotors(m_VoltageSend);

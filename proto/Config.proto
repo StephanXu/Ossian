@@ -91,10 +91,10 @@ message Gun {
 	 int32 kFricSpeed18 = 3;
 	 int32 kFricSpeed30 = 4;
 
-	 int32 kFeedNormalRPM = 5;
-	 int32 kFeedSemiRPM = 6;
-	 int32 kFeedBurstRPM = 7;
-	 int32 kFeedAutoRPM = 8;
+	 int32 kFeedNormalSpeed = 5;
+	 int32 kFeedSemiSpeed = 6;
+	 int32 kFeedBurstSpeed = 7;
+	 int32 kFeedAutoSpeed = 8;
 }
 
 message PIDParams {

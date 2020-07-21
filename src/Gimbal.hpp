@@ -348,7 +348,7 @@ private:
 	ossian::IOData<GyroA204Status<GyroType::Pitch>>* m_GyroA204PitchListener;
 	ossian::IOData<GyroA204Status<GyroType::Yaw>>* m_GyroA204YawListener;
 	
-	GimbalAngleMode m_CurGimbalAngleMode, m_LastGimbalAngleMode;
+	std::array<GimbalAngleMode, 2> m_CurGimbalAngleMode;
 	std::atomic<GimbalInputSrc> m_GimbalCtrlSrc;
 	GimbalMotorsModel m_MotorsStatus;
 

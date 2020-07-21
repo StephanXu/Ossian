@@ -197,9 +197,9 @@ public:
 		FirstOrderFilter rpmFdbFilter(0.25, 0.003);
 		m_RPMFdbFilters.fill(rpmFdbFilter);
 
-		m_RCListener->AddOnChange([](const RemoteStatus& value) {
+		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
-				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]); });
+				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]); });*/
 	}
 
 	void InitFric()
@@ -310,13 +310,14 @@ public:
 	static constexpr int kHeatPerBullet = 10;
 
 	//拨弹轮
+	static constexpr double kSpeedToMotorRPMCoef = 36;
 	static constexpr int kBurstBulletNum = 3; //点射的子弹发射数量
 	static constexpr int16_t kFeedJamRPM = 5;     //判断卡弹的拨弹轮转速阈值
 
-	static int16_t kFeedNormalRPM; //自动补弹上膛或反转时，拨弹轮供弹的转速
-	static int16_t kFeedSemiRPM;   //单发时，拨弹轮供弹的转速
-	static int16_t kFeedBurstRPM;  //点射时，拨弹轮供弹的转速
-	static int16_t kFeedAutoRPM;   //连发时，拨弹轮供弹的转速   点射>连发>单发
+	static int16_t kFeedNormalSpeed; //自动补弹上膛或反转时，拨弹轮供弹的转速
+	static int16_t kFeedSemiSpeed;   //单发时，拨弹轮供弹的转速
+	static int16_t kFeedBurstSpeed;  //点射时，拨弹轮供弹的转速
+	static int16_t kFeedAutoSpeed;   //连发时，拨弹轮供弹的转速   点射>连发>单发
 
 	//pid参数
 	static std::array<double, 5> PIDFeedSpeedParams;
@@ -350,10 +351,10 @@ public:
 		PIDFeedSpeedParams[3] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->thout();
 		PIDFeedSpeedParams[4] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->thiout();
 
-		kFeedNormalRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeednormalrpm();
-		kFeedSemiRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedsemirpm();
-		kFeedBurstRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedburstrpm();
-		kFeedAutoRPM = m_Config->Instance<Configuration>()->mutable_gun()->kfeedautorpm();
+		kFeedNormalSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeednormalspeed();
+		kFeedSemiSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedsemispeed();
+		kFeedBurstSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedburstspeed();
+		kFeedAutoSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedautospeed();
 
 		/*m_PhototubeListener->AddOnChange([this](const PhototubeStatus& value)
 		{
@@ -401,11 +402,11 @@ public:
 	void FeedModeSet();
 
 	//发送电流给2006
-	void FeedRotateCtrl(bool stop = false, int rpmSet = 0, bool reverse = false);
+	void FeedRotateCtrl(bool stop = false, int speedSet = 0, bool reverse = false);
 
 	void AutoReloadCtrl();
 
-	void SingleShotCtrl(int rpmSet);
+	void SingleShotCtrl(int speedSet);
 
 	void FeedCtrl();
 

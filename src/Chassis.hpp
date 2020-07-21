@@ -223,7 +223,7 @@ public:
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
 		m_PIDChassisAngle.SetFlagAngleLoop();
-		m_RCListener->AddOnChange([](const RemoteStatus& value) {
+		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
 				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
 
@@ -231,7 +231,7 @@ public:
 			SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
 				value.m_ChassisPower,
 				value.m_ChassisPowerBuffer,
-				80); });
+				80); });*/
 	}
 
 	void InitChassis()

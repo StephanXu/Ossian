@@ -6,10 +6,10 @@ int16_t FricCtrlTask::kFricSpeed15 = 0;
 int16_t FricCtrlTask::kFricSpeed18 = 0;
 int16_t FricCtrlTask::kFricSpeed30 = 0;
 
-int16_t FeedCtrlTask::kFeedNormalRPM = 0;
-int16_t FeedCtrlTask::kFeedSemiRPM = 0;
-int16_t FeedCtrlTask::kFeedBurstRPM = 0;
-int16_t FeedCtrlTask::kFeedAutoRPM = 0;
+int16_t FeedCtrlTask::kFeedNormalSpeed = 0;
+int16_t FeedCtrlTask::kFeedSemiSpeed = 0;
+int16_t FeedCtrlTask::kFeedBurstSpeed = 0;
+int16_t FeedCtrlTask::kFeedAutoSpeed = 0;
 
 std::array<double, 5> FricCtrlTask::PIDFricSpeedParams;
 std::array<double, 5> FeedCtrlTask::PIDFeedSpeedParams;
@@ -68,20 +68,24 @@ void FricCtrlTask::FricCtrl()
 		currentSend.fill(0);
 	else
 	{
-		currentSend[FricBelow] = m_RPMFdbFilters[FricBelow].Calc(m_FricMotorsStatus.m_RPM[FricBelow]);
-		currentSend[FricBelow] = m_PIDFricSpeed[FricBelow].Calc(-m_FricSpeedSet, currentSend[FricBelow]);
+		for (size_t i = 0; i < kNumGunFricMotors; ++i)
+		{
+			double set = (i == 0 ? -m_FricSpeedSet : m_FricSpeedSet);
+			double get = m_RPMFdbFilters[i].Calc(m_FricMotorsStatus.m_RPM[i]);
+			//double get = m_FricMotorsStatus.m_RPM[i];
+			currentSend[i] = m_PIDFricSpeed[i].Calc(set, get);
 
-		currentSend[FricUpper] = m_RPMFdbFilters[FricUpper].Calc(m_FricMotorsStatus.m_RPM[FricUpper]);
-		currentSend[FricUpper] = m_PIDFricSpeed[FricUpper].Calc(m_FricSpeedSet, m_FricMotorsStatus.m_RPM[FricUpper]);
+			SPDLOG_INFO("@PIDFric{}=[$setFB{}={},$getFB{}={},$pidoutFB{}={}]",
+				i,
+				i,
+				set,
+				i,
+				get,
+				i,
+				currentSend[i]);
+		}
 	}
-	SPDLOG_INFO("@PIDFricBelow=[$setFB={},$getFB={},$pidoutFB={}]",
-		-m_FricSpeedSet,
-		m_FricMotorsStatus.m_RPM[FricBelow],
-		currentSend[FricBelow]);
-	SPDLOG_INFO("@PIDFricUpper=[$setFU={},$getFU={},$pidoutFU={}]",
-		m_FricSpeedSet,
-		m_FricMotorsStatus.m_RPM[FricUpper],
-		currentSend[FricUpper]);
+	
 	m_Gun->SendCurrentToMotorsFric(currentSend);
 }
 
@@ -104,31 +108,38 @@ void FeedCtrlTask::FeedModeSet()
 		else if (thumbWheelValue == 0)
 			m_FeedMode = FeedMode::Reload;
 		else
-			m_FeedMode = FeedMode::Auto;
+			m_FeedMode = FeedMode::Burst;
 	}
 	
 	//若卡弹则拨弹轮反转
 	/*bool jammed = m_FeedMode != FeedMode::Stop && m_FeedMotorStatus.m_RPM[Feed] < kFeedJamRPM;
 	if (jammed)
 		m_FeedMode = FeedMode::Reverse; */
+
+	SPDLOG_INFO("@FeedMode=[$mode={}]", m_FeedMode);
 }
 
-void FeedCtrlTask::FeedRotateCtrl(bool stop, int rpmSet, bool reverse)
+void FeedCtrlTask::FeedRotateCtrl(bool stop, int speedSet, bool reverse)
 {
 	double current = 0;
-	double get = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
+	
 	if (stop)
 		current = 0;
 	else
 	{
-		current = m_PIDFeedSpeed.Calc(rpmSet, get);
+		double set = speedSet * kSpeedToMotorRPMCoef;
+		double get = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
+		current = m_PIDFeedSpeed.Calc(set, get);
 		if (reverse)
-			current *= -1;
+			set = -set;
+
+		SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={},$status_pt={}]",
+			set,
+			get,
+			current,
+			static_cast<int>(m_FeedSensorValues.phototubeStatus.m_Status)*2000);
 	}
-	SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={}]",
-		rpmSet,
-		get,
-		current);
+	
 	m_Gun->SendCurrentToMotorFeed(current);
 }
 
@@ -136,7 +147,7 @@ void FeedCtrlTask::AutoReloadCtrl()
 {
 	//如果光电管处无弹，则控制拨弹轮补弹
 	if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::NO_BULLET)
-		FeedRotateCtrl(false, kFeedNormalRPM);
+		FeedRotateCtrl(false, kFeedNormalSpeed);
 	else //否则，拨弹轮停止
 		FeedRotateCtrl(true);
 }
@@ -145,11 +156,11 @@ void FeedCtrlTask::AutoReloadCtrl()
  * 由于自动补弹的作用，进入此函数时，微动开关处有弹
  * 拨弹轮转动--->微动开关检测到弹丸离开--->拨弹轮转动送弹--->微动开关检测有弹丸--->拨弹轮停
  */
-void FeedCtrlTask::SingleShotCtrl(int rpmSet)
+void FeedCtrlTask::SingleShotCtrl(int speedSet)
 {
 	//如果光电管处有弹，则控制拨弹轮送弹
 	if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::HAS_BULLET)
-		FeedRotateCtrl(false, rpmSet);
+		FeedRotateCtrl(false, speedSet);
 	else //否则，控制拨弹轮补弹
 		AutoReloadCtrl();
 }
@@ -165,22 +176,22 @@ void FeedCtrlTask::FeedCtrl()
 	else if (m_FeedMode == FeedMode::Reload)
 		AutoReloadCtrl();
 	else if (m_FeedMode == FeedMode::Reverse)
-		FeedRotateCtrl(false, kFeedNormalRPM, true);
+		FeedRotateCtrl(false, kFeedNormalSpeed, true);
 	else if (m_FeedMode == FeedMode::Semi)
 	{
 		if (interval >= 1000 || m_LastShootTimestamp == hrClock::time_point())  //单发间隔1s
 		{
-			SingleShotCtrl(kFeedSemiRPM);
+			SingleShotCtrl(kFeedSemiSpeed);
 			m_LastShootTimestamp = hrClock::now();
 		}
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		if (interval >= 1000 || m_LastShootTimestamp == hrClock::time_point()) // 三连发间隔1s
+		if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point()) // 三连发间隔2s
 		{
 			if (shootCnt < kBurstBulletNum)
 			{
-				SingleShotCtrl(kFeedBurstRPM);
+				SingleShotCtrl(kFeedBurstSpeed);
 				++shootCnt;
 			}
 			else
@@ -192,7 +203,7 @@ void FeedCtrlTask::FeedCtrl()
 		}
 	}
 	else if (m_FeedMode == FeedMode::Auto)
-		SingleShotCtrl(kFeedAutoRPM);
+		SingleShotCtrl(kFeedAutoSpeed);
 }
 
 
