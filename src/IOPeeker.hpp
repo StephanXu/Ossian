@@ -42,11 +42,7 @@ public:
 	{
 		while (true)
 		{
-			auto devices = m_UARTManager->GetDevices();
-			for (auto dev : devices)
-			{
-				dev->Process();
-			}
+			m_UARTManager->ProcessDevices();
 		}
 	}
 
