@@ -296,20 +296,14 @@ std::vector<UARTBus*> UARTManager::GetBuses() const
 	return buses;
 }
 
-std::vector<ossian::UARTDevice*> ossian::UARTManager::GetDevices() const
+void ossian::UARTManager::ProcessDevices()
 {
 	//[TODO] 改善代码执行效率
-	std::vector<ossian::UARTDevice*> devices;
 	auto busesMap = m_BusMap;
 	for (auto && it : busesMap)
 	{
-		auto devs = it.second->GetDevices();
-		for (auto && dev : devs)
-		{
-			devices.push_back(dev);
-		}
+		it.second->GetDevice()->Process();
 	}
-	return devices;
 }
 
 } // ossian

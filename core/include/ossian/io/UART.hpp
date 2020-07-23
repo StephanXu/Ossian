@@ -117,7 +117,7 @@ public:
 	bool Close();
 	void Read() const override;
 	std::vector<UARTDevice*> GetDevices() const;
-
+	UARTDevice* GetDevice() const { return m_Device.get(); }
 	std::shared_ptr<UARTDevice> const& AddDevice();
 	void WriteRaw(size_t length, const uint8_t* data) const;
 
@@ -151,11 +151,10 @@ public:
 
 	void Invoke(const size_t length, std::shared_ptr<uint8_t[]> data) override
 	{
-		m_BufferPool->AddTask(
-			[callback = m_Callback, ptr = shared_from_this(), length, data = std::move(data)]()
-			{
-				callback(ptr, length, data.get());
-			});
+		if(length)
+		{
+			m_Callback(shared_from_this(), length, data.get());
+		}
 	}
 
 	void Process() const { return m_BufferPool->Process(); }
@@ -192,7 +191,7 @@ public:
 	                                      const UARTProperties::Parity parit);
 	UARTBus* Bus(std::string const& location) const;
 	std::vector<UARTBus*> GetBuses() const;
-	std::vector<UARTDevice*> GetDevices() const;
+	void ProcessDevices();
 
 private:
 	std::unordered_map<std::string, std::shared_ptr<UARTBus>> m_BusMap;
