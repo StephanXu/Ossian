@@ -1,4 +1,4 @@
-
+ï»¿
 #include "Gun.hpp"
 
 int16_t FricCtrlTask::kFricSpeed12 = 0;
@@ -18,7 +18,7 @@ void FricCtrlTask::FricModeSet()
 {
 	static uint8_t lastSw = kRCSwUp;
 
-	//Ò£¿ØÆ÷ÓÒ²à¿ª¹ØÉÏ²¦Ò»´Î£¬¿ªÆôÄ¦²ÁÂÖ£»ÔÙÉÏ²¦Ò»´Î£¬¹Ø±ÕÄ¦²ÁÂÖ
+	//é¥æ§å™¨å³ä¾§å¼€å…³ä¸Šæ‹¨ä¸€æ¬¡ï¼Œå¼€å¯æ‘©æ“¦è½®ï¼›å†ä¸Šæ‹¨ä¸€æ¬¡ï¼Œå…³é—­æ‘©æ“¦è½®
 	if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp && lastSw != kRCSwUp)
 	{
 		switch (m_FricMode)
@@ -31,14 +31,14 @@ void FricCtrlTask::FricModeSet()
 			m_FricMode = FricMode::Disable; break;
 		}
 	}
-	//Èç¹ûÔÆÌ¨Ê§ÄÜ£¬ÔòÄ¦²ÁÂÖÒ²Ê§ÄÜ
+	//å¦‚æœäº‘å°å¤±èƒ½ï¼Œåˆ™æ‘©æ“¦è½®ä¹Ÿå¤±èƒ½
 	/*else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable)
 		m_FricMode = FricMode::Disable;*/
 
 	lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
 }
 
-//[TODO] ¶ÁÈ¡³¡µØ¼Ó³ÉRFID×´Ì¬£¬µş¼ÓÉä»÷ËÙ¶È¼Ó³É
+//[TODO] è¯»å–åœºåœ°åŠ æˆRFIDçŠ¶æ€ï¼Œå åŠ å°„å‡»é€Ÿåº¦åŠ æˆ
 void FricCtrlTask::FricExpSpeedSet()
 {
 	if (m_FricMode == FricMode::Disable)
@@ -89,19 +89,19 @@ void FricCtrlTask::FricCtrl()
 	m_Gun->SendCurrentToMotorsFric(currentSend);
 }
 
-//[TODO] Êó±ê¼üÅÌÉä»÷Âß¼­
+//[TODO] é¼ æ ‡é”®ç›˜å°„å‡»é€»è¾‘
 void FeedCtrlTask::FeedModeSet()
 {
-	//Èô³¬ÈÈÁ¿Ôò²¦µ¯ÂÖÍ£×ª
+	//è‹¥è¶…çƒ­é‡åˆ™æ‹¨å¼¹è½®åœè½¬
 	bool overheat = m_CurBulletShotNum.load() >= (m_FeedSensorValues.refereeRobotStatus.m_Shooter17HeatLimit
 		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet;
 	
-	//ÈôÄ¦²ÁÂÖÍ£×ª£¬Ôò²¦µ¯ÂÖÍ£×ª
+	//è‹¥æ‘©æ“¦è½®åœè½¬ï¼Œåˆ™æ‹¨å¼¹è½®åœè½¬
 	if (/*overheat || */m_FricCtrlTask->Stopped())
 		m_FeedMode = FeedMode::Stop;
 	else
 	{
-		//ÔÚ´ò¿ªÄ¦²ÁÂÖµÄÇé¿öÏÂ£º×óÉÏ½ÇµÄ²¨ÂÖ£¬ÏòÏÂ µ¥·¢£¬ÏòÉÏ Á¬·¢
+		//åœ¨æ‰“å¼€æ‘©æ“¦è½®çš„æƒ…å†µä¸‹ï¼šå·¦ä¸Šè§’çš„æ³¢è½®ï¼Œå‘ä¸‹ å•å‘ï¼Œå‘ä¸Š è¿å‘
 		int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
 		if (thumbWheelValue < 0)
 			m_FeedMode = FeedMode::Semi;
@@ -111,7 +111,7 @@ void FeedCtrlTask::FeedModeSet()
 			m_FeedMode = FeedMode::Burst;
 	}
 	
-	//Èô¿¨µ¯Ôò²¦µ¯ÂÖ·´×ª
+	//è‹¥å¡å¼¹åˆ™æ‹¨å¼¹è½®åè½¬
 	/*bool jammed = m_FeedMode != FeedMode::Stop && m_FeedMotorStatus.m_RPM[Feed] < kFeedJamRPM;
 	if (jammed)
 		m_FeedMode = FeedMode::Reverse; */
@@ -145,23 +145,23 @@ void FeedCtrlTask::FeedRotateCtrl(bool stop, int speedSet, bool reverse)
 
 void FeedCtrlTask::AutoReloadCtrl()
 {
-	//Èç¹û¹âµç¹Ü´¦ÎŞµ¯£¬Ôò¿ØÖÆ²¦µ¯ÂÖ²¹µ¯
+	//å¦‚æœå…‰ç”µç®¡å¤„æ— å¼¹ï¼Œåˆ™æ§åˆ¶æ‹¨å¼¹è½®è¡¥å¼¹
 	if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::NO_BULLET)
 		FeedRotateCtrl(false, kFeedNormalSpeed);
-	else //·ñÔò£¬²¦µ¯ÂÖÍ£Ö¹
+	else //å¦åˆ™ï¼Œæ‹¨å¼¹è½®åœæ­¢
 		FeedRotateCtrl(true);
 }
 
 /**
- * ÓÉÓÚ×Ô¶¯²¹µ¯µÄ×÷ÓÃ£¬½øÈë´Ëº¯ÊıÊ±£¬Î¢¶¯¿ª¹Ø´¦ÓĞµ¯
- * ²¦µ¯ÂÖ×ª¶¯--->Î¢¶¯¿ª¹Ø¼ì²âµ½µ¯ÍèÀë¿ª--->²¦µ¯ÂÖ×ª¶¯ËÍµ¯--->Î¢¶¯¿ª¹Ø¼ì²âÓĞµ¯Íè--->²¦µ¯ÂÖÍ£
+ * ç”±äºè‡ªåŠ¨è¡¥å¼¹çš„ä½œç”¨ï¼Œè¿›å…¥æ­¤å‡½æ•°æ—¶ï¼Œå¾®åŠ¨å¼€å…³å¤„æœ‰å¼¹
+ * æ‹¨å¼¹è½®è½¬åŠ¨--->å¾®åŠ¨å¼€å…³æ£€æµ‹åˆ°å¼¹ä¸¸ç¦»å¼€--->æ‹¨å¼¹è½®è½¬åŠ¨é€å¼¹--->å¾®åŠ¨å¼€å…³æ£€æµ‹æœ‰å¼¹ä¸¸--->æ‹¨å¼¹è½®åœ
  */
 void FeedCtrlTask::SingleShotCtrl(int speedSet)
 {
-	//Èç¹û¹âµç¹Ü´¦ÓĞµ¯£¬Ôò¿ØÖÆ²¦µ¯ÂÖËÍµ¯
+	//å¦‚æœå…‰ç”µç®¡å¤„æœ‰å¼¹ï¼Œåˆ™æ§åˆ¶æ‹¨å¼¹è½®é€å¼¹
 	if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::HAS_BULLET)
 		FeedRotateCtrl(false, speedSet);
-	else //·ñÔò£¬¿ØÖÆ²¦µ¯ÂÖ²¹µ¯
+	else //å¦åˆ™ï¼Œæ§åˆ¶æ‹¨å¼¹è½®è¡¥å¼¹
 		AutoReloadCtrl();
 }
 
@@ -179,7 +179,7 @@ void FeedCtrlTask::FeedCtrl()
 		FeedRotateCtrl(false, kFeedNormalSpeed, true);
 	else if (m_FeedMode == FeedMode::Semi)
 	{
-		if (interval >= 1000 || m_LastShootTimestamp == hrClock::time_point())  //µ¥·¢¼ä¸ô1s
+		if (interval >= 1000 || m_LastShootTimestamp == hrClock::time_point())  //å•å‘é—´éš”1s
 		{
 			SingleShotCtrl(kFeedSemiSpeed);
 			m_LastShootTimestamp = hrClock::now();
@@ -187,7 +187,7 @@ void FeedCtrlTask::FeedCtrl()
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point()) // ÈıÁ¬·¢¼ä¸ô2s
+		if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point()) // ä¸‰è¿å‘é—´éš”2s
 		{
 			if (shootCnt < kBurstBulletNum)
 			{
