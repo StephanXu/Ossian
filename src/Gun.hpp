@@ -197,9 +197,9 @@ public:
 		FirstOrderFilter rpmFdbFilter(0.25, 0.003);
 		m_RPMFdbFilters.fill(rpmFdbFilter);
 
-		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
+		m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
-				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]); });*/
+				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]); });
 	}
 
 	void InitFric()
@@ -299,8 +299,8 @@ public:
 	};
 
 	//遥控器解析
-	static constexpr int16_t kGunRCDeadband = 50; //拨轮死区
-	static constexpr size_t kShootModeChannel = 4;
+	static constexpr int16_t kGunRCDeadband = 10; //拨轮死区
+	static constexpr size_t kShootModeChannel = 4; //4
 
 	static constexpr uint8_t kRCSwUp = 1;
 	static constexpr uint8_t kRCSwMid = 3;

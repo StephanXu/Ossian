@@ -92,6 +92,7 @@ void FricCtrlTask::FricCtrl()
 //[TODO] 鼠标键盘射击逻辑
 void FeedCtrlTask::FeedModeSet()
 {
+	//static FeedMode lastFeedMode = FeedMode::Stop;
 	//若超热量则拨弹轮停转
 	bool overheat = m_CurBulletShotNum.load() >= (m_FeedSensorValues.refereeRobotStatus.m_Shooter17HeatLimit
 		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet;
@@ -105,10 +106,10 @@ void FeedCtrlTask::FeedModeSet()
 		int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
 		if (thumbWheelValue < 0)
 			m_FeedMode = FeedMode::Semi;
-		else if (thumbWheelValue == 0)
-			m_FeedMode = FeedMode::Reload;
+		else if (thumbWheelValue > 0)
+			m_FeedMode = FeedMode::Auto;
 		else
-			m_FeedMode = FeedMode::Burst;
+			m_FeedMode = FeedMode::Stop;
 	}
 	
 	//若卡弹则拨弹轮反转
@@ -116,29 +117,23 @@ void FeedCtrlTask::FeedModeSet()
 	if (jammed)
 		m_FeedMode = FeedMode::Reverse; */
 
+	//lastFeedMode = m_FeedMode;
 	SPDLOG_INFO("@FeedMode=[$mode={}]", m_FeedMode);
 }
 
 void FeedCtrlTask::FeedRotateCtrl(bool stop, int speedSet, bool reverse)
 {
-	double current = 0;
-	
-	if (stop)
-		current = 0;
-	else
-	{
-		double set = speedSet * kSpeedToMotorRPMCoef;
-		double get = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
-		current = m_PIDFeedSpeed.Calc(set, get);
-		if (reverse)
-			set = -set;
+	double set = (stop ? 0 : speedSet * kSpeedToMotorRPMCoef);
+	double get = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
+	double current = m_PIDFeedSpeed.Calc(set, get);
+	if (reverse)
+		set = -set;
 
-		SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={},$status_pt={}]",
-			set,
-			get,
-			current,
-			static_cast<int>(m_FeedSensorValues.phototubeStatus.m_Status)*2000);
-	}
+	SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={},$status_pt={}]",
+		set,
+		get,
+		current,
+		static_cast<int>(m_FeedSensorValues.phototubeStatus.m_Status)*2000);
 	
 	m_Gun->SendCurrentToMotorFeed(current);
 }
@@ -173,13 +168,13 @@ void FeedCtrlTask::FeedCtrl()
 	
 	if (m_FeedMode == FeedMode::Stop)
 		FeedRotateCtrl(true);
-	else if (m_FeedMode == FeedMode::Reload)
-		AutoReloadCtrl();
+	/*else if (m_FeedMode == FeedMode::Reload)
+		AutoReloadCtrl();*/
 	else if (m_FeedMode == FeedMode::Reverse)
 		FeedRotateCtrl(false, kFeedNormalSpeed, true);
 	else if (m_FeedMode == FeedMode::Semi)
 	{
-		if (interval >= 1000 || m_LastShootTimestamp == hrClock::time_point())  //单发间隔1s
+		if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point())  //单发间隔2s
 		{
 			SingleShotCtrl(kFeedSemiSpeed);
 			m_LastShootTimestamp = hrClock::now();
@@ -203,7 +198,14 @@ void FeedCtrlTask::FeedCtrl()
 		}
 	}
 	else if (m_FeedMode == FeedMode::Auto)
-		SingleShotCtrl(kFeedAutoSpeed);
+	{
+		if (interval >= 600 || m_LastShootTimestamp == hrClock::time_point()) // 连发间隔600ms
+		{
+			SingleShotCtrl(kFeedAutoSpeed);
+			m_LastShootTimestamp = hrClock::now();
+		}
+	}
+		
 }
 
 
