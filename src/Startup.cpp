@@ -90,13 +90,13 @@ void Startup::ConfigServices(AppBuilder& app)
 		{
 			//option.AddGyro("/dev/ttyUSB0");
 		});
-	app.AddService<GyroA204Mt<GyroType::Yaw>>(
-		[](GyroA204Mt<GyroType::Yaw>& option)
+	app.AddService<GyroA204St<GyroType::Yaw>>(
+		[](GyroA204St<GyroType::Yaw>& option)
 		{
 			option.Add("can0", 0x402, 0x403);
 		});
-	app.AddService<GyroA204Mt<GyroType::Pitch>>(
-		[](GyroA204Mt<GyroType::Pitch>& option)
+	app.AddService<GyroA204St<GyroType::Pitch>>(
+		[](GyroA204St<GyroType::Pitch>& option)
 		{
 			option.Add("can1", 0x402, 0x403);
 		});
@@ -137,7 +137,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
-	app.AddExecutable<FricCtrlTask>();
-	app.AddExecutable<FeedCtrlTask>();
+	//app.AddExecutable<FricCtrlTask>();
+	//app.AddExecutable<FeedCtrlTask>();
 	//app.AddService<ossian::IExecutable, CameraPeeker>();
 }

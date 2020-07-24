@@ -61,6 +61,9 @@ struct RemoteStatus
 			memset(&outModel, 0, sizeof(RemoteStatus));
 			throw ossian::GeneralIOParseFailed{ "Remote parse failed" };
 		}
+		SPDLOG_INFO("CH0:{} CH1:{} CH2:{} CH3:{} CH4:{} SW1:{} SW2:{}",
+			outModel.ch[0], outModel.ch[1], outModel.ch[2], outModel.ch[3], outModel.ch[4],
+			outModel.sw[0], outModel.sw[1]);
 	}
 };
 

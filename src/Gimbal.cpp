@@ -15,8 +15,8 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 	//SPDLOG_INFO("@FlagInitGimbal=[$flagIG={}]", static_cast<int>(m_FlagInitGimbal));
 	if (m_FlagInitGimbal)
 	{
-		if (fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.1 
-			&& fabs(m_GimbalSensorValues.relativeAngle[Yaw]) < 0.1)
+		if (/*fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.1 
+			&& fabs(m_GimbalSensorValues.relativeAngle[Yaw]) < 0.1*/1)
 		{
 			SPDLOG_TRACE("Gimbal Init Done.");
 			m_CurGimbalAngleMode[Pitch] = Encoding;
@@ -129,13 +129,14 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 		{
 			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle);
 			angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
-
-			SPDLOG_INFO("@pidAngle{}=[$SetAG{}={},$GetAG{}={}]",
+			SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={},$pidoutAG{}={}]",
 				position,
 				position,
 				m_GyroAngleSet[position],
 				position,
-				gyro);
+				gyro,
+				position,
+				angleSpeedSet);
 		}
 		else if (m_CurGimbalAngleMode[position] == Encoding)
 		{
@@ -153,24 +154,29 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
 			angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
-			SPDLOG_INFO("@pidAngle{}=[$SetAG{}={},$GetAG{}={}]",
+			SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
 			position,
 			position,
 			m_EcdAngleSet[position],
 			position,
-			curEcdAngle);
+			curEcdAngle,
+			position,
+			angleSpeedSet);
 			//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
 		}
 
 		m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
 		
-		/*SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
+		SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={},$pidoutAS{}={},$rpm{}={}]",
 			position,
 			position,
-			angleSpeedSet,
+			angleSpeedSet*1000,
 			position,
-			gyroSpeed);*/
+			gyroSpeed*1000,
+			position,
+			m_VoltageSend[position],
+			position,
+			(double)m_MotorsStatus.m_RPM[position]/60*2*M_PI*1000);
 	}
-	m_VoltageSend.fill(0);
 	m_Gimbal->SendVoltageToMotors(m_VoltageSend);
 }

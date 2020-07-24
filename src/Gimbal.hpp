@@ -106,7 +106,9 @@ private:
 class GimbalCtrlTask : public ossian::IExecutable
 {
 public:
-	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192;
+	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192.0;
+	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
+
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
 	static constexpr uint16_t kPitchMinEcd = 4176;
 	static constexpr uint16_t kPitchMaxEcd = 5715;
@@ -138,7 +140,7 @@ public:
 	static constexpr uint8_t kRCSwMid = 3;
 	static constexpr uint8_t kRCSwDown = 2;
 
-	static constexpr double kYawRCSen = -0.000005;
+	static constexpr double kYawRCSen = 0.00005; //-0.000005
 	static constexpr double kPitchRCSen = -0.000006; //0.005
 
 	//pid参数
@@ -267,7 +269,12 @@ public:
 		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawMidEcd);
 
 		m_GimbalSensorValues.imuPitch = m_GyroA204PitchListener->Get();
+		m_GimbalSensorValues.imuPitch.m_ZAxisSpeed *= -kDegreeToRadCoef;
+		m_GimbalSensorValues.imuPitch.m_ZAxisAngle *= -kDegreeToRadCoef;
+
 		m_GimbalSensorValues.imuYaw = m_GyroA204YawListener->Get();
+		m_GimbalSensorValues.imuYaw.m_ZAxisSpeed *= -kDegreeToRadCoef;
+		m_GimbalSensorValues.imuYaw.m_ZAxisAngle *= -kDegreeToRadCoef;
 		//std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
 		//std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
 		//m_GimbalSensorValues.imu.m_Pitch = -m_GimbalSensorValues.imu.m_Pitch;
@@ -275,22 +282,20 @@ public:
 		//m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wz
 		//	- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wx;
 
-		/*SPDLOG_INFO("@IMUAngle=[$GRoll={},$GPitch={},$GYaw={}]",
-			m_GimbalSensorValues.imu.m_Roll,
-			m_GimbalSensorValues.imu.m_Pitch,
-			m_GimbalSensorValues.imu.m_Yaw);
-		SPDLOG_INFO("@IMUSpeed=[$WRoll={},$WPitch={},$WYaw={}]",
-			m_GimbalSensorValues.imu.m_Wx,
-			m_GimbalSensorValues.imu.m_Wy,
-			m_GimbalSensorValues.imu.m_Wz);*/
-			/*SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
-				m_GimbalSensorValues.imu.m_Hx,
-				m_GimbalSensorValues.imu.m_Hy,
-				m_GimbalSensorValues.imu.m_Hz);*/
+		SPDLOG_INFO("@IMUAngle=[$GPitch={},$GYaw={}]",
+			m_GimbalSensorValues.imuPitch.m_ZAxisAngle,
+			m_GimbalSensorValues.imuYaw.m_ZAxisAngle);
+		SPDLOG_INFO("@IMUSpeed=[$WPitch={},$WYaw={}]",
+			m_GimbalSensorValues.imuPitch.m_ZAxisSpeed,
+			m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
+		/*SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
+			m_GimbalSensorValues.imu.m_Hx,
+			m_GimbalSensorValues.imu.m_Hy,
+			m_GimbalSensorValues.imu.m_Hz);*/
 
-				/*SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
-					m_Motors[Pitch]->Get().m_Encoding,
-					m_Motors[Yaw]->Get().m_Encoding);*/
+		/*SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
+			m_Motors[Pitch]->Get().m_Encoding,
+			m_Motors[Yaw]->Get().m_Encoding);*/
 
 	}
 
@@ -315,7 +320,7 @@ public:
 		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			while (3000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			while (5000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 			}

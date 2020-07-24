@@ -121,25 +121,17 @@ void FeedCtrlTask::FeedModeSet()
 
 void FeedCtrlTask::FeedRotateCtrl(bool stop, int speedSet, bool reverse)
 {
-	double current = 0;
-	
-	if (stop)
-		current = 0;
-	else
-	{
-		double set = speedSet * kSpeedToMotorRPMCoef;
-		double get = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
-		current = m_PIDFeedSpeed.Calc(set, get);
-		if (reverse)
-			set = -set;
+	double set = (stop ? 0 : speedSet * kSpeedToMotorRPMCoef);
+	if (reverse)
+		set = -set;
+	double get = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
+	double current = m_PIDFeedSpeed.Calc(set, get);
 
-		SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={},$status_pt={}]",
-			set,
-			get,
-			current,
-			static_cast<int>(m_FeedSensorValues.phototubeStatus.m_Status)*2000);
-	}
-	
+	SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={},$status_pt={}]",
+		set,
+		get,
+		current,
+		static_cast<int>(m_FeedSensorValues.phototubeStatus.m_Status) * 2000);
 	m_Gun->SendCurrentToMotorFeed(current);
 }
 
