@@ -151,10 +151,11 @@ public:
 
 	void Invoke(const size_t length, std::shared_ptr<uint8_t[]> data) override
 	{
-		if(length)
+		m_BufferPool->AddTask(
+			[callback = m_Callback, ptr = shared_from_this(), length, data = std::move(data)]()
 		{
-			m_Callback(shared_from_this(), length, data.get());
-		}
+			callback(ptr, length, data.get());
+		});
 	}
 
 	void Process() const { return m_BufferPool->Process(); }
