@@ -19,7 +19,7 @@ void FricCtrlTask::FricModeSet()
 	static uint8_t lastSw = kRCSwUp;
 
 	//遥控器右侧开关上拨一次，开启摩擦轮；再上拨一次，关闭摩擦轮
-	if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp && lastSw != kRCSwUp)
+	if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp || m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwMid)
 	{
 		switch (m_FricMode)
 		{
@@ -76,14 +76,14 @@ void FricCtrlTask::FricCtrl()
 			//double get = m_FricMotorsStatus.m_RPM[i];
 			currentSend[i] = m_PIDFricSpeed[i].Calc(set, get);
 
-			SPDLOG_INFO("@PIDFric{}=[$setFB{}={},$getFB{}={},$pidoutFB{}={}]",
+			/*SPDLOG_INFO("@PIDFric{}=[$setFC{}={},$getFC{}={},$pidoutFC{}={}]",
 				i,
 				i,
 				set,
 				i,
 				get,
 				i,
-				currentSend[i]);
+				currentSend[i]);*/
 		}
 	}
 	
@@ -98,18 +98,22 @@ void FeedCtrlTask::FeedModeSet()
 		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet;
 	
 	//若摩擦轮停转，则拨弹轮停转
-	if (/*overheat || */m_FricCtrlTask->Stopped())
+	if (/*overheat || */m_FricCtrlTask->Stopped()&&0)
 		m_FeedMode = FeedMode::Stop;
 	else
 	{
+		if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
+			m_FeedMode = FeedMode::Auto;
+		else
+			m_FeedMode = FeedMode::Stop;
 		//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
-		int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
+		/*int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
 		if (thumbWheelValue > 0)
-			m_FeedMode = FeedMode::Semi;
+			m_FeedMode = FeedMode::Auto;
 		else if (thumbWheelValue == 0)
 			m_FeedMode = FeedMode::Stop;
 		else
-			m_FeedMode = FeedMode::Auto;
+			m_FeedMode = FeedMode::Auto;*/
 	}
 	
 	//若卡弹则拨弹轮反转
@@ -117,33 +121,36 @@ void FeedCtrlTask::FeedModeSet()
 	if (jammed)
 		m_FeedMode = FeedMode::Reverse; */
 
-	SPDLOG_INFO("@FeedMode=[$mode={}]", m_FeedMode);
+	//SPDLOG_INFO("@FeedMode=[$mode={}]", m_FeedMode);
 }
 
 void FeedCtrlTask::FeedRotateCtrl(bool stop, int speedSet, bool reverse)
 {
-	double set = (stop ? 0 : speedSet * kSpeedToMotorRPMCoef);
+	double set1 = (stop ? 0 : speedSet * kSpeedToMotorRPMCoef);
 	if (reverse)
-		set = -set;
-	double get = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
-	double current = m_PIDFeedSpeed.Calc(set, get);
+		set1 = -set1;
+	double get1 = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
+	//double get = m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed];
+	double current1 = m_PIDFeedSpeed.Calc(set1, get1);
 
-	SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={},$status_pt={}]",
-		set,
-		get,
-		current,
+	if (stop)
+		current1 = 0;
+	SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={},$phototube={}]",
+		set1,
+		get1,
+		current1,
 		static_cast<int>(m_FeedSensorValues.phototubeStatus.m_Status) * 2000);
-	m_Gun->SendCurrentToMotorFeed(current);
+	m_Gun->SendCurrentToMotorFeed(current1);
 }
 
-void FeedCtrlTask::AutoReloadCtrl()
-{
-	//如果光电管处无弹，则控制拨弹轮补弹
-	if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::NO_BULLET)
-		FeedRotateCtrl(false, kFeedNormalSpeed);
-	else //否则，拨弹轮停止
-		FeedRotateCtrl(true);
-}
+//void FeedCtrlTask::AutoReloadCtrl()
+//{
+//	//如果光电管处无弹，则控制拨弹轮补弹
+//	if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::NO_BULLET)
+//		FeedRotateCtrl(false, kFeedNormalSpeed);
+//	else //否则，拨弹轮停止
+//		FeedRotateCtrl(true);
+//}
 
 /**
  * 由于自动补弹的作用，进入此函数时，微动开关处有弹
@@ -182,7 +189,7 @@ void FeedCtrlTask::FeedCtrl()
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		SingleShotCtrl(kFeedBurstSpeed);
+		SingleShotCtrl(kFeedSemiSpeed);
 		//if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point()) // 三连发间隔2s
 		//{
 		//	if (shootCnt < kBurstBulletNum)

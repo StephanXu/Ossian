@@ -53,6 +53,7 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 			m_CurGimbalAngleMode.fill(Encoding);
 			m_GyroAngleZeroPoints.fill(0);
 			std::for_each(m_EcdAngleFilters.begin(), m_EcdAngleFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
+			std::for_each(m_GyroSpeedFilters.begin(), m_GyroSpeedFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 			m_TimestampInit = std::chrono::high_resolution_clock::time_point();
 
 			return;
@@ -65,7 +66,7 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 	case kRCSwUp:
 		m_GimbalCtrlSrc = RC; break;  
 	case kRCSwMid:
-		m_GimbalCtrlSrc = Disable; break; //Aimbot
+		m_GimbalCtrlSrc = RC; break; //Aimbot
 	case kRCSwDown:
 		m_GimbalCtrlSrc = Disable; break;  //Mouse
 	default:
@@ -136,10 +137,11 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 	{
 		double angleSpeedSet;
 		double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
-
+		gyroSpeed = m_GyroSpeedFilters[position].Calc(gyroSpeed);
 		if (m_CurGimbalAngleMode[position] == Gyro)
 		{
 			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle);
+			
 			angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
 			SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={},$pidoutAG{}={}]",
 				position,

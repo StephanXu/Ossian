@@ -239,7 +239,7 @@ public:
 		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			SPDLOG_INFO("@FricInterval=[$timefric={}]", std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count());
+			//SPDLOG_INFO("@FricInterval=[$timefric={}]", std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count());
 			while (3000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
@@ -301,7 +301,7 @@ public:
 
 	//遥控器解析
 	static constexpr int16_t kGunRCDeadband = 10; //拨轮死区
-	static constexpr size_t kShootModeChannel = 4; //4
+	static constexpr size_t kShootModeChannel = 1; //4
 
 	static constexpr uint8_t kRCSwUp = 1;
 	static constexpr uint8_t kRCSwMid = 3;
@@ -357,9 +357,9 @@ public:
 		kFeedBurstSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedburstspeed();
 		kFeedAutoSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedautospeed();
 
-		m_RCListener->AddOnChange([](const RemoteStatus& value) {
+		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
-				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4], value.sw[0], value.sw[1]); });
+				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4], value.sw[0], value.sw[1]); });*/
 		/*m_PhototubeListener->AddOnChange([this](const PhototubeStatus& value)
 		{
 			SPDLOG_INFO("@Phototube=[$status_pt={}]", value.m_Status);
@@ -409,7 +409,7 @@ public:
 	//发送电流给2006
 	void FeedRotateCtrl(bool stop = false, int speedSet = 0, bool reverse = false);
 
-	void AutoReloadCtrl();
+	//void AutoReloadCtrl();
 
 	void SingleShotCtrl(int speedSet);
 
@@ -426,23 +426,26 @@ public:
 		{
 			//auto interval = std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count();
 			double interval = (double)(clock() - lastTime) / CLOCKS_PER_SEC * 1000.0;
-			SPDLOG_INFO("@FeedInterval=[$timefeed={}]", interval);
+			//SPDLOG_INFO("@FeedInterval=[$timefeed={}]", interval);
 			while (6 > interval)
 			{
+
 				std::this_thread::yield();
+				interval = (double)(clock() - lastTime) / CLOCKS_PER_SEC * 1000.0;
 			}
+			
 			lastTime = clock();
 			//lastTime = Clock::now();
 			//SPDLOG_INFO("@FeedSpeedSet=[$normal={},$semi={},$burst={},$auto={}]", kFeedNormalSpeed, kFeedSemiSpeed, kFeedBurstSpeed, kFeedAutoSpeed);
 
-			/*m_FeedMotorStatus = m_MotorFeedListener->Get();
+			m_FeedMotorStatus = m_MotorFeedListener->Get();
 
 			UpdateFeedSensorFeedback();
 			if (m_FlagInitFeed)
 				InitFeed();
 
 			FeedModeSet();
-			FeedCtrl();*/
+			FeedCtrl();
 		}
 
 	}

@@ -92,9 +92,9 @@ void ChassisCtrlTask::ChassisModeSet()
 	switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
 	{
 	case kRCSwUp:
-		m_CurChassisMode = Openloop_Z; break;  //Follow_Gimbal_Yaw
+		m_CurChassisMode = Top; break;  //Follow_Gimbal_Yaw
 	case kRCSwMid:
-		m_CurChassisMode = Disable; break; 
+		m_CurChassisMode = Openloop_Z;  break;
 	case kRCSwDown:
 		m_CurChassisMode = Disable; break;   //Top
 	default:
@@ -111,9 +111,9 @@ void ChassisCtrlTask::ChassisCtrl()
 		CalcWheelSpeedTarget();
 		for (size_t i = 0; i < kNumChassisMotors; ++i)
 		{
-			double set = m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef;
-			double get = m_RPMFdbFilters[i].Calc(m_MotorsStatus.m_RPM[i]);
-			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(set, get);
+			double set2 = m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef;
+			double get2 = m_RPMFdbFilters[i].Calc(m_MotorsStatus.m_RPM[i]);
+			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(set2, get2);
 			//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
 			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
@@ -121,9 +121,9 @@ void ChassisCtrlTask::ChassisCtrl()
 			SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
 							i,
 							i,
-							set, 
+							set2, 
 							i,
-							get,
+							get2,
 							i,
 							m_CurrentSend[i]);
 			//m_PIDChassisSpeed[i].PrintDetails(i);
@@ -237,6 +237,6 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 
-		//SPDLOG_INFO("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
+		SPDLOG_INFO("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
 	}
 }

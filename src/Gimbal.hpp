@@ -243,6 +243,9 @@ public:
 		FirstOrderFilter ecdAngleFilter(0.25, kGimbalCtrlPeriod);
 		m_EcdAngleFilters.fill(ecdAngleFilter);
 
+		FirstOrderFilter gyroFilter(0.0001, kGimbalCtrlPeriod);
+		m_GyroSpeedFilters.fill(gyroFilter);
+
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);
 
@@ -298,9 +301,9 @@ public:
 			m_GimbalSensorValues.imu.m_Hy,
 			m_GimbalSensorValues.imu.m_Hz);*/
 
-		SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
+		/*SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
 			m_MotorsStatus.m_Encoding[Pitch],
-			m_MotorsStatus.m_Encoding[Yaw]);
+			m_MotorsStatus.m_Encoding[Yaw]);*/
 
 	}
 
@@ -380,6 +383,7 @@ private:
 	std::array<std::chrono::high_resolution_clock::time_point, kNumGimbalMotors> m_LastEcdTimeStamp;
 
 	std::array<FirstOrderFilter, kNumGimbalMotors> m_EcdAngleFilters;
+	std::array<FirstOrderFilter, kNumGimbalMotors> m_GyroSpeedFilters; //陀螺仪角速度滤波，去除摩擦轮共振干扰
 	/*double m_YawAdd, m_PitchAdd; //角度增量rad
 	double m_LastYaw, m_LastPitch;*/
 	std::array<double, kNumGimbalMotors> m_GyroAngleSet; //累加 陀螺仪模式

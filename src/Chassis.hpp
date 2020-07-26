@@ -129,7 +129,7 @@ public:
 	static constexpr uint8_t kRCSwDown = 2;
 
 	static constexpr int16_t kChassisRCDeadband = 10;     ///< 摇杆死区
-	static constexpr double kChassisVxRCSen = 0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
+	static constexpr double kChassisVxRCSen = 0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例0.006
 	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
 	static constexpr double kChassisWzRCSen = -0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 	static constexpr double kChassisCtrlPeriod = 0.012;  //底盘控制周期s，用于低通滤波器
@@ -256,10 +256,10 @@ public:
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000; //v
-		/*SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
+		SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower,
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
-			80);*/
+			80);
 	}
 
 	void CalcWheelSpeedTarget();
