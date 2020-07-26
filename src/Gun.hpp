@@ -14,6 +14,7 @@
 #include <chrono>
 #include <array>
 #include <atomic>
+#include <ctime>
 
 //constexpr size_t kNumGunFricMotorsFake = 3;
 constexpr size_t kNumGunFricMotors = 2; 
@@ -189,6 +190,7 @@ public:
 		kFricSpeed30 = m_Config->Instance<Configuration>()->mutable_gun()->kfricspeed30();
 
 		m_FlagInitFric = true;
+		m_FricMode = FricMode::Disable;
 
 		PIDController pidFricSpeed;
 		pidFricSpeed.SetParams(PIDFricSpeedParams);
@@ -197,9 +199,7 @@ public:
 		FirstOrderFilter rpmFdbFilter(0.25, 0.003);
 		m_RPMFdbFilters.fill(rpmFdbFilter);
 
-		m_RCListener->AddOnChange([](const RemoteStatus& value) {
-			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
-				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]); });
+		
 	}
 
 	void InitFric()
@@ -239,6 +239,7 @@ public:
 		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
+			SPDLOG_INFO("@FricInterval=[$timefric={}]", std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count());
 			while (3000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
@@ -356,19 +357,23 @@ public:
 		kFeedBurstSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedburstspeed();
 		kFeedAutoSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedautospeed();
 
+		m_RCListener->AddOnChange([](const RemoteStatus& value) {
+			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
+				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4], value.sw[0], value.sw[1]); });
 		/*m_PhototubeListener->AddOnChange([this](const PhototubeStatus& value)
 		{
 			SPDLOG_INFO("@Phototube=[$status_pt={}]", value.m_Status);
 		});*/
 		//如果射击数据（0x0207）有更新，则累加已发射的子弹数
-		m_RefereeShootDataListener->AddOnChange([this](const ShootData& value)
+		/*m_RefereeShootDataListener->AddOnChange([this](const ShootData& value)
 		{
 			++m_CurBulletShotNum;
-		});
+		});*/
 		m_FlagInitFeed = true;
+		m_FeedMode = FeedMode::Stop;
 
 		m_PIDFeedSpeed.SetParams(PIDFeedSpeedParams);
-		m_RPMFdbFilter.SetState(0.25, 0.003);
+		m_RPMFdbFilter.SetState(0.25, 0.006);
 	}
 
 	void InitFeed()
@@ -390,8 +395,8 @@ public:
 		m_FeedSensorValues.gimbalInputSrc = m_GimbalCtrlTask->GimbalCtrlSrc();  //[TODO] 增加对自瞄模式射击的处理
 		m_FeedSensorValues.phototubeStatus = m_PhototubeListener->Get();
 
-		m_FeedSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
-		m_FeedSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();
+		/*m_FeedSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
+		m_FeedSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();*/
 
 		//如果当前获取的热量低于历史热量，则将已发射的子弹数清零
 		if (m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat < lastHeat)
@@ -412,26 +417,32 @@ public:
 
 	auto ExecuteProc() -> void override
 	{
-		using Clock = std::chrono::high_resolution_clock;
+		/*using Clock = std::chrono::high_resolution_clock;
 		using TimeStamp = Clock::time_point;
 
-		TimeStamp lastTime = Clock::now();
+		volatile TimeStamp lastTime = Clock::now();*/
+		volatile clock_t lastTime = clock();
 		while (true)
 		{
-			while (3000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			//auto interval = std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count();
+			double interval = (double)(clock() - lastTime) / CLOCKS_PER_SEC * 1000.0;
+			SPDLOG_INFO("@FeedInterval=[$timefeed={}]", interval);
+			while (6 > interval)
 			{
 				std::this_thread::yield();
 			}
-			lastTime = Clock::now();
+			lastTime = clock();
+			//lastTime = Clock::now();
+			//SPDLOG_INFO("@FeedSpeedSet=[$normal={},$semi={},$burst={},$auto={}]", kFeedNormalSpeed, kFeedSemiSpeed, kFeedBurstSpeed, kFeedAutoSpeed);
 
-			m_FeedMotorStatus = m_MotorFeedListener->Get();
+			/*m_FeedMotorStatus = m_MotorFeedListener->Get();
 
 			UpdateFeedSensorFeedback();
 			if (m_FlagInitFeed)
 				InitFeed();
 
 			FeedModeSet();
-			FeedCtrl();
+			FeedCtrl();*/
 		}
 
 	}

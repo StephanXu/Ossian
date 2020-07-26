@@ -137,7 +137,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
-	//app.AddExecutable<FricCtrlTask>();
-	//app.AddExecutable<FeedCtrlTask>();
+	app.AddExecutable<FricCtrlTask>();
+	app.AddExecutable<FeedCtrlTask>();
 	//app.AddService<ossian::IExecutable, CameraPeeker>();
 }

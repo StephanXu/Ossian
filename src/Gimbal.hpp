@@ -88,7 +88,7 @@ public:
 
 	double RelativeAngleToChassis() 
 	{ 
-		static constexpr uint16_t kYawMidEcd = 5504;
+		static constexpr uint16_t kYawMidEcd = 5475;
 		return -RelativeEcdToRad(m_YawEcd.load(), kYawMidEcd); //[TODO]负号？
 	} 
 
@@ -110,13 +110,13 @@ public:
 	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
 
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
-	static constexpr uint16_t kPitchMinEcd = 4176;
-	static constexpr uint16_t kPitchMaxEcd = 5715;
-	static constexpr uint16_t kPitchMidEcd = 4705;
+	static constexpr uint16_t kPitchMinEcd = 6885;
+	static constexpr uint16_t kPitchMaxEcd = 226;
+	static constexpr uint16_t kPitchMidEcd = 7517;
 
-	static constexpr uint16_t kYawMinEcd = 3456;
-	static constexpr uint16_t kYawMaxEcd = 7552;
-	static constexpr uint16_t kYawMidEcd = 5504;
+	static constexpr uint16_t kYawMinEcd = 7500;
+	static constexpr uint16_t kYawMaxEcd = 3465;
+	static constexpr uint16_t kYawMidEcd = 5475;
 
 	//最大最小的 相对（中值的）角度
 	const std::array<double, 2> kMaxRelativeAngle = { RelativeEcdToRad(kPitchMaxEcd, kPitchMidEcd),
@@ -141,7 +141,7 @@ public:
 	static constexpr uint8_t kRCSwDown = 2;
 
 	static constexpr double kYawRCSen = 0.00005; //-0.000005
-	static constexpr double kPitchRCSen = -0.000006; //0.005
+	static constexpr double kPitchRCSen = -0.00006; //0.005
 
 	//pid参数
 	static std::array<double, 5> PIDAngleEcdPitchParams;
@@ -151,7 +151,7 @@ public:
 	static std::array<double, 5> PIDAngleGyroYawParams;
 	static std::array<double, 5> PIDAngleSpeedYawParams;
 
-	static constexpr double kGimbalCtrlPeriod = 0.003;
+	static constexpr double kGimbalCtrlPeriod = 0.005;
 	static double kAngleSpeedFilterCoef;
 
 	enum GimbalAngleMode
@@ -240,8 +240,8 @@ public:
 
 		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
 
-		FirstOrderFilter angleSpeedFilter(kAngleSpeedFilterCoef, kGimbalCtrlPeriod);
-		m_AngleSpeedFilters.fill(angleSpeedFilter);
+		FirstOrderFilter ecdAngleFilter(0.25, kGimbalCtrlPeriod);
+		m_EcdAngleFilters.fill(ecdAngleFilter);
 
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);
@@ -269,12 +269,17 @@ public:
 		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawMidEcd);
 
 		m_GimbalSensorValues.imuPitch = m_GyroA204PitchListener->Get();
-		m_GimbalSensorValues.imuPitch.m_ZAxisSpeed *= -kDegreeToRadCoef;
-		m_GimbalSensorValues.imuPitch.m_ZAxisAngle *= -kDegreeToRadCoef;
+		m_GimbalSensorValues.imuPitch.m_ZAxisSpeed *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imuPitch.m_ZAxisAngle *= kDegreeToRadCoef;
+		/*if(!m_FlagInitGimbal)
+			m_GimbalSensorValues.imuPitch.m_ZAxisAngle = ClampLoop(static_cast<double>(m_GimbalSensorValues.imuPitch.m_ZAxisAngle), m_GyroAngleZeroPoints[Pitch], m_GyroAngleZeroPoints[Pitch] + M_PI * 2);*/
 
 		m_GimbalSensorValues.imuYaw = m_GyroA204YawListener->Get();
 		m_GimbalSensorValues.imuYaw.m_ZAxisSpeed *= -kDegreeToRadCoef;
 		m_GimbalSensorValues.imuYaw.m_ZAxisAngle *= -kDegreeToRadCoef;
+		/*if(!m_FlagInitGimbal)
+			m_GimbalSensorValues.imuYaw.m_ZAxisAngle = ClampLoop(static_cast<double>(m_GimbalSensorValues.imuYaw.m_ZAxisAngle), m_GyroAngleZeroPoints[Yaw], m_GyroAngleZeroPoints[Yaw] + M_PI * 2);*/
+		
 		//std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
 		//std::swap(m_GimbalSensorValues.imu.m_Wx, m_GimbalSensorValues.imu.m_Wy);
 		//m_GimbalSensorValues.imu.m_Pitch = -m_GimbalSensorValues.imu.m_Pitch;
@@ -282,20 +287,20 @@ public:
 		//m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wz
 		//	- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wx;
 
-		SPDLOG_INFO("@IMUAngle=[$GPitch={},$GYaw={}]",
+		/*SPDLOG_INFO("@IMUAngle=[$GPitch={},$GYaw={}]",
 			m_GimbalSensorValues.imuPitch.m_ZAxisAngle,
 			m_GimbalSensorValues.imuYaw.m_ZAxisAngle);
 		SPDLOG_INFO("@IMUSpeed=[$WPitch={},$WYaw={}]",
 			m_GimbalSensorValues.imuPitch.m_ZAxisSpeed,
-			m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
+			m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);*/
 		/*SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
 			m_GimbalSensorValues.imu.m_Hx,
 			m_GimbalSensorValues.imu.m_Hy,
 			m_GimbalSensorValues.imu.m_Hz);*/
 
-		/*SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
-			m_Motors[Pitch]->Get().m_Encoding,
-			m_Motors[Yaw]->Get().m_Encoding);*/
+		SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
+			m_MotorsStatus.m_Encoding[Pitch],
+			m_MotorsStatus.m_Encoding[Yaw]);
 
 	}
 
@@ -337,11 +342,11 @@ public:
 			GimbalCtrlInputProc();
 			//[TODO] 模式切换过渡
 
-			//GimbalExpAngleSet(Pitch);
-			GimbalExpAngleSet(Yaw);
+			GimbalExpAngleSet(Pitch);
+			//GimbalExpAngleSet(Yaw);
 
-			//GimbalCtrl(Pitch);
-			GimbalCtrl(Yaw);
+			GimbalCtrl(Pitch);
+			//GimbalCtrl(Yaw);
 		}
 	}
 
@@ -367,12 +372,14 @@ private:
 	} m_GimbalSensorValues;
 
 	bool m_FlagInitGimbal;
+	std::chrono::high_resolution_clock::time_point m_TimestampInit;
+	std::array<double, kNumGimbalMotors> m_GyroAngleZeroPoints{};
 
 	std::array<double, kNumGimbalMotors> m_AngleInput;
 	std::array<double, kNumGimbalMotors> m_LastEcdAngle;
 	std::array<std::chrono::high_resolution_clock::time_point, kNumGimbalMotors> m_LastEcdTimeStamp;
 
-	std::array<FirstOrderFilter, kNumGimbalMotors> m_AngleSpeedFilters;
+	std::array<FirstOrderFilter, kNumGimbalMotors> m_EcdAngleFilters;
 	/*double m_YawAdd, m_PitchAdd; //角度增量rad
 	double m_LastYaw, m_LastPitch;*/
 	std::array<double, kNumGimbalMotors> m_GyroAngleSet; //累加 陀螺仪模式

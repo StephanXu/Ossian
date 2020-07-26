@@ -32,8 +32,9 @@ void FricCtrlTask::FricModeSet()
 		}
 	}
 	//如果云台失能，则摩擦轮也失能
-	/*else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable)
-		m_FricMode = FricMode::Disable;*/
+	else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable
+		|| m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Init)
+		m_FricMode = FricMode::Disable;
 
 	lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
 }
@@ -103,12 +104,12 @@ void FeedCtrlTask::FeedModeSet()
 	{
 		//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
 		int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
-		if (thumbWheelValue < 0)
+		if (thumbWheelValue > 0)
 			m_FeedMode = FeedMode::Semi;
 		else if (thumbWheelValue == 0)
-			m_FeedMode = FeedMode::Reload;
+			m_FeedMode = FeedMode::Stop;
 		else
-			m_FeedMode = FeedMode::Burst;
+			m_FeedMode = FeedMode::Auto;
 	}
 	
 	//若卡弹则拨弹轮反转
@@ -150,11 +151,12 @@ void FeedCtrlTask::AutoReloadCtrl()
  */
 void FeedCtrlTask::SingleShotCtrl(int speedSet)
 {
-	//如果光电管处有弹，则控制拨弹轮送弹
-	if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::HAS_BULLET)
-		FeedRotateCtrl(false, speedSet);
-	else //否则，控制拨弹轮补弹
-		AutoReloadCtrl();
+	FeedRotateCtrl(false, speedSet);
+	////如果光电管处有弹，则控制拨弹轮送弹
+	//if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::HAS_BULLET)
+	//	FeedRotateCtrl(false, speedSet);
+	//else //否则，控制拨弹轮补弹
+	//	AutoReloadCtrl();
 }
 
 void FeedCtrlTask::FeedCtrl()
@@ -165,34 +167,36 @@ void FeedCtrlTask::FeedCtrl()
 	
 	if (m_FeedMode == FeedMode::Stop)
 		FeedRotateCtrl(true);
-	else if (m_FeedMode == FeedMode::Reload)
+	/*else if (m_FeedMode == FeedMode::Reload)
 		AutoReloadCtrl();
 	else if (m_FeedMode == FeedMode::Reverse)
-		FeedRotateCtrl(false, kFeedNormalSpeed, true);
+		FeedRotateCtrl(false, kFeedNormalSpeed, true);*/
 	else if (m_FeedMode == FeedMode::Semi)
 	{
-		if (interval >= 1000 || m_LastShootTimestamp == hrClock::time_point())  //单发间隔1s
-		{
-			SingleShotCtrl(kFeedSemiSpeed);
-			m_LastShootTimestamp = hrClock::now();
-		}
+		SingleShotCtrl(kFeedSemiSpeed);
+		//if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point())  //单发间隔2s
+		//{
+		//	SingleShotCtrl(kFeedSemiSpeed);
+		//	m_LastShootTimestamp = hrClock::now();
+		//}
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point()) // 三连发间隔2s
-		{
-			if (shootCnt < kBurstBulletNum)
-			{
-				SingleShotCtrl(kFeedBurstSpeed);
-				++shootCnt;
-			}
-			else
-			{
-				shootCnt = 0;
-				m_LastShootTimestamp = hrClock::now();
-			}
-				
-		}
+		SingleShotCtrl(kFeedBurstSpeed);
+		//if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point()) // 三连发间隔2s
+		//{
+		//	if (shootCnt < kBurstBulletNum)
+		//	{
+		//		SingleShotCtrl(kFeedBurstSpeed);
+		//		++shootCnt;
+		//	}
+		//	else
+		//	{
+		//		shootCnt = 0;
+		//		m_LastShootTimestamp = hrClock::now();
+		//	}
+		//		
+		//}
 	}
 	else if (m_FeedMode == FeedMode::Auto)
 		SingleShotCtrl(kFeedAutoSpeed);

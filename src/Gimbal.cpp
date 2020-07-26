@@ -18,24 +18,32 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 		if (/*fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.1 
 			&& fabs(m_GimbalSensorValues.relativeAngle[Yaw]) < 0.1*/1)
 		{
-			SPDLOG_TRACE("Gimbal Init Done.");
-			m_CurGimbalAngleMode[Pitch] = Encoding;
-			m_CurGimbalAngleMode[Yaw] = Gyro;
-			m_EcdAngleSet[Pitch] = 0;
-			m_EcdAngleSet[Yaw] = 0;
-			m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imuPitch.m_ZAxisAngle;
-			m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imuYaw.m_ZAxisAngle;
+			long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::high_resolution_clock::now() - m_TimestampInit).count();
+			if (1/*interval > 2000 && m_TimestampInit!= std::chrono::high_resolution_clock::time_point()*/)  //在中值处稳定一段时间
+			{
+				SPDLOG_TRACE("Gimbal Init Done.");
+				m_CurGimbalAngleMode[Pitch] = Encoding;
+				m_CurGimbalAngleMode[Yaw] = Gyro;
+				m_EcdAngleSet[Pitch] = 0;
+				m_EcdAngleSet[Yaw] = 0;
+				m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imuPitch.m_ZAxisAngle;
+				m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imuYaw.m_ZAxisAngle;
 
-			/*m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
-			m_PIDAngleEcd[Pitch].Reset();
-			m_PIDAngleGyro[Pitch].Reset();
-			m_PIDAngleSpeed[Pitch].Reset();
+				m_GyroAngleZeroPoints[Pitch] = m_GimbalSensorValues.imuPitch.m_ZAxisAngle;;
+				m_GyroAngleZeroPoints[Yaw] = m_GimbalSensorValues.imuYaw.m_ZAxisAngle;;
+				/*m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
+				m_PIDAngleEcd[Pitch].Reset();
+				m_PIDAngleGyro[Pitch].Reset();
+				m_PIDAngleSpeed[Pitch].Reset();
 
-			m_PIDAngleEcd[Yaw].Reset();
-			m_PIDAngleGyro[Yaw].Reset();
-			m_PIDAngleSpeed[Yaw].Reset();*/
-
-			m_FlagInitGimbal = false;
+				m_PIDAngleEcd[Yaw].Reset();
+				m_PIDAngleGyro[Yaw].Reset();
+				m_PIDAngleSpeed[Yaw].Reset();*/
+				m_TimestampInit = std::chrono::high_resolution_clock::time_point();
+				m_FlagInitGimbal = false;
+			}
+			m_TimestampInit = std::chrono::high_resolution_clock::now();
 		}
 		else
 		{
@@ -43,9 +51,13 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwUp)
 				m_GimbalCtrlSrc = Disable;
 			m_CurGimbalAngleMode.fill(Encoding);
+			m_GyroAngleZeroPoints.fill(0);
+			std::for_each(m_EcdAngleFilters.begin(), m_EcdAngleFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
+			m_TimestampInit = std::chrono::high_resolution_clock::time_point();
 
 			return;
 		}
+
 	}
 	
 	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
@@ -141,7 +153,7 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 		else if (m_CurGimbalAngleMode[position] == Encoding)
 		{
 			//[TODO]用电机转速rpm换算出云台角速度
-			double curEcdAngle = m_GimbalSensorValues.relativeAngle[position];
+			double curEcdAngle = m_EcdAngleFilters[position].Calc(m_GimbalSensorValues.relativeAngle[position]);
 			/*//初始时刻，无法通过差分计算出角速度
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
 			{
