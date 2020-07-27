@@ -346,10 +346,10 @@ public:
 			//[TODO] 模式切换过渡
 
 			GimbalExpAngleSet(Pitch);
-			//GimbalExpAngleSet(Yaw);
+			GimbalExpAngleSet(Yaw);
 
 			GimbalCtrl(Pitch);
-			//GimbalCtrl(Yaw);
+			GimbalCtrl(Yaw);
 		}
 	}
 
