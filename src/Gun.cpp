@@ -12,6 +12,8 @@ int16_t FeedCtrlTask::kFeedBurstSpeed = 0;
 int16_t FeedCtrlTask::kFeedAutoSpeed = 0;
 
 std::array<double, 5> FricCtrlTask::PIDFricSpeedParams;
+
+std::array<double, 5> FeedCtrlTask::PIDFeedAngleParams;
 std::array<double, 5> FeedCtrlTask::PIDFeedSpeedParams;
 
 void FricCtrlTask::FricModeSet()
@@ -21,7 +23,8 @@ void FricCtrlTask::FricModeSet()
 	//遥控器右侧开关上拨一次，开启摩擦轮；再上拨一次，关闭摩擦轮
 	if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp || m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwMid)
 	{
-		switch (m_FricMode)
+		m_FricMode = FricMode::Enable;
+		/*switch (m_FricMode)
 		{
 		case FricMode::Disable:
 			m_FricMode = FricMode::Enable; break;
@@ -29,14 +32,17 @@ void FricCtrlTask::FricModeSet()
 			m_FricMode = FricMode::Disable; break;
 		default:
 			m_FricMode = FricMode::Disable; break;
-		}
+		}*/
 	}
-	//如果云台失能，则摩擦轮也失能
-	else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable
-		|| m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Init)
+	else
 		m_FricMode = FricMode::Disable;
+	//如果云台失能，则摩擦轮也失能
+	/*else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable
+		|| m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Init)
+		m_FricMode = FricMode::Disable;*/
 
 	lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
+	//m_FricMode = FricMode::Disable;
 }
 
 //[TODO] 读取场地加成RFID状态，叠加射击速度加成
@@ -124,23 +130,49 @@ void FeedCtrlTask::FeedModeSet()
 	//SPDLOG_INFO("@FeedMode=[$mode={}]", m_FeedMode);
 }
 
-void FeedCtrlTask::FeedRotateCtrl(bool stop, int speedSet, bool reverse)
+//deltaAngle：拨盘的角度变化量
+void FeedCtrlTask::FeedRotateCtrl(bool stop, double deltaAngle)
 {
-	double set1 = (stop ? 0 : speedSet * kSpeedToMotorRPMCoef);
-	if (reverse)
-		set1 = -set1;
-	double get1 = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
-	//double get = m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed];
-	double current1 = m_PIDFeedSpeed.Calc(set1, get1);
+	static int lastEcd = -1;
+	static double sumPerCtrlDeltaAngleGet = 0;
 
+	double current = 0;
 	if (stop)
-		current1 = 0;
-	SPDLOG_INFO("@PIDFeed=[$setFd={},$getFd={},$pidoutFd={},$phototube={}]",
-		set1,
-		get1,
-		current1,
-		static_cast<int>(m_FeedSensorValues.phototubeStatus.m_Status) * 2000);
-	m_Gun->SendCurrentToMotorFeed(current1);
+		current = 0;
+	else
+	{
+		double perCtrlDeltaAngleGet = 0;
+		if (lastEcd >= 0)
+			sumPerCtrlDeltaAngleGet += RelativeEcdToRad(m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed], lastEcd) / kSpeedToMotorRPMCoef;
+
+		if (fabs(deltaAngle - sumPerCtrlDeltaAngleGet) < 0.1)  //已经到达目标位置
+		{
+			m_FlagInPosition = true;
+			sumPerCtrlDeltaAngleGet = 0;
+		}
+		else
+		{
+			m_FlagInPosition = false;
+			double speedSet = m_PIDFeedAngle.Calc(deltaAngle, sumPerCtrlDeltaAngleGet);  //拨盘速度
+			std::cerr << deltaAngle << '\t' << sumPerCtrlDeltaAngleGet << '\t' << speedSet << std::endl;
+			SPDLOG_INFO("@PIDFeedAngle=[$setFdA={},$getFdA={},$pidoutFdA={}]",
+				deltaAngle,
+				sumPerCtrlDeltaAngleGet,
+				speedSet);
+
+			double rpmSet = speedSet * kSpeedToMotorRPMCoef;
+			double rpmGet = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
+			current = m_PIDFeedSpeed.Calc(rpmSet, rpmGet);
+
+			SPDLOG_INFO("@PIDFeedSpeed=[$setFdS={},$getFdS={},$pidoutFdS={}]",
+				rpmSet,
+				rpmGet,
+				current
+			/*static_cast<int>(m_FeedSensorValues.phototubeStatus.m_Status) * 2000*/);
+		}
+	}
+	lastEcd = m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed];
+	m_Gun->SendCurrentToMotorFeed(current);
 }
 
 //void FeedCtrlTask::AutoReloadCtrl()
@@ -156,21 +188,21 @@ void FeedCtrlTask::FeedRotateCtrl(bool stop, int speedSet, bool reverse)
  * 由于自动补弹的作用，进入此函数时，微动开关处有弹
  * 拨弹轮转动--->微动开关检测到弹丸离开--->拨弹轮转动送弹--->微动开关检测有弹丸--->拨弹轮停
  */
-void FeedCtrlTask::SingleShotCtrl(int speedSet)
-{
-	FeedRotateCtrl(false, speedSet);
-	////如果光电管处有弹，则控制拨弹轮送弹
-	//if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::HAS_BULLET)
-	//	FeedRotateCtrl(false, speedSet);
-	//else //否则，控制拨弹轮补弹
-	//	AutoReloadCtrl();
-}
+//void FeedCtrlTask::SingleShotCtrl(int speedSet)
+//{
+//	FeedRotateCtrl(false, speedSet);
+//	////如果光电管处有弹，则控制拨弹轮送弹
+//	//if (m_FeedSensorValues.phototubeStatus.m_Status == PhototubeStatus::HAS_BULLET)
+//	//	FeedRotateCtrl(false, speedSet);
+//	//else //否则，控制拨弹轮补弹
+//	//	AutoReloadCtrl();
+//}
 
 void FeedCtrlTask::FeedCtrl()
 {
 	static int shootCnt = 0;
 	long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-						 hrClock::now() - m_LastShootTimestamp).count();
+		std::chrono::high_resolution_clock::now() - m_LastShootTimestamp).count();
 	
 	if (m_FeedMode == FeedMode::Stop)
 		FeedRotateCtrl(true);
@@ -180,16 +212,34 @@ void FeedCtrlTask::FeedCtrl()
 		FeedRotateCtrl(false, kFeedNormalSpeed, true);*/
 	else if (m_FeedMode == FeedMode::Semi)
 	{
-		SingleShotCtrl(kFeedSemiSpeed);
-		//if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point())  //单发间隔2s
-		//{
-		//	SingleShotCtrl(kFeedSemiSpeed);
-		//	m_LastShootTimestamp = hrClock::now();
-		//}
+		
+		//SingleShotCtrl(kFeedSemiSpeed);
+		if (interval >= 2000 || m_LastShootTimestamp == std::chrono::high_resolution_clock::time_point())  //单发间隔2s
+		{
+			FeedRotateCtrl(false, kAnglePerCell);
+			if (m_FlagInPosition)
+				m_LastShootTimestamp = std::chrono::high_resolution_clock::now();
+		}
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		SingleShotCtrl(kFeedSemiSpeed);
+		if (interval >= 2000 || m_LastShootTimestamp == std::chrono::high_resolution_clock::time_point())  //三连发间隔2s
+		{
+			if (shootCnt < kBurstBulletNum)
+			{
+				FeedRotateCtrl(false, kAnglePerCell);
+				if (m_FlagInPosition)
+					++shootCnt;
+			}
+			else
+			{
+				shootCnt = 0;
+				if (m_FlagInPosition)
+					m_LastShootTimestamp = std::chrono::high_resolution_clock::now();
+			}
+			
+		}
+		//SingleShotCtrl(kFeedSemiSpeed);
 		//if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point()) // 三连发间隔2s
 		//{
 		//	if (shootCnt < kBurstBulletNum)
@@ -206,7 +256,8 @@ void FeedCtrlTask::FeedCtrl()
 		//}
 	}
 	else if (m_FeedMode == FeedMode::Auto)
-		SingleShotCtrl(kFeedAutoSpeed);
+		FeedRotateCtrl(false, kAnglePerCell);
+		//SingleShotCtrl(kFeedAutoSpeed);
 }
 
 

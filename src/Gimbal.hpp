@@ -114,9 +114,9 @@ public:
 	static constexpr uint16_t kPitchMaxEcd = 226;
 	static constexpr uint16_t kPitchMidEcd = 7517;
 
-	static constexpr uint16_t kYawMinEcd = 7500;
-	static constexpr uint16_t kYawMaxEcd = 3465;
-	static constexpr uint16_t kYawMidEcd = 5475;
+	static constexpr uint16_t kYawMinEcd = 6273;
+	static constexpr uint16_t kYawMaxEcd = 1789;
+	static constexpr uint16_t kYawMidEcd = 4082;
 
 	//最大最小的 相对（中值的）角度
 	const std::array<double, 2> kMaxRelativeAngle = { RelativeEcdToRad(kPitchMaxEcd, kPitchMidEcd),
@@ -140,8 +140,8 @@ public:
 	static constexpr uint8_t kRCSwMid = 3;
 	static constexpr uint8_t kRCSwDown = 2;
 
-	static constexpr double kYawRCSen = 0.00005; //-0.000005
-	static constexpr double kPitchRCSen = -0.00006; //0.005
+	static constexpr double kYawRCSen = 0.000005; //-0.000005
+	static constexpr double kPitchRCSen = -0.000006; //0.005
 
 	//pid参数
 	static std::array<double, 5> PIDAngleEcdPitchParams;
@@ -223,6 +223,7 @@ public:
 
 		m_GimbalCtrlSrc = Init;
 		m_FlagInitGimbal = true;
+		m_FlagInitGyro = true;
 
 		m_PIDAngleEcd[Pitch].SetParams(PIDAngleEcdPitchParams);
 		m_PIDAngleEcd[Pitch].SetFlagAngleLoop();
@@ -326,16 +327,19 @@ public:
 		using TimeStamp = Clock::time_point;
 
 		TimeStamp lastTime = Clock::now();
+
 		while (true)
 		{
 			while (5000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 			}
+			lastTime = Clock::now();
+
 			/*SPDLOG_INFO("@Interval=[$t={}]",
 				std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
 
-			lastTime = Clock::now();
+			
 
 			m_MotorsStatus = m_MotorsListener->Get();
 
@@ -374,9 +378,8 @@ private:
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
 
-	bool m_FlagInitGimbal;
+	bool m_FlagInitGimbal, m_FlagInitGyro; //上电后陀螺仪静置5秒用于自校正
 	std::chrono::high_resolution_clock::time_point m_TimestampInit;
-	std::array<double, kNumGimbalMotors> m_GyroAngleZeroPoints{};
 
 	std::array<double, kNumGimbalMotors> m_AngleInput;
 	std::array<double, kNumGimbalMotors> m_LastEcdAngle;

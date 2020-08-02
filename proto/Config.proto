@@ -123,5 +123,6 @@ message Configuration {
 	 PIDParams pidAngleGyroYaw = 15;
 	 PIDParams pidAngleSpeedYaw = 16;
 	 PIDParams pidFricSpeed = 17;
-	 PIDParams pidFeedSpeed = 18;
+	 PIDParams pidFeedAngle = 18;
+	 PIDParams pidFeedSpeed = 19;
 }

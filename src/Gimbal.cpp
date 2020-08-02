@@ -13,6 +13,7 @@ double GimbalCtrlTask::kAngleSpeedFilterCoef = 0;
 void GimbalCtrlTask::GimbalCtrlSrcSet()
 {
 	//SPDLOG_INFO("@FlagInitGimbal=[$flagIG={}]", static_cast<int>(m_FlagInitGimbal));
+	
 	if (m_FlagInitGimbal)
 	{
 		if (/*fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.1 
@@ -30,8 +31,6 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 				m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imuPitch.m_ZAxisAngle;
 				m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imuYaw.m_ZAxisAngle;
 
-				m_GyroAngleZeroPoints[Pitch] = m_GimbalSensorValues.imuPitch.m_ZAxisAngle;;
-				m_GyroAngleZeroPoints[Yaw] = m_GimbalSensorValues.imuYaw.m_ZAxisAngle;;
 				/*m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 				m_PIDAngleEcd[Pitch].Reset();
 				m_PIDAngleGyro[Pitch].Reset();
@@ -48,10 +47,9 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 		else
 		{
 			m_GimbalCtrlSrc = Init;
-			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwUp)
+			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid)
 				m_GimbalCtrlSrc = Disable;
 			m_CurGimbalAngleMode.fill(Encoding);
-			m_GyroAngleZeroPoints.fill(0);
 			std::for_each(m_EcdAngleFilters.begin(), m_EcdAngleFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 			std::for_each(m_GyroSpeedFilters.begin(), m_GyroSpeedFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 			m_TimestampInit = std::chrono::high_resolution_clock::time_point();
