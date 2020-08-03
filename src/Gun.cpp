@@ -21,7 +21,12 @@ void FricCtrlTask::FricModeSet()
 	static uint8_t lastSw = kRCSwUp;
 
 	//遥控器右侧开关上拨一次，开启摩擦轮；再上拨一次，关闭摩擦轮
-	if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp || m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwMid)
+	
+	//如果云台失能，则摩擦轮也失能
+	if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable
+		|| m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Init)
+		m_FricMode = FricMode::Disable;
+	else if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp || m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwMid)
 	{
 		m_FricMode = FricMode::Enable;
 		/*switch (m_FricMode)
@@ -34,12 +39,6 @@ void FricCtrlTask::FricModeSet()
 			m_FricMode = FricMode::Disable; break;
 		}*/
 	}
-	else
-		m_FricMode = FricMode::Disable;
-	//如果云台失能，则摩擦轮也失能
-	/*else if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable
-		|| m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Init)
-		m_FricMode = FricMode::Disable;*/
 
 	lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
 	//m_FricMode = FricMode::Disable;
@@ -154,7 +153,7 @@ void FeedCtrlTask::FeedRotateCtrl(bool stop, double deltaAngle)
 		{
 			m_FlagInPosition = false;
 			double speedSet = m_PIDFeedAngle.Calc(deltaAngle, sumPerCtrlDeltaAngleGet);  //拨盘速度
-			std::cerr << deltaAngle << '\t' << sumPerCtrlDeltaAngleGet << '\t' << speedSet << std::endl;
+			//std::cerr << deltaAngle << '\t' << sumPerCtrlDeltaAngleGet << '\t' << speedSet << std::endl;
 			SPDLOG_INFO("@PIDFeedAngle=[$setFdA={},$getFdA={},$pidoutFdA={}]",
 				deltaAngle,
 				sumPerCtrlDeltaAngleGet,

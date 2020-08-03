@@ -88,8 +88,8 @@ public:
 
 	double RelativeAngleToChassis() 
 	{ 
-		static constexpr uint16_t kYawMidEcd = 5475;
-		return -RelativeEcdToRad(m_YawEcd.load(), kYawMidEcd); //[TODO]负号？
+		static constexpr uint16_t kYawEcdMid = 4082;
+		return -RelativeEcdToRad(m_YawEcd.load(), kYawEcdMid); //[TODO]负号？
 	} 
 
 
@@ -110,19 +110,24 @@ public:
 	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
 
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
-	static constexpr uint16_t kPitchMinEcd = 6885;
-	static constexpr uint16_t kPitchMaxEcd = 226;
-	static constexpr uint16_t kPitchMidEcd = 7517;
+	static constexpr uint16_t kPitchEcdLimit0 = 6885;
+	static constexpr uint16_t kPitchEcdLimit1 = 226;
+	static constexpr uint16_t kPitchEcdMid = 7517;
 
-	static constexpr uint16_t kYawMinEcd = 6273;
-	static constexpr uint16_t kYawMaxEcd = 1789;
-	static constexpr uint16_t kYawMidEcd = 4082;
+	static constexpr uint16_t kYawEcdLimit0 = 1789;
+	static constexpr uint16_t kYawEcdLimit1 = 6273;
+	static constexpr uint16_t kYawEcdMid = 4082;
 
 	//最大最小的 相对（中值的）角度
-	const std::array<double, 2> kMaxRelativeAngle = { RelativeEcdToRad(kPitchMaxEcd, kPitchMidEcd),
-													  RelativeEcdToRad(kYawMaxEcd, kYawMidEcd) };
-	const std::array<double, 2> kMinRelativeAngle = { RelativeEcdToRad(kPitchMinEcd, kPitchMidEcd),
-													  RelativeEcdToRad(kYawMinEcd, kYawMidEcd) };
+	//确保 kMinRelativeAngle < kMaxRelativeAngle，包括符号
+	const std::array<double, 2> kMaxRelativeAngle = { std::max(RelativeEcdToRad(kPitchEcdLimit0, kPitchEcdMid),
+															   RelativeEcdToRad(kPitchEcdLimit1, kPitchEcdMid)),
+													  std::max(RelativeEcdToRad(kYawEcdLimit0, kYawEcdMid),
+														       RelativeEcdToRad(kYawEcdLimit1, kYawEcdMid)) };
+	const std::array<double, 2> kMinRelativeAngle = { std::min(RelativeEcdToRad(kPitchEcdLimit0, kPitchEcdMid),
+															   RelativeEcdToRad(kPitchEcdLimit1, kPitchEcdMid)),
+													  std::min(RelativeEcdToRad(kYawEcdLimit0, kYawEcdMid),
+															   RelativeEcdToRad(kYawEcdLimit1, kYawEcdMid)) };
 	/*
 	static constexpr double   PITCH_MAX_RAD = kPitchMaxEcd * kMotorEcdToRadCoef;
 	static constexpr double   PITCH_MIN_RAD = kPitchMinEcd * kMotorEcdToRadCoef;
@@ -140,7 +145,7 @@ public:
 	static constexpr uint8_t kRCSwMid = 3;
 	static constexpr uint8_t kRCSwDown = 2;
 
-	static constexpr double kYawRCSen = 0.000005; //-0.000005
+	static constexpr double kYawRCSen = 0.00005; //-0.000005
 	static constexpr double kPitchRCSen = -0.000006; //0.005
 
 	//pid参数
@@ -269,8 +274,8 @@ public:
 	void UpdateGimbalSensorFeedback()
 	{
 		m_GimbalSensorValues.rc = m_RCListener->Get();
-		m_GimbalSensorValues.relativeAngle[Pitch] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Pitch], kPitchMidEcd);
-		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawMidEcd);
+		m_GimbalSensorValues.relativeAngle[Pitch] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Pitch], kPitchEcdMid);
+		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawEcdMid);
 
 		m_GimbalSensorValues.imuPitch = m_GyroA204PitchListener->Get();
 		m_GimbalSensorValues.imuPitch.m_ZAxisSpeed *= kDegreeToRadCoef;

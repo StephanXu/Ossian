@@ -12,18 +12,27 @@ double GimbalCtrlTask::kAngleSpeedFilterCoef = 0;
 
 void GimbalCtrlTask::GimbalCtrlSrcSet()
 {
+	/*std::cerr << kMinRelativeAngle[0] << '\t' << kMaxRelativeAngle[0] << std::endl;
+	std::cerr <<kMinRelativeAngle[1] << '\t' << kMaxRelativeAngle[1] << std::endl;*/
 	//SPDLOG_INFO("@FlagInitGimbal=[$flagIG={}]", static_cast<int>(m_FlagInitGimbal));
-	
 	if (m_FlagInitGimbal)
 	{
-		if (/*fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.1 
-			&& fabs(m_GimbalSensorValues.relativeAngle[Yaw]) < 0.1*/1)
+		static bool firstClosing = true;
+		if (fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.1 
+			&& fabs(m_GimbalSensorValues.relativeAngle[Yaw]) < 0.1)
 		{
+			if (firstClosing)
+			{
+				m_TimestampInit = std::chrono::high_resolution_clock::now();
+				firstClosing = false;
+			}
+
 			long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
 				std::chrono::high_resolution_clock::now() - m_TimestampInit).count();
-			if (1/*interval > 2000 && m_TimestampInit!= std::chrono::high_resolution_clock::time_point()*/)  //在中值处稳定一段时间
+			//std::cerr << interval << std::endl;
+			if (interval > 2000 && m_TimestampInit!= std::chrono::high_resolution_clock::time_point())  //在中值处稳定一段时间
 			{
-				SPDLOG_TRACE("Gimbal Init Done.");
+				std::cerr << "Gimbal Init Done!" << std::endl;
 				m_CurGimbalAngleMode[Pitch] = Encoding;
 				m_CurGimbalAngleMode[Yaw] = Gyro;
 				m_EcdAngleSet[Pitch] = 0;
@@ -31,6 +40,9 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 				m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imuPitch.m_ZAxisAngle;
 				m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imuYaw.m_ZAxisAngle;
 
+				std::for_each(m_EcdAngleFilters.begin(), m_EcdAngleFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
+				std::for_each(m_GyroSpeedFilters.begin(), m_GyroSpeedFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
+				firstClosing = true;
 				/*m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 				m_PIDAngleEcd[Pitch].Reset();
 				m_PIDAngleGyro[Pitch].Reset();
@@ -39,20 +51,28 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 				m_PIDAngleEcd[Yaw].Reset();
 				m_PIDAngleGyro[Yaw].Reset();
 				m_PIDAngleSpeed[Yaw].Reset();*/
-				m_TimestampInit = std::chrono::high_resolution_clock::time_point();
+				
 				m_FlagInitGimbal = false;
 			}
-			m_TimestampInit = std::chrono::high_resolution_clock::now();
+			else
+			{
+				m_GimbalCtrlSrc = Init;
+				if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid)  //右侧开关保持居中，云台归中，否则失能
+					m_GimbalCtrlSrc = Disable;
+				m_CurGimbalAngleMode.fill(Encoding);
+				
+				return;
+			}
+				
 		}
 		else
 		{
 			m_GimbalCtrlSrc = Init;
-			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid)
+			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid)  //右侧开关保持居中，云台归中，否则失能
 				m_GimbalCtrlSrc = Disable;
 			m_CurGimbalAngleMode.fill(Encoding);
-			std::for_each(m_EcdAngleFilters.begin(), m_EcdAngleFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
-			std::for_each(m_GyroSpeedFilters.begin(), m_GyroSpeedFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
-			m_TimestampInit = std::chrono::high_resolution_clock::time_point();
+			
+			//m_TimestampInit = std::chrono::high_resolution_clock::time_point();
 
 			return;
 		}
@@ -109,6 +129,7 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 				if (angleInput < 0)
 					angleInput = kMinRelativeAngle[position] - errorAngle - curEcdAngle;
 			}
+			//std::cerr << angleInput << '\t' << kMinRelativeAngle[position] << '\t' << kMaxRelativeAngle[position] << std::endl;
 			m_GyroAngleSet[position] = ClampLoop(m_GyroAngleSet[position] + angleInput, -M_PI, M_PI);
 		}
 		else if (m_CurGimbalAngleMode[position] == Encoding)
