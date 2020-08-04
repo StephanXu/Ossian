@@ -25,7 +25,9 @@ void FricCtrlTask::FricModeSet()
 	//如果云台失能，则摩擦轮也失能
 	if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable
 		|| m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Init)
+	{
 		m_FricMode = FricMode::Disable;
+	}
 	else if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp || m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwMid)
 	{
 		m_FricMode = FricMode::Enable;
@@ -41,7 +43,7 @@ void FricCtrlTask::FricModeSet()
 	}
 
 	lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
-	//m_FricMode = FricMode::Disable;
+	m_FricMode = FricMode::Disable;
 }
 
 //[TODO] 读取场地加成RFID状态，叠加射击速度加成
@@ -103,7 +105,7 @@ void FeedCtrlTask::FeedModeSet()
 		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet;
 	
 	//若摩擦轮停转，则拨弹轮停转
-	if (/*overheat || */m_FricCtrlTask->Stopped()&&0)
+	if (/*overheat || */m_FricCtrlTask->Stopped())
 		m_FeedMode = FeedMode::Stop;
 	else
 	{
@@ -222,7 +224,7 @@ void FeedCtrlTask::FeedCtrl()
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		if (interval >= 2000 || m_LastShootTimestamp == std::chrono::high_resolution_clock::time_point())  //三连发间隔2s
+		if (interval >= 4000 || m_LastShootTimestamp == std::chrono::high_resolution_clock::time_point())  //三连发间隔4s
 		{
 			if (shootCnt < kBurstBulletNum)
 			{
@@ -255,7 +257,7 @@ void FeedCtrlTask::FeedCtrl()
 		//}
 	}
 	else if (m_FeedMode == FeedMode::Auto)
-		FeedRotateCtrl(false, kAnglePerCell);
+		FeedRotateCtrl(false, kAnglePerCell*2);
 		//SingleShotCtrl(kFeedAutoSpeed);
 }
 

@@ -89,17 +89,26 @@ void ChassisCtrlTask::RCToChassisSpeed()
 
 void ChassisCtrlTask::ChassisModeSet()
 {
-	switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
+	if (m_ChassisSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable
+		|| m_ChassisSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Init)
 	{
-	case kRCSwUp:
-		m_CurChassisMode = Top; break;  //Follow_Gimbal_Yaw
-	case kRCSwMid:
-		m_CurChassisMode = Openloop_Z;  break;
-	case kRCSwDown:
-		m_CurChassisMode = Disable; break;   //Top
-	default:
-		m_CurChassisMode = Disable; break;
+		m_CurChassisMode = Disable;
 	}
+	else
+	{
+		switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
+		{
+		case kRCSwUp:
+			m_CurChassisMode = Top; break;  //Follow_Gimbal_Yaw
+		case kRCSwMid:
+			m_CurChassisMode = Follow_Gimbal_Yaw;  break;
+		case kRCSwDown:
+			m_CurChassisMode = Disable; break;   //Top
+		default:
+			m_CurChassisMode = Disable; break;
+		}
+	}
+	
 }
 
 void ChassisCtrlTask::ChassisCtrl()
@@ -205,7 +214,7 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 	else if (m_CurChassisMode == Follow_Gimbal_Yaw)
 	{
 		RCToChassisSpeed();
-		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);
+		double cosine = cos(-m_ChassisSensorValues.relativeAngle), sine = sin(-m_ChassisSensorValues.relativeAngle);
 		double vx = m_VxSet * cosine + m_VySet * sine;
 		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
@@ -224,7 +233,7 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 	else if (m_CurChassisMode == Top)
 	{
 		RCToChassisSpeed();
-		double cosine = cos(m_ChassisSensorValues.relativeAngle), sine = sin(m_ChassisSensorValues.relativeAngle);     
+		double cosine = cos(-m_ChassisSensorValues.relativeAngle), sine = sin(-m_ChassisSensorValues.relativeAngle);     
 		double vx = m_VxSet * cosine + m_VySet * sine;
 		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);

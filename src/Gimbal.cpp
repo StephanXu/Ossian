@@ -118,17 +118,21 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 		{
 			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle); 
 			double errorAngle = ClampLoop(m_GyroAngleSet[position] - gyro, -M_PI, M_PI); 
-			//判断会不会越过限位
-			if (curEcdAngle + errorAngle + angleInput > kMaxRelativeAngle[position])
+			//只判断pitch会不会越过限位，yaw是360度旋转
+			if (position == Pitch)
 			{
-				if (angleInput > 0)
-					angleInput = kMaxRelativeAngle[position] - errorAngle - curEcdAngle;
+				if (curEcdAngle + errorAngle + angleInput > kMaxRelativeAngle[position])
+				{
+					if (angleInput > 0)
+						angleInput = kMaxRelativeAngle[position] - errorAngle - curEcdAngle;
+				}
+				else if (curEcdAngle + errorAngle + angleInput < kMinRelativeAngle[position])
+				{
+					if (angleInput < 0)
+						angleInput = kMinRelativeAngle[position] - errorAngle - curEcdAngle;
+				}
 			}
-			else if (curEcdAngle + errorAngle + angleInput < kMinRelativeAngle[position])
-			{
-				if (angleInput < 0)
-					angleInput = kMinRelativeAngle[position] - errorAngle - curEcdAngle;
-			}
+			
 			//std::cerr << angleInput << '\t' << kMinRelativeAngle[position] << '\t' << kMaxRelativeAngle[position] << std::endl;
 			m_GyroAngleSet[position] = ClampLoop(m_GyroAngleSet[position] + angleInput, -M_PI, M_PI);
 		}
@@ -156,7 +160,7 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 	{
 		double angleSpeedSet;
 		double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
-		gyroSpeed = m_GyroSpeedFilters[position].Calc(gyroSpeed);
+		//gyroSpeed = m_GyroSpeedFilters[position].Calc(gyroSpeed);
 		if (m_CurGimbalAngleMode[position] == Gyro)
 		{
 			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle);

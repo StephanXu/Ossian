@@ -109,7 +109,7 @@ public:
 	static constexpr double kWheelRadius = 76.0 / 1000.0;  ///< m
 	static constexpr double kWheelXn = 175.0 / 1000.0; ///< m
 	static constexpr double kWheelYn = 232.5 / 1000;   ///< m
-	static constexpr double kWheelSpeedLimit = 225;            ///< 单个麦轮的最大转速rpm
+	static constexpr double kWheelSpeedLimit = 400;            ///< 单个麦轮的最大转速rpm
 	static constexpr double kWheelSpeedToMotorRPMCoef = 11.875;
 	//static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
 
@@ -129,9 +129,9 @@ public:
 	static constexpr uint8_t kRCSwDown = 2;
 
 	static constexpr int16_t kChassisRCDeadband = 10;     ///< 摇杆死区
-	static constexpr double kChassisVxRCSen = 0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例0.006
-	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
-	static constexpr double kChassisWzRCSen = -0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+	static constexpr double kChassisVxRCSen = -0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例0.006
+	static constexpr double kChassisVyRCSen = 0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
+	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 	static constexpr double kChassisCtrlPeriod = 0.012;  //底盘控制周期s，用于低通滤波器
 
 	//底盘运动
@@ -170,7 +170,7 @@ public:
 										 ossian::IOData<RemoteStatus>* remote,
 										 ICapacitor* capacitor,
 										 Chassis* chassis,
-										 Gimbal* gimbal,
+										 GimbalCtrlTask* gimbalCtrlTask,
 										 Utils::ConfigLoader* config,
 										 ossian::IOData<PowerHeatData>* powerHeatDataListener))
 
@@ -178,7 +178,7 @@ public:
 		, m_RCListener(remote)
 		, m_SpCap(capacitor)
 		, m_Chassis(chassis)
-		, m_Gimbal(gimbal)
+		, m_GimbalCtrlTask(gimbalCtrlTask)
 		, m_Config(config)
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
 	{
@@ -252,14 +252,15 @@ public:
 		m_ChassisSensorValues.rc = m_RCListener->Get();
 		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
-		//m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();
+		m_ChassisSensorValues.gimbalInputSrc = m_GimbalCtrlTask->GimbalCtrlSrc();
+		m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000; //v
-		SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
+		/*SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower,
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
-			80);
+			80);*/
 	}
 
 	void CalcWheelSpeedTarget();
@@ -324,8 +325,9 @@ private:
 	ossian::IOData<RemoteStatus>* m_RCListener; //遥控器
 	ossian::IOData<ChassisMotorsModel>* m_MotorsListener;
 	ICapacitor* m_SpCap;
-	Gimbal* m_Gimbal;
+	
 	Chassis* m_Chassis;
+	GimbalCtrlTask* m_GimbalCtrlTask;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 
 	bool m_FlagInitChassis;
@@ -340,6 +342,7 @@ private:
 		PowerHeatData refereePowerHeatData; ///< 裁判系统数据
 		int refereeMaxPwr = 80, refereeMaxBuf = 60;
 		double relativeAngle; ///< 底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
+		GimbalCtrlTask::GimbalInputSrc gimbalInputSrc;
 	} m_ChassisSensorValues;
 
 	double m_VxSet, m_VySet, m_WzSet; //三轴速度期望

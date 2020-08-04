@@ -63,10 +63,8 @@ public:
 		motor->Lock();
 		m_MotorsStatus.m_RPM[position] = status.m_RPM;
 		m_MotorsStatus.m_Encoding[position] = status.m_Encoding;
-		if (position == Yaw)
-			m_YawEcd = status.m_Encoding;
 		motor->UnLock();
-		//SPDLOG_INFO("@Single6020=[$rpm={}]", status.m_RPM);
+
 		m_MotorMsgCheck[position] = true;
 		if (!(m_MotorMsgCheck[Pitch] && m_MotorMsgCheck[Yaw]))
 		{
@@ -86,13 +84,6 @@ public:
 		m_Motors[Pitch]->Writer()->PackAndSend();
 	}
 
-	double RelativeAngleToChassis() 
-	{ 
-		static constexpr uint16_t kYawEcdMid = 4082;
-		return -RelativeEcdToRad(m_YawEcd.load(), kYawEcdMid); //[TODO]负号？
-	} 
-
-
 private:
 	ossian::MotorManager* m_MotorManager;  	
 	std::array<std::shared_ptr<ossian::DJIMotor6020Mt>, kNumGimbalMotors> m_Motors;
@@ -100,7 +91,6 @@ private:
 	ossian::IOData<GimbalMotorsModel>* m_IOData;
 
 	std::array<bool, kNumGimbalMotors> m_MotorMsgCheck;
-	std::atomic<uint16_t> m_YawEcd;
 };
 
 class GimbalCtrlTask : public ossian::IExecutable
@@ -146,7 +136,7 @@ public:
 	static constexpr uint8_t kRCSwDown = 2;
 
 	static constexpr double kYawRCSen = 0.00005; //-0.000005
-	static constexpr double kPitchRCSen = -0.000006; //0.005
+	static constexpr double kPitchRCSen = 0.000006; //0.005
 
 	//pid参数
 	static std::array<double, 5> PIDAngleEcdPitchParams;
@@ -271,6 +261,11 @@ public:
 
 	GimbalInputSrc GimbalCtrlSrc() { return m_GimbalCtrlSrc.load(); }
 
+	double RelativeAngleToChassis()
+	{
+		return RelativeEcdToRad(m_EcdYaw.load(), kYawEcdMid); //[TODO]负号？
+	}
+
 	void UpdateGimbalSensorFeedback()
 	{
 		m_GimbalSensorValues.rc = m_RCListener->Get();
@@ -344,9 +339,8 @@ public:
 			/*SPDLOG_INFO("@Interval=[$t={}]",
 				std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
 
-			
-
 			m_MotorsStatus = m_MotorsListener->Get();
+			m_EcdYaw = m_MotorsStatus.m_Encoding[Yaw];
 
 			UpdateGimbalSensorFeedback();
 
@@ -373,6 +367,7 @@ private:
 	std::array<GimbalAngleMode, 2> m_CurGimbalAngleMode;
 	std::atomic<GimbalInputSrc> m_GimbalCtrlSrc;
 	GimbalMotorsModel m_MotorsStatus;
+	std::atomic<uint16_t> m_EcdYaw{};
 
 	struct GimbalSensorFeedback
 	{
