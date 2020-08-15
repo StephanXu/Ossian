@@ -126,7 +126,7 @@ void Startup::ConfigServices(AppBuilder& app)
 			option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 1, 0x200);
 			option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);
 		});
-	//app.AddService<Aimbot>();
+	app.AddService<Aimbot>();
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)
@@ -139,5 +139,5 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<GimbalCtrlTask>();
 	app.AddExecutable<FricCtrlTask>();
 	app.AddExecutable<FeedCtrlTask>();
-	//app.AddService<ossian::IExecutable, CameraPeeker>();
+	app.AddService<ossian::IExecutable, CameraPeeker>();
 }

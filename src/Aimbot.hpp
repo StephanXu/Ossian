@@ -4,6 +4,7 @@
 #include <ossian/Factory.hpp>
 #include <ossian/Configuration.hpp>
 #include <opencv2/opencv.hpp>
+#include <ossian/IOData.hpp>
 
 #ifdef WITH_CUDA
 #include <opencv2/core/cuda.hpp>
@@ -23,11 +24,21 @@
 
 namespace Utils = ossian::Utils;
 
-class Aimbot
+struct AutoAimData
+{
+    double m_Pitch; //rad
+    double m_Yaw;   //rad
+    double m_Dist;  //mm
+
+    std::chrono::high_resolution_clock::time_point m_Timestamp;
+};
+
+class Aimbot : public ossian::IODataBuilder<std::mutex, AutoAimData>
 {
 public:
     void Process(unsigned char* pImage);
-    OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config));
+    OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config, 
+                                ossian::IOData<AutoAimData>* autoAimData));
     ~Aimbot()
     {
 #ifdef WITH_CUDA
@@ -40,6 +51,8 @@ public:
     cv::Mat debugFrame;
 
 private:
+    AutoAimData m_AutoAimStatus;
+    ossian::IOData<AutoAimData>* m_AutoAimData;
 
     enum class ArmorType
     {

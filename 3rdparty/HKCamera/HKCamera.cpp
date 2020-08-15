@@ -114,8 +114,13 @@ void HKCamera::SetDevice(const int camIndex)
 
     if (MV_OK != MV_CC_CreateHandle(&m_Handle, m_DeviceList.pDeviceInfo[camIndex]))
         throw std::runtime_error("Create handle fail");
-    if (MV_OK != MV_CC_OpenDevice(m_Handle))
+    int nRet = MV_CC_OpenDevice(m_Handle);
+    if (MV_OK != nRet)
+    {
+        printf("MV_CC_OpenDevice fail! nRet [%x]\n", nRet);
         throw std::runtime_error("Open device fail");
+    }
+        
     m_IsOpenedDevice = true;
 
     if (MV_OK != MV_CC_SetEnumValue(m_Handle, "TriggerMode", MV_CAM_TRIGGER_MODE::MV_TRIGGER_MODE_OFF))
@@ -127,6 +132,18 @@ void HKCamera::SetDevice(const int camIndex)
     if (MV_OK != MV_CC_GetIntValue(m_Handle, "PayloadSize", &stParam))
         throw std::runtime_error("Get PayloadSize fail");
     m_PayloadSize = stParam.nCurValue;
+
+    /*if (MV_OK != MV_CC_SetIntValue(m_Handle, "GevHeartbeatTimeout", 500)) 
+        throw std::runtime_error("Set GevHeartbeatTimeout fail");*/
+
+    if (MV_OK != MV_CC_SetEnumValue(m_Handle, "AcquisitionMode", 2))
+        throw std::runtime_error("Set AcquisitionMode fail");
+
+    /*if (MV_OK != MV_CC_SetIntValue(m_Handle, "DeviceLinkHeartbeatTimeout", 600))
+        throw std::runtime_error("Set DeviceLinkHeartbeatTimeout fail");*/
+
+    if (MV_OK != MV_CC_SetEnumValue(m_Handle, "ExposureAuto", 0))
+        throw std::runtime_error("Set ExposureAuto fail");
 
     if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 750))
         throw std::runtime_error("Set ExposureTime fail");

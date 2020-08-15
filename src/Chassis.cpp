@@ -101,7 +101,7 @@ void ChassisCtrlTask::ChassisModeSet()
 		case kRCSwUp:
 			m_CurChassisMode = Top; break;  //Follow_Gimbal_Yaw
 		case kRCSwMid:
-			m_CurChassisMode = Follow_Gimbal_Yaw;  break;
+			m_CurChassisMode = Openloop_Z;  break;
 		case kRCSwDown:
 			m_CurChassisMode = Disable; break;   //Top
 		default:

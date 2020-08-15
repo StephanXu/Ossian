@@ -18,7 +18,7 @@ std::array<double, 5> FeedCtrlTask::PIDFeedSpeedParams;
 
 void FricCtrlTask::FricModeSet()
 {
-	static uint8_t lastSw = kRCSwUp;
+	//static uint8_t lastSw = kRCSwUp;
 
 	//遥控器右侧开关上拨一次，开启摩擦轮；再上拨一次，关闭摩擦轮
 	
@@ -28,7 +28,7 @@ void FricCtrlTask::FricModeSet()
 	{
 		m_FricMode = FricMode::Disable;
 	}
-	else if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp || m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwMid)
+	else if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
 	{
 		m_FricMode = FricMode::Enable;
 		/*switch (m_FricMode)
@@ -41,8 +41,12 @@ void FricCtrlTask::FricModeSet()
 			m_FricMode = FricMode::Disable; break;
 		}*/
 	}
+	else
+	{
+		m_FricMode = FricMode::Disable;
+	}
+	//lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
 
-	lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
 	m_FricMode = FricMode::Disable;
 }
 
@@ -127,7 +131,7 @@ void FeedCtrlTask::FeedModeSet()
 	/*bool jammed = m_FeedMode != FeedMode::Stop && m_FeedMotorStatus.m_RPM[Feed] < kFeedJamRPM;
 	if (jammed)
 		m_FeedMode = FeedMode::Reverse; */
-
+	m_FeedMode = FeedMode::Stop;
 	//SPDLOG_INFO("@FeedMode=[$mode={}]", m_FeedMode);
 }
 
@@ -146,7 +150,7 @@ void FeedCtrlTask::FeedRotateCtrl(bool stop, double deltaAngle)
 		if (lastEcd >= 0)
 			sumPerCtrlDeltaAngleGet += RelativeEcdToRad(m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed], lastEcd) / kSpeedToMotorRPMCoef;
 
-		if (fabs(deltaAngle - sumPerCtrlDeltaAngleGet) < 0.1)  //已经到达目标位置
+		if (fabs(deltaAngle - sumPerCtrlDeltaAngleGet) < 0.01)  //已经到达目标位置
 		{
 			m_FlagInPosition = true;
 			sumPerCtrlDeltaAngleGet = 0;

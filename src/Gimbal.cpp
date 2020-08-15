@@ -82,7 +82,7 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
 	{
 	case kRCSwUp:
-		m_GimbalCtrlSrc = RC; break;  
+		m_GimbalCtrlSrc = Aimbot; break;  
 	case kRCSwMid:
 		m_GimbalCtrlSrc = RC; break; //Aimbot
 	case kRCSwDown:
@@ -102,6 +102,11 @@ void GimbalCtrlTask::GimbalCtrlInputProc()
 		m_AngleInput[Yaw] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kYawChannel], kGimbalRCDeadband) * kYawRCSen; 
 		//SPDLOG_INFO("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
 	}
+	else if (m_GimbalCtrlSrc == Aimbot)
+	{
+		m_AngleInput[Pitch] = m_GimbalSensorValues.autoAimData.m_Pitch;
+		m_AngleInput[Yaw] = m_GimbalSensorValues.autoAimData.m_Yaw;
+	}
 }
 
 
@@ -111,7 +116,7 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 	double curEcdAngle = m_GimbalSensorValues.relativeAngle[position];
 	if (m_GimbalCtrlSrc == Disable)
 		return;
-	else if (m_GimbalCtrlSrc == RC)
+	else if (m_GimbalCtrlSrc == RC || m_GimbalCtrlSrc == Aimbot)
 	{
 		double angleInput = m_AngleInput[position]; 
 		if (m_CurGimbalAngleMode[position] == Gyro)
@@ -156,7 +161,7 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 {
 	if (m_GimbalCtrlSrc == Disable)
 		m_VoltageSend.fill(0);
-	else if (m_GimbalCtrlSrc == RC || m_GimbalCtrlSrc == Init)
+	else if (m_GimbalCtrlSrc == RC || m_GimbalCtrlSrc == Init || m_GimbalCtrlSrc == Aimbot)
 	{
 		double angleSpeedSet;
 		double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);

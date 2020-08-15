@@ -33,9 +33,11 @@ Eigen::Vector3d Aimbot::PoseSolver::m_WorldToCamTran;
 
 cv::Point2d Aimbot::Armor::frameCenter(0, 0);
 
-Aimbot::Aimbot(Utils::ConfigLoader* config)
-	:m_Valid(false)
+Aimbot::Aimbot(Utils::ConfigLoader* config,
+               ossian::IOData<AutoAimData>* autoAimData)
+	: m_Valid(false)
     , m_Config(config)
+    , m_AutoAimData(autoAimData)
 {
     using OssianConfig::Configuration;
     Aimbot::LightBar::minArea = m_Config->Instance<Configuration>()->mutable_aimbot()->lightbarminarea();
@@ -87,6 +89,10 @@ void Aimbot::Process(unsigned char* pImage)
     //ImageInputData* imageInput = dynamic_cast<ImageInputData*>(input);
 	
     //cv::Mat origFrame = imageInput->m_Image;
+    static int cnt = 0;
+    std::cerr << "In Aimbot #" <<cnt++<< std::endl;
+    //return;
+
     auto start=std::chrono::high_resolution_clock::now();
     if (!pImage)
     {
@@ -97,20 +103,32 @@ void Aimbot::Process(unsigned char* pImage)
     ArmorType armorType;
     bool shootMode = false;  //[TODO] 删除，将发弹决策放到电控部分
 
-    bool foundArmor = FindArmor(pImage, armorBBox, armorType);
-    double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
-    SPDLOG_INFO("@Aimbot=[$ms={}]", interval);
-    double deltaYaw = 0, deltaPitch = 0, dist = 0;
-    static PoseSolver angleSolver;
-    if (foundArmor)
-    {
-        std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox); //rad, mm
+ //   bool foundArmor = FindArmor(pImage, armorBBox, armorType);
+ //   double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
+ //   SPDLOG_INFO("@Aimbot=[$ms={}]", interval);
+ //   double deltaYaw = 0, deltaPitch = 0, dist = 0;
+ //   static PoseSolver angleSolver;
+ //   if (foundArmor)
+ //   {
+ //       std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox); //rad, mm
 
-        Math::RegularizeErrAngle(deltaYaw, 'y');
-        Math::RegularizeErrAngle(deltaPitch, 'p');
-    }
-	SPDLOG_INFO("Aimbot Status: {}\t{}\t{}", deltaYaw, deltaPitch, dist);
+ //       Math::RegularizeErrAngle(deltaYaw, 'y');
+ //       Math::RegularizeErrAngle(deltaPitch, 'p');
+
+ //       m_AutoAimStatus.m_Pitch = deltaPitch;
+ //       m_AutoAimStatus.m_Yaw = deltaYaw;
+ //       m_AutoAimStatus.m_Dist = dist;
+ //       m_AutoAimData->Set(m_AutoAimStatus);
+ //   }
+	//SPDLOG_INFO("Aimbot Status: {}\t{}\t{}", deltaYaw, deltaPitch, dist);
+
+    m_AutoAimStatus.m_Pitch = 0.01;
+    m_AutoAimStatus.m_Yaw = 0.1;
+    m_AutoAimStatus.m_Dist = 20;
+    m_AutoAimStatus.m_Timestamp = std::chrono::high_resolution_clock::now();
+    m_AutoAimData->Set(m_AutoAimStatus);
     
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     //[TODO] 发送两角度给云台
 	/*try
 	{

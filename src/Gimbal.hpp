@@ -7,6 +7,7 @@
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
 #include "GyroA204.hpp"
+#include "Aimbot.hpp"
 
 #include <chrono>
 #include <array>
@@ -169,13 +170,15 @@ public:
 		Gimbal* gimbal,
 		Utils::ConfigLoader* config,
 		ossian::IOData<GyroA204Status<GyroType::Pitch>>* gyroPitchListener,
-		ossian::IOData<GyroA204Status<GyroType::Yaw>>* gyroYawListener))
+		ossian::IOData<GyroA204Status<GyroType::Yaw>>* gyroYawListener,
+		ossian::IOData<AutoAimData>* autoAimDataListener))
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
 		, m_Gimbal(gimbal)
 		, m_Config(config)
 		, m_GyroA204PitchListener(gyroPitchListener)
 		, m_GyroA204YawListener(gyroYawListener)
+		, m_AutoAimDataListener(autoAimDataListener)
 	{
 		using OssianConfig::Configuration;
 		PIDAngleEcdPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->kp();
@@ -281,6 +284,19 @@ public:
 		m_GimbalSensorValues.imuYaw = m_GyroA204YawListener->Get();
 		m_GimbalSensorValues.imuYaw.m_ZAxisSpeed *= -kDegreeToRadCoef;
 		m_GimbalSensorValues.imuYaw.m_ZAxisAngle *= -kDegreeToRadCoef;
+		m_GimbalSensorValues.imuYaw.m_ZAxisSpeed = DeadbandLimit(m_GimbalSensorValues.imuYaw.m_ZAxisSpeed, 0.003f);
+
+		auto tempAutoAimData = m_AutoAimDataListener->Get();
+		if (m_GimbalSensorValues.autoAimData.m_Timestamp != tempAutoAimData.m_Timestamp)
+			m_GimbalSensorValues.autoAimData = tempAutoAimData;
+		else
+		{
+			m_GimbalSensorValues.autoAimData.m_Pitch = 0;
+			m_GimbalSensorValues.autoAimData.m_Yaw = 0;
+			m_GimbalSensorValues.autoAimData.m_Dist = 0;
+		}
+		//m_GimbalSensorValues.autoAimData = m_AutoAimDataListener->Get();
+		//std::cerr << m_GimbalSensorValues.autoAimData.m_Pitch << '\t' << m_GimbalSensorValues.autoAimData.m_Yaw << '\t' << m_GimbalSensorValues.autoAimData.m_Dist << std::endl;
 		/*if(!m_FlagInitGimbal)
 			m_GimbalSensorValues.imuYaw.m_ZAxisAngle = ClampLoop(static_cast<double>(m_GimbalSensorValues.imuYaw.m_ZAxisAngle), m_GyroAngleZeroPoints[Yaw], m_GyroAngleZeroPoints[Yaw] + M_PI * 2);*/
 		
@@ -363,7 +379,8 @@ private:
 	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
 	ossian::IOData<GyroA204Status<GyroType::Pitch>>* m_GyroA204PitchListener;
 	ossian::IOData<GyroA204Status<GyroType::Yaw>>* m_GyroA204YawListener;
-	
+	ossian::IOData<AutoAimData>* m_AutoAimDataListener;
+
 	std::array<GimbalAngleMode, 2> m_CurGimbalAngleMode;
 	std::atomic<GimbalInputSrc> m_GimbalCtrlSrc;
 	GimbalMotorsModel m_MotorsStatus;
@@ -375,6 +392,7 @@ private:
 		RemoteStatus rc;	 //遥控器数据
 		GyroA204Status<GyroType::Pitch> imuPitch;
 		GyroA204Status<GyroType::Yaw> imuYaw;
+		AutoAimData autoAimData;
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
 
