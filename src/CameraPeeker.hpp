@@ -19,12 +19,23 @@ public:
 		: m_Aimbot(aimbot)
 	,m_Camera(0,1440,1080)
 	{
-		m_Camera.SetReceiveImageCallback([this](unsigned char* data, MV_FRAME_OUT_INFO_EX* pFrameInfo)
+		auto timeStamp = std::chrono::system_clock::now();
+		m_Camera.SetReceiveImageCallback([this, &timeStamp](unsigned char* data, MV_FRAME_OUT_INFO_EX* pFrameInfo)
 										 {
 											 //cv::cuda::GpuMat image;
 											 //HKCamera::ConvertDataToMat(pFrameInfo, data, image);
-											 m_Aimbot->Process(data);
+											 if (pFrameInfo)
+											 {
+												auto currentTime = std::chrono::system_clock::now();
+												std::cerr << "Read Fps = " <<
+													1.0f / static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(currentTime - timeStamp).count()) * 1000000
+														<< std::endl;
+												timeStamp = currentTime;
+												m_Aimbot->Process(data);
+											 }
+											 
 										 });
+		
 	};
 
 	auto ExecuteProc() -> void override

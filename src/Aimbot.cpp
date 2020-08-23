@@ -128,7 +128,7 @@ void Aimbot::Process(unsigned char* pImage)
     m_AutoAimStatus.m_Timestamp = std::chrono::high_resolution_clock::now();
     m_AutoAimData->Set(m_AutoAimStatus);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     //[TODO] 发送两角度给云台
 	/*try
 	{

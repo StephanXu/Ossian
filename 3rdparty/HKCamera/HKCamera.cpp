@@ -136,8 +136,11 @@ void HKCamera::SetDevice(const int camIndex)
     /*if (MV_OK != MV_CC_SetIntValue(m_Handle, "GevHeartbeatTimeout", 500)) 
         throw std::runtime_error("Set GevHeartbeatTimeout fail");*/
 
-    if (MV_OK != MV_CC_SetEnumValue(m_Handle, "AcquisitionMode", 2))
-        throw std::runtime_error("Set AcquisitionMode fail");
+    /*if (MV_OK != MV_CC_SetEnumValue(m_Handle, "AcquisitionMode", 1))
+        throw std::runtime_error("Set AcquisitionMode fail");*/
+
+    if(MV_OK != MV_CC_SetBoolValue(m_Handle, "AcquisitionFrameRateEnable", false))
+        throw std::runtime_error("set AcquisitionFrameRateEnable fail");
 
     /*if (MV_OK != MV_CC_SetIntValue(m_Handle, "DeviceLinkHeartbeatTimeout", 600))
         throw std::runtime_error("Set DeviceLinkHeartbeatTimeout fail");*/
