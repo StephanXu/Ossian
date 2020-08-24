@@ -74,10 +74,11 @@ Aimbot::Aimbot(Utils::ConfigLoader* config,
     /*cudaError_t cudaStatus = cudaMallocManaged(&m_pBinary, 1440 * 1080 * sizeof(unsigned char));
     if (cudaStatus != cudaSuccess)         
         SPDLOG_ERROR("Aimbot: cudaMallocManaged() Failed: {}", cudaStatus);    */ 
+
     cudaError_t cudaStatus = cudaMalloc(&m_pdFrame, 1440 * 1080 * 1);
     if (cudaStatus != cudaSuccess)
         SPDLOG_ERROR("Aimbot: cudaMalloc() Failed: {}", cudaStatus);    
-    m_phBinary = new unsigned char[1440 * 1080 * 1];
+    m_phBinary = new unsigned char[kGpuMatStep * 1080 * 1];
     if (!m_pdFrame || !m_phBinary)        
         std::bad_alloc();
 #endif //WITH_CUDA
@@ -103,28 +104,24 @@ void Aimbot::Process(unsigned char* pImage)
     ArmorType armorType;
     bool shootMode = false;  //[TODO] 删除，将发弹决策放到电控部分
 
- //   bool foundArmor = FindArmor(pImage, armorBBox, armorType);
- //   double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
- //   SPDLOG_INFO("@Aimbot=[$ms={}]", interval);
- //   double deltaYaw = 0, deltaPitch = 0, dist = 0;
- //   static PoseSolver angleSolver;
- //   if (foundArmor)
- //   {
- //       std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox); //rad, mm
+    bool foundArmor = FindArmor(pImage, armorBBox, armorType);
+    double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
+    
+    double deltaYaw = 0, deltaPitch = 0, dist = 0;
+    static PoseSolver angleSolver;
+    if (foundArmor)
+    {
+        std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox); //rad, mm
 
- //       Math::RegularizeErrAngle(deltaYaw, 'y');
- //       Math::RegularizeErrAngle(deltaPitch, 'p');
+        /*Math::RegularizeErrAngle(deltaYaw, 'y');
+        Math::RegularizeErrAngle(deltaPitch, 'p');*/
+    }
 
- //       m_AutoAimStatus.m_Pitch = deltaPitch;
- //       m_AutoAimStatus.m_Yaw = deltaYaw;
- //       m_AutoAimStatus.m_Dist = dist;
- //       m_AutoAimData->Set(m_AutoAimStatus);
- //   }
-	//SPDLOG_INFO("Aimbot Status: {}\t{}\t{}", deltaYaw, deltaPitch, dist);
+    SPDLOG_INFO("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
 
-    m_AutoAimStatus.m_Pitch = 0.01;
-    m_AutoAimStatus.m_Yaw = 0.1;
-    m_AutoAimStatus.m_Dist = 20;
+    m_AutoAimStatus.m_Pitch = deltaPitch;
+    m_AutoAimStatus.m_Yaw = deltaYaw;
+    m_AutoAimStatus.m_Dist = dist;
     m_AutoAimStatus.m_Timestamp = std::chrono::high_resolution_clock::now();
     m_AutoAimData->Set(m_AutoAimStatus);
     

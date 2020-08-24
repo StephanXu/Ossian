@@ -36,6 +36,7 @@ struct AutoAimData
 class Aimbot : public ossian::IODataBuilder<std::mutex, AutoAimData>
 {
 public:
+    static const int kGpuMatStep = 1536;
     void Process(unsigned char* pImage);
     OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config, 
                                 ossian::IOData<AutoAimData>* autoAimData));
@@ -480,8 +481,8 @@ private:
         static std::vector<LightBar> lightBars;
 
 #ifdef WITH_CUDA
-        cudaMemcpy(m_phBinary, binary.data, 1440 * 1080 * 1, cudaMemcpyDeviceToHost);
-        cv::Mat hBinary(1080, 1440, CV_8UC1, m_phBinary);
+        cudaMemcpy(m_phBinary, binary.data, binary.step*binary.rows, cudaMemcpyDeviceToHost);
+        cv::Mat hBinary(1080, 1440, CV_8UC1, m_phBinary, binary.step);
         cv::findContours(hBinary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
 #else
         cv::findContours(binary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
