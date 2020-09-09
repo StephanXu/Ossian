@@ -7,6 +7,7 @@ std::array<double, 5> GimbalCtrlTask::PIDAngleSpeedPitchParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleEcdYawParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleGyroYawParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleSpeedYawParams;
+std::array<double, 5> GimbalCtrlTask::PIDAutoAimInputParams;
 
 double GimbalCtrlTask::kAngleSpeedFilterCoef = 0;
 
@@ -101,11 +102,20 @@ void GimbalCtrlTask::GimbalCtrlInputProc()
 		m_AngleInput[Pitch] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kPitchChannel], kGimbalRCDeadband) * kPitchRCSen; 
 		m_AngleInput[Yaw] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kYawChannel], kGimbalRCDeadband) * kYawRCSen; 
 		//SPDLOG_INFO("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
+		//std::cerr << "AngleInput: " << m_AngleInput[Pitch] << '\t' << m_AngleInput[Yaw] << std::endl;
 	}
 	else if (m_GimbalCtrlSrc == Aimbot)
 	{
-		m_AngleInput[Pitch] = m_GimbalSensorValues.autoAimData.m_Pitch;
-		m_AngleInput[Yaw] = m_GimbalSensorValues.autoAimData.m_Yaw;
+		auto filterdAngles = m_AutoAimPredictor.Predict();
+		std::cerr << filterdAngles << std::endl;
+		m_AutoAimPredictor.Correct(m_GimbalSensorValues.autoAimData.m_Pitch, m_GimbalSensorValues.autoAimData.m_Yaw);
+
+		m_AngleInput[Pitch] = m_PIDAutoAimInput[Pitch].Calc(filterdAngles(0), 0);
+		m_AngleInput[Yaw] = m_PIDAutoAimInput[Yaw].Calc(filterdAngles(1), 0);
+
+		/*m_AngleInput[Pitch] = m_PIDAutoAimInput[Pitch].Calc(m_GimbalSensorValues.autoAimData.m_Pitch, 0);
+		m_AngleInput[Yaw] = m_PIDAutoAimInput[Yaw].Calc(m_GimbalSensorValues.autoAimData.m_Yaw, 0);*/
+		//std::cerr << "AimbotInput: " << m_AngleInput[Pitch] << '\t' << m_AngleInput[Yaw] << std::endl;
 	}
 }
 

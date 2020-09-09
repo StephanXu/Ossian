@@ -128,7 +128,7 @@ public:
 
 	//遥控器解析
 	static constexpr int16_t kGimbalRCDeadband = 10; //摇杆死区
-	static constexpr size_t kYawChannel = 4;
+	static constexpr size_t kYawChannel = 2;
 	static constexpr size_t kPitchChannel = 3;
 	static constexpr size_t kGimbalModeChannel = 1; //选择云台状态的开关通道
 
@@ -136,7 +136,7 @@ public:
 	static constexpr uint8_t kRCSwMid = 3;
 	static constexpr uint8_t kRCSwDown = 2;
 
-	static constexpr double kYawRCSen = 0.00005; //-0.000005
+	static constexpr double kYawRCSen = -0.00005; //-0.000005
 	static constexpr double kPitchRCSen = 0.000006; //0.005
 
 	//pid参数
@@ -146,6 +146,7 @@ public:
 	static std::array<double, 5> PIDAngleEcdYawParams;
 	static std::array<double, 5> PIDAngleGyroYawParams;
 	static std::array<double, 5> PIDAngleSpeedYawParams;
+	static std::array<double, 5> PIDAutoAimInputParams;
 
 	static constexpr double kGimbalCtrlPeriod = 0.005;
 	static double kAngleSpeedFilterCoef;
@@ -217,6 +218,12 @@ public:
 		PIDAngleSpeedYawParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->thout();
 		PIDAngleSpeedYawParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->thiout();
 
+		PIDAutoAimInputParams[0] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->kp();
+		PIDAutoAimInputParams[1] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->ki();
+		PIDAutoAimInputParams[2] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->kd();
+		PIDAutoAimInputParams[3] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->thout();
+		PIDAutoAimInputParams[4] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->thiout();
+
 		kAngleSpeedFilterCoef = m_Config->Instance<Configuration>()->mutable_gimbal()->kanglespeedfiltercoef();
 
 		m_GimbalCtrlSrc = Init;
@@ -231,6 +238,9 @@ public:
 
 		m_PIDAngleSpeed[Pitch].SetParams(PIDAngleSpeedPitchParams);
 
+		m_PIDAutoAimInput[Pitch].SetParams(PIDAutoAimInputParams);
+		m_PIDAutoAimInput[Pitch].SetFlagAngleLoop();
+
 		m_PIDAngleEcd[Yaw].SetParams(PIDAngleEcdYawParams);
 		m_PIDAngleEcd[Yaw].SetFlagAngleLoop();
 
@@ -238,6 +248,9 @@ public:
 		m_PIDAngleGyro[Yaw].SetFlagAngleLoop();
 
 		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
+
+		m_PIDAutoAimInput[Yaw].SetParams(PIDAutoAimInputParams);
+		m_PIDAutoAimInput[Yaw].SetFlagAngleLoop();
 
 		FirstOrderFilter ecdAngleFilter(0.25, kGimbalCtrlPeriod);
 		m_EcdAngleFilters.fill(ecdAngleFilter);
@@ -247,6 +260,8 @@ public:
 
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);
+
+		m_AutoAimPredictor.SetMatsForAutoAim(3);
 
 		/*m_GyroA204YawListener->AddOnChange([](const GyroA204Status<GyroType::Yaw>& value) {
 			SPDLOG_INFO("@ImuYaw=[$ZAngleYaw={},$ZSpeedYaw={}]",
@@ -291,6 +306,7 @@ public:
 			m_GimbalSensorValues.autoAimData = tempAutoAimData;
 		else
 		{
+			m_GimbalSensorValues.autoAimData.m_Found = false;
 			m_GimbalSensorValues.autoAimData.m_Pitch = 0;
 			m_GimbalSensorValues.autoAimData.m_Yaw = 0;
 			m_GimbalSensorValues.autoAimData.m_Dist = 0;
@@ -411,9 +427,11 @@ private:
 	std::array<double, kNumGimbalMotors> m_EcdAngleSet; //累加 编码器模式
 
 	//设定角度--->旋转角速度  旋转角速度-->6020控制电压
+	std::array<PIDController, kNumGimbalMotors> m_PIDAutoAimInput;
 	std::array<PIDController, kNumGimbalMotors> m_PIDAngleEcd, m_PIDAngleGyro, m_PIDAngleSpeed;
 	std::array<double, kNumGimbalMotors> m_VoltageSend;
 
+	KalmanFilter m_AutoAimPredictor{ 4,2,0 };
 	//std::array<FirstOrderFilter, kNumGimbalMotors> m_VoltageSetFilters;
 };
 

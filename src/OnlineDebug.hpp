@@ -153,7 +153,7 @@ public:
 		auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, logId);
 
 		//distSink->add_sink(stdSink);
-		distSink->add_sink(onlineSink);
+		//distSink->add_sink(onlineSink);
 
 		auto logger = std::make_shared<spdlog::logger>(loggerName, distSink);
 		logger->set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");

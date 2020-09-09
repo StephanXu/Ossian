@@ -67,7 +67,7 @@ target_link_libraries(Ossian
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
 set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
 set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
-
+target_link_options(Ossian PRIVATE "-fsanitize=leak")
 target_compile_options(Ossian
         PRIVATE
             "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused;-ggdb;-g3>>"

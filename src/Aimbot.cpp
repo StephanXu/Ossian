@@ -116,13 +116,18 @@ void Aimbot::Process(unsigned char* pImage)
         /*Math::RegularizeErrAngle(deltaYaw, 'y');
         Math::RegularizeErrAngle(deltaPitch, 'p');*/
     }
-
+    else
+    {
+        deltaYaw = 0, deltaPitch = 0, dist = 0;
+    }
     SPDLOG_INFO("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
 
+    std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
+    m_AutoAimStatus.m_Found = foundArmor;
     m_AutoAimStatus.m_Pitch = deltaPitch;
     m_AutoAimStatus.m_Yaw = deltaYaw;
     m_AutoAimStatus.m_Dist = dist;
-    m_AutoAimStatus.m_Timestamp = std::chrono::high_resolution_clock::now();
+    m_AutoAimStatus.m_Timestamp = start;
     m_AutoAimData->Set(m_AutoAimStatus);
     
     //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -145,11 +150,12 @@ void Aimbot::Process(unsigned char* pImage)
 
 #ifdef _DEBUG
     //putText(debugFrame, fmt::format("ms: {:.4f}",ms), cv::Point(30, 50), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(173, 205, 249));
-    putText(debugFrame, fmt::format("yaw: {:.4f}", sendYaw), cv::Point(50, 90), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
-    putText(debugFrame, fmt::format("pitch: {:.4f}", sendPitch), cv::Point(50, 110), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
+    //cv::rectangle(debugFrame, armorBBox, cv::Scalar(62, 255, 192), 2);
+    putText(debugFrame, fmt::format("yaw: {:.4f}", deltaYaw), cv::Point(50, 90), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
+    putText(debugFrame, fmt::format("pitch: {:.4f}", deltaPitch), cv::Point(50, 110), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     putText(debugFrame, fmt::format("dist: {:.4f}", dist), cv::Point(50, 130), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     putText(debugFrame, fmt::format("ms: {}", armorType == ArmorType::Small ? "Small" : "Big"), cv::Point(50, 150), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
-    putText(debugFrame, fmt::format("ms: {}", shootMode ? "Shoot" : "Stop shooting"), cv::Point(220, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
+    //putText(debugFrame, fmt::format("ms: {}", shootMode ? "Shoot" : "Stop shooting"), cv::Point(220, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     //cv::circle(debugFrame, redDot, 2, cv::Scalar(0, 255, 0), -1);
     imshow("DebugFrame", debugFrame);
     cv::waitKey(10);

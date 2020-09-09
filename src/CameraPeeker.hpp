@@ -23,7 +23,7 @@ public:
 										 {
 											 //cv::cuda::GpuMat image;
 											 //HKCamera::ConvertDataToMat(pFrameInfo, data, image);
-											 if (pFrameInfo)
+											 //if (pFrameInfo)
 											 {
 												m_Aimbot->Process(data);
 											 }

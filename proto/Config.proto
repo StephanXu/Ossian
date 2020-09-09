@@ -125,4 +125,5 @@ message Configuration {
 	 PIDParams pidFricSpeed = 17;
 	 PIDParams pidFeedAngle = 18;
 	 PIDParams pidFeedSpeed = 19;
+	 PIDParams pidAutoAimInput = 20;
 }
