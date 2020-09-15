@@ -12,6 +12,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(mimalloc 1.6 REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(CUDA)
+find_package(httplib)
 
 message(STATUS "CUDA_FOUND: ${CUDA_FOUND}")
 
@@ -20,6 +21,7 @@ add_subdirectory(core)
 add_subdirectory(3rdparty)
 add_subdirectory(bench)
 add_subdirectory(tests)
+add_subdirectory(tools)
 
 target_compile_features(Ossian PUBLIC cxx_std_17)
 target_sources(Ossian

@@ -57,13 +57,13 @@ RUN cd /tmp \
     && mkdir -p out/release \
     && cd out/release \
     && cmake ../.. \
-    && make -j4 \
+    && make -j$((`nproc`+1)) \
     && make install \
     && cd ../.. \
     && mkdir -p out/debug \
     && cd out/debug \
     && cmake -DCMAKE_BUILD_TYPE=Debug ../.. \
-    && make -j4
+    && make -j$((`nproc`+1))
 
 RUN apt install -y libcpprest-dev \
     && cd /tmp \
@@ -78,7 +78,7 @@ RUN apt install -y libcpprest-dev \
         -DUSE_CPPRESTSDK=true \
         -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/ \
         -DCMAKE_INSTALL_PREFIX=/tmp/libs/release/SignalR-Client-Cpp \
-    && make -j4 \
+    && make -j$((`nproc`+1)) \
     && make install \
     && cd .. \
     && mkdir build.debug \
@@ -88,8 +88,43 @@ RUN apt install -y libcpprest-dev \
         -DUSE_CPPRESTSDK=true \
         -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/ \
         -DCMAKE_INSTALL_PREFIX=/tmp/libs/debug/SignalR-Client-Cpp/ \
-    && make -j4 \
+    && make -j$((`nproc`+1)) \
     && make install
+
+RUN cd /tmp \
+    && git clone https://github.com/yhirose/cpp-httplib.git \
+    && git checkout 3da4a0ac69574c4998af05009d237454c481e071 \
+    && pushd cpp-httplib \
+    && mkdir build \
+    && pushd build \
+    && cmake .. \
+        -DCMAKE_INSTALL_PREFIX=/tmp/libs/cpp-httplib/ \
+    && make -j$((`nproc`+1)) \
+    && make install \
+    && popd \
+    && popd    
+
+RUN cd /tmp \
+    && git clone https://github.com/gflags/gflags.git \
+    && git checkout e171aa2d15ed9eb17054558e0b3a6a413bb01067 \
+    && pushd gflags \
+    && mkdir build.release \
+    && pushd build.release \
+    && cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/tmp/libs/release/gflags \
+    && make -j$((`nproc`+1)) \
+    && make install \
+    && popd \
+    && mkdir build.debug \
+    && pushd build.debug \
+    && cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/tmp/libs/debug/gfalgs \
+    && make -j$((`nproc`+1)) \
+    && make install \
+    && popd \
+    && popd
 
 EXPOSE 22
 
