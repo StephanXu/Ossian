@@ -109,7 +109,7 @@ public:
 	static constexpr double kWheelRadius = 76.0 / 1000.0;  ///< m
 	static constexpr double kWheelXn = 175.0 / 1000.0; ///< m
 	static constexpr double kWheelYn = 232.5 / 1000;   ///< m
-	static constexpr double kWheelSpeedLimit = 400;            ///< 单个麦轮的最大转速rpm
+	static constexpr double kWheelSpeedLimit = 800;            ///< 单个麦轮的最大转速rpm
 	static constexpr double kWheelSpeedToMotorRPMCoef = 11.875;
 	//static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
 

@@ -202,17 +202,16 @@ public:
 
 		H = H.Identity(m,n);
 
-		Q.resize(n, n);
-		Q.fill(1e-2); //bigger ---- slower regression
+		Q = Q.Identity(n, n) * 1e-2; //bigger ---- slower regression
 
-		R.resize(m, m);
-		R.fill(1e-3); //smaller --- quicker regression
+		R = R.Identity(m, m) * 1e-3; //smaller --- quicker regression
 
-		P0.resize(n, n);
-		P0.fill(1);
+		P0 = P0.Identity(n, n);
 
 		X0.resize(n);
 		X0.setRandom();
+
+		I = I.Identity(n, n);
 	}
 	
 	void SetFixedMat(Eigen::MatrixXd _A, Eigen::MatrixXd _H, Eigen::MatrixXd _Q, Eigen::MatrixXd _R, Eigen::MatrixXd _B = Eigen::MatrixXd())
@@ -244,6 +243,18 @@ public:
 		X = (A * X0) + (B * U);
 		P = (A * P0 * A.transpose()) + Q;
 		return X;
+	}
+
+	void Correct(double pitchMeasured, double yawMeasured)
+	{
+		Eigen::Vector2d Z(pitchMeasured, yawMeasured);
+
+		K = (P * H.transpose()) * (H * P * H.transpose() + R).inverse();
+		X = X + K * (Z - H * X);
+		P = (I - K * H) * P;
+
+		X0 = X;
+		P0 = P;
 	}
 
 	//Z：观测向量

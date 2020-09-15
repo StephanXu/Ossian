@@ -1,6 +1,8 @@
 ﻿#ifndef AIMBOT_HPP
 #define AIMBOT_HPP
 
+//#define _DEBUG
+
 #include <ossian/Factory.hpp>
 #include <ossian/Configuration.hpp>
 #include <opencv2/opencv.hpp>
@@ -26,6 +28,7 @@ namespace Utils = ossian::Utils;
 
 struct AutoAimData
 {
+    bool m_Found;
     double m_Pitch; //rad
     double m_Yaw;   //rad
     double m_Dist;  //mm
@@ -298,9 +301,10 @@ private:
         {
             PNPSolver(bbox, armorType);
             double yaw = 0, pitch = 0, dist = 0;
-            Eigen::Vector3d posInGimbal = m_CamToGblRot * m_WorldToCamTran - m_CamToGblTran;
+            Eigen::Vector3d posInGimbal = m_CamToGblRot * m_WorldToCamTran + m_CamToGblTran;
             dist = posInGimbal(2) * scaleDist;
             yaw = atan2(posInGimbal(0), posInGimbal(2));
+            //pitch = atan2(posInGimbal(1), posInGimbal(2));
 
             double alpha = asin(barrelToGimbalY / sqrt(posInGimbal(1) * posInGimbal(1) + posInGimbal(2) * posInGimbal(2)));
             if (posInGimbal(1) < 0) 
@@ -322,7 +326,7 @@ private:
             if (EnableGravity)
                 pitch += GetPitch(dist/1000, posInGimbal(1)/1000, initV);
 
-            return std::make_tuple(yaw, pitch, dist);
+            return std::make_tuple(-yaw, -pitch, dist);
         }
 
     private:
@@ -431,8 +435,8 @@ private:
         cudaMemcpy(m_pdFrame, pImage, 1440 * 1080 * 1, cudaMemcpyHostToDevice);
         cv::cuda::GpuMat dFrame(1080, 1440, CV_8UC1, m_pdFrame);
 
-        cv::cuda::demosaicing(dFrame, dFrame, cv::cuda::COLOR_BayerRG2BGR_MHT, 0, cudaStream);
-        //cv::cuda::cvtColor(dFrame, dFrame, cv::COLOR_BayerRG2BGR, 0, cudaStream);
+        //cv::cuda::demosaicing(dFrame, dFrame, cv::cuda::COLOR_BayerRG2BGR_MHT, 0, cudaStream);
+        cv::cuda::cvtColor(dFrame, dFrame, cv::COLOR_BayerRG2RGB, 0, cudaStream);
 
         cv::cuda::cvtColor(dFrame, grayBrightness, cv::COLOR_BGR2GRAY, 0, cudaStream);
         cv::cuda::threshold(grayBrightness, binaryBrightness, brightness, 255, cv::THRESH_BINARY, cudaStream);
@@ -465,20 +469,20 @@ private:
 #endif // WITH_CUDA
         
 #ifdef _DEBUG
-        cv::Mat debugBinaryBrightness, debugBinaryColor, debugBinary;
+        //cv::Mat debugBinaryBrightness, debugBinaryColor, debugBinary;
         dFrame.download(debugFrame);
-        binaryBrightness.download(debugBinaryBrightness);
+        /*binaryBrightness.download(debugBinaryBrightness);
         binaryColor.download(debugBinaryColor);
         binary.download(debugBinary);
         cv::imshow("BinaryBrightness", debugBinaryBrightness);
         cv::imshow("BinaryColor", debugBinaryColor);
-        cv::imshow("DebugBinary", debugBinary);
+        cv::imshow("DebugBinary", debugBinary);*/
         //cv::waitKey(10);
 #endif // DEBUG
 
-        static std::vector<std::vector<cv::Point> > contours;
-        static std::vector<cv::Vec4i> hierarchy;
-        static std::vector<LightBar> lightBars;
+        std::vector<std::vector<cv::Point> > contours;
+        std::vector<cv::Vec4i> hierarchy;
+        std::vector<LightBar> lightBars;
 
 #ifdef WITH_CUDA
         cudaMemcpy(m_phBinary, binary.data, binary.step*binary.rows, cudaMemcpyDeviceToHost);
@@ -504,7 +508,7 @@ private:
                 }
             }
         }
-        static std::vector<Armor> armors;
+        std::vector<Armor> armors;
 
         for (size_t i = 0; i < lightBars.size(); ++i)
         {
@@ -543,8 +547,8 @@ private:
 #ifdef _DEBUG
         if (armorFound)
         {
-            cv::rectangle(debugFrame, cv::boundingRect(m_CurTargetArmor.Vertexes()), colorArmor, 2);
-            cv::circle(debugFrame, m_CurTargetArmor.Center(), 3, colorCenter, -1);
+            cv::rectangle(debugFrame, cv::boundingRect(target.Vertexes()), cv::Scalar(62, 255, 192), 2);
+            cv::circle(debugFrame, target.Center(), 3, cv::Scalar(62, 255, 192), -1);
         }
 #endif // _DEBUG
 
