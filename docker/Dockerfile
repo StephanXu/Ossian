@@ -92,39 +92,38 @@ RUN apt install -y libcpprest-dev \
     && make install
 
 RUN cd /tmp \
-    && git clone https://github.com/yhirose/cpp-httplib.git \
+    && git clone https://github.com/yhirose/cpp-httplib.git -n \
+    && cd cpp-httplib \
     && git checkout 3da4a0ac69574c4998af05009d237454c481e071 \
-    && pushd cpp-httplib \
     && mkdir build \
-    && pushd build \
+    && cd build \
     && cmake .. \
         -DCMAKE_INSTALL_PREFIX=/tmp/libs/cpp-httplib/ \
     && make -j$((`nproc`+1)) \
     && make install \
-    && popd \
-    && popd    
+    && cd ../.. \    
 
 RUN cd /tmp \
-    && git clone https://github.com/gflags/gflags.git \
+    && git clone https://github.com/gflags/gflags.git -n \
+    && cd gflags \
     && git checkout e171aa2d15ed9eb17054558e0b3a6a413bb01067 \
-    && pushd gflags \
     && mkdir build.release \
-    && pushd build.release \
+    && cd build.release \
     && cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/tmp/libs/release/gflags \
     && make -j$((`nproc`+1)) \
     && make install \
-    && popd \
+    && cd .. \
     && mkdir build.debug \
-    && pushd build.debug \
+    && cd build.debug \
     && cmake .. \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_INSTALL_PREFIX=/tmp/libs/debug/gfalgs \
     && make -j$((`nproc`+1)) \
     && make install \
-    && popd \
-    && popd
+    && cd .. \
+    && cd ..
 
 EXPOSE 22
 
