@@ -16,7 +16,7 @@ find_package(httplib)
 
 message(STATUS "CUDA_FOUND: ${CUDA_FOUND}")
 
-add_subdirectory(proto)
+add_subdirectory(schema)
 add_subdirectory(core)
 add_subdirectory(3rdparty)
 add_subdirectory(bench)
@@ -58,7 +58,7 @@ target_link_libraries(Ossian
             spdlog::spdlog
             fmt::fmt
             mimalloc
-            proto
+            Schema
             ${OpenCV_LIBS}
             "$<$<BOOL:${CUDA_FOUND}>:${CUDA_LIBRARIES}>"
             OssianCore

@@ -4,7 +4,15 @@ FROM ubuntu:18.04 as build
 LABEL description="Ossian development container"
  
 RUN apt update \ 
-    && apt install -y curl file gcc g++ git build-essential tar unzip wget ninja-build yasm openssh-server rsync
+    && apt install -y curl file gcc g++ git build-essential tar unzip wget ninja-build yasm openssh-server rsync npm
+    
+RUN npm install -g npm \
+    && npm install -g n \
+    && n stable
+
+RUN npm install -g quicktype
+
+RUN apt install -y libssl-dev
 
 RUN mkdir -p /var/run/sshd
 
@@ -49,6 +57,7 @@ RUN VCPKG_FORCE_SYSTEM_BINARIES=1 ./tmp/vcpkg/vcpkg install fmt:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 ./tmp/vcpkg/vcpkg install spdlog:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 ./tmp/vcpkg/vcpkg install gtest:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 ./tmp/vcpkg/vcpkg install benchmark:x64-linux
+RUN VCPKG_FORCE_SYSTEM_BINARIES=1 ./tmp/vcpkg/vcpkg install nlohmann-json:x64-linux
 
 RUN cd /tmp \
     && git clone https://github.com/microsoft/mimalloc.git -n \

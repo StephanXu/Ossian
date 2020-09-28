@@ -1,0 +1,103 @@
+{
+  "type": "object",
+  "title": "Example Schema",
+  "description": "An extraordinary example.",
+  "properties": {
+    "connection": {
+      "type": "object",
+      "title": "Connection",
+      "properties": {
+        "serialPort": {
+          "type": "object",
+          "title": "Serialport",
+          "description": "Serial port settings",
+          "properties": {
+            "comName": {
+              "type": "string",
+              "title": "COM name",
+              "description": "Name of serial port",
+              "component": "text"
+            },
+            "parity": {
+              "type": "string",
+              "title": "Parity",
+              "description": "Parity of serial port",
+              "component": "select",
+              "enum": [
+                "noParity",
+                "testParity"
+              ],
+              "enumName": [
+                "No parity",
+                "test parity"
+              ]
+            }
+          }
+        },
+        "can": {
+          "type": "object",
+          "title": "Controller Area Network",
+          "description": "Settings of CAN connection",
+          "properties": {
+            "canName": {
+              "type": "string",
+              "title": "CAN name",
+              "description": "Name of CAN interface",
+              "component": "text"
+            }
+          }
+        },
+        "log": {
+          "type": "object",
+          "title": "Online logger",
+          "description": "Connect to online logger to provide plot service",
+          "properties": {
+            "hostname": {
+              "type": "string",
+              "title": "Host name",
+              "description": "Host name of online logger service",
+              "component": "text"
+            },
+            "level": {
+              "type": "string",
+              "title": "Log level",
+              "description": "Level of log",
+              "component": "select",
+              "enum": [
+                "trace",
+                "debug",
+                "warning",
+                "error"
+              ],
+              "enumName": [
+                "Trace",
+                "Debug",
+                "Warning",
+                "Error"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "control": {
+      "type": "object",
+      "title": "Control",
+      "properties": {
+        "gimbal": {
+          "type": "object",
+          "title": "Gimbal",
+          "description": "Settings of gimbal",
+          "properties": {
+            "speed": {
+              "type": "number",
+              "title": "Speed",
+              "description": "Speed of gimbal",
+              "component": "text"
+            }
+          }
+        }
+      }
+    }
+  }
+}
