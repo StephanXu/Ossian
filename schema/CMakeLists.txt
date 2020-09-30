@@ -22,8 +22,9 @@ function(JSON_SCHEMA_GENERATE_CPP HDRS DEST)
         COMMAND ${_QUICK_TYPE_EXECUTABLE}
         ARGS 
             --lang c++ 
+            --include-location global-include
             --no-boost
-            --namespace ns::config
+            --namespace OssianConfig
             --source-style single-source
             --code-format with-getter-setter
             --type-style camel-case

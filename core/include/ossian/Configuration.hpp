@@ -2,17 +2,15 @@
 #define OSSIAN_CORE_CONFIGURATION
 
 #include <spdlog/spdlog.h>
-#include <fmt/format.h>
-#include <google/protobuf/message.h>
-#include <google/protobuf/util/json_util.h>
 
 #include <string>
-#include <unordered_map>
 #include <variant>
+#include <any>
 #include <memory>
 
 #include "Http.hpp"
 #include "ApplicationBuilder.hpp"
+#include <nlohmann/json.hpp>
 
 namespace ossian
 {
@@ -33,8 +31,8 @@ public:
  *
  * @brief	配置文件解析
  *
- * @author	Xu Zihan
- * @date	2019/11/21
+ * @author	Xu Zihan, Huang Jiaxin
+ * @date	2020/9/30
  */
 class ConfigLoader : public CustomBuilder<ConfigServiceBuilder>
 {
@@ -46,22 +44,16 @@ public:
 	template <typename ConfigType>
 	void LoadConfig(std::string text)
 	{
-		m_Config.reset(new ConfigType);
-		const auto convertStatus = google::protobuf::util::JsonStringToMessage(text, m_Config.get());
-		if (!convertStatus.ok())
+		m_Config.reset();
+		try
 		{
-			throw ConfigParseError{convertStatus.ToString()};
+			ConfigType config = nlohmann::json::parse(text);
+			m_Config = config;
 		}
-#ifdef _DEBUG
+		catch (std::exception& e)
 		{
-			std::string str;
-			google::protobuf::util::JsonOptions opt;
-			opt.always_print_primitive_fields = true;
-			opt.add_whitespace                = true;
-			google::protobuf::util::MessageToJsonString(*m_Config, &str, opt);
-			SPDLOG_INFO("{}", str);
+			throw ConfigParseError{ e.what() };
 		}
-#endif
 		m_Valid = true;
 	}
 
@@ -69,7 +61,7 @@ public:
 	ConfigType* Instance()
 	{
 		if (m_Valid)
-			return google::protobuf::DynamicCastToGenerated<ConfigType>(m_Config.get());
+			return std::any_cast<ConfigType>(&m_Config);
 		return nullptr;
 	}
 
@@ -118,7 +110,7 @@ public:
 
 private:
 	bool m_Valid;
-	std::shared_ptr<google::protobuf::Message> m_Config;
+	std::any m_Config;
 };
 
 class ConfigServiceBuilder

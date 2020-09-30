@@ -1,6 +1,5 @@
 #include <ossian/ossian.hpp>
 #include <mimalloc.h>
-#include "Config.pb.h"
 
 #include "Startup.hpp"
 #include "InputAdapter.hpp"

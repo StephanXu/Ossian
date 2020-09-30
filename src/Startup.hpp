@@ -2,13 +2,12 @@
 #define STARTUP_HPP
 
 #include <ossian/ApplicationBuilder.hpp>
-
-#include "Config.pb.h"
+#include <Config.schema.hpp>
 
 class Startup : public ossian::IStartup
 {
     using AppBuilder = ossian::ApplicationBuilder;
-    OssianConfig::Configuration m_Config;
+    OssianConfig::configSchema m_Config;
 	
 public:
     Startup();
