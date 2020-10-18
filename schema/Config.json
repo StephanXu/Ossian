@@ -1,7 +1,7 @@
 {
   "type": "object",
-  "title": "Example Schema",
-  "description": "An extraordinary example.",
+  "title": "Ossian Configuration",
+  "description": "Configuration of project ossian.",
   "properties": {
     "connection": {
       "type": "object",
@@ -12,10 +12,16 @@
           "title": "Serialport",
           "description": "Serial port settings",
           "properties": {
-            "comName": {
+            "portName": {
               "type": "string",
-              "title": "COM name",
+              "title": "Port Name",
               "description": "Name of serial port",
+              "component": "text"
+            },
+            "baudrate": {
+              "type": "number",
+              "title": "Baudrate",
+              "description": "",
               "component": "text"
             },
             "parity": {
@@ -25,24 +31,57 @@
               "component": "select",
               "enum": [
                 "noParity",
-                "testParity"
+                "oddParity",
+                "evenParity",
+                "markParity"
               ],
               "enumName": [
-                "No parity",
-                "test parity"
+                "None",
+                "Odd",
+                "Even",
+                "Mark"
               ]
-            }
-          }
-        },
-        "can": {
-          "type": "object",
-          "title": "Controller Area Network",
-          "description": "Settings of CAN connection",
-          "properties": {
-            "canName": {
+            },
+            "dataBit": {
+              "type": "number",
+              "title": "DataBit",
+              "description": "",
+              "component": "text"
+            },
+            "stopBit": {
               "type": "string",
-              "title": "CAN name",
-              "description": "Name of CAN interface",
+              "title": "StopBit",
+              "description": "",
+              "component": "select",
+              "enum": [
+                "OneStopBit",
+                "One5StopBits",
+                "TwoStopBits"
+              ],
+              "enumName": [
+                "1",
+                "1.5",
+                "2"
+              ]
+            },
+            "commType": {
+              "type": "string",
+              "title": "CommType",
+              "description": "",
+              "component": "select",
+              "enum": [
+                "Sync",
+                "ASync"
+              ],
+              "enumName": [
+                "Sync",
+                "ASync"
+              ]
+            },
+            "syncInterval": {
+              "type": "number",
+              "title": "SyncInterval",
+              "description": "",
               "component": "text"
             }
           }
@@ -80,19 +119,743 @@
         }
       }
     },
+    "vision": {
+      "type": "object",
+      "title": "Vision",
+      "properties": {
+        "camera": {
+          "type": "object",
+          "title": "Camera",
+          "description": "Settings of camera",
+          "properties": {
+            "deviceIndex": {
+              "type": "number",
+              "title": "deviceIndex",
+              "description": "",
+              "component": "text"
+            },
+            "frameWidth": {
+              "type": "number",
+              "title": "frameWidth",
+              "description": "",
+              "component": "text"
+            },
+            "frameHeight": {
+              "type": "number",
+              "title": "frameHeight",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "testVideoSource": {
+          "type": "object",
+          "title": "testVideoSource",
+          "description": "",
+          "properties": {
+            "filename": {
+              "type": "number",
+              "title": "filename",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "aimbot": {
+          "type": "object",
+          "title": "Aimbot",
+          "description": "",
+          "properties": {
+            "enemyColor": {
+              "type": "string",
+              "title": "enemyColor",
+              "description": "",
+              "component": "select",
+              "enum": [
+                "blue",
+                "red"
+              ],
+              "enumName": [
+                "Blue",
+                "Red"
+              ]
+            },
+            "thresBrightness": {
+              "type": "number",
+              "title": "thresBrightness",
+              "description": "",
+              "component": "text"
+            },
+            "thresColor": {
+              "type": "number",
+              "title": "thresColor",
+              "description": "",
+              "component": "text"
+            },
+            "lightbarMinArea": {
+              "type": "number",
+              "title": "lightbarMinArea",
+              "description": "",
+              "component": "text"
+            },
+            "lightBarContourMinSolidity": {
+              "type": "number",
+              "title": "lightBarContourMinSolidity",
+              "description": "",
+              "component": "text"
+            },
+            "lightBarEllipseMinAspectRatio": {
+              "type": "number",
+              "title": "lightBarEllipseMinAspectRatio",
+              "description": "",
+              "component": "text"
+            },
+            "armorMaxAngleDiff": {
+              "type": "number",
+              "title": "armorMaxAngleDiff",
+              "description": "",
+              "component": "text"
+            },
+            "armorMaxHeightDiffRatio": {
+              "type": "number",
+              "title": "armorMaxHeightDiffRatio",
+              "description": "",
+              "component": "text"
+            },
+            "armorMaxYDiffRatio": {
+              "type": "number",
+              "title": "armorMaxYDiffRatio",
+              "description": "",
+              "component": "text"
+            },
+            "armorMinXDiffRatio": {
+              "type": "number",
+              "title": "armorMinXDiffRatio",
+              "description": "",
+              "component": "text"
+            },
+            "armorBigArmorRatio": {
+              "type": "number",
+              "title": "armorBigArmorRatio",
+              "description": "",
+              "component": "text"
+            },
+            "armorSmallArmorRatio": {
+              "type": "number",
+              "title": "armorSmallArmorRatio",
+              "description": "",
+              "component": "text"
+            },
+            "armorMinAspectRatio": {
+              "type": "number",
+              "title": "armorMinAspectRatio",
+              "description": "",
+              "component": "text"
+            },
+            "armorMaxAspectRatio": {
+              "type": "number",
+              "title": "armorMaxAspectRatio",
+              "description": "",
+              "component": "text"
+            },
+            "areaNormalizedBase": {
+              "type": "number",
+              "title": "areaNormalizedBase",
+              "description": "",
+              "component": "text"
+            },
+            "sightOffsetNormalizedBase": {
+              "type": "number",
+              "title": "sightOffsetNormalizedBase",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "poseSolver": {
+          "type": "object",
+          "title": "PoseSolver",
+          "description": "",
+          "properties": {
+            "cameraToGimbalX": {
+              "type": "number",
+              "title": "cameraToGimbalX",
+              "description": "",
+              "component": "text"
+            },
+            "cameraToGimbalY": {
+              "type": "number",
+              "title": "cameraToGimbalY",
+              "description": "",
+              "component": "text"
+            },
+            "cameraToGimbalZ": {
+              "type": "number",
+              "title": "cameraToGimbalZ",
+              "description": "",
+              "component": "text"
+            },
+            "barrelToGimbalY": {
+              "type": "number",
+              "title": "barrelToGimbalY",
+              "description": "",
+              "component": "text"
+            },
+            "rotOverlapLen": {
+              "type": "number",
+              "title": "rotOverlapLen",
+              "description": "",
+              "component": "text"
+            },
+            "initV": {
+              "type": "number",
+              "title": "initV",
+              "description": "",
+              "component": "text"
+            },
+            "initK": {
+              "type": "number",
+              "title": "initK",
+              "description": "",
+              "component": "text"
+            },
+            "gravity": {
+              "type": "number",
+              "title": "gravity",
+              "description": "",
+              "component": "text"
+            },
+            "scaleDist": {
+              "type": "number",
+              "title": "scaleDist",
+              "description": "",
+              "component": "text"
+            }
+          }
+        }
+      }
+    },
     "control": {
       "type": "object",
       "title": "Control",
       "properties": {
+        "chassis": {
+          "type": "object",
+          "title": "Chassis",
+          "description": "Settings of chassis",
+          "properties": {
+            "topWz": {
+              "type": "number",
+              "title": "TopWz",
+              "description": "",
+              "component": "text"
+            },
+            "vxFilterCoef": {
+              "type": "number",
+              "title": "VxFilterCoef",
+              "description": "",
+              "component": "text"
+            },
+            "vyFilterCoef": {
+              "type": "number",
+              "title": "VyFilterCoef",
+              "description": "",
+              "component": "text"
+            },
+            "rpmFdbFilterCoef": {
+              "type": "number",
+              "title": "RPMFdbFilterCoef",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
         "gimbal": {
           "type": "object",
           "title": "Gimbal",
-          "description": "Settings of gimbal",
+          "description": "",
           "properties": {
-            "speed": {
+
+          }
+        },
+        "gun": {
+          "type": "object",
+          "title": "Gun",
+          "description": "",
+          "properties": {
+            "fricSpeed12": {
               "type": "number",
-              "title": "Speed",
-              "description": "Speed of gimbal",
+              "title": "FricSpeed12",
+              "description": "",
+              "component": "text"
+            },
+            "fricSpeed15": {
+              "type": "number",
+              "title": "FricSpeed15",
+              "description": "",
+              "component": "text"
+            },
+            "fricSpeed18": {
+              "type": "number",
+              "title": "FricSpeed18",
+              "description": "",
+              "component": "text"
+            },
+            "fricSpeed30": {
+              "type": "number",
+              "title": "FricSpeed30",
+              "description": "",
+              "component": "text"
+            }
+
+          }
+        }
+      }
+    },
+    "pids": {
+      "type": "object",
+      "title": "PIDs",
+      "properties": {
+        "pidWheelSpeed": {
+          "type": "object",
+          "title": "pidWheelSpeed",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidChassisAngle": {
+          "type": "object",
+          "title": "pidChassisAngle",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidAngleEcdPitch": {
+          "type": "object",
+          "title": "pidAngleEcdPitch",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidAngleGyroPitch": {
+          "type": "object",
+          "title": "pidAngleGyroPitch",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidAngleSpeedPitch": {
+          "type": "object",
+          "title": "pidAngleSpeedPitch",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidAngleEcdYaw": {
+          "type": "object",
+          "title": "pidAngleEcdYaw",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidAngleGyroYaw": {
+          "type": "object",
+          "title": "pidAngleGyroYaw",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidAngleSpeedYaw": {
+          "type": "object",
+          "title": "pidAngleSpeedYaw",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidFricSpeed": {
+          "type": "object",
+          "title": "pidFricSpeed",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidFeedAngle": {
+          "type": "object",
+          "title": "pidFeedAngle",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidFeedSpeed": {
+          "type": "object",
+          "title": "pidFeedSpeed",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidAutoAimInput": {
+          "type": "object",
+          "title": "pidAutoAimInput",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
               "component": "text"
             }
           }

@@ -132,7 +132,8 @@ public:
 	 */
 	auto StartLogging(std::string loggerName,
 	                  std::string logName,
-	                  std::string logDescription) const -> std::string
+	                  std::string logDescription,
+	                  std::string argumentId) const -> std::string
 	{
 		if (!m_Valid)
 		{
@@ -140,7 +141,7 @@ public:
 		}
 
 		std::promise<std::string> waitLogId;
-		m_Hub->Invoke("CreateLog", logName, logDescription)
+		m_Hub->Invoke("CreateLog", logName, logDescription, argumentId)
 		     .Then<std::string>(
 			     [&waitLogId](const std::string& id, std::exception_ptr)
 			     {
@@ -152,8 +153,8 @@ public:
 		auto logId      = waitLogId.get_future().get();
 		auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, logId);
 
-		//distSink->add_sink(stdSink);
-		//distSink->add_sink(onlineSink);
+		distSink->add_sink(stdSink);
+		distSink->add_sink(onlineSink);
 
 		auto logger = std::make_shared<spdlog::logger>(loggerName, distSink);
 		logger->set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
@@ -170,15 +171,6 @@ public:
 		}).detach();
 
 		return logId;
-	}
-
-	auto StartLoggingAndArchiveConfiguration(std::string loggerName,
-	                                         std::string logName,
-	                                         std::string logDescription,
-	                                         std::string configuration)
-	{
-		auto logId = StartLogging(loggerName, logName, logDescription);
-		m_Hub->Invoke("ArchiveConfiguration", logId, configuration);
 	}
 };
 

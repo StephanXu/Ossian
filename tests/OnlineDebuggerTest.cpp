@@ -4,11 +4,13 @@
 
 int main()
 {
+	const std::string demoArgumentId{"5f8c2c540553361014548e5f"};
 	OnlineDebug onlineDbg;
 	onlineDbg.Connect("http://ossian.mrxzh.com/logger");
 	onlineDbg.StartLogging("OnlineLog",
 	                       "OnlineDebuggerTest",
-	                       "Test of online debugger");
+	                       "Test of online debugger",
+	                       demoArgumentId);
 
 	std::default_random_engine random(std::time(nullptr));
 	std::uniform_real_distribution<double> uniformDist(-10, 10);

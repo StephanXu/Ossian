@@ -16,6 +16,8 @@ namespace ossian
 {
 namespace Utils
 {
+
+template<typename ConfigType>
 class ConfigServiceBuilder;
 
 class ConfigParseError : public std::runtime_error
@@ -34,17 +36,16 @@ public:
  * @author	Xu Zihan, Huang Jiaxin
  * @date	2020/9/30
  */
-class ConfigLoader : public CustomBuilder<ConfigServiceBuilder>
+template <typename ConfigType>
+class ConfigLoader : public CustomBuilder<ConfigServiceBuilder<ConfigType>>
 {
 public:
 	OSSIAN_SERVICE_SETUP(ConfigLoader())
 	{
 	}
 
-	template <typename ConfigType>
 	void LoadConfig(std::string text)
 	{
-		m_Config.reset();
 		try
 		{
 			ConfigType config = nlohmann::json::parse(text);
@@ -57,22 +58,18 @@ public:
 		m_Valid = true;
 	}
 
-	template <typename ConfigType>
-	ConfigType* Instance()
+	const ConfigType& Instance() const
 	{
-		if (m_Valid)
-			return std::any_cast<ConfigType>(&m_Config);
-		return nullptr;
+		return m_Config;
 	}
 
-	template <typename ConfigType>
 	void LoadConfigFromFile(std::string configFilename)
 	{
 		std::ifstream f(configFilename);
 		std::string text{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
 		try
 		{
-			LoadConfig<ConfigType>(text);
+			LoadConfig(text);
 		}
 		catch (ConfigParseError& err)
 		{
@@ -82,7 +79,6 @@ public:
 		SPDLOG_TRACE("Load configuration from file: {}", configFilename);
 	}
 
-	template <typename ConfigType>
 	void LoadConfigFromUrl(std::string host, int port, std::string path)
 	{
 		httplib::Client cli(host, port);
@@ -93,7 +89,7 @@ public:
 		}
 		try
 		{
-			LoadConfig<ConfigType>(res->body);
+			LoadConfig(res->body);
 		}
 		catch (ConfigParseError& err)
 		{
@@ -110,12 +106,14 @@ public:
 
 private:
 	bool m_Valid;
-	std::any m_Config;
+	ConfigType m_Config;
 };
 
+template <typename ConfigType>
 class ConfigServiceBuilder
 {
-	using BaseBuilder = BaseServiceBuilder<ConfigLoader>;
+	using ServiceType = ConfigLoader<ConfigType>;
+	using BaseBuilder = BaseServiceBuilder<ServiceType>;
 	ApplicationBuilder& m_AppBuilder;
 	BaseBuilder& m_BaseBuilder;
 public:
@@ -124,22 +122,20 @@ public:
 	{
 	}
 
-	template <typename ConfigType>
 	auto LoadFromUrl(std::string host, int port, std::string path) -> ConfigServiceBuilder&
 	{
-		m_BaseBuilder.AddConfig([host, port, path](Utils::ConfigLoader& option)
+		m_BaseBuilder.AddConfig([host, port, path](ServiceType& option)
 		{
-			option.LoadConfigFromUrl<ConfigType>(host, port, path);
+			option.LoadConfigFromUrl(host, port, path);
 		});
 		return *this;
 	}
 
-	template <typename ConfigType>
 	auto LoadFromFile(std::string filename) -> ConfigServiceBuilder&
 	{
-		m_BaseBuilder.AddConfig([filename](Utils::ConfigLoader& option)
+		m_BaseBuilder.AddConfig([filename](ServiceType& option)
 		{
-			option.LoadConfigFromFile<ConfigType>(filename);
+			option.LoadConfigFromFile(filename);
 		});
 		return *this;
 	}
