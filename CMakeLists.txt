@@ -39,10 +39,11 @@ target_sources(Ossian
             src/Capacitor.cpp
             src/Gun.cpp
             src/Referee.cpp
-            src/Gyro.cpp
             src/IOPeeker.cpp
             src/CameraPeeker.cpp
+            src/Gyro.cpp
             src/GyroA204.cpp
+            src/Gyro6Axis.cpp
             src/TOFNooploop.cpp
             src/Phototube.cpp
         )
