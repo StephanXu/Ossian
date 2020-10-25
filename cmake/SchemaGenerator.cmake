@@ -23,11 +23,12 @@ function(JSON_SCHEMA_GENERATE_CPP IS_ON_CONFIGURATION HDRS DEST)
                 --lang c++ 
                 --include-location global-include
                 --no-boost
-                --namespace OssianConfig
+                --namespace ${FIL_WE}
                 --source-style single-source
-                --code-format with-getter-setter
-                --type-style camel-case
-                --member-style pascal-case
+                --code-format with-struct
+                --type-style pascal-case
+                --member-style camel-case
+                --enumerator-style upper-underscore-case
                 --src-lang schema
                 --out "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.schema.hpp"
                 "${FIL}"
@@ -38,11 +39,12 @@ function(JSON_SCHEMA_GENERATE_CPP IS_ON_CONFIGURATION HDRS DEST)
                 --lang c++ 
                 --include-location global-include
                 --no-boost
-                --namespace OssianConfig
+                --namespace ${FIL_WE}
                 --source-style single-source
-                --code-format with-getter-setter
-                --type-style camel-case
-                --member-style pascal-case
+                --code-format with-struct
+                --type-style pascal-case
+                --member-style camel-case
+                --enumerator-style upper-underscore-case
                 --src-lang schema
                 --out "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.schema.hpp"
                 "${FIL}"

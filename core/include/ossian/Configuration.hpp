@@ -16,8 +16,7 @@ namespace ossian
 {
 namespace Utils
 {
-
-template<typename ConfigType>
+template <typename ConfigType>
 class ConfigServiceBuilder;
 
 class ConfigParseError : public std::runtime_error
@@ -49,18 +48,18 @@ public:
 		try
 		{
 			ConfigType config = nlohmann::json::parse(text);
-			m_Config = config;
+			m_Config          = config;
 		}
 		catch (std::exception& e)
 		{
-			throw ConfigParseError{ e.what() };
+			throw ConfigParseError{e.what()};
 		}
 		m_Valid = true;
 	}
 
-	const ConfigType& Instance() const
+	const ConfigType* Instance() const
 	{
-		return m_Config;
+		return &m_Config;
 	}
 
 	void LoadConfigFromFile(std::string configFilename)
@@ -79,10 +78,10 @@ public:
 		SPDLOG_TRACE("Load configuration from file: {}", configFilename);
 	}
 
-	void LoadConfigFromUrl(std::string host, int port, std::string path)
+	void LoadConfigFromUrl(const std::string host, const std::string id, const unsigned int port = 80)
 	{
-		httplib::Client cli(host, port);
-		auto res = cli.Get(path.c_str());
+		httplib::Client cli(host.c_str(), port);
+		auto res = cli.Get(fmt::format("/api/argument/{}?pt=true", id).c_str());
 		if (!res || res->status != 200)
 		{
 			throw std::runtime_error(fmt::format("Fetch configuration from url failed: {}", res->status));
@@ -99,10 +98,9 @@ public:
 		SPDLOG_TRACE("Load configuration from {}", host);
 	}
 
-	bool Valid() const noexcept
-	{
-		return m_Valid;
-	}
+	const ConfigType* operator->() const { return Instance(); }
+
+	bool Valid() const noexcept { return m_Valid; }
 
 private:
 	bool m_Valid;
@@ -122,11 +120,11 @@ public:
 	{
 	}
 
-	auto LoadFromUrl(std::string host, int port, std::string path) -> ConfigServiceBuilder&
+	auto LoadFromUrl(std::string host, std::string id, const unsigned int port = 80) -> ConfigServiceBuilder&
 	{
-		m_BaseBuilder.AddConfig([host, port, path](ServiceType& option)
+		m_BaseBuilder.AddConfig([host, id, port](ServiceType& option)
 		{
-			option.LoadConfigFromUrl(host, port, path);
+			option.LoadConfigFromUrl(host, id, port);
 		});
 		return *this;
 	}
@@ -140,9 +138,7 @@ public:
 		return *this;
 	}
 };
-
 } //Utils
-
 } //ossian
 
 

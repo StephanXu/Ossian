@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "title": "AppLaunchSetting",
+  "description": "",
+  "properties": {
+    "Ossian": {
+      "type": "object",
+      "title": "Ossian",
+      "description": "Ossian configuration.",
+      "properties": {
+        "onlineArguments": {
+          "title": "Online Arguments",
+          "type": "object",
+          "description": "Fetch online arguments.",
+          "properties": {
+            "server": {
+              "type": "string",
+              "title": "Server",
+              "description": "Hostname of online configuration server.",
+              "component": "text"
+            },
+            "argId": {
+              "type": "string",
+              "title": "Argument Id",
+              "description": "Id of argument schema.",
+              "component": "text"
+            }
+          }
+        },
+        "onlineDebug": {
+          "title": "Online Debug",
+          "type": "object",
+          "description": "Plot status online.",
+          "properties": {
+            "loggerUrl": {
+              "type": "string",
+              "title": "Logger URL",
+              "description": "",
+              "component": "text"
+            },
+            "logName": {
+              "type": "string",
+              "title": "Log Name",
+              "description": "",
+              "component": "text"
+            },
+            "logDesc": {
+              "type": "string",
+              "title": "Log Description",
+              "Description": "",
+              "component": "text"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -13,6 +13,7 @@ endif()
 
 json_schema_generate_cpp(${JSON_SCHEMA_GEN_ON_CONFIG} SCHEMA_HDRS ${SCHEMA_META_BASE_DIR} 
     "Config.json"
+    "LaunchSettings.json"
     )
 
 find_package(nlohmann_json CONFIG REQUIRED)
