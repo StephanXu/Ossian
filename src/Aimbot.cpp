@@ -34,10 +34,10 @@ Eigen::Vector3d Aimbot::PoseSolver::m_WorldToCamTran;
 cv::Point2d Aimbot::Armor::frameCenter(0, 0);
 
 Aimbot::Aimbot(Utils::ConfigLoader* config,
-               ossian::IOData<AutoAimData>* autoAimData)
+               ossian::IOData<AutoAimStatus>* autoAimStatus)
 	: m_Valid(false)
     , m_Config(config)
-    , m_AutoAimData(autoAimData)
+    , m_AutoAimStatusSender(autoAimStatus)
 {
     using OssianConfig::Configuration;
     Aimbot::LightBar::minArea = m_Config->Instance<Configuration>()->mutable_aimbot()->lightbarminarea();
@@ -120,15 +120,15 @@ void Aimbot::Process(unsigned char* pImage)
     {
         deltaYaw = 0, deltaPitch = 0, dist = 0;
     }
-    SPDLOG_INFO("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
+    //SPDLOG_INFO("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
 
-    std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
+    //std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
     m_AutoAimStatus.m_Found = foundArmor;
     m_AutoAimStatus.m_Pitch = deltaPitch;
     m_AutoAimStatus.m_Yaw = deltaYaw;
     m_AutoAimStatus.m_Dist = dist;
     m_AutoAimStatus.m_Timestamp = start;
-    m_AutoAimData->Set(m_AutoAimStatus);
+    m_AutoAimStatusSender->Set(m_AutoAimStatus);
     
     //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     //[TODO] 发送两角度给云台

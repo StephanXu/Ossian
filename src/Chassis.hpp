@@ -170,17 +170,17 @@ public:
 										 ossian::IOData<RemoteStatus>* remote,
 										 ICapacitor* capacitor,
 										 Chassis* chassis,
-										 GimbalCtrlTask* gimbalCtrlTask,
 										 Utils::ConfigLoader* config,
-										 ossian::IOData<PowerHeatData>* powerHeatDataListener))
+										 ossian::IOData<PowerHeatData>* powerHeatDataListener,
+										 ossian::IOData<GimbalStatus>* gimbalStatusListener))
 
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
 		, m_SpCap(capacitor)
 		, m_Chassis(chassis)
-		, m_GimbalCtrlTask(gimbalCtrlTask)
 		, m_Config(config)
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
+		, m_GimbalStatusListener(gimbalStatusListener)
 	{
 		using OssianConfig::Configuration;
 		PIDWheelSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->kp();
@@ -252,8 +252,9 @@ public:
 		m_ChassisSensorValues.rc = m_RCListener->Get();
 		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
-		m_ChassisSensorValues.gimbalInputSrc = m_GimbalCtrlTask->GimbalCtrlSrc();
-		m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();
+		m_ChassisSensorValues.gimbalStatus = m_GimbalStatusListener->Get();
+		/*m_ChassisSensorValues.gimbalCtrlMode = m_GimbalCtrlTask->GimbalCtrlSrc();
+		m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();*/
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000; //v
@@ -288,7 +289,7 @@ public:
 		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			while (12000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			while (1000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 			}
@@ -327,7 +328,6 @@ private:
 	ICapacitor* m_SpCap;
 	
 	Chassis* m_Chassis;
-	GimbalCtrlTask* m_GimbalCtrlTask;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 
 	bool m_FlagInitChassis;
@@ -341,8 +341,7 @@ private:
 		CapacitorStatus spCap;              ///< 超级电容数据
 		PowerHeatData refereePowerHeatData; ///< 裁判系统数据
 		int refereeMaxPwr = 80, refereeMaxBuf = 60;
-		double relativeAngle; ///< 底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
-		GimbalCtrlTask::GimbalInputSrc gimbalInputSrc;
+		GimbalStatus gimbalStatus;
 	} m_ChassisSensorValues;
 
 	double m_VxSet, m_VySet, m_WzSet; //三轴速度期望
@@ -350,6 +349,7 @@ private:
 
 
 	ChassisMode m_CurChassisMode;
+	ossian::IOData<GimbalStatus>* m_GimbalStatusListener;
 	Eigen::Vector4d m_WheelSpeedSet;
 	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
 	std::array<double, kNumChassisMotors> m_CurrentSend;

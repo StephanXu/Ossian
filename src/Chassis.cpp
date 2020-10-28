@@ -89,8 +89,8 @@ void ChassisCtrlTask::RCToChassisSpeed()
 
 void ChassisCtrlTask::ChassisModeSet()
 {
-	if (m_ChassisSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable
-		|| m_ChassisSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Init)
+	if (m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
+		|| m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init)
 	{
 		m_CurChassisMode = Disable;
 	}
@@ -214,12 +214,13 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 	else if (m_CurChassisMode == Follow_Gimbal_Yaw)
 	{
 		RCToChassisSpeed();
-		double cosine = cos(-m_ChassisSensorValues.relativeAngle), sine = sin(-m_ChassisSensorValues.relativeAngle);
+		double cosine = cos(-m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
+		double sine = sin(-m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
 		double vx = m_VxSet * cosine + m_VySet * sine;
 		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
-		m_WzSet = -m_PIDChassisAngle.Calc(m_ChassisSensorValues.relativeAngle, 0); //符号为负？
+		m_WzSet = -m_PIDChassisAngle.Calc(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis, 0); //符号为负？
 	}
 	/*else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{
@@ -233,7 +234,8 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 	else if (m_CurChassisMode == Top)
 	{
 		RCToChassisSpeed();
-		double cosine = cos(-m_ChassisSensorValues.relativeAngle), sine = sin(-m_ChassisSensorValues.relativeAngle);     
+		double cosine = cos(-m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
+		double sine = sin(-m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
 		double vx = m_VxSet * cosine + m_VySet * sine;
 		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
@@ -246,6 +248,6 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 
-		SPDLOG_INFO("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
+		//SPDLOG_INFO("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
 	}
 }

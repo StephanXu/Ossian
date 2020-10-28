@@ -11,7 +11,7 @@ std::array<double, 5> GimbalCtrlTask::PIDAutoAimInputParams;
 
 double GimbalCtrlTask::kAngleSpeedFilterCoef = 0;
 
-void GimbalCtrlTask::GimbalCtrlSrcSet()
+void GimbalCtrlTask::GimbalCtrlModeSet()
 {
 	/*std::cerr << kMinRelativeAngle[0] << '\t' << kMaxRelativeAngle[0] << std::endl;
 	std::cerr <<kMinRelativeAngle[1] << '\t' << kMaxRelativeAngle[1] << std::endl;*/
@@ -44,6 +44,7 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 				std::for_each(m_EcdAngleFilters.begin(), m_EcdAngleFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 				std::for_each(m_GyroSpeedFilters.begin(), m_GyroSpeedFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 				firstClosing = true;
+				m_TimestampInit = std::chrono::high_resolution_clock::time_point();
 				/*m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 				m_PIDAngleEcd[Pitch].Reset();
 				m_PIDAngleGyro[Pitch].Reset();
@@ -57,9 +58,9 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 			}
 			else
 			{
-				m_GimbalCtrlSrc = Init;
+				m_GimbalCtrlMode = GimbalCtrlMode::Init;
 				if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid)  //右侧开关保持居中，云台归中，否则失能
-					m_GimbalCtrlSrc = Disable;
+					m_GimbalCtrlMode = GimbalCtrlMode::Disable;
 				m_CurGimbalAngleMode.fill(Encoding);
 				
 				return;
@@ -68,9 +69,9 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 		}
 		else
 		{
-			m_GimbalCtrlSrc = Init;
+			m_GimbalCtrlMode = GimbalCtrlMode::Init;
 			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid)  //右侧开关保持居中，云台归中，否则失能
-				m_GimbalCtrlSrc = Disable;
+				m_GimbalCtrlMode = GimbalCtrlMode::Disable;
 			m_CurGimbalAngleMode.fill(Encoding);
 			
 			//m_TimestampInit = std::chrono::high_resolution_clock::time_point();
@@ -83,20 +84,20 @@ void GimbalCtrlTask::GimbalCtrlSrcSet()
 	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
 	{
 	case kRCSwUp:
-		m_GimbalCtrlSrc = Aimbot; break;  
+		m_GimbalCtrlMode = GimbalCtrlMode::Aimbot; break;
 	case kRCSwMid:
-		m_GimbalCtrlSrc = RC; break; //Aimbot
+		m_GimbalCtrlMode = GimbalCtrlMode::RC; break; //Aimbot
 	case kRCSwDown:
-		m_GimbalCtrlSrc = Disable; break;  //Mouse
+		m_GimbalCtrlMode = GimbalCtrlMode::Disable; break;  //Mouse
 	default:
-		m_GimbalCtrlSrc = Disable; break;
+		m_GimbalCtrlMode = GimbalCtrlMode::Disable; break;
 	}
 
 }
 
 void GimbalCtrlTask::GimbalCtrlInputProc()
 {
-	if (m_GimbalCtrlSrc == RC)
+	if (m_GimbalCtrlMode == GimbalCtrlMode::RC)
 	{
 		//遥控器传来的角度期望rad
 		m_AngleInput[Pitch] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kPitchChannel], kGimbalRCDeadband) * kPitchRCSen; 
@@ -104,17 +105,17 @@ void GimbalCtrlTask::GimbalCtrlInputProc()
 		//SPDLOG_INFO("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
 		//std::cerr << "AngleInput: " << m_AngleInput[Pitch] << '\t' << m_AngleInput[Yaw] << std::endl;
 	}
-	else if (m_GimbalCtrlSrc == Aimbot)
+	else if (m_GimbalCtrlMode == GimbalCtrlMode::Aimbot)
 	{
 		auto filterdAngles = m_AutoAimPredictor.Predict();
 		std::cerr << filterdAngles << std::endl;
-		m_AutoAimPredictor.Correct(m_GimbalSensorValues.autoAimData.m_Pitch, m_GimbalSensorValues.autoAimData.m_Yaw);
+		m_AutoAimPredictor.Correct(m_GimbalSensorValues.autoAimStatus.m_Pitch, m_GimbalSensorValues.autoAimStatus.m_Yaw);
 
 		m_AngleInput[Pitch] = m_PIDAutoAimInput[Pitch].Calc(filterdAngles(0), 0);
 		m_AngleInput[Yaw] = m_PIDAutoAimInput[Yaw].Calc(filterdAngles(1), 0);
 
-		/*m_AngleInput[Pitch] = m_PIDAutoAimInput[Pitch].Calc(m_GimbalSensorValues.autoAimData.m_Pitch, 0);
-		m_AngleInput[Yaw] = m_PIDAutoAimInput[Yaw].Calc(m_GimbalSensorValues.autoAimData.m_Yaw, 0);*/
+		/*m_AngleInput[Pitch] = m_PIDAutoAimInput[Pitch].Calc(m_GimbalSensorValues.autoAimStatus.m_Pitch, 0);
+		m_AngleInput[Yaw] = m_PIDAutoAimInput[Yaw].Calc(m_GimbalSensorValues.autoAimStatus.m_Yaw, 0);*/
 		//std::cerr << "AimbotInput: " << m_AngleInput[Pitch] << '\t' << m_AngleInput[Yaw] << std::endl;
 	}
 }
@@ -124,9 +125,9 @@ void GimbalCtrlTask::GimbalCtrlInputProc()
 void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 {
 	double curEcdAngle = m_GimbalSensorValues.relativeAngle[position];
-	if (m_GimbalCtrlSrc == Disable)
+	if (m_GimbalCtrlMode == GimbalCtrlMode::Disable)
 		return;
-	else if (m_GimbalCtrlSrc == RC || m_GimbalCtrlSrc == Aimbot)
+	else if (m_GimbalCtrlMode == GimbalCtrlMode::RC || m_GimbalCtrlMode == GimbalCtrlMode::Aimbot)
 	{
 		double angleInput = m_AngleInput[position]; 
 		if (m_CurGimbalAngleMode[position] == Gyro)
@@ -159,7 +160,7 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 			//SPDLOG_INFO("@RelativeAngleYaw=[$min={},$max={}]", kMinRelativeAngle[Yaw], kMaxRelativeAngle[Yaw]);
 		}
 	}
-	else if (m_GimbalCtrlSrc == Init)
+	else if (m_GimbalCtrlMode == GimbalCtrlMode::Init)
 	{
 		m_EcdAngleSet[Pitch] = 0;
 		m_EcdAngleSet[Yaw] = 0;
@@ -169,9 +170,9 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 
 void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 {
-	if (m_GimbalCtrlSrc == Disable)
+	if (m_GimbalCtrlMode == GimbalCtrlMode::Disable)
 		m_VoltageSend.fill(0);
-	else if (m_GimbalCtrlSrc == RC || m_GimbalCtrlSrc == Init || m_GimbalCtrlSrc == Aimbot)
+	else if (m_GimbalCtrlMode == GimbalCtrlMode::RC || m_GimbalCtrlMode == GimbalCtrlMode::Init || m_GimbalCtrlMode == GimbalCtrlMode::Aimbot)
 	{
 		double angleSpeedSet;
 		double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);

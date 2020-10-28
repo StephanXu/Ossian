@@ -23,8 +23,8 @@ void FricCtrlTask::FricModeSet()
 	//遥控器右侧开关上拨一次，开启摩擦轮；再上拨一次，关闭摩擦轮
 	
 	//如果云台失能，则摩擦轮也失能
-	if (m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Disable
-		|| m_FricSensorValues.gimbalInputSrc == GimbalCtrlTask::GimbalInputSrc::Init)
+	if (m_FricSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
+		|| m_FricSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init)
 	{
 		m_FricMode = FricMode::Disable;
 	}
@@ -101,7 +101,7 @@ void FricCtrlTask::FricCtrl()
 	m_Gun->SendCurrentToMotorsFric(currentSend);
 }
 
-//[TODO] 鼠标键盘射击逻辑
+//[TODO] 鼠标键盘射击逻辑，自瞄发弹逻辑
 void FeedCtrlTask::FeedModeSet()
 {
 	//若超热量则拨弹轮停转
@@ -109,14 +109,18 @@ void FeedCtrlTask::FeedModeSet()
 		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet;
 	
 	//若摩擦轮停转，则拨弹轮停转
-	if (/*overheat || */m_FricCtrlTask->Stopped())
-		m_FeedMode = FeedMode::Stop;
+	if (/*overheat || */m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
+		|| m_FeedSensorValues.fricStatus.m_Mode == FricMode::Disable
+		|| m_FeedSensorValues.fricStatus.m_FlagLowRPM)
+	{
+		m_FeedMode = FeedMode::Disable;
+	}
 	else
 	{
 		if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
 			m_FeedMode = FeedMode::Auto;
 		else
-			m_FeedMode = FeedMode::Stop;
+			m_FeedMode = FeedMode::Disable;
 		//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
 		/*int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
 		if (thumbWheelValue > 0)
@@ -131,29 +135,45 @@ void FeedCtrlTask::FeedModeSet()
 	/*bool jammed = m_FeedMode != FeedMode::Stop && m_FeedMotorStatus.m_RPM[Feed] < kFeedJamRPM;
 	if (jammed)
 		m_FeedMode = FeedMode::Reverse; */
-	m_FeedMode = FeedMode::Stop;
+	
+	if (m_FeedMode==FeedMode::Semi || m_FeedMode==FeedMode::Burst) //单发、N连发间隔2s
+	{
+		if (m_FlagInPosition)
+		{
+			static std::chrono::high_resolution_clock::time_point m_TimestampLastInPosition;
+			long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::high_resolution_clock::now() - m_TimestampLastInPosition).count();
+			if (interval < 2000 && m_TimestampLastInPosition != std::chrono::high_resolution_clock::time_point())
+				m_FeedMode = FeedMode::Stop;
+			else
+				m_FlagInPosition = false;  //停顿2s后，继续执行单发或N连发
+
+			m_TimestampLastInPosition = std::chrono::high_resolution_clock::now();
+		}
+
+	}
+	m_FeedMode = FeedMode::Disable;
 	//SPDLOG_INFO("@FeedMode=[$mode={}]", m_FeedMode);
 }
 
 //deltaAngle：拨盘的角度变化量
-void FeedCtrlTask::FeedRotateCtrl(bool stop, double deltaAngle)
+void FeedCtrlTask::FeedRotateCtrl(bool disable, double deltaAngle)
 {
-	static int lastEcd = -1;
+	static int lastEcd = m_FeedEcdMid;
 	static double sumPerCtrlDeltaAngleGet = 0;
 
 	double current = 0;
-	if (stop)
+	if (disable)
 		current = 0;
 	else
 	{
-		double perCtrlDeltaAngleGet = 0;
-		if (lastEcd >= 0)
-			sumPerCtrlDeltaAngleGet += RelativeEcdToRad(m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed], lastEcd) / kSpeedToMotorRPMCoef;
+		sumPerCtrlDeltaAngleGet += RelativeEcdToRad(m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed], lastEcd) / kSpeedToMotorRPMCoef;
 
 		if (fabs(deltaAngle - sumPerCtrlDeltaAngleGet) < 0.01)  //已经到达目标位置
 		{
 			m_FlagInPosition = true;
 			sumPerCtrlDeltaAngleGet = 0;
+			lastEcd = m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed];
 		}
 		else
 		{
@@ -176,7 +196,7 @@ void FeedCtrlTask::FeedRotateCtrl(bool stop, double deltaAngle)
 			/*static_cast<int>(m_FeedSensorValues.phototubeStatus.m_Status) * 2000*/);
 		}
 	}
-	lastEcd = m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed];
+	
 	m_Gun->SendCurrentToMotorFeed(current);
 }
 
@@ -205,45 +225,41 @@ void FeedCtrlTask::FeedRotateCtrl(bool stop, double deltaAngle)
 
 void FeedCtrlTask::FeedCtrl()
 {
-	static int shootCnt = 0;
+	/*static int shootCnt = 0;
 	long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::high_resolution_clock::now() - m_LastShootTimestamp).count();
+		std::chrono::high_resolution_clock::now() - m_LastShootTimestamp).count();*/
 	
-	if (m_FeedMode == FeedMode::Stop)
+	if (m_FeedMode == FeedMode::Disable)
 		FeedRotateCtrl(true);
+	else if (m_FeedMode == FeedMode::Stop || m_FeedMode == FeedMode::Init)
+		FeedRotateCtrl(false, 0);
 	/*else if (m_FeedMode == FeedMode::Reload)
 		AutoReloadCtrl();
 	else if (m_FeedMode == FeedMode::Reverse)
 		FeedRotateCtrl(false, kFeedNormalSpeed, true);*/
 	else if (m_FeedMode == FeedMode::Semi)
 	{
-		
-		//SingleShotCtrl(kFeedSemiSpeed);
-		if (interval >= 2000 || m_LastShootTimestamp == std::chrono::high_resolution_clock::time_point())  //单发间隔2s
-		{
-			FeedRotateCtrl(false, kAnglePerCell);
-			if (m_FlagInPosition)
-				m_LastShootTimestamp = std::chrono::high_resolution_clock::now();
-		}
+		FeedRotateCtrl(false, kAnglePerCell);
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		if (interval >= 4000 || m_LastShootTimestamp == std::chrono::high_resolution_clock::time_point())  //三连发间隔4s
-		{
-			if (shootCnt < kBurstBulletNum)
-			{
-				FeedRotateCtrl(false, kAnglePerCell);
-				if (m_FlagInPosition)
-					++shootCnt;
-			}
-			else
-			{
-				shootCnt = 0;
-				if (m_FlagInPosition)
-					m_LastShootTimestamp = std::chrono::high_resolution_clock::now();
-			}
-			
-		}
+		FeedRotateCtrl(false, kAnglePerCell * kBurstBulletNum);
+		//if (interval >= 4000 || m_LastShootTimestamp == std::chrono::high_resolution_clock::time_point())  //三连发间隔4s
+		//{
+		//	if (shootCnt < kBurstBulletNum)
+		//	{
+		//		FeedRotateCtrl(false, kAnglePerCell);
+		//		if (m_FlagInPosition)
+		//			++shootCnt;
+		//	}
+		//	else
+		//	{
+		//		shootCnt = 0;
+		//		if (m_FlagInPosition)
+		//			m_LastShootTimestamp = std::chrono::high_resolution_clock::now();
+		//	}
+		//	
+		//}
 		//SingleShotCtrl(kFeedSemiSpeed);
 		//if (interval >= 2000 || m_LastShootTimestamp == hrClock::time_point()) // 三连发间隔2s
 		//{
@@ -261,7 +277,7 @@ void FeedCtrlTask::FeedCtrl()
 		//}
 	}
 	else if (m_FeedMode == FeedMode::Auto)
-		FeedRotateCtrl(false, kAnglePerCell*2);
+		FeedRotateCtrl(false, kAnglePerCell);
 		//SingleShotCtrl(kFeedAutoSpeed);
 }
 

@@ -132,7 +132,18 @@ private:
 	
 };
 
-class FricCtrlTask : public ossian::IExecutable
+enum class FricMode
+{
+	Disable, Enable
+};
+
+struct FricStatus
+{
+	FricMode m_Mode;
+	bool m_FlagLowRPM;
+};
+
+class FricCtrlTask : public ossian::IExecutable, public ossian::IODataBuilder<std::mutex, FricStatus>
 {
 public:
 	//摩擦轮转速期望rpm [TODO]实验得出不同等级下的射击初速度上限所对应的摩擦轮转速期望
@@ -153,28 +164,25 @@ public:
 	static std::array<double, 5> PIDFricSpeedParams;
 
 	//摩擦轮转速下限
-	static constexpr int16_t kFricLowSpeed = 10;
+	static constexpr int16_t kFricLowSpeed = 100;
 
 	enum MotorPosition
 	{
 		FricBelow = 0, FricUpper
 	};
-
-	enum FricMode
-	{
-		Disable, Enable
-	};
 	
 	OSSIAN_SERVICE_SETUP(FricCtrlTask(ossian::IOData<RemoteStatus>* remote,
-		GimbalCtrlTask* gimbalCtrlTask,
 		Utils::ConfigLoader* config,
 		Gun* gun,
-		ossian::IOData<GunFricMotorsModel>* motorsFricListener))
+		ossian::IOData<GunFricMotorsModel>* motorsFricListener,
+		ossian::IOData<GimbalStatus>* gimbalStatusListener,
+		ossian::IOData<FricStatus>* fricStatusSender))
 		: m_RCListener(remote)
-		, m_GimbalCtrlTask(gimbalCtrlTask)
 		, m_Config(config)
 		, m_Gun(gun)
 		, m_MotorsFricListener(motorsFricListener)
+		, m_GimbalStatusListener(gimbalStatusListener)
+		, m_FricStatusSender(fricStatusSender)
 	{
 		using OssianConfig::Configuration;
 		PIDFricSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->kp();
@@ -197,8 +205,6 @@ public:
 
 		FirstOrderFilter rpmFdbFilter(0.25, 0.003);
 		m_RPMFdbFilters.fill(rpmFdbFilter);
-
-		
 	}
 
 	void InitFric()
@@ -214,15 +220,16 @@ public:
 	void UpdateFricSensorFeedback()
 	{
 		m_FricSensorValues.rc = m_RCListener->Get();
-		m_FricSensorValues.gimbalInputSrc = m_GimbalCtrlTask->GimbalCtrlSrc();  //[TODO] 增加对自瞄模式射击的处理
+		m_FricSensorValues.gimbalStatus = m_GimbalStatusListener->Get();
+		//m_FricSensorValues.gimbalCtrlMode = m_GimbalCtrlTask->GimbalCtrlSrc();  //[TODO] 增加对自瞄模式射击的处理
 	}
 
-	bool Stopped() 
+	/*bool Stopped() 
 	{ 
 		return (m_FricMode == FricMode::Disable
 			|| std::abs(m_FricMotorsStatus.m_RPM[FricBelow]) < kFricLowSpeed
 			|| std::abs(m_FricMotorsStatus.m_RPM[FricUpper]) < kFricLowSpeed);
-	}
+	}*/
 
 	void FricModeSet();
 
@@ -239,7 +246,7 @@ public:
 		while (true)
 		{
 			//SPDLOG_INFO("@FricInterval=[$timefric={}]", std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count());
-			while (3000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			while (1000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 			}
@@ -252,26 +259,32 @@ public:
 				InitFric();
 
 			FricModeSet();
+			m_Status.m_Mode = m_FricMode;
+			m_Status.m_FlagLowRPM = (std::abs(m_FricMotorsStatus.m_RPM[FricBelow]) < kFricLowSpeed
+									 || std::abs(m_FricMotorsStatus.m_RPM[FricUpper]) < kFricLowSpeed);
+			m_FricStatusSender->Set(m_Status);
 			FricExpSpeedSet();
 			FricCtrl();
 		}
 	}
 
-
 private:
 	Utils::ConfigLoader* m_Config;
 	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
-	GimbalCtrlTask* m_GimbalCtrlTask;
 
 	ossian::IOData<GunFricMotorsModel>* m_MotorsFricListener;
-	
+	ossian::IOData<GimbalStatus>* m_GimbalStatusListener;
+
+	FricStatus m_Status;
+	ossian::IOData<FricStatus>* m_FricStatusSender;
+
 	GunFricMotorsModel m_FricMotorsStatus;
 	Gun* m_Gun;
 
 	struct FricSensorFeedback
 	{
 		RemoteStatus rc;	 //遥控器数据
-		GimbalCtrlTask::GimbalInputSrc gimbalInputSrc;
+		GimbalStatus gimbalStatus;
 		//double refereeCurHeat, refereeHeatLimit;
 		uint8_t shooter_heat0_speed_limit = 30;
 
@@ -295,12 +308,13 @@ public:
 
 	enum FeedMode
 	{
-		Stop, Reload, Reverse, Semi, Burst, Auto
+		Disable, Init, Stop, Reload, Reverse, Semi, Burst, Auto
 	};
 
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192.0 / 36.0;  //电机编码值---拨盘旋转角度
-	static constexpr double kNumCells = 8;
+	static constexpr int kNumCells = 8;
 	static constexpr double kAnglePerCell = 2 * M_PI / kNumCells;
+	static constexpr std::array<uint16_t, kNumCells> kFeedMidEcds{ 100,500,1000,2000,3000,4000,5000,6000 };
 
 	//遥控器解析
 	static constexpr int16_t kGunRCDeadband = 10; //拨轮死区
@@ -328,18 +342,16 @@ public:
 	static std::array<double, 5> PIDFeedSpeedParams;
 
 	OSSIAN_SERVICE_SETUP(FeedCtrlTask(ossian::IOData<RemoteStatus>* remote,
-		GimbalCtrlTask* gimbalCtrlTask,
-		FricCtrlTask* fricCtrlTask,
 		Utils::ConfigLoader* config,
 		Gun* gun,
 		ossian::IOData<GunFeedMotorsModel>* motorFeedListener,
 		ossian::IOData<PowerHeatData>* powerHeatDataListener,
 		ossian::IOData<RobotStatus>* robotStatusListener,
 		ossian::IOData<ShootData>* shootDataListener,
-		ossian::IOData<PhototubeStatus>* phototubeListener))
+		ossian::IOData<PhototubeStatus>* phototubeListener,
+		ossian::IOData<GimbalStatus>* gimbalStatusListener,
+		ossian::IOData<FricStatus>* fricStatusListener))
 		: m_RCListener(remote)
-		, m_GimbalCtrlTask(gimbalCtrlTask)
-		, m_FricCtrlTask(fricCtrlTask)
 		, m_Config(config)
 		, m_Gun(gun)
 		, m_MotorFeedListener(motorFeedListener)
@@ -347,6 +359,8 @@ public:
 		, m_RefereeRobotStatusListener(robotStatusListener)
 		, m_RefereeShootDataListener(shootDataListener)
 		, m_PhototubeListener(phototubeListener)
+		, m_GimbalStatusListener(gimbalStatusListener)
+		, m_FricStatusListener(fricStatusListener)
 	{
 		using OssianConfig::Configuration;
 
@@ -380,7 +394,8 @@ public:
 			++m_CurBulletShotNum;
 		});*/
 		m_FlagInitFeed = true;
-		m_FeedMode = FeedMode::Stop;
+		m_FlagFindEcdMid = true;
+		m_FeedMode = FeedMode::Disable;
 
 		m_PIDFeedAngle.SetParams(PIDFeedAngleParams);
 		m_PIDFeedAngle.SetFlagAngleLoop();
@@ -389,19 +404,73 @@ public:
 		m_RPMFdbFilter.SetState(0.25, 0.006);
 	}
 
+	void FindEcdMid()
+	{
+		double absMinAngle = DBL_MAX;
+		for (const auto& ecdMid : kFeedMidEcds)
+		{
+			double relativeAngle = RelativeEcdToRad(m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed],
+				ecdMid) / kSpeedToMotorRPMCoef;
+			if (relativeAngle > 0 && fabs(relativeAngle) < absMinAngle)  //拨弹轮只能正转
+			{
+				absMinAngle = fabs(relativeAngle);
+				m_FeedEcdMid = ecdMid;
+			}
+		}
+		m_FlagFindEcdMid = false;
+	}
+
 	void InitFeed()
 	{
-		m_FeedMode = FeedMode::Stop;
-		m_PIDFeedSpeed.Reset();
-		m_CurBulletShotNum = 0;
-		m_LastShootTimestamp = std::chrono::high_resolution_clock::time_point();
-		m_RPMFdbFilter.Reset();
-		m_PIDFeedAngle.Reset();
-		m_FlagInPosition = false;
-		//m_AngleSet = m_FeedSensorValues.relativeAngle;
-		//m_EcdMid = m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed];
+		static bool firstClosing = true;
+		if (fabs(m_FeedSensorValues.relativeAngle) < 0.01)
+		{
+			if (firstClosing)
+			{
+				m_TimestampInit = std::chrono::high_resolution_clock::now();
+				firstClosing = false;
+			}
 
-		m_FlagInitFeed = false;
+			long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::high_resolution_clock::now() - m_TimestampInit).count();
+			//std::cerr << interval << std::endl;
+			if (interval > 2000 && m_TimestampInit != std::chrono::high_resolution_clock::time_point())  //在中值处稳定一段时间
+			{
+				std::cerr << "Feed Init Done!" << std::endl;
+				m_FeedMode = FeedMode::Disable;
+				m_PIDFeedSpeed.Reset();
+				m_CurBulletShotNum = 0;
+				m_LastShootTimestamp = std::chrono::high_resolution_clock::time_point();
+				m_RPMFdbFilter.Reset();
+				m_PIDFeedAngle.Reset();
+				m_FlagInPosition = false;
+
+				firstClosing = true;
+				m_TimestampInit = std::chrono::high_resolution_clock::time_point();
+
+				m_FlagInitFeed = false;
+			}
+			else
+			{
+				m_FeedMode = FeedMode::Init;
+				if (m_FeedSensorValues.rc.sw[kShootModeChannel] != kRCSwMid)  //右侧开关保持居中，云台归中，否则失能
+					m_FeedMode = FeedMode::Disable;
+
+				return;
+			}
+
+			//m_AngleSet = m_FeedSensorValues.relativeAngle;
+			//m_EcdMid = m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed];
+
+		}
+		else
+		{
+			m_FeedMode = FeedMode::Init;
+			if (m_FeedSensorValues.rc.sw[kShootModeChannel] != kRCSwMid)  //右侧开关保持居中，云台归中，否则失能
+				m_FeedMode = FeedMode::Disable;
+
+			return;
+		}
 	}
 
 	void UpdateFeedSensorFeedback()
@@ -409,11 +478,13 @@ public:
 		static uint16_t lastHeat = 0;      //上次读取的热量值
 
 		m_FeedSensorValues.rc = m_RCListener->Get();
-		m_FeedSensorValues.gimbalInputSrc = m_GimbalCtrlTask->GimbalCtrlSrc();  //[TODO] 增加对自瞄模式射击的处理
+		//m_FeedSensorValues.gimbalCtrlMode = m_GimbalCtrlTask->GimbalCtrlSrc();  //[TODO] 增加对自瞄模式射击的处理
 		m_FeedSensorValues.phototubeStatus = m_PhototubeListener->Get();
 		
-		/*m_FeedSensorValues.relativeAngle = 
-			RelativeEcdToRad(m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed], m_EcdMid) / kSpeedToMotorRPMCoef;*/	
+		m_FeedSensorValues.relativeAngle = 
+			RelativeEcdToRad(m_FeedMotorStatus.m_Encoding[FeedCtrlTask::Feed], m_FeedEcdMid) / kSpeedToMotorRPMCoef;
+		m_FeedSensorValues.gimbalStatus = m_GimbalStatusListener->Get();
+		m_FeedSensorValues.fricStatus = m_FricStatusListener->Get();
 		/*m_FeedSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_FeedSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();*/
 
@@ -426,7 +497,7 @@ public:
 	void FeedModeSet();
 
 	//发送电流给2006
-	void FeedRotateCtrl(bool stop=true, double deltaAngle=0);
+	void FeedRotateCtrl(bool disable=true, double deltaAngle=0);
 
 	//void AutoReloadCtrl();
 
@@ -446,7 +517,7 @@ public:
 			//auto interval = std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count();
 			//double interval = (double)(clock() - lastTime) / CLOCKS_PER_SEC * 1000.0;
 			//SPDLOG_INFO("@FeedInterval=[$timefeed={}]", interval);
-			while (6000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			while (1000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 				//interval = (double)(clock() - lastTime) / CLOCKS_PER_SEC * 1000.0;
@@ -457,6 +528,10 @@ public:
 			//SPDLOG_INFO("@FeedSpeedSet=[$normal={},$semi={},$burst={},$auto={}]", kFeedNormalSpeed, kFeedSemiSpeed, kFeedBurstSpeed, kFeedAutoSpeed);
 
 			m_FeedMotorStatus = m_MotorFeedListener->Get();
+
+			//找离初始位置最近的击发中值
+			if (m_FlagFindEcdMid)
+				FindEcdMid();
 
 			UpdateFeedSensorFeedback();
 
@@ -477,9 +552,9 @@ private:
 	ossian::IOData<ShootData>* m_RefereeShootDataListener;
 	ossian::IOData<GunFeedMotorsModel>* m_MotorFeedListener;
 	ossian::IOData<PhototubeStatus>* m_PhototubeListener;
+	ossian::IOData<GimbalStatus>* m_GimbalStatusListener;
+	ossian::IOData<FricStatus>* m_FricStatusListener;
 
-	GimbalCtrlTask* m_GimbalCtrlTask;
-	FricCtrlTask* m_FricCtrlTask;
 	Gun* m_Gun;
 	GunFeedMotorsModel m_FeedMotorStatus;
 	
@@ -487,17 +562,19 @@ private:
 	struct FeedSensorFeedback
 	{
 		RemoteStatus rc;	 //遥控器数据
-		GimbalCtrlTask::GimbalInputSrc gimbalInputSrc;
 		PowerHeatData refereePowerHeatData;
 		RobotStatus refereeRobotStatus;
 		PhototubeStatus phototubeStatus;
 		double relativeAngle;  //拨盘角度	
-		
+		GimbalStatus gimbalStatus;
+		FricStatus fricStatus;
 		//double refereeCurHeat, refereeHeatLimit;
 	} m_FeedSensorValues;
 
-	bool m_FlagInitFeed;
+	bool m_FlagInitFeed, m_FlagFindEcdMid;
+	uint16_t m_FeedEcdMid=0;
 	std::chrono::high_resolution_clock::time_point m_LastShootTimestamp;
+	std::chrono::high_resolution_clock::time_point m_TimestampInit;
 	std::atomic<int> m_CurBulletShotNum; //在热量持续上升的过程中，累积打出的子弹数
 	PIDController m_PIDFeedAngle, m_PIDFeedSpeed;
 	bool m_FlagInPosition;

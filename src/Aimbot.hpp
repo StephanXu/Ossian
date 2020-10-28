@@ -26,7 +26,7 @@
 
 namespace Utils = ossian::Utils;
 
-struct AutoAimData
+struct AutoAimStatus
 {
     bool m_Found;
     double m_Pitch; //rad
@@ -36,13 +36,13 @@ struct AutoAimData
     std::chrono::high_resolution_clock::time_point m_Timestamp;
 };
 
-class Aimbot : public ossian::IODataBuilder<std::mutex, AutoAimData>
+class Aimbot : public ossian::IODataBuilder<std::mutex, AutoAimStatus>
 {
 public:
     static const int kGpuMatStep = 1536;
     void Process(unsigned char* pImage);
     OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config, 
-                                ossian::IOData<AutoAimData>* autoAimData));
+                                ossian::IOData<AutoAimStatus>* autoAimStatus));
     ~Aimbot()
     {
 #ifdef WITH_CUDA
@@ -55,8 +55,8 @@ public:
     cv::Mat debugFrame;
 
 private:
-    AutoAimData m_AutoAimStatus;
-    ossian::IOData<AutoAimData>* m_AutoAimData;
+    AutoAimStatus m_AutoAimStatus;
+    ossian::IOData<AutoAimStatus>* m_AutoAimStatusSender;
 
     enum class ArmorType
     {
