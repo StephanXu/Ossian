@@ -41,7 +41,7 @@ class Aimbot : public ossian::IODataBuilder<std::mutex, AutoAimStatus>
 public:
     static const int kGpuMatStep = 1536;
     void Process(unsigned char* pImage);
-    OSSIAN_SERVICE_SETUP(Aimbot(Utils::ConfigLoader* config, 
+    OSSIAN_SERVICE_SETUP(Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config, 
                                 ossian::IOData<AutoAimStatus>* autoAimStatus));
     ~Aimbot()
     {
@@ -426,10 +426,9 @@ private:
 
     bool DetectArmor(unsigned char* pImage, Armor& outTarget) noexcept
     {
-        using OssianConfig::Configuration;
-        static int enemyColor = m_Config->Instance<Configuration>()->mutable_aimbot()->enemycolor();
-        static int brightness = m_Config->Instance<Configuration>()->mutable_aimbot()->brightness();
-        static int thresColor = m_Config->Instance<Configuration>()->mutable_aimbot()->threscolor();
+        static int enemyColor = static_cast<int>(*m_Config->Instance()->vision->aimbot->enemyColor);
+        static int brightness = *m_Config->Instance()->vision->aimbot->thresBrightness;
+        static int thresColor = *m_Config->Instance()->vision->aimbot->thresColor;
         
 #ifdef WITH_CUDA
         cudaMemcpy(m_pdFrame, pImage, 1440 * 1080 * 1, cudaMemcpyHostToDevice);
@@ -573,7 +572,7 @@ private:
 
     std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;
     std::atomic_bool m_Valid = false;
-    Utils::ConfigLoader* m_Config = nullptr;
+    ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config = nullptr;
 };
 
 #endif // AIMBOT_HPP

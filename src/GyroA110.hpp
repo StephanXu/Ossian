@@ -5,7 +5,7 @@
 #include <ossian/io/CAN.hpp>
 #include <ossian/GeneralIO.hpp>
 
-struct Gyro6AxisStatus
+struct GyroA110Status
 {
 	int16_t m_XAxisSpeed;
 	int16_t m_YAxisSpeed;
@@ -21,13 +21,13 @@ struct Gyro6AxisStatus
 };
 
 template <typename Mutex>
-class Gyro6Axis : public ossian::IODataBuilder<Mutex, Gyro6AxisStatus>
+class GyroA110 : public ossian::IODataBuilder<Mutex, GyroA110Status>
 {
 	ossian::CANManager* m_CANManager;
-	ossian::IOData<Gyro6AxisStatus>* m_IOData;
+	ossian::IOData<GyroA110Status>* m_IOData;
 
 public:
-	OSSIAN_SERVICE_SETUP(Gyro6Axis(ossian::CANManager* ioManager, ossian::IOData<Gyro6AxisStatus>* ioData))
+	OSSIAN_SERVICE_SETUP(GyroA110(ossian::CANManager* ioManager, ossian::IOData<GyroA110Status>* ioData))
 		: m_CANManager(ioManager)
 		, m_IOData(ioData)
 	{}
@@ -119,8 +119,8 @@ private:
 	};
 };
 
-using Gyro6AxisMt = Gyro6Axis<std::mutex>;
+using GyroA110Mt = GyroA110<std::mutex>;
 
-using Gyro6AxisSt = Gyro6Axis<ossian::null_mutex>;
+using GyroA110St = GyroA110<ossian::null_mutex>;
 
 #endif // OSSIAN_GYRO_6AXIS

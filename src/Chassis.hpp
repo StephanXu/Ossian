@@ -5,6 +5,8 @@
 #include <ossian/motors/DJIMotor.hpp>
 #include <ossian/IOData.hpp>
 #include <ossian/Pipeline.hpp>
+#include <Config.schema.hpp>
+#include <ossian/Configuration.hpp>
 #include <spdlog/spdlog.h>
 
 #include "CtrlAlgorithms.hpp"
@@ -170,7 +172,7 @@ public:
 										 ossian::IOData<RemoteStatus>* remote,
 										 ICapacitor* capacitor,
 										 Chassis* chassis,
-										 Utils::ConfigLoader* config,
+										 ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
 										 ossian::IOData<PowerHeatData>* powerHeatDataListener,
 										 ossian::IOData<GimbalStatus>* gimbalStatusListener))
 
@@ -182,23 +184,22 @@ public:
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
 		, m_GimbalStatusListener(gimbalStatusListener)
 	{
-		using OssianConfig::Configuration;
-		PIDWheelSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->kp();
-		PIDWheelSpeedParams[1] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->ki();
-		PIDWheelSpeedParams[2] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->kd();
-		PIDWheelSpeedParams[3] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->thout();
-		PIDWheelSpeedParams[4] = m_Config->Instance<Configuration>()->mutable_pidwheelspeed()->thiout();
+		PIDWheelSpeedParams[0] = *m_Config->Instance()->pids->pidWheelSpeed->kP;
+		PIDWheelSpeedParams[1] = *m_Config->Instance()->pids->pidWheelSpeed->kI;
+		PIDWheelSpeedParams[2] = *m_Config->Instance()->pids->pidWheelSpeed->kD;
+		PIDWheelSpeedParams[3] = *m_Config->Instance()->pids->pidWheelSpeed->thOut;
+		PIDWheelSpeedParams[4] = *m_Config->Instance()->pids->pidWheelSpeed->thIOut;
 
-		PIDChassisAngleParams[0] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->kp();
-		PIDChassisAngleParams[1] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->ki();
-		PIDChassisAngleParams[2] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->kd();
-		PIDChassisAngleParams[3] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->thout();
-		PIDChassisAngleParams[4] = m_Config->Instance<Configuration>()->mutable_pidchassisangle()->thiout();
+		PIDChassisAngleParams[0] = *m_Config->Instance()->pids->pidChassisAngle->kP;
+		PIDChassisAngleParams[1] = *m_Config->Instance()->pids->pidChassisAngle->kI;
+		PIDChassisAngleParams[2] = *m_Config->Instance()->pids->pidChassisAngle->kD;
+		PIDChassisAngleParams[3] = *m_Config->Instance()->pids->pidChassisAngle->thOut;
+		PIDChassisAngleParams[4] = *m_Config->Instance()->pids->pidChassisAngle->thIOut;
 
-		kTopWz = m_Config->Instance<Configuration>()->mutable_chassis()->ktopwz();
-		kVxFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->kvxfiltercoef();
-		kVyFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->kvyfiltercoef();
-		kRPMFdbFilterCoef = m_Config->Instance<Configuration>()->mutable_chassis()->krpmfdbfiltercoef();
+		kTopWz = *m_Config->Instance()->control->chassis->topWz;
+		kVxFilterCoef = *m_Config->Instance()->control->chassis->vxFilterCoef;
+		kVyFilterCoef = *m_Config->Instance()->control->chassis->vyFilterCoef;
+		kRPMFdbFilterCoef = *m_Config->Instance()->control->chassis->rpmFdbFilterCoef;
 
 		double coef = kWheelXn + kWheelYn;
 		m_WheelKinematicMat << 1, -1, -coef,
@@ -322,7 +323,7 @@ public:
 	}
 
 private:
-	Utils::ConfigLoader* m_Config;
+	ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config;
 	ossian::IOData<RemoteStatus>* m_RCListener; //遥控器
 	ossian::IOData<ChassisMotorsModel>* m_MotorsListener;
 	ICapacitor* m_SpCap;

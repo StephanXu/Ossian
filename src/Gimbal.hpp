@@ -7,7 +7,7 @@
 #include "CtrlAlgorithms.hpp"
 #include "InputAdapter.hpp"
 #include "Remote.hpp"
-#include "GyroA204.hpp"
+#include "GyroA110.hpp"
 #include "Aimbot.hpp"
 
 #include <chrono>
@@ -160,7 +160,7 @@ public:
 	static std::array<double, 5> PIDAutoAimInputParams;
 
 	static constexpr double kGimbalCtrlPeriod = 0.005;
-	static double kAngleSpeedFilterCoef;
+	//static double kAngleSpeedFilterCoef;
 
 	enum GimbalAngleMode
 	{
@@ -175,64 +175,61 @@ public:
 	OSSIAN_SERVICE_SETUP(GimbalCtrlTask(ossian::IOData<GimbalMotorsModel>* motors,
 		ossian::IOData<RemoteStatus>* remote,
 		Gimbal* gimbal,
-		Utils::ConfigLoader* config,
-		ossian::IOData<GyroA204Status<GyroType::Pitch>>* gyroPitchListener,
-		ossian::IOData<GyroA204Status<GyroType::Yaw>>* gyroYawListener,
+		ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
+		ossian::IOData<GyroA110Status>* gyroListener,
 		ossian::IOData<AutoAimStatus>* autoAimStatusListener,
 		ossian::IOData<GimbalStatus>* gimbalStatusSender))
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
 		, m_Gimbal(gimbal)
 		, m_Config(config)
-		, m_GyroA204PitchListener(gyroPitchListener)
-		, m_GyroA204YawListener(gyroYawListener)
+		, m_GyroListener(gyroListener)
 		, m_AutoAimStatusListener(autoAimStatusListener)
 		, m_GimbalStatusSender(gimbalStatusSender)
 	{
-		using OssianConfig::Configuration;
-		PIDAngleEcdPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->kp();
-		PIDAngleEcdPitchParams[1] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->ki();
-		PIDAngleEcdPitchParams[2] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->kd();
-		PIDAngleEcdPitchParams[3] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->thout();
-		PIDAngleEcdPitchParams[4] = m_Config->Instance<Configuration>()->mutable_pidangleecdpitch()->thiout();
+		PIDAngleEcdPitchParams[0] = *m_Config->Instance()->pids->pidAngleEcdPitch->kP;
+		PIDAngleEcdPitchParams[1] = *m_Config->Instance()->pids->pidAngleEcdPitch->kI;
+		PIDAngleEcdPitchParams[2] = *m_Config->Instance()->pids->pidAngleEcdPitch->kD;
+		PIDAngleEcdPitchParams[3] = *m_Config->Instance()->pids->pidAngleEcdPitch->thOut;
+		PIDAngleEcdPitchParams[4] = *m_Config->Instance()->pids->pidAngleEcdPitch->thIOut;
 
-		PIDAngleGyroPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->kp();
-		PIDAngleGyroPitchParams[1] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->ki();
-		PIDAngleGyroPitchParams[2] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->kd();
-		PIDAngleGyroPitchParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->thout();
-		PIDAngleGyroPitchParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglegyropitch()->thiout();
+		PIDAngleGyroPitchParams[0] = *m_Config->Instance()->pids->pidAngleGyroPitch->kP;
+		PIDAngleGyroPitchParams[1] = *m_Config->Instance()->pids->pidAngleGyroPitch->kI;
+		PIDAngleGyroPitchParams[2] = *m_Config->Instance()->pids->pidAngleGyroPitch->kD;
+		PIDAngleGyroPitchParams[3] = *m_Config->Instance()->pids->pidAngleGyroPitch->thOut;
+		PIDAngleGyroPitchParams[4] = *m_Config->Instance()->pids->pidAngleGyroPitch->thIOut;
 
-		PIDAngleSpeedPitchParams[0] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->kp();
-		PIDAngleSpeedPitchParams[1] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->ki();
-		PIDAngleSpeedPitchParams[2] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->kd();
-		PIDAngleSpeedPitchParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->thout();
-		PIDAngleSpeedPitchParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglespeedpitch()->thiout();
+		PIDAngleSpeedPitchParams[0] = *m_Config->Instance()->pids->pidAngleSpeedPitch->kP;
+		PIDAngleSpeedPitchParams[1] = *m_Config->Instance()->pids->pidAngleSpeedPitch->kI;
+		PIDAngleSpeedPitchParams[2] = *m_Config->Instance()->pids->pidAngleSpeedPitch->kD;
+		PIDAngleSpeedPitchParams[3] = *m_Config->Instance()->pids->pidAngleSpeedPitch->thOut;
+		PIDAngleSpeedPitchParams[4] = *m_Config->Instance()->pids->pidAngleSpeedPitch->thIOut;
 
-		PIDAngleEcdYawParams[0] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->kp();
-		PIDAngleEcdYawParams[1] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->ki();
-		PIDAngleEcdYawParams[2] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->kd();
-		PIDAngleEcdYawParams[3] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->thout();
-		PIDAngleEcdYawParams[4] = m_Config->Instance<Configuration>()->mutable_pidangleecdyaw()->thiout();
+		PIDAngleEcdYawParams[0] = *m_Config->Instance()->pids->pidAngleEcdYaw->kP;
+		PIDAngleEcdYawParams[1] = *m_Config->Instance()->pids->pidAngleEcdYaw->kI;
+		PIDAngleEcdYawParams[2] = *m_Config->Instance()->pids->pidAngleEcdYaw->kD;
+		PIDAngleEcdYawParams[3] = *m_Config->Instance()->pids->pidAngleEcdYaw->thOut;
+		PIDAngleEcdYawParams[4] = *m_Config->Instance()->pids->pidAngleEcdYaw->thIOut;
 
-		PIDAngleGyroYawParams[0] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->kp();
-		PIDAngleGyroYawParams[1] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->ki();
-		PIDAngleGyroYawParams[2] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->kd();
-		PIDAngleGyroYawParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->thout();
-		PIDAngleGyroYawParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglegyroyaw()->thiout();
+		PIDAngleGyroYawParams[0] = *m_Config->Instance()->pids->pidAngleGyroYaw->kP;
+		PIDAngleGyroYawParams[1] = *m_Config->Instance()->pids->pidAngleGyroYaw->kI;
+		PIDAngleGyroYawParams[2] = *m_Config->Instance()->pids->pidAngleGyroYaw->kD;
+		PIDAngleGyroYawParams[3] = *m_Config->Instance()->pids->pidAngleGyroYaw->thOut;
+		PIDAngleGyroYawParams[4] = *m_Config->Instance()->pids->pidAngleGyroYaw->thIOut;
 
-		PIDAngleSpeedYawParams[0] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->kp();
-		PIDAngleSpeedYawParams[1] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->ki();
-		PIDAngleSpeedYawParams[2] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->kd();
-		PIDAngleSpeedYawParams[3] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->thout();
-		PIDAngleSpeedYawParams[4] = m_Config->Instance<Configuration>()->mutable_pidanglespeedyaw()->thiout();
+		PIDAngleSpeedYawParams[0] = *m_Config->Instance()->pids->pidAngleSpeedYaw->kP;
+		PIDAngleSpeedYawParams[1] = *m_Config->Instance()->pids->pidAngleSpeedYaw->kI;
+		PIDAngleSpeedYawParams[2] = *m_Config->Instance()->pids->pidAngleSpeedYaw->kD;
+		PIDAngleSpeedYawParams[3] = *m_Config->Instance()->pids->pidAngleSpeedYaw->thOut;
+		PIDAngleSpeedYawParams[4] = *m_Config->Instance()->pids->pidAngleSpeedYaw->thIOut;
 
-		PIDAutoAimInputParams[0] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->kp();
-		PIDAutoAimInputParams[1] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->ki();
-		PIDAutoAimInputParams[2] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->kd();
-		PIDAutoAimInputParams[3] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->thout();
-		PIDAutoAimInputParams[4] = m_Config->Instance<Configuration>()->mutable_pidautoaiminput()->thiout();
+		PIDAutoAimInputParams[0] = *m_Config->Instance()->pids->pidAutoAimInput->kP;
+		PIDAutoAimInputParams[1] = *m_Config->Instance()->pids->pidAutoAimInput->kI;
+		PIDAutoAimInputParams[2] = *m_Config->Instance()->pids->pidAutoAimInput->kD;
+		PIDAutoAimInputParams[3] = *m_Config->Instance()->pids->pidAutoAimInput->thOut;
+		PIDAutoAimInputParams[4] = *m_Config->Instance()->pids->pidAutoAimInput->thIOut;
 
-		kAngleSpeedFilterCoef = m_Config->Instance<Configuration>()->mutable_gimbal()->kanglespeedfiltercoef();
+		//kAngleSpeedFilterCoef = *m_Config->Instance()->mutable_gimbal()->kanglespeedfiltercoef();
 
 		m_GimbalCtrlMode = GimbalCtrlMode::Init;
 		m_FlagInitGimbal = true;
@@ -298,16 +295,16 @@ public:
 		m_GimbalSensorValues.relativeAngle[Pitch] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Pitch], kPitchEcdMid);
 		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawEcdMid);
 
-		m_GimbalSensorValues.imuPitch = m_GyroA204PitchListener->Get();
-		m_GimbalSensorValues.imuPitch.m_ZAxisSpeed *= kDegreeToRadCoef;
-		m_GimbalSensorValues.imuPitch.m_ZAxisAngle *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imu = m_GyroListener->Get();
+		m_GimbalSensorValues.imu.m_XAxisSpeed *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imu.m_Roll *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imu.m_YAxisSpeed *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imu.m_Pitch *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imu.m_ZAxisSpeed *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imu.m_Yaw *= kDegreeToRadCoef;
+
 		/*if(!m_FlagInitGimbal)
 			m_GimbalSensorValues.imuPitch.m_ZAxisAngle = ClampLoop(static_cast<double>(m_GimbalSensorValues.imuPitch.m_ZAxisAngle), m_GyroAngleZeroPoints[Pitch], m_GyroAngleZeroPoints[Pitch] + M_PI * 2);*/
-
-		m_GimbalSensorValues.imuYaw = m_GyroA204YawListener->Get();
-		m_GimbalSensorValues.imuYaw.m_ZAxisSpeed *= -kDegreeToRadCoef;
-		m_GimbalSensorValues.imuYaw.m_ZAxisAngle *= -kDegreeToRadCoef;
-		m_GimbalSensorValues.imuYaw.m_ZAxisSpeed = DeadbandLimit(m_GimbalSensorValues.imuYaw.m_ZAxisSpeed, 0.003f);
 
 		auto tempAutoAimStatus = m_AutoAimStatusListener->Get();
 		if (m_GimbalSensorValues.autoAimStatus.m_Timestamp != tempAutoAimStatus.m_Timestamp)
@@ -400,11 +397,10 @@ public:
 
 private:
 	ossian::IOData<GimbalMotorsModel>* m_MotorsListener;
-	Utils::ConfigLoader* m_Config;
+	ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config;
 	Gimbal* m_Gimbal;
 	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
-	ossian::IOData<GyroA204Status<GyroType::Pitch>>* m_GyroA204PitchListener;
-	ossian::IOData<GyroA204Status<GyroType::Yaw>>* m_GyroA204YawListener;
+	ossian::IOData<GyroA110Status>* m_GyroListener;
 	ossian::IOData<AutoAimStatus>* m_AutoAimStatusListener;
 
 	std::array<GimbalAngleMode, 2> m_CurGimbalAngleMode;
@@ -416,8 +412,7 @@ private:
 	{
 		double relativeAngle[kNumGimbalMotors];
 		RemoteStatus rc;	 //遥控器数据
-		GyroA204Status<GyroType::Pitch> imuPitch;
-		GyroA204Status<GyroType::Yaw> imuYaw;
+		GyroA110Status imu;
 		AutoAimStatus autoAimStatus;
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;

@@ -3,6 +3,7 @@
 
 #include <ossian/ApplicationBuilder.hpp>
 #include <LaunchSettings.schema.hpp>
+#include <ossian/Configuration.hpp>
 
 class Startup : public ossian::IStartup
 {

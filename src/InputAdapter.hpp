@@ -8,7 +8,7 @@
 #include <spdlog/spdlog.h>
 #include <HKCamera.hpp>
 
-#include "Config.pb.h"
+#include <Config.schema.hpp>
 
 namespace Utils = ossian::Utils;
 namespace IO = ossian::IO;
@@ -22,10 +22,10 @@ namespace IO = ossian::IO;
 class CameraInputSource
 {
 public:
-	OSSIAN_SERVICE_SETUP(CameraInputSource(ossian::Utils::ConfigLoader* config))
-		: m_Camera(config->Instance<OssianConfig::Configuration>()->mutable_camera()->deviceindex(),
-				   config->Instance<OssianConfig::Configuration>()->mutable_camera()->framewidth(),
-				   config->Instance<OssianConfig::Configuration>()->mutable_camera()->frameheight())
+	OSSIAN_SERVICE_SETUP(CameraInputSource(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config))
+		: m_Camera(static_cast<unsigned int>(*config->Instance()->vision->camera->deviceIndex),
+			static_cast<unsigned int>(*config->Instance()->vision->camera->frameWidth),
+			static_cast<unsigned int>(*config->Instance()->vision->camera->frameHeight))
 		, m_Valid(true)
 	{
 		try

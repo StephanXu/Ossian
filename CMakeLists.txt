@@ -43,7 +43,7 @@ target_sources(Ossian
             src/CameraPeeker.cpp
             src/Gyro.cpp
             src/GyroA204.cpp
-            src/Gyro6Axis.cpp
+            src/GyroA110.cpp
             src/TOFNooploop.cpp
             src/Phototube.cpp
         )

@@ -370,14 +370,6 @@
             }
           }
         },
-        "gimbal": {
-          "type": "object",
-          "title": "Gimbal",
-          "description": "",
-          "properties": {
-
-          }
-        },
         "gun": {
           "type": "object",
           "title": "Gun",
