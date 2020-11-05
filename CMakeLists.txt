@@ -16,7 +16,7 @@ find_package(httplib)
 
 message(STATUS "CUDA_FOUND: ${CUDA_FOUND}")
 
-add_subdirectory(proto)
+add_subdirectory(schema)
 add_subdirectory(core)
 add_subdirectory(3rdparty)
 add_subdirectory(bench)
@@ -39,10 +39,11 @@ target_sources(Ossian
             src/Capacitor.cpp
             src/Gun.cpp
             src/Referee.cpp
-            src/Gyro.cpp
             src/IOPeeker.cpp
             src/CameraPeeker.cpp
+            src/Gyro.cpp
             src/GyroA204.cpp
+            src/Gyro6Axis.cpp
             src/TOFNooploop.cpp
             src/Phototube.cpp
         )
@@ -58,7 +59,7 @@ target_link_libraries(Ossian
             spdlog::spdlog
             fmt::fmt
             mimalloc
-            proto
+            Schema
             ${OpenCV_LIBS}
             "$<$<BOOL:${CUDA_FOUND}>:${CUDA_LIBRARIES}>"
             OssianCore

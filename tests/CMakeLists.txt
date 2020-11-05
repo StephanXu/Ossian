@@ -48,3 +48,9 @@ test_target(
 	SRCS "SensorTest.cpp" "../src/OnlineDebug.cpp"
 	LIBS OssianCore spdlog::spdlog signalrclient mimalloc
 )
+
+test_target(
+	NAME ConfigTest
+	SRCS "ConfigTest.cpp"
+	LIBS OssianCore spdlog::spdlog Schema mimalloc
+)

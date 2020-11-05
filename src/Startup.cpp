@@ -1,6 +1,5 @@
 #include <ossian/ossian.hpp>
 #include <mimalloc.h>
-#include "Config.pb.h"
 
 #include "Startup.hpp"
 #include "InputAdapter.hpp"
@@ -20,12 +19,11 @@
 #include "IOPeeker.hpp"
 #include "CameraPeeker.hpp"
 
-#include <thread>
+#include <Config.schema.hpp>
+#include <LaunchSettings.schema.hpp>
 
 Startup::Startup()
 {
-	GOOGLE_PROTOBUF_VERIFY_VERSION;
-
 	// Initialize logger
 	const auto console = spdlog::stderr_color_mt("console");
 	spdlog::set_default_logger(console);
@@ -35,29 +33,23 @@ Startup::Startup()
 	SPDLOG_INFO("MI_VERSION: {}", mi_version());
 
 	// Load configuration
-	Utils::ConfigLoader config;
-	config.LoadConfigFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
-	m_Config = *config.Instance<OssianConfig::Configuration>();
+	m_AppConfig.LoadConfigFromFile("AppSettings.json");
 }
 
 void Startup::ConfigServices(AppBuilder& app)
 {
-	app.AddService<Utils::ConfigLoader>()
-	   .LoadFromUrl<OssianConfig::Configuration>("ossian.mrxzh.com", 80, "/api/argument");
+	app.AddService<Utils::ConfigLoader<Config::ConfigSchema>>()
+	   .LoadFromUrl(*m_AppConfig->ossian->onlineArguments->server,
+	                *m_AppConfig->ossian->onlineArguments->argId);
 	app.AddService<OnlineDebug>(
-		[config = m_Config](OnlineDebug& option)
+		[config = m_AppConfig](OnlineDebug& option)
 		{
-			std::string configuration;
-			google::protobuf::util::JsonOptions opt;
-			opt.always_print_primitive_fields = true;
-			opt.add_whitespace                = true;
-			google::protobuf::util::MessageToJsonString(config, &configuration, opt);
-
-			option.Connect("http://ossian.mrxzh.com/logger");
-			option.StartLoggingAndArchiveConfiguration("OnlineLog",
-			                                           "OssianLog",
-			                                           "A piece of log.",
-			                                           configuration);
+			const auto logConfig = config->ossian->onlineDebug;
+			option.Connect(*logConfig->loggerUrl);
+			option.StartLogging("OnlineLog",
+			                    *logConfig->logName,
+			                    *logConfig->logDesc,
+			                    *config->ossian->onlineArguments->argId);
 		});
 
 	app.AddService<ossian::CANManager>();
@@ -74,7 +66,7 @@ void Startup::ConfigServices(AppBuilder& app)
 		[](RemoteMt& option)
 		{
 			option.Add("/dev/ttyUSB0",
-					   100000,
+			           100000,
 			           ossian::UARTProperties::FlowControlNone,
 			           ossian::UARTProperties::DataBits8,
 			           ossian::UARTProperties::StopBits1,
