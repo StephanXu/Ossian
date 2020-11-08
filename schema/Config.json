@@ -154,7 +154,7 @@
           "description": "",
           "properties": {
             "filename": {
-              "type": "number",
+              "type": "string",
               "title": "filename",
               "description": "",
               "component": "text"
