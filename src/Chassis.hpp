@@ -111,8 +111,9 @@ public:
 	static constexpr double kWheelRadius = 76.0 / 1000.0;  ///< m
 	static constexpr double kWheelXn = 175.0 / 1000.0; ///< m
 	static constexpr double kWheelYn = 232.5 / 1000;   ///< m
-	static constexpr double kWheelSpeedLimit = 800;            ///< 单个麦轮的最大转速rpm
-	static constexpr double kWheelSpeedToMotorRPMCoef = 11.875;
+	static constexpr double kWheelSpeedLimit = 200;            ///< 单个麦轮的最大转速rpm
+	static constexpr double kWheelSpeedToMotorRPMCoef = 3591 / 187.0;
+	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
 	//static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
 
 	//底盘功率控制
@@ -133,7 +134,8 @@ public:
 	static constexpr int16_t kChassisRCDeadband = 10;     ///< 摇杆死区
 	static constexpr double kChassisVxRCSen = -0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例0.006
 	static constexpr double kChassisVyRCSen = 0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
-	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+	static constexpr double kChassisWzRCSen = 0.001;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+	static constexpr double kChassisAngleWzRCSen = 0.000002; ///< 跟随底盘yaw模式下，遥控器的yaw遥杆（max 660）增加到车体角度的比例
 	static constexpr double kChassisCtrlPeriod = 0.012;  //底盘控制周期s，用于低通滤波器
 
 	//底盘运动
@@ -162,7 +164,7 @@ public:
 		Disable, ///< 失能
 		Follow_Gimbal_Yaw, ///< 跟随云台
 
-		//Follow_Chassis_Yaw,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
+		Follow_Chassis_Yaw,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
 
 		Top, ///< 小陀螺
 		Openloop_Z ///< 单独调试底盘
@@ -174,7 +176,8 @@ public:
 										 Chassis* chassis,
 										 ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
 										 ossian::IOData<PowerHeatData>* powerHeatDataListener,
-										 ossian::IOData<GimbalStatus>* gimbalStatusListener))
+										 ossian::IOData<GimbalStatus>* gimbalStatusListener,
+										 ossian::IOData<GyroA110Status>* gyroListener))
 
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
@@ -183,6 +186,7 @@ public:
 		, m_Config(config)
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
 		, m_GimbalStatusListener(gimbalStatusListener)
+		, m_GyroListener(gyroListener)
 	{
 		PIDWheelSpeedParams[0] = *m_Config->Instance()->pids->pidWheelSpeed->kP;
 		PIDWheelSpeedParams[1] = *m_Config->Instance()->pids->pidWheelSpeed->kI;
@@ -225,19 +229,22 @@ public:
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
 		m_PIDChassisAngle.SetFlagAngleLoop();
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
-			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]",
-				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4]);});
+			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
+				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4],value.sw[0], value.sw[1]);});*/
 
-		m_RefereePowerHeatDataListener->AddOnChange([](const PowerHeatData& value) {
+		/*m_RefereePowerHeatDataListener->AddOnChange([](const PowerHeatData& value) {
 			SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
 				value.m_ChassisPower,
 				value.m_ChassisPowerBuffer,
 				80); });*/
+		m_GyroListener->AddOnChange([](const GyroA110Status& value) {
+			SPDLOG_INFO("@ChassisImu=[$yaw={},$yawSpeed={}]", value.m_Yaw, value.m_ZAngleSpeed);
+		});
 	}
 
 	void InitChassis()
 	{
-		m_AngleSet = 0;
+		m_AngleSet = m_ChassisSensorValues.imu.m_Yaw;
 
 		std::for_each(m_RCInputFilters.begin(), m_RCInputFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 		std::for_each(m_RPMFdbFilters.begin(), m_RPMFdbFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
@@ -254,11 +261,19 @@ public:
 		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
 		//m_ChassisSensorValues.spCap = m_SpCap->Get();
 		m_ChassisSensorValues.gimbalStatus = m_GimbalStatusListener->Get();
+
+		m_ChassisSensorValues.imu = m_GyroListener->Get();
+		m_ChassisSensorValues.imu.m_XAxisSpeed *= kDegreeToRadCoef;
+		m_ChassisSensorValues.imu.m_Roll *= kDegreeToRadCoef;
+		m_ChassisSensorValues.imu.m_YAxisSpeed *= kDegreeToRadCoef;
+		m_ChassisSensorValues.imu.m_Pitch *= kDegreeToRadCoef;
+		m_ChassisSensorValues.imu.m_ZAxisSpeed *= kDegreeToRadCoef;
+		m_ChassisSensorValues.imu.m_Yaw *= kDegreeToRadCoef;
 		/*m_ChassisSensorValues.gimbalCtrlMode = m_GimbalCtrlTask->GimbalCtrlSrc();
 		m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();*/
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
-		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000; //v
+		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000.0; //v
 		/*SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower,
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
@@ -296,7 +311,7 @@ public:
 			}
 			/*SPDLOG_INFO("@Interval=[$t={}]",
 						std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
-			
+
 			lastTime = Clock::now();
 			m_MotorsStatus = m_MotorsListener->Get();
 
@@ -337,7 +352,7 @@ private:
 	struct ChassisSensorFeedback
 	{
 		RemoteStatus rc;
-		double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ;
+		GyroA110Status imu;
 		///< 底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 		CapacitorStatus spCap;              ///< 超级电容数据
 		PowerHeatData refereePowerHeatData; ///< 裁判系统数据
@@ -351,6 +366,7 @@ private:
 
 	ChassisMode m_CurChassisMode;
 	ossian::IOData<GimbalStatus>* m_GimbalStatusListener;
+	ossian::IOData<GyroA110Status>* m_GyroListener;
 	Eigen::Vector4d m_WheelSpeedSet;
 	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
 	std::array<double, kNumChassisMotors> m_CurrentSend;

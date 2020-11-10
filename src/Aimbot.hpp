@@ -427,7 +427,7 @@ private:
     bool DetectArmor(unsigned char* pImage, Armor& outTarget) noexcept
     {
         static int enemyColor = static_cast<int>(*m_Config->Instance()->vision->aimbot->enemyColor);
-        static int brightness = *m_Config->Instance()->vision->aimbot->thresBrightness;
+        static int thresBrightness = *m_Config->Instance()->vision->aimbot->thresBrightness;
         static int thresColor = *m_Config->Instance()->vision->aimbot->thresColor;
         
 #ifdef WITH_CUDA
@@ -438,7 +438,7 @@ private:
         cv::cuda::cvtColor(dFrame, dFrame, cv::COLOR_BayerRG2RGB, 0, cudaStream);
 
         cv::cuda::cvtColor(dFrame, grayBrightness, cv::COLOR_BGR2GRAY, 0, cudaStream);
-        cv::cuda::threshold(grayBrightness, binaryBrightness, brightness, 255, cv::THRESH_BINARY, cudaStream);
+        cv::cuda::threshold(grayBrightness, binaryBrightness, thresBrightness, 255, cv::THRESH_BINARY, cudaStream);
 
         cv::cuda::split(dFrame, channels, cudaStream);
         cv::cuda::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor, cv::noArray(), -1,
@@ -455,7 +455,7 @@ private:
         cv::cvtColor(dFrame, dFrame, cv::COLOR_BayerRG2BGR);
 
         cv::cvtColor(dFrame, grayBrightness, cv::COLOR_BGR2GRAY);
-        cv::threshold(grayBrightness, binaryBrightness, brightness, 255, cv::THRESH_BINARY);
+        cv::threshold(grayBrightness, binaryBrightness, thresBrightness, 255, cv::THRESH_BINARY);
 
         cv::split(dFrame, channels);
         cv::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor);

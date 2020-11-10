@@ -7,17 +7,17 @@
 
 struct GyroA110Status
 {
-	int16_t m_XAxisSpeed;
-	int16_t m_YAxisSpeed;
-	int16_t m_ZAxisSpeed;
+	double m_XAxisSpeed;
+	double m_YAxisSpeed;
+	double m_ZAxisSpeed;
 	
-	int16_t m_XAngleSpeed;
-	int16_t m_YAngleSpeed;
-	int16_t m_ZAngleSpeed;
+	double m_XAngleSpeed;
+	double m_YAngleSpeed;
+	double m_ZAngleSpeed;
 
-	int16_t m_Pitch;
-	int16_t m_Roll;
-	int16_t m_Yaw;
+	double m_Pitch;
+	double m_Roll;
+	double m_Yaw;
 };
 
 template <typename Mutex>
@@ -52,9 +52,9 @@ public:
 			zOriginal.m_Buf[1] = data[5];
 			
 			auto model = m_IOData->Get();
-			model.m_XAxisSpeed = xOriginal.m_Value;
-			model.m_YAxisSpeed = yOriginal.m_Value;
-			model.m_ZAxisSpeed = zOriginal.m_Value;
+			model.m_XAxisSpeed = static_cast<double>(xOriginal.m_Value) * 0.001;
+			model.m_YAxisSpeed = static_cast<double>(yOriginal.m_Value) * 0.001;
+			model.m_ZAxisSpeed = static_cast<double>(zOriginal.m_Value) * 0.001;
 			m_IOData->Set(model);
 		};
 
@@ -76,9 +76,9 @@ public:
 			zOriginal.m_Buf[1] = data[5];
 
 			auto model = m_IOData->Get();
-			model.m_XAngleSpeed = xOriginal.m_Value;
-			model.m_YAngleSpeed = yOriginal.m_Value;
-			model.m_ZAngleSpeed = zOriginal.m_Value;
+			model.m_XAngleSpeed = static_cast<double>(xOriginal.m_Value) * 0.1;
+			model.m_YAngleSpeed = static_cast<double>(yOriginal.m_Value) * 0.1;
+			model.m_ZAngleSpeed = static_cast<double>(zOriginal.m_Value) * 0.1;
 			m_IOData->Set(model);
 		};
 
@@ -100,9 +100,9 @@ public:
 			yawOriginal.m_Buf[1] = data[5];
 
 			auto model = m_IOData->Get();
-			model.m_XAngleSpeed = pitchOriginal.m_Value;
-			model.m_YAngleSpeed = rollOriginal.m_Value;
-			model.m_ZAngleSpeed = yawOriginal.m_Value;
+			model.m_Pitch = static_cast<double>(pitchOriginal.m_Value) * 0.01;
+			model.m_Roll = static_cast<double>(rollOriginal.m_Value) * 0.01;
+			model.m_Yaw = static_cast<double>(yawOriginal.m_Value) * 0.1;
 			m_IOData->Set(model);
 		};
 		
