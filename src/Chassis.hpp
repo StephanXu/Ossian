@@ -111,7 +111,7 @@ public:
 	static constexpr double kWheelRadius = 76.0 / 1000.0;  ///< m
 	static constexpr double kWheelXn = 175.0 / 1000.0; ///< m
 	static constexpr double kWheelYn = 232.5 / 1000;   ///< m
-	static constexpr double kWheelSpeedLimit = 200;            ///< 单个麦轮的最大转速rpm
+	static constexpr double kWheelSpeedLimit = 800;            ///< 单个麦轮的最大转速rpm
 	static constexpr double kWheelSpeedToMotorRPMCoef = 3591 / 187.0;
 	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
 	//static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
@@ -133,8 +133,8 @@ public:
 
 	static constexpr int16_t kChassisRCDeadband = 10;     ///< 摇杆死区
 	static constexpr double kChassisVxRCSen = -0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例0.006
-	static constexpr double kChassisVyRCSen = 0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
-	static constexpr double kChassisWzRCSen = 0.001;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
+	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
+	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 	static constexpr double kChassisAngleWzRCSen = 0.000002; ///< 跟随底盘yaw模式下，遥控器的yaw遥杆（max 660）增加到车体角度的比例
 	static constexpr double kChassisCtrlPeriod = 0.012;  //底盘控制周期s，用于低通滤波器
 
