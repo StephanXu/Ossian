@@ -24,7 +24,8 @@ struct PhototubeStatus
 	{
 		if (!buffer)
 		{
-			return;
+			memset(&outModel, 0, sizeof(PhototubeStatus));
+			throw ossian::GeneralIOParseFailed{ "Phototube parse failed" };
 		}
 
 		StatusType status;

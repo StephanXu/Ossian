@@ -36,6 +36,12 @@ struct RemoteStatus
 	                  const uint8_t* buffer,
 	                  const size_t bufferSize) -> void
 	{
+		const size_t packSize = 18;
+		if (packSize > bufferSize)
+		{
+			memset(&outModel, 0, sizeof(RemoteStatus));
+			throw ossian::GeneralIOParseFailed{ "Remote parse failed: packSize > bufferSize" };
+		}
 		outModel.ch[0] = (buffer[0] | buffer[1] << 8) & 0x07FF;
 		outModel.ch[0] -= 1024;
 		outModel.ch[1] = (buffer[1] >> 3 | buffer[2] << 5) & 0x07FF;
