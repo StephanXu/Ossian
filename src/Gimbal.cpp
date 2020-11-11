@@ -9,7 +9,7 @@ std::array<double, 5> GimbalCtrlTask::PIDAngleGyroYawParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleSpeedYawParams;
 std::array<double, 5> GimbalCtrlTask::PIDAutoAimInputParams;
 
-double GimbalCtrlTask::kAngleSpeedFilterCoef = 0;
+//double GimbalCtrlTask::kAngleSpeedFilterCoef = 0;
 
 void GimbalCtrlTask::GimbalCtrlModeSet()
 {
@@ -38,8 +38,8 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 				m_CurGimbalAngleMode[Yaw] = Gyro;
 				m_EcdAngleSet[Pitch] = 0;
 				m_EcdAngleSet[Yaw] = 0;
-				m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imuPitch.m_ZAxisAngle;
-				m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imuYaw.m_ZAxisAngle;
+				m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
+				m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
 
 				std::for_each(m_EcdAngleFilters.begin(), m_EcdAngleFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 				std::for_each(m_GyroSpeedFilters.begin(), m_GyroSpeedFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
@@ -132,7 +132,7 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 		double angleInput = m_AngleInput[position]; 
 		if (m_CurGimbalAngleMode[position] == Gyro)
 		{
-			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle); 
+			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw); 
 			double errorAngle = ClampLoop(m_GyroAngleSet[position] - gyro, -M_PI, M_PI); 
 			//只判断pitch会不会越过限位，yaw是360度旋转
 			if (position == Pitch)
@@ -175,11 +175,11 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 	else if (m_GimbalCtrlMode == GimbalCtrlMode::RC || m_GimbalCtrlMode == GimbalCtrlMode::Init || m_GimbalCtrlMode == GimbalCtrlMode::Aimbot)
 	{
 		double angleSpeedSet;
-		double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisSpeed : m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);
+		double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_YAngleSpeed : m_GimbalSensorValues.imu.m_ZAngleSpeed);
 		//gyroSpeed = m_GyroSpeedFilters[position].Calc(gyroSpeed);
 		if (m_CurGimbalAngleMode[position] == Gyro)
 		{
-			double gyro = (position == Pitch ? m_GimbalSensorValues.imuPitch.m_ZAxisAngle : m_GimbalSensorValues.imuYaw.m_ZAxisAngle);
+			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw);
 			
 			angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
 			SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={},$pidoutAG{}={}]",

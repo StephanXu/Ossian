@@ -172,7 +172,7 @@ public:
 	};
 	
 	OSSIAN_SERVICE_SETUP(FricCtrlTask(ossian::IOData<RemoteStatus>* remote,
-		Utils::ConfigLoader* config,
+		ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
 		Gun* gun,
 		ossian::IOData<GunFricMotorsModel>* motorsFricListener,
 		ossian::IOData<GimbalStatus>* gimbalStatusListener,
@@ -184,17 +184,16 @@ public:
 		, m_GimbalStatusListener(gimbalStatusListener)
 		, m_FricStatusSender(fricStatusSender)
 	{
-		using OssianConfig::Configuration;
-		PIDFricSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->kp();
-		PIDFricSpeedParams[1] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->ki();
-		PIDFricSpeedParams[2] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->kd();
-		PIDFricSpeedParams[3] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->thout();
-		PIDFricSpeedParams[4] = m_Config->Instance<Configuration>()->mutable_pidfricspeed()->thiout();
+		PIDFricSpeedParams[0] = *m_Config->Instance()->pids->pidFricSpeed->kP;
+		PIDFricSpeedParams[1] = *m_Config->Instance()->pids->pidFricSpeed->kI;
+		PIDFricSpeedParams[2] = *m_Config->Instance()->pids->pidFricSpeed->kD;
+		PIDFricSpeedParams[3] = *m_Config->Instance()->pids->pidFricSpeed->thOut;
+		PIDFricSpeedParams[4] = *m_Config->Instance()->pids->pidFricSpeed->thIOut;
 
-		kFricSpeed12 = m_Config->Instance<Configuration>()->mutable_gun()->kfricspeed12();
-		kFricSpeed15 = m_Config->Instance<Configuration>()->mutable_gun()->kfricspeed15();
-		kFricSpeed18 = m_Config->Instance<Configuration>()->mutable_gun()->kfricspeed18();
-		kFricSpeed30 = m_Config->Instance<Configuration>()->mutable_gun()->kfricspeed30();
+		kFricSpeed12 = *m_Config->Instance()->control->gun->fricSpeed12;
+		kFricSpeed15 = *m_Config->Instance()->control->gun->fricSpeed15;
+		kFricSpeed18 = *m_Config->Instance()->control->gun->fricSpeed18;
+		kFricSpeed30 = *m_Config->Instance()->control->gun->fricSpeed30;
 
 		m_FlagInitFric = true;
 		m_FricMode = FricMode::Disable;
@@ -269,7 +268,7 @@ public:
 	}
 
 private:
-	Utils::ConfigLoader* m_Config;
+	ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config;
 	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
 
 	ossian::IOData<GunFricMotorsModel>* m_MotorsFricListener;
@@ -342,7 +341,7 @@ public:
 	static std::array<double, 5> PIDFeedSpeedParams;
 
 	OSSIAN_SERVICE_SETUP(FeedCtrlTask(ossian::IOData<RemoteStatus>* remote,
-		Utils::ConfigLoader* config,
+		ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
 		Gun* gun,
 		ossian::IOData<GunFeedMotorsModel>* motorFeedListener,
 		ossian::IOData<PowerHeatData>* powerHeatDataListener,
@@ -362,24 +361,22 @@ public:
 		, m_GimbalStatusListener(gimbalStatusListener)
 		, m_FricStatusListener(fricStatusListener)
 	{
-		using OssianConfig::Configuration;
+		PIDFeedAngleParams[0] = *m_Config->Instance()->pids->pidFeedAngle->kP;
+		PIDFeedAngleParams[1] = *m_Config->Instance()->pids->pidFeedAngle->kI;
+		PIDFeedAngleParams[2] = *m_Config->Instance()->pids->pidFeedAngle->kD;
+		PIDFeedAngleParams[3] = *m_Config->Instance()->pids->pidFeedAngle->thOut;
+		PIDFeedAngleParams[4] = *m_Config->Instance()->pids->pidFeedAngle->thIOut;
 
-		PIDFeedAngleParams[0] = m_Config->Instance<Configuration>()->mutable_pidfeedangle()->kp();
-		PIDFeedAngleParams[1] = m_Config->Instance<Configuration>()->mutable_pidfeedangle()->ki();
-		PIDFeedAngleParams[2] = m_Config->Instance<Configuration>()->mutable_pidfeedangle()->kd();
-		PIDFeedAngleParams[3] = m_Config->Instance<Configuration>()->mutable_pidfeedangle()->thout();
-		PIDFeedAngleParams[4] = m_Config->Instance<Configuration>()->mutable_pidfeedangle()->thiout();
+		PIDFeedSpeedParams[0] = *m_Config->Instance()->pids->pidFeedSpeed->kP;
+		PIDFeedSpeedParams[1] = *m_Config->Instance()->pids->pidFeedSpeed->kI;
+		PIDFeedSpeedParams[2] = *m_Config->Instance()->pids->pidFeedSpeed->kD;
+		PIDFeedSpeedParams[3] = *m_Config->Instance()->pids->pidFeedSpeed->thOut;
+		PIDFeedSpeedParams[4] = *m_Config->Instance()->pids->pidFeedSpeed->thIOut;
 
-		PIDFeedSpeedParams[0] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->kp();
-		PIDFeedSpeedParams[1] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->ki();
-		PIDFeedSpeedParams[2] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->kd();
-		PIDFeedSpeedParams[3] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->thout();
-		PIDFeedSpeedParams[4] = m_Config->Instance<Configuration>()->mutable_pidfeedspeed()->thiout();
-
-		kFeedNormalSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeednormalspeed();
-		kFeedSemiSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedsemispeed();
-		kFeedBurstSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedburstspeed();
-		kFeedAutoSpeed = m_Config->Instance<Configuration>()->mutable_gun()->kfeedautospeed();
+		/*kFeedNormalSpeed = *m_Config->Instance()->control->gun->kfeednormalspeed();
+		kFeedSemiSpeed = *m_Config->Instance()->control->gun->kfeedsemispeed();
+		kFeedBurstSpeed = *m_Config->Instance()->control->gun->kfeedburstspeed();
+		kFeedAutoSpeed = *m_Config->Instance()->control->gun->kfeedautospeed();*/
 
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
@@ -545,7 +542,7 @@ public:
 	}
 
 private:
-	Utils::ConfigLoader* m_Config;
+	ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config;
 	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 	ossian::IOData<RobotStatus>* m_RefereeRobotStatusListener;

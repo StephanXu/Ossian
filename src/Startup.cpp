@@ -77,25 +77,30 @@ void Startup::ConfigServices(AppBuilder& app)
 		{
 			//option.AddCapacitor("can0", 0x211, 0x210);
 		});
-	app.AddService<IGyro, GyroMt>(
+	/*app.AddService<IGyro, GyroMt>(
 		[](IGyro& option)
 		{
-			//option.AddGyro("/dev/ttyUSB0");
-		});
-	app.AddService<GyroA204St<GyroType::Yaw>>(
-		[](GyroA204St<GyroType::Yaw>& option)
-		{
-			option.Add("can0", 0x402, 0x403);
-		});
-	app.AddService<GyroA204St<GyroType::Pitch>>(
-		[](GyroA204St<GyroType::Pitch>& option)
-		{
-			option.Add("can1", 0x402, 0x403);
-		});
+			option.AddGyro("/dev/ttyUSB0");
+		});*/
+	//app.AddService<GyroA204St<GyroType::Yaw>>(
+	//	[](GyroA204St<GyroType::Yaw>& option)
+	//	{
+	//		//option.Add("can0", 0x402, 0x403);
+	//	});
+	//app.AddService<GyroA204St<GyroType::Pitch>>(
+	//	[](GyroA204St<GyroType::Pitch>& option)
+	//	{
+	//		//option.Add("can1", 0x402, 0x403);
+	//	});
+	app.AddService<GyroA110Mt>(
+		[](GyroA110Mt& option)
+	{
+		option.Add("can1", 0x511, 0x512, 0x513);
+	});
 	app.AddService<PhototubeMt>(
 		[](PhototubeMt& option)
 		{
-			option.Add("can0", 0x300);
+			//option.Add("can0", 0x300);
 		});
 	app.AddService<Chassis>(
 		[](Chassis& option)
@@ -114,9 +119,9 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Gun>(
 		[](Gun& option)
 		{
-			option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 2, 0x200);
+			/*option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 2, 0x200);
 			option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 1, 0x200);
-			option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);
+			option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);*/
 		});
 	app.AddService<Aimbot>();
 }
@@ -129,7 +134,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
-	app.AddExecutable<FricCtrlTask>();
+	/*app.AddExecutable<FricCtrlTask>();
 	app.AddExecutable<FeedCtrlTask>();
-	app.AddExecutable<CameraPeeker>();
+	app.AddExecutable<CameraPeeker>();*/
 }

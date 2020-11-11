@@ -43,7 +43,7 @@ target_sources(Ossian
             src/CameraPeeker.cpp
             src/Gyro.cpp
             src/GyroA204.cpp
-            src/Gyro6Axis.cpp
+            src/GyroA110.cpp
             src/TOFNooploop.cpp
             src/Phototube.cpp
         )
@@ -73,7 +73,7 @@ set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
 target_link_options(Ossian PRIVATE "-fsanitize=leak")
 target_compile_options(Ossian
         PRIVATE
-            "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused;-ggdb;-g3>>"
+            "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-Wall;-ggdb;-g3>>"
             "$<${msvc_cxx}:$<$<CONFIG:Debug>:-W3>>"
         )
 target_link_options(Ossian
@@ -88,3 +88,11 @@ target_compile_definitions(Ossian
             "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE"
             "$<$<BOOL:${ENABLE_GPERF}>:ENABLE_GPERF>"
         )
+
+# Copy AppSettings.json to build directory.
+add_custom_target(AppSettingsFile ALL
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/AppSettings.json
+    ${CMAKE_CURRENT_BINARY_DIR}/AppSettings.json
+)
+add_dependencies(Ossian AppSettingsFile)

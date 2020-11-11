@@ -33,42 +33,41 @@ Eigen::Vector3d Aimbot::PoseSolver::m_WorldToCamTran;
 
 cv::Point2d Aimbot::Armor::frameCenter(0, 0);
 
-Aimbot::Aimbot(Utils::ConfigLoader* config,
+Aimbot::Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
                ossian::IOData<AutoAimStatus>* autoAimStatus)
 	: m_Valid(false)
     , m_Config(config)
     , m_AutoAimStatusSender(autoAimStatus)
 {
-    using OssianConfig::Configuration;
-    Aimbot::LightBar::minArea = m_Config->Instance<Configuration>()->mutable_aimbot()->lightbarminarea();
-    Aimbot::LightBar::ellipseMinAspectRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->lightbarellipseminaspectratio();
+    Aimbot::LightBar::minArea = *m_Config->Instance()->vision->aimbot->lightbarMinArea;
+    Aimbot::LightBar::ellipseMinAspectRatio = *m_Config->Instance()->vision->aimbot->lightBarEllipseMinAspectRatio;
 
-    Aimbot::Armor::maxAngleDiff = m_Config->Instance<Configuration>()->mutable_aimbot()->armormaxanglediff();
-    Aimbot::Armor::maxYDiffRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armormaxydiffratio();
-    Aimbot::Armor::minXDiffRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armorminxdiffratio();
-    Aimbot::Armor::maxHeightDiffRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armormaxheightdiffratio();
+    Aimbot::Armor::maxAngleDiff = *m_Config->Instance()->vision->aimbot->armorMaxAngleDiff;
+    Aimbot::Armor::maxYDiffRatio = *m_Config->Instance()->vision->aimbot->armorMaxYDiffRatio;
+    Aimbot::Armor::minXDiffRatio = *m_Config->Instance()->vision->aimbot->armorMinXDiffRatio;
+    Aimbot::Armor::maxHeightDiffRatio = *m_Config->Instance()->vision->aimbot->armorMaxHeightDiffRatio;
 
-    Aimbot::Armor::armorMinAspectRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armorminaspectratio();
-    Aimbot::Armor::armorMaxAspectRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armormaxaspectratio();
+    Aimbot::Armor::armorMinAspectRatio = *m_Config->Instance()->vision->aimbot->armorMinAspectRatio;
+    Aimbot::Armor::armorMaxAspectRatio = *m_Config->Instance()->vision->aimbot->armorMaxAspectRatio;
 
-    Aimbot::Armor::bigArmorRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armorbigarmorratio();
-    Aimbot::Armor::smallArmorRatio = m_Config->Instance<Configuration>()->mutable_aimbot()->armorsmallarmorratio();
+    Aimbot::Armor::bigArmorRatio = *m_Config->Instance()->vision->aimbot->armorBigArmorRatio;
+    Aimbot::Armor::smallArmorRatio = *m_Config->Instance()->vision->aimbot->armorSmallArmorRatio;
 
-    Aimbot::Armor::areaNormalizedBase = m_Config->Instance<Configuration>()->mutable_aimbot()->areanormalizedbase();
-    Aimbot::Armor::sightOffsetNormalizedBase = m_Config->Instance<Configuration>()->mutable_aimbot()->sightoffsetnormalizedbase();
+    Aimbot::Armor::areaNormalizedBase = *m_Config->Instance()->vision->aimbot->areaNormalizedBase;
+    Aimbot::Armor::sightOffsetNormalizedBase = *m_Config->Instance()->vision->aimbot->sightOffsetNormalizedBase;
 
-    Aimbot::PoseSolver::cameraToGimbalX = m_Config->Instance<Configuration>()->mutable_posesolver()->cameratogimbalx();
-    Aimbot::PoseSolver::cameraToGimbalY = m_Config->Instance<Configuration>()->mutable_posesolver()->cameratogimbaly();
-    Aimbot::PoseSolver::cameraToGimbalZ = m_Config->Instance<Configuration>()->mutable_posesolver()->cameratogimbalz();
-    Aimbot::PoseSolver::barrelToGimbalY = m_Config->Instance<Configuration>()->mutable_posesolver()->barreltogimbaly();
-    Aimbot::PoseSolver::rotOverlapLen = m_Config->Instance<Configuration>()->mutable_posesolver()->rotoverlaplen();
-    Aimbot::PoseSolver::initV = m_Config->Instance<Configuration>()->mutable_posesolver()->initv();
-    Aimbot::PoseSolver::initK = m_Config->Instance<Configuration>()->mutable_posesolver()->initk();
-    Aimbot::PoseSolver::gravity = m_Config->Instance<Configuration>()->mutable_posesolver()->gravity();
-    Aimbot::PoseSolver::scaleDist = m_Config->Instance<Configuration>()->mutable_posesolver()->scaledist();
+    Aimbot::PoseSolver::cameraToGimbalX = *m_Config->Instance()->vision->poseSolver->cameraToGimbalX;
+    Aimbot::PoseSolver::cameraToGimbalY = *m_Config->Instance()->vision->poseSolver->cameraToGimbalY;
+    Aimbot::PoseSolver::cameraToGimbalZ = *m_Config->Instance()->vision->poseSolver->cameraToGimbalZ;
+    Aimbot::PoseSolver::barrelToGimbalY = *m_Config->Instance()->vision->poseSolver->barrelToGimbalY;
+    Aimbot::PoseSolver::rotOverlapLen = *m_Config->Instance()->vision->poseSolver->rotOverlapLen;
+    Aimbot::PoseSolver::initV = *m_Config->Instance()->vision->poseSolver->initV;
+    Aimbot::PoseSolver::initK = *m_Config->Instance()->vision->poseSolver->initK;
+    Aimbot::PoseSolver::gravity = *m_Config->Instance()->vision->poseSolver->gravity;
+    Aimbot::PoseSolver::scaleDist = *m_Config->Instance()->vision->poseSolver->scaleDist;
 
-    Aimbot::Armor::frameCenter.x = m_Config->Instance<Configuration>()->mutable_camera()->framewidth();
-    Aimbot::Armor::frameCenter.y = m_Config->Instance<Configuration>()->mutable_camera()->frameheight();
+    Aimbot::Armor::frameCenter.x = *m_Config->Instance()->vision->camera->frameWidth;
+    Aimbot::Armor::frameCenter.y = *m_Config->Instance()->vision->camera->frameHeight;
 
 #ifdef WITH_CUDA
     /*cudaError_t cudaStatus = cudaMallocManaged(&m_pBinary, 1440 * 1080 * sizeof(unsigned char));
