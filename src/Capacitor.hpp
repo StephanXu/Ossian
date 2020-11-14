@@ -16,20 +16,8 @@ struct CapacitorStatus
 	float m_TargetPower;
 };
 
-class ICapacitor
-{
-public:
-	virtual auto AddCapacitor(const std::string location, const unsigned int readerId, const unsigned int writerId)->void = 0;
-
-	/**
-	 * @brief 设置功率
-	 * @param power 功率值(W)
-	 */
-	virtual auto SetPower(const double power)->void = 0;
-};
-
-template<typename Mutex = std::mutex>
-class Capacitor : ossian::IODataBuilder<Mutex, CapacitorStatus>
+template <typename Mutex = std::mutex>
+class Capacitor : public ossian::IODataBuilder<Mutex, CapacitorStatus>
 {
 #pragma pack(push,1)
 	struct SetPowerModel
@@ -44,23 +32,23 @@ class Capacitor : ossian::IODataBuilder<Mutex, CapacitorStatus>
 		uint16_t m_TestCurrent;
 		uint16_t m_TargetPower;
 	};
-#pragma pack(pop)	
+#pragma pack(pop)
 	ossian::IOData<CapacitorStatus>* m_Status{};
 	ossian::CANManager* m_CANManager;
 	std::shared_ptr<ossian::CANDevice> m_WriterDevice{};
 
 public:
 	OSSIAN_SERVICE_SETUP(Capacitor(
-		ossian::CANManager* canManager, 
+		ossian::CANManager* canManager,
 		ossian::IOData<CapacitorStatus>* capacitorStatus))
-		:m_CANManager(canManager)
-		,m_Status(capacitorStatus)
+		: m_CANManager(canManager)
+		  , m_Status(capacitorStatus)
 	{
 	}
 
 	auto AddCapacitor(const std::string location,
-					  const unsigned int readerId,
-					  const unsigned writerId)->void 
+	                  const unsigned int readerId,
+	                  const unsigned writerId) -> void
 	{
 		if (!m_CANManager)
 		{
@@ -68,23 +56,23 @@ public:
 		}
 		m_CANManager->AddDevice(location, readerId)->SetCallback(
 			[this](const std::shared_ptr<ossian::BaseDevice>& device,
-				   const size_t length,
-				   const uint8_t* data)
+			       const size_t length,
+			       const uint8_t* data)
 			{
 				CapacitorStatus status;
-				auto model = reinterpret_cast<const StatusModel*>(data);
-				status.m_InputVoltage = model->m_InputVoltage / 100.f;
+				auto model                = reinterpret_cast<const StatusModel*>(data);
+				status.m_InputVoltage     = model->m_InputVoltage / 100.f;
 				status.m_CapacitorVoltage = model->m_CapacitorVoltage / 100.f;
-				status.m_TestCurrent = model->m_TestCurrent / 100.f;
-				status.m_TargetPower = model->m_TargetPower / 100.f;
+				status.m_TestCurrent      = model->m_TestCurrent / 100.f;
+				status.m_TargetPower      = model->m_TargetPower / 100.f;
 				m_Status->Set(status);
 			});
 		m_WriterDevice = m_CANManager->AddDevice(location, writerId);
 	}
 
-	auto SetPower(const double power)->void 
+	auto SetPower(const double power) -> void
 	{
-		SetPowerModel data{ static_cast<uint16_t>(power * 100) };
+		SetPowerModel data{static_cast<uint16_t>(power * 100)};
 		m_WriterDevice->WriteRaw(sizeof(SetPowerModel), reinterpret_cast<uint8_t*>(&data));
 	}
 };
