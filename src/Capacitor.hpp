@@ -4,6 +4,7 @@
 #include <ossian/Factory.hpp>
 #include <ossian/io/CAN.hpp>
 #include <ossian/MultiThread.hpp>
+#include <ossian/IOData.hpp>
 
 #include <mutex>
 
@@ -25,20 +26,11 @@ public:
 	 * @param power ¹¦ÂÊÖµ(W)
 	 */
 	virtual auto SetPower(const double power)->void = 0;
-	
-	virtual auto Status()->CapacitorStatus = 0;
-	
-	virtual auto StatusRef()->const CapacitorStatus & = 0;
-	
-	virtual auto Lock()->void = 0;
-	
-	virtual auto UnLock()->void = 0;
-	
-	virtual auto TryLock()->bool = 0;
 };
 
 template<typename Mutex = std::mutex>
-class Capacitor : public ICapacitor
+class Capacitor : public ICapacitor, 
+	              ossian::IODataBuilder<Mutex, CapacitorStatus>
 {
 #pragma pack(push,1)
 	struct SetPowerModel
@@ -54,14 +46,16 @@ class Capacitor : public ICapacitor
 		uint16_t m_TargetPower;
 	};
 #pragma pack(pop)	
-	Mutex m_Mutex;
-	CapacitorStatus m_Status{};
+	ossian::IOData<CapacitorStatus>* m_Status{};
 	ossian::CANManager* m_CANManager;
 	std::shared_ptr<ossian::CANDevice> m_WriterDevice{};
 
 public:
-	OSSIAN_SERVICE_SETUP(Capacitor(ossian::CANManager* canManager))
+	OSSIAN_SERVICE_SETUP(Capacitor(
+		ossian::CANManager* canManager, 
+		ossian::IOData<CapacitorStatus>* capacitorStatus))
 		:m_CANManager(canManager)
+		,m_Status(capacitorStatus)
 	{
 	}
 
@@ -78,12 +72,13 @@ public:
 				   const size_t length,
 				   const uint8_t* data)
 			{
-				std::lock_guard<Mutex> guard{ m_Mutex };
+				CapacitorStatus status;
 				auto model = reinterpret_cast<const StatusModel*>(data);
-				m_Status.m_InputVoltage = model->m_InputVoltage / 100.f;
-				m_Status.m_CapacitorVoltage = model->m_CapacitorVoltage / 100.f;
-				m_Status.m_TestCurrent = model->m_TestCurrent / 100.f;
-				m_Status.m_TargetPower = model->m_TargetPower / 100.f;
+				status.m_InputVoltage = model->m_InputVoltage / 100.f;
+				status.m_CapacitorVoltage = model->m_CapacitorVoltage / 100.f;
+				status.m_TestCurrent = model->m_TestCurrent / 100.f;
+				status.m_TargetPower = model->m_TargetPower / 100.f;
+				m_Status->Set(status);
 			});
 		m_WriterDevice = m_CANManager->AddDevice(location, writerId);
 	}
@@ -92,32 +87,6 @@ public:
 	{
 		SetPowerModel data{ static_cast<uint16_t>(power * 100) };
 		m_WriterDevice->WriteRaw(sizeof(SetPowerModel), reinterpret_cast<uint8_t*>(&data));
-	}
-
-	auto Status()->CapacitorStatus override
-	{
-		std::lock_guard<Mutex> guard{m_Mutex};
-		return m_Status;
-	}
-
-	auto StatusRef()->const CapacitorStatus & override
-	{
-		return m_Status;
-	}
-
-	auto Lock()->void override
-	{
-		m_Mutex.lock();
-	}
-
-	auto UnLock()->void override
-	{
-		m_Mutex.unlock();
-	}
-
-	auto TryLock()->bool override
-	{
-		return m_Mutex.try_lock();
 	}
 };
 
