@@ -11,7 +11,8 @@ int main()
 	onlineDbg.Connect("http://ossian.mrxzh.com/logger");
 	onlineDbg.StartLogging("OnlineLog",
 	                       "Camera",
-	                       "Test of HKCamera.");
+	                       "Test of HKCamera.",
+						   "5fa7c5d407f435000123982e");
 	SPDLOG_INFO("Start testing...");
 
 	HKCamera camera(0, 1440, 1080);

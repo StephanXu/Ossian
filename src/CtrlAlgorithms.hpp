@@ -59,25 +59,54 @@ inline double RelativeEcdToRad(const uint16_t& ecd, const uint16_t& ecdMid)
 	return relativeEcd * kMotorEcdToRadCoef;
 }
 
+//斜坡函数
+class RampFunction
+{
+public:
+	RampFunction() = default;
+	RampFunction(double framePeriod, double lowerBnd, double upperBnd) : 
+		m_FramePeriod(framePeriod), m_LowerBnd(lowerBnd), m_UpperBnd(upperBnd) {}
+	void SetState(double framePeriod, double lowerBnd, double upperBnd)
+	{
+		m_FramePeriod = framePeriod;
+		m_LowerBnd = lowerBnd;
+		m_UpperBnd = upperBnd;
+	}
+
+	double Calc(double curValue)
+	{
+		m_Result += curValue * m_FramePeriod;
+		m_Result = Clamp(m_Result, m_LowerBnd, m_UpperBnd);
+
+		return m_Result;
+	}
+	void Reset() { m_Result = 0; }
+
+private:
+	double m_FramePeriod;
+	double m_LowerBnd, m_UpperBnd;
+	double m_Result = 0;
+};
+
+
 // out = k / (k + T) * out + T / (k + T) * in
 // 一阶低通滤波器
 class FirstOrderFilter   
 {
 public:
-	FirstOrderFilter(double k=1,double t=1) : m_Coef(k),m_FramePeriod(t) { m_LastResult = 0; }  //参数取决于滤波时间和采样周期
+	FirstOrderFilter(double k=1,double t=1) : m_Coef(k),m_FramePeriod(t) {}  //参数取决于滤波时间和采样周期
 	void SetState(double k, double t) { m_Coef = k; m_FramePeriod = t; }
 	double Calc(double curValue)
 	{
-		double result = m_Coef / (m_Coef + m_FramePeriod) * m_LastResult + m_FramePeriod / (m_Coef + m_FramePeriod) * curValue;
-		m_LastResult = result;
-		return result;
+		m_Result = m_Coef / (m_Coef + m_FramePeriod) * m_Result + m_FramePeriod / (m_Coef + m_FramePeriod) * curValue;
+		return m_Result;
 	}
 
-	void Reset() { m_LastResult = 0; }
+	void Reset() { m_Result = 0; }
 
 private:
 	double m_Coef;
-	double m_LastResult;
+	double m_Result = 0;
 	double m_FramePeriod;
 };
 

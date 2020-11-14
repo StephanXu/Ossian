@@ -29,8 +29,7 @@ public:
 };
 
 template<typename Mutex = std::mutex>
-class Capacitor : public ICapacitor, 
-	              ossian::IODataBuilder<Mutex, CapacitorStatus>
+class Capacitor : ossian::IODataBuilder<Mutex, CapacitorStatus>
 {
 #pragma pack(push,1)
 	struct SetPowerModel
@@ -61,7 +60,7 @@ public:
 
 	auto AddCapacitor(const std::string location,
 					  const unsigned int readerId,
-					  const unsigned writerId)->void override
+					  const unsigned writerId)->void 
 	{
 		if (!m_CANManager)
 		{
@@ -83,7 +82,7 @@ public:
 		m_WriterDevice = m_CANManager->AddDevice(location, writerId);
 	}
 
-	auto SetPower(const double power)->void override
+	auto SetPower(const double power)->void 
 	{
 		SetPowerModel data{ static_cast<uint16_t>(power * 100) };
 		m_WriterDevice->WriteRaw(sizeof(SetPowerModel), reinterpret_cast<uint8_t*>(&data));

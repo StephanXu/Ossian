@@ -7,6 +7,8 @@
 #include <ossian/Configuration.hpp>
 #include <opencv2/opencv.hpp>
 #include <ossian/IOData.hpp>
+#include <ossian/io/UART.hpp>
+#include <CtrlAlgorithms.hpp>
 
 #ifdef WITH_CUDA
 #include <opencv2/core/cuda.hpp>
@@ -36,13 +38,29 @@ struct AutoAimStatus
     std::chrono::high_resolution_clock::time_point m_Timestamp;
 };
 
+#pragma pack(push, 1)
+struct AimbotPLCSendMsg
+{
+    uint8_t m_FrameHead = 0xA5;
+    float m_Pitch;
+    float m_Yaw;
+    uint8_t m_FlagFound;
+    uint8_t m_FlagFire;
+    uint8_t m_FrameTail = 0xAA;
+};
+#pragma pack(pop)
+
+constexpr size_t kSendBufSize = sizeof(AimbotPLCSendMsg);
+
 class Aimbot : public ossian::IODataBuilder<std::mutex, AutoAimStatus>
 {
 public:
-    static const int kGpuMatStep = 1536;
+    static constexpr double kRadToDegreeCoef = 180.0 / M_PI;
+    static constexpr int kGpuMatStep = 1536;
     void Process(unsigned char* pImage);
     OSSIAN_SERVICE_SETUP(Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config, 
-                                ossian::IOData<AutoAimStatus>* autoAimStatus));
+                                ossian::IOData<AutoAimStatus>* autoAimStatus,
+                                ossian::UARTManager* uartManager));
     ~Aimbot()
     {
 #ifdef WITH_CUDA
@@ -52,6 +70,29 @@ public:
         m_phBinary = nullptr;
 #endif // WITH_CUDA
     }
+
+    void ParsePLC(const uint8_t* data, const size_t length) {}
+#ifdef VISION_ONLY
+    void AddPLCConnector(const std::string& location)
+    {
+        using namespace ossian::UARTProperties;
+        m_PLCDevice = m_UARTManager->AddDevice(location,
+            115200,
+            FlowControl::FlowControlNone,
+            DataBits::DataBits8,
+            StopBits::StopBits1,
+            Parity::ParityNone);
+
+        m_PLCDevice->SetCallback([this](const std::shared_ptr<ossian::BaseDevice>& device,
+            const size_t length,
+            const uint8_t* data)
+        {
+            SPDLOG_TRACE("PLC Receive: {}", length);
+            ParsePLC(data, length);
+        });
+    }
+#endif // VISION_ONLY
+
     cv::Mat debugFrame;
 
 private:
@@ -92,8 +133,9 @@ private:
         */
         bool IsLegal() const noexcept
         {
-            if (m_AreaContour > minArea&&
-                m_LongAxis / m_MinorAxis >= ellipseMinAspectRatio)
+            if (m_AreaContour > minArea
+                && m_LongAxis / m_MinorAxis >= ellipseMinAspectRatio
+                && fabs(m_Angle)<10)
             {
                 return true;
             }
@@ -301,12 +343,12 @@ private:
         {
             PNPSolver(bbox, armorType);
             double yaw = 0, pitch = 0, dist = 0;
-            Eigen::Vector3d posInGimbal = m_CamToGblRot * m_WorldToCamTran + m_CamToGblTran;
+            Eigen::Vector3d posInGimbal = /*m_CamToGblRot * */m_WorldToCamTran + m_CamToGblTran;
             dist = posInGimbal(2) * scaleDist;
             yaw = atan2(posInGimbal(0), posInGimbal(2));
-            //pitch = atan2(posInGimbal(1), posInGimbal(2));
+            pitch = atan2(posInGimbal(1), posInGimbal(2));
 
-            double alpha = asin(barrelToGimbalY / sqrt(posInGimbal(1) * posInGimbal(1) + posInGimbal(2) * posInGimbal(2)));
+            /*double alpha = asin(barrelToGimbalY / sqrt(posInGimbal(1) * posInGimbal(1) + posInGimbal(2) * posInGimbal(2)));
             if (posInGimbal(1) < 0) 
             {
                 double theta = atan(-posInGimbal(1) / posInGimbal(2));
@@ -321,12 +363,12 @@ private:
             {
                 double theta = atan(posInGimbal(1)/ posInGimbal(2));
                 pitch = (theta - alpha);   
-            }
+            }*/
 
             if (EnableGravity)
                 pitch += GetPitch(dist/1000, posInGimbal(1)/1000, initV);
 
-            return std::make_tuple(-yaw, -pitch, dist);
+            return std::make_tuple(yaw, pitch, dist);
         }
 
     private:
@@ -396,11 +438,11 @@ private:
 				cv::Point3d(bigArmorWidth  / 2,  smallArmorHeight / 2, 0),	//br
 				cv::Point3d(-bigArmorWidth / 2,  smallArmorHeight / 2, 0)	//bl
 			};
-            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1763.56659425676, 0, 755.6922965695335,
-                                          0, 1764.629234433968, 560.6661455507484,
-                                          0, 0, 1);
-            const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.05267019741741139, 0.05428699162792178,
-                                        -0.0002141029821745741, -0.001124320437987154, -0.4855547217023871);
+            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1766.669912681928, 0, 761.7515960733542,
+            0, 1766.25803717183, 565.6503462949001,
+            0, 0, 1);
+            const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.0760893012372638, 0.402763931163976, 
+                0.0004829922498116148, 0.0008781734366235105, -2.225999824210345);
 			
 			// tmp
 			static cv::Mat rvec, tvec;
@@ -426,11 +468,24 @@ private:
 
     bool DetectArmor(unsigned char* pImage, Armor& outTarget) noexcept
     {
-        static int enemyColor = static_cast<int>(*m_Config->Instance()->vision->aimbot->enemyColor);
+        static int enemyColor = (*m_Config->Instance()->vision->aimbot->enemyColor == Config::EnemyColor::BLUE) ? 0 : 2;
         static int thresBrightness = *m_Config->Instance()->vision->aimbot->thresBrightness;
         static int thresColor = *m_Config->Instance()->vision->aimbot->thresColor;
-        
+
+        static const cv::Mat kElement3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+        static const cv::Mat kElement5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
+
+        static std::vector<std::vector<cv::Point>> contours;
+        static std::vector<LightBar> lightBars;
+        static std::vector<Armor> armors;
+        contours.clear();
+        lightBars.clear();
+        armors.clear();
+
 #ifdef WITH_CUDA
+        static const cv::Ptr<cv::cuda::Filter> kDilateFilter = cv::cuda::createMorphologyFilter(cv::MORPH_DILATE, CV_8UC1, kElement3);
+        static const cv::Ptr<cv::cuda::Filter> kErodeFilter = cv::cuda::createMorphologyFilter(cv::MORPH_ERODE, CV_8UC1, kElement3);
+
         cudaMemcpy(m_pdFrame, pImage, 1440 * 1080 * 1, cudaMemcpyHostToDevice);
         cv::cuda::GpuMat dFrame(1080, 1440, CV_8UC1, m_pdFrame);
 
@@ -446,13 +501,30 @@ private:
         cv::cuda::threshold(grayColor, binaryColor, thresColor, 255, cv::THRESH_BINARY, cudaStream);
 
         cv::cuda::bitwise_and(binaryBrightness, binaryColor, binary, cv::noArray(), cudaStream);
-#else
-        const static cv::Mat element3 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
-        const static cv::Mat element5 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
 
+        kDilateFilter->apply(binary, binary, cudaStream);
+        kErodeFilter->apply(binary, binary, cudaStream);
+
+        cudaMemcpy(m_phBinary, binary.data, binary.step * binary.rows, cudaMemcpyDeviceToHost);
+        cv::Mat hBinary(1080, 1440, CV_8UC1, m_phBinary, binary.step);
+        cv::findContours(hBinary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
+
+#ifdef _DEBUG
+        static cv::Mat debugBinaryBrightness, debugBinaryColor, debugBinary;
+        dFrame.download(debugFrame);
+        binaryBrightness.download(debugBinaryBrightness);
+        binaryColor.download(debugBinaryColor);
+        binary.download(debugBinary);
+        cv::imshow("BinaryBrightness", debugBinaryBrightness);
+        cv::imshow("BinaryColor", debugBinaryColor);
+        cv::imshow("DebugBinary", debugBinary);
+        //cv::waitKey(10);
+#endif // _DEBUG
+
+#else
         cv::Mat dFrame(1080, 1440, CV_8UC1, pImage);
 
-        cv::cvtColor(dFrame, dFrame, cv::COLOR_BayerRG2BGR);
+        cv::cvtColor(dFrame, dFrame, cv::COLOR_BayerRG2RGB);
 
         cv::cvtColor(dFrame, grayBrightness, cv::COLOR_BGR2GRAY);
         cv::threshold(grayBrightness, binaryBrightness, thresBrightness, 255, cv::THRESH_BINARY);
@@ -463,34 +535,20 @@ private:
 
         cv::bitwise_and(binaryBrightness, binaryColor, binary);
 
-        cv::dilate(binary, binary, element3);
-        cv::erode(binary, binary, element3);
-#endif // WITH_CUDA
-        
+        cv::dilate(binary, binary, kElement3);
+        cv::erode(binary, binary, kElement3);
+
+        cv::findContours(binary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
+
 #ifdef _DEBUG
-        //cv::Mat debugBinaryBrightness, debugBinaryColor, debugBinary;
-        dFrame.download(debugFrame);
-        /*binaryBrightness.download(debugBinaryBrightness);
-        binaryColor.download(debugBinaryColor);
-        binary.download(debugBinary);
-        cv::imshow("BinaryBrightness", debugBinaryBrightness);
-        cv::imshow("BinaryColor", debugBinaryColor);
-        cv::imshow("DebugBinary", debugBinary);*/
-        //cv::waitKey(10);
-#endif // DEBUG
+        debugFrame = dFrame.clone();
+        cv::imshow("BinaryBrightness", binaryBrightness);
+        cv::imshow("BinaryColor", binaryColor);
+        cv::imshow("DebugBinary", binary);
+#endif // _DEBUG
 
-        std::vector<std::vector<cv::Point> > contours;
-        std::vector<cv::Vec4i> hierarchy;
-        std::vector<LightBar> lightBars;
-
-#ifdef WITH_CUDA
-        cudaMemcpy(m_phBinary, binary.data, binary.step*binary.rows, cudaMemcpyDeviceToHost);
-        cv::Mat hBinary(1080, 1440, CV_8UC1, m_phBinary, binary.step);
-        cv::findContours(hBinary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
-#else
-        cv::findContours(binary, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); //CHAIN_APPROX_SIMPLE
 #endif // WITH_CUDA
-        
+
         for (size_t i = 0; i < contours.size(); ++i)
         {
             if (contours[i].size() >= 6)
@@ -507,7 +565,6 @@ private:
                 }
             }
         }
-        std::vector<Armor> armors;
 
         for (size_t i = 0; i < lightBars.size(); ++i)
         {
@@ -573,6 +630,13 @@ private:
     std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;
     std::atomic_bool m_Valid = false;
     ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config = nullptr;
+    
+    ossian::UARTManager* m_UARTManager;
+#ifdef VISION_ONLY
+    AimbotPLCSendMsg m_AimbotPLCSendMsg{};
+    uint8_t m_PLCSendBuf[kSendBufSize];
+    KalmanFilter m_AutoAimPredictor{ 4,2,0 };
+#endif // VISION_ONLY
 };
 
 #endif // AIMBOT_HPP

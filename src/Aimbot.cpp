@@ -34,10 +34,12 @@ Eigen::Vector3d Aimbot::PoseSolver::m_WorldToCamTran;
 cv::Point2d Aimbot::Armor::frameCenter(0, 0);
 
 Aimbot::Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
-               ossian::IOData<AutoAimStatus>* autoAimStatus)
+               ossian::IOData<AutoAimStatus>* autoAimStatus,
+               ossian::UARTManager* uartManager)
 	: m_Valid(false)
     , m_Config(config)
     , m_AutoAimStatusSender(autoAimStatus)
+    , m_UARTManager(uartManager)
 {
     Aimbot::LightBar::minArea = *m_Config->Instance()->vision->aimbot->lightbarMinArea;
     Aimbot::LightBar::ellipseMinAspectRatio = *m_Config->Instance()->vision->aimbot->lightBarEllipseMinAspectRatio;
@@ -69,12 +71,30 @@ Aimbot::Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
     Aimbot::Armor::frameCenter.x = *m_Config->Instance()->vision->camera->frameWidth;
     Aimbot::Armor::frameCenter.y = *m_Config->Instance()->vision->camera->frameHeight;
 
+#ifdef VISION_ONLY
+    m_AutoAimPredictor.SetMatsForAutoAim(10);
+#endif // VISION_ONLY
+
 #ifdef WITH_CUDA
     /*cudaError_t cudaStatus = cudaMallocManaged(&m_pBinary, 1440 * 1080 * sizeof(unsigned char));
     if (cudaStatus != cudaSuccess)         
         SPDLOG_ERROR("Aimbot: cudaMallocManaged() Failed: {}", cudaStatus);    */ 
+    //cuda初始化
+    int deviceCount = 0;
+    cudaError_t cudaStatus;
+    cudaStatus = cudaGetDeviceCount(&deviceCount);
+    if (cudaStatus != cudaSuccess)
+        throw std::runtime_error("cudaGetDeviceCount() failed");
+    if (deviceCount < 1)
+        throw std::runtime_error("cuda device not found");
+    SPDLOG_INFO("cudaEnabledDeviceCount={}", deviceCount);
+    cv::cuda::printCudaDeviceInfo(cv::cuda::getDevice());
+    cudaSetDeviceFlags(cudaDeviceMapHost);
+    cudaStatus = cudaSetDevice(0);
+    if (cudaStatus != cudaSuccess)
+        throw std::runtime_error("cudaSetDevice() failed");
 
-    cudaError_t cudaStatus = cudaMalloc(&m_pdFrame, 1440 * 1080 * 1);
+    cudaStatus = cudaMalloc(&m_pdFrame, 1440 * 1080 * 1);
     if (cudaStatus != cudaSuccess)
         SPDLOG_ERROR("Aimbot: cudaMalloc() Failed: {}", cudaStatus);    
     m_phBinary = new unsigned char[kGpuMatStep * 1080 * 1];
@@ -89,13 +109,15 @@ void Aimbot::Process(unsigned char* pImage)
     //ImageInputData* imageInput = dynamic_cast<ImageInputData*>(input);
 	
     //cv::Mat origFrame = imageInput->m_Image;
-    static int cnt = 0;
-    std::cerr << "In Aimbot #" <<cnt++<< std::endl;
+
+    /*static int cnt = 0;
+    std::cerr << "In Aimbot #" <<cnt++<< std::endl;*/
     //return;
 
     auto start=std::chrono::high_resolution_clock::now();
     if (!pImage)
     {
+        SPDLOG_ERROR("Empty Image!");
         return;
     }
 
@@ -111,9 +133,15 @@ void Aimbot::Process(unsigned char* pImage)
     if (foundArmor)
     {
         std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox); //rad, mm
-
+        shootMode = (deltaPitch < 0.1 && deltaYaw < 0.1);
         /*Math::RegularizeErrAngle(deltaYaw, 'y');
         Math::RegularizeErrAngle(deltaPitch, 'p');*/
+
+        /*auto filterdAngles = m_AutoAimPredictor.Predict();
+        std::cerr << filterdAngles << std::endl;
+        m_AutoAimPredictor.Correct(deltaPitch, deltaYaw);
+        deltaPitch = filterdAngles(0);
+        deltaYaw = filterdAngles(1);*/
     }
     else
     {
@@ -121,13 +149,23 @@ void Aimbot::Process(unsigned char* pImage)
     }
     //SPDLOG_INFO("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
 
-    //std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
+    std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
+    
+#ifdef VISION_ONLY
+    m_AimbotPLCSendMsg.m_Pitch = -deltaPitch * kRadToDegreeCoef * 1000.0;
+    m_AimbotPLCSendMsg.m_Yaw = -deltaYaw * kRadToDegreeCoef * 1000.0;
+    m_AimbotPLCSendMsg.m_FlagFound = foundArmor;
+    m_AimbotPLCSendMsg.m_FlagFire = shootMode;
+    std::memcpy(m_PLCSendBuf, &m_AimbotPLCSendMsg, kSendBufSize);
+    m_UARTManager->WriteTo(m_PLCDevice.get(), sizeof(AimbotPLCSendMsg), m_PLCSendBuf);
+#else
     m_AutoAimStatus.m_Found = foundArmor;
     m_AutoAimStatus.m_Pitch = deltaPitch;
     m_AutoAimStatus.m_Yaw = deltaYaw;
     m_AutoAimStatus.m_Dist = dist;
     m_AutoAimStatus.m_Timestamp = start;
     m_AutoAimStatusSender->Set(m_AutoAimStatus);
+#endif // VISION_ONLY
     
     //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     //[TODO] 发送两角度给云台
@@ -148,13 +186,13 @@ void Aimbot::Process(unsigned char* pImage)
     }*/
 
 #ifdef _DEBUG
-    //putText(debugFrame, fmt::format("ms: {:.4f}",ms), cv::Point(30, 50), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(173, 205, 249));
+    putText(debugFrame, fmt::format("ms: {:.2f}", interval), cv::Point(30, 50), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(173, 205, 249));
     //cv::rectangle(debugFrame, armorBBox, cv::Scalar(62, 255, 192), 2);
-    putText(debugFrame, fmt::format("yaw: {:.4f}", deltaYaw), cv::Point(50, 90), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
-    putText(debugFrame, fmt::format("pitch: {:.4f}", deltaPitch), cv::Point(50, 110), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
-    putText(debugFrame, fmt::format("dist: {:.4f}", dist), cv::Point(50, 130), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
-    putText(debugFrame, fmt::format("ms: {}", armorType == ArmorType::Small ? "Small" : "Big"), cv::Point(50, 150), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
-    //putText(debugFrame, fmt::format("ms: {}", shootMode ? "Shoot" : "Stop shooting"), cv::Point(220, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
+    putText(debugFrame, fmt::format("Yaw: {:.2f}", deltaYaw), cv::Point(50, 90), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
+    putText(debugFrame, fmt::format("Pitch: {:.2f}", deltaPitch), cv::Point(50, 110), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
+    putText(debugFrame, fmt::format("dist: {:.2f}", dist), cv::Point(50, 130), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
+    putText(debugFrame, fmt::format("Type: {}", armorType == ArmorType::Small ? "Small" : "Big"), cv::Point(50, 150), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
+    putText(debugFrame, fmt::format("Gun: {}", shootMode ? "Shoot" : "Stop Shooting"), cv::Point(220, 50), cv::FONT_HERSHEY_COMPLEX, 0.6, cv::Scalar(0, 252, 124));
     //cv::circle(debugFrame, redDot, 2, cv::Scalar(0, 255, 0), -1);
     imshow("DebugFrame", debugFrame);
     cv::waitKey(10);

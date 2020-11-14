@@ -52,31 +52,32 @@ void Startup::ConfigServices(AppBuilder& app)
 			                    *config->ossian->onlineArguments->argId);
 		});
 
-	app.AddService<ossian::CANManager>();
 	app.AddService<ossian::UARTManager>();
 	app.AddService<ossian::IOListener>();
+#ifndef VISION_ONLY
+	app.AddService<ossian::CANManager>();
 	app.AddService<ossian::MotorManager>();
 
 	app.AddService<IReferee, RefereeAllMessagesMt>(
 		[](IReferee& option)
-		{
-			option.AddReferee("/dev/ttyTHS2");
-		});
+	{
+		option.AddReferee("/dev/ttyTHS2");
+	});
 	app.AddService<RemoteMt>(
 		[](RemoteMt& option)
-		{
-			option.Add("/dev/ttyUSB0",
-			           100000,
-			           ossian::UARTProperties::FlowControlNone,
-			           ossian::UARTProperties::DataBits8,
-			           ossian::UARTProperties::StopBits1,
-			           ossian::UARTProperties::ParityEven);
-		});
-	app.AddService<ICapacitor, CapacitorMt>(
-		[](ICapacitor& option)
-		{
-			//option.AddCapacitor("can0", 0x211, 0x210);
-		});
+	{
+		option.Add("/dev/ttyUSB0",
+			100000,
+			ossian::UARTProperties::FlowControlNone,
+			ossian::UARTProperties::DataBits8,
+			ossian::UARTProperties::StopBits1,
+			ossian::UARTProperties::ParityEven);
+	});
+	app.AddService<CapacitorMt>(
+		[](CapacitorMt& option)
+	{
+		option.AddCapacitor("can0", 0x211, 0x210);
+	});
 	/*app.AddService<IGyro, GyroMt>(
 		[](IGyro& option)
 		{
@@ -99,31 +100,39 @@ void Startup::ConfigServices(AppBuilder& app)
 	});
 	app.AddService<PhototubeMt>(
 		[](PhototubeMt& option)
-		{
-			//option.Add("can0", 0x300);
-		});
+	{
+		//option.Add("can0", 0x300);
+	});
 	app.AddService<Chassis>(
 		[](Chassis& option)
-		{
-			option.AddMotor(Chassis::MotorPosition::LF, "can0", 1, 0x200);
-			option.AddMotor(Chassis::MotorPosition::LR, "can0", 2, 0x200);
-			option.AddMotor(Chassis::MotorPosition::RR, "can0", 3, 0x200);
-			option.AddMotor(Chassis::MotorPosition::RF, "can0", 4, 0x200);
-		});
+	{
+		option.AddMotor(Chassis::MotorPosition::LF, "can0", 1, 0x200);
+		option.AddMotor(Chassis::MotorPosition::LR, "can0", 2, 0x200);
+		option.AddMotor(Chassis::MotorPosition::RR, "can0", 3, 0x200);
+		option.AddMotor(Chassis::MotorPosition::RF, "can0", 4, 0x200);
+	});
 	app.AddService<Gimbal>(
 		[](Gimbal& option)
-		{
-			option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 7, 0x2ff);
-			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 6, 0x2ff);
-		});
+	{
+		option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 7, 0x2ff);
+		option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 6, 0x2ff);
+	});
 	app.AddService<Gun>(
 		[](Gun& option)
-		{
-			/*option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 2, 0x200);
-			option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 1, 0x200);
-			option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);*/
-		});
-	app.AddService<Aimbot>();
+	{
+		/*option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 2, 0x200);
+		option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 1, 0x200);
+		option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);*/
+	});
+#endif // !VISION_ONLY
+
+	app.AddService<Aimbot>(
+		[](Aimbot& option)
+	{
+#ifdef VISION_ONLY
+		option.AddPLCConnector("/dev/ttyUSB0");
+#endif // VISION_ONLY
+	});
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)
@@ -134,7 +143,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
-	/*app.AddExecutable<FricCtrlTask>();
-	app.AddExecutable<FeedCtrlTask>();
-	app.AddExecutable<CameraPeeker>();*/
+	//app.AddExecutable<FricCtrlTask>();
+	//app.AddExecutable<FeedCtrlTask>();
+	//app.AddExecutable<CameraPeeker>();
 }

@@ -16,12 +16,12 @@ void ChassisCtrlTask::CalcWheelSpeedTarget()
 	m_WheelSpeedSet = m_WheelKinematicMat * vSet / kWheelRadius / (2.0 * M_PI) * 60; //[4, 3] * [3, 1] --> [4, 1]  轮子转速期望rpm
 	//m_WheelSpeedSet(2) *= -1, m_WheelSpeedSet(3) *= -1;  //3,4号电机转向与轮子相反
 	//限制麦轮最大速度
-	double maxWheelSpeedItem = m_WheelSpeedSet.maxCoeff();
+	/*double maxWheelSpeedItem = m_WheelSpeedSet.maxCoeff();
 	if (maxWheelSpeedItem > kWheelSpeedLimit)
 	{
 		double scaleWheelSpeed = kWheelSpeedLimit / maxWheelSpeedItem;
 		m_WheelSpeedSet *= scaleWheelSpeed;
-	}
+	}*/
 	/*SPDLOG_INFO("@WheelSpeedSet=[$wheel0={},$wheel1={},$wheel2={},$wheel3={}]", 
 		m_WheelSpeedSet(0), m_WheelSpeedSet(1), m_WheelSpeedSet(2), m_WheelSpeedSet(3));*/
 }
@@ -96,6 +96,10 @@ void ChassisCtrlTask::ChassisModeSet()
 	{
 		m_CurChassisMode = Disable;
 	}
+	else if (m_FlagInitChassis)
+	{
+		m_CurChassisMode = Init;
+	}
 	else
 	{
 		switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
@@ -116,7 +120,7 @@ void ChassisCtrlTask::ChassisModeSet()
 
 void ChassisCtrlTask::ChassisCtrl()
 {
-	if (m_CurChassisMode == Disable)
+	if (m_CurChassisMode == Disable || m_CurChassisMode == Init)
 		m_CurrentSend.fill(0);
 	else
 	{
@@ -130,14 +134,14 @@ void ChassisCtrlTask::ChassisCtrl()
 			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
 			//SPDLOG_INFO("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
-			SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
+			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
 							i,
 							i,
 							set2, 
 							i,
 							get2,
 							i,
-							m_CurrentSend[i]);
+							m_CurrentSend[i]);*/
 			//m_PIDChassisSpeed[i].PrintDetails(i);
 		}
 	}
@@ -212,7 +216,7 @@ void ChassisCtrlTask::ChassisCtrl()
 void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 {
 	//[TODO] 检验三角函数的符号
-	if (m_CurChassisMode == Disable)
+	if (m_CurChassisMode == Disable || m_CurChassisMode == Init)
 		m_VxSet = m_VySet = m_WzSet = 0;
 	else if (m_CurChassisMode == Follow_Gimbal_Yaw)
 	{
@@ -230,7 +234,7 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		RCToChassisSpeed();		
 		double deltaAngle = ClampLoop(m_AngleSet - m_ChassisSensorValues.imu.m_Yaw, -M_PI, M_PI);
 		m_WzSet = m_PIDChassisAngle.Calc(deltaAngle, 0); //符号为负？
-		std::cerr << "Delta Angle=" << deltaAngle << '\t' << "m_WzSet=" << m_WzSet << std::endl;
+		SPDLOG_INFO("@PIDChassisYawAngle=[$set={},$get={},$pidout={}]", deltaAngle, 0, m_WzSet);
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 	}
@@ -251,6 +255,6 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 
-		SPDLOG_INFO("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
+		//SPDLOG_INFO("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
 	}
 }

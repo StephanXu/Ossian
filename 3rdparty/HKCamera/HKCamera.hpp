@@ -19,11 +19,6 @@
 
 #include <opencv2/opencv.hpp>
 
-#ifdef WITH_CUDA
-#include <opencv2/core/cuda.hpp>
-#include <cuda_runtime.h>
-#endif // WITH_CUDA
-
 #include <MvCameraControl.h>
 
 #include <exception>
@@ -107,7 +102,7 @@ public:
 	 *
 	 * @returns	True if it succeeds, false if it fails.
 	 */
-	bool ReadFrame(cv::cuda::GpuMat& outMat);
+	bool ReadFrame(unsigned char* pData);
 
 	/**
 	 * @fn	void HKCamera::StartGrabFrame();

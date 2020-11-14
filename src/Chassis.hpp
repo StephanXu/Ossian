@@ -111,7 +111,7 @@ public:
 	static constexpr double kWheelRadius = 76.0 / 1000.0;  ///< m
 	static constexpr double kWheelXn = 175.0 / 1000.0; ///< m
 	static constexpr double kWheelYn = 232.5 / 1000;   ///< m
-	static constexpr double kWheelSpeedLimit = 800;            ///< 单个麦轮的最大转速rpm
+	static constexpr double kWheelSpeedLimit = 1000;            ///< 单个麦轮的最大转速rpm
 	static constexpr double kWheelSpeedToMotorRPMCoef = 3591 / 187.0;
 	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
 	//static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
@@ -135,7 +135,7 @@ public:
 	static constexpr double kChassisVxRCSen = -0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例0.006
 	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
 	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
-	static constexpr double kChassisAngleWzRCSen = 0.000002; ///< 跟随底盘yaw模式下，遥控器的yaw遥杆（max 660）增加到车体角度的比例
+	static constexpr double kChassisAngleWzRCSen = 0.000005; ///< 跟随底盘yaw模式下，遥控器的yaw遥杆（max 660）增加到车体角度的比例
 	static constexpr double kChassisCtrlPeriod = 0.012;  //底盘控制周期s，用于低通滤波器
 
 	//底盘运动
@@ -162,6 +162,7 @@ public:
 	enum ChassisMode
 	{
 		Disable, ///< 失能
+		Init,	 ///< 初始化
 		Follow_Gimbal_Yaw, ///< 跟随云台
 
 		Follow_Chassis_Yaw,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
@@ -172,7 +173,7 @@ public:
 
 	OSSIAN_SERVICE_SETUP(ChassisCtrlTask(ossian::IOData<ChassisMotorsModel>* motors,
 										 ossian::IOData<RemoteStatus>* remote,
-										 ICapacitor* capacitor,
+										 ossian::IOData<CapacitorStatus>* capacitorListener,
 										 Chassis* chassis,
 										 ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
 										 ossian::IOData<PowerHeatData>* powerHeatDataListener,
@@ -181,7 +182,7 @@ public:
 
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
-		, m_SpCap(capacitor)
+		, m_SpCapListener(capacitorListener)
 		, m_Chassis(chassis)
 		, m_Config(config)
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
@@ -237,6 +238,11 @@ public:
 				value.m_ChassisPower,
 				value.m_ChassisPowerBuffer,
 				80); });*/
+		m_SpCapListener->AddOnChange([](const CapacitorStatus& value) {
+			SPDLOG_INFO("@SpCap=[$InputV={},$CapV={},$InputI={},$TargetP={}]",
+				value.m_InputVoltage, value.m_CapacitorVoltage, value.m_TestCurrent, value.m_TargetPower);
+		});
+
 		m_GyroListener->AddOnChange([](const GyroA110Status& value) {
 			SPDLOG_INFO("@ChassisImu=[$yaw={},$yawSpeed={}]", value.m_Yaw, value.m_ZAngleSpeed);
 		});
@@ -244,22 +250,37 @@ public:
 
 	void InitChassis()
 	{
-		m_AngleSet = m_ChassisSensorValues.imu.m_Yaw;
+		static std::chrono::high_resolution_clock::time_point timestampInit;
+		static bool flagStartInit = true;
+		if (flagStartInit)
+		{
+			timestampInit = std::chrono::high_resolution_clock::now();
+			flagStartInit = false;
+		}
+			
+		long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::high_resolution_clock::now() - timestampInit).count();
 
-		std::for_each(m_RCInputFilters.begin(), m_RCInputFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
-		std::for_each(m_RPMFdbFilters.begin(), m_RPMFdbFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
+		if (interval > 2000 && timestampInit != std::chrono::high_resolution_clock::time_point()) //待imu稳定后再读数
+		{
+			m_AngleSet = m_ChassisSensorValues.imu.m_Yaw;
 
-		std::for_each(m_PIDChassisSpeed.begin(), m_PIDChassisSpeed.end(), [](PIDController& x) { x.Reset(); });
-		m_PIDChassisAngle.Reset();
+			std::for_each(m_RCInputFilters.begin(), m_RCInputFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
+			std::for_each(m_RPMFdbFilters.begin(), m_RPMFdbFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
 
-		m_FlagInitChassis = false;
+			std::for_each(m_PIDChassisSpeed.begin(), m_PIDChassisSpeed.end(), [](PIDController& x) { x.Reset(); });
+			m_PIDChassisAngle.Reset();
+
+			m_FlagInitChassis = false;
+			flagStartInit = true;
+		}
+		
 	}
 
 	void UpdateChassisSensorFeedback()
 	{
 		m_ChassisSensorValues.rc = m_RCListener->Get();
-		//SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={}]", m_ChassisSensorValues.rc.ch[0], m_ChassisSensorValues.rc.ch[1], m_ChassisSensorValues.rc.ch[2], m_ChassisSensorValues.rc.ch[3], m_ChassisSensorValues.rc.ch[4]);
-		//m_ChassisSensorValues.spCap = m_SpCap->Get();
+		m_ChassisSensorValues.spCap = m_SpCapListener->Get();
 		m_ChassisSensorValues.gimbalStatus = m_GimbalStatusListener->Get();
 
 		m_ChassisSensorValues.imu = m_GyroListener->Get();
@@ -341,7 +362,7 @@ private:
 	ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config;
 	ossian::IOData<RemoteStatus>* m_RCListener; //遥控器
 	ossian::IOData<ChassisMotorsModel>* m_MotorsListener;
-	ICapacitor* m_SpCap;
+	ossian::IOData<CapacitorStatus>* m_SpCapListener;
 	
 	Chassis* m_Chassis;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;

@@ -63,23 +63,6 @@ bool HKCamera::Initialize()
     if (MV_OK != MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &m_DeviceList))
         throw std::runtime_error("Enum devices fail");
     m_IsValid = true;
-
-#ifdef WITH_CUDA
-    //cuda≥ı ºªØ
-    int deviceCount = 0; 		
-    cudaError_t cudaStatus;  		
-    cudaStatus = cudaGetDeviceCount(&deviceCount); 		
-    if (cudaStatus != cudaSuccess) 			
-        throw std::runtime_error("cudaGetDeviceCount() failed");
-    if (deviceCount < 1)
-        throw std::runtime_error("cuda device not found");
-    SPDLOG_INFO("cudaEnabledDeviceCount={}", deviceCount); 		
-    cv::cuda::printCudaDeviceInfo(cv::cuda::getDevice()); 	
-    cudaSetDeviceFlags(cudaDeviceMapHost);
-    cudaStatus = cudaSetDevice(0); 		
-    if (cudaStatus != cudaSuccess) 			
-        throw std::runtime_error("cudaSetDevice() failed");
-#endif //WITH_CUDA
 }
 
 std::vector<MV_CC_DEVICE_INFO> HKCamera::ListDevices()
@@ -184,7 +167,7 @@ void HKCamera::SetFrameSize(const int width, const int height)
     m_FrameHeight = height;
 }
 
-bool HKCamera::ReadFrame(cv::cuda::GpuMat &outMat)
+bool HKCamera::ReadFrame(unsigned char* pData)
 {
     if (!m_IsValid)
         return false;
@@ -208,6 +191,7 @@ bool HKCamera::ReadFrame(cv::cuda::GpuMat &outMat)
 #endif
     /*if (!ConvertDataToMat(&stImageInfo, m_Data, outMat))
         throw std::runtime_error("OpenCV format convert failed");*/
+    pData = m_Data;
     return true;
 }
 
@@ -221,13 +205,8 @@ void HKCamera::StartGrabFrame()
 
     memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
     SPDLOG_INFO("payloadSize={}", m_PayloadSize);
-#ifdef WITH_CUDA
-    m_Data = new unsigned char[m_PayloadSize];
-    /*cudaError_t cudaStatus = cudaMallocManaged(&m_Data, m_PayloadSize);
-    if (cudaStatus != cudaSuccess)
-        SPDLOG_ERROR("cudaMallocManaged() Failed: {}", cudaStatus);*/
-#endif // WITH_CUDA
 
+    m_Data = new unsigned char[m_PayloadSize];
     if (!m_Data)
         std::bad_alloc();
     m_IsGrabbing = true;
@@ -248,11 +227,7 @@ void HKCamera::Close()
         throw std::runtime_error("Destroy Handle fail");
     m_Handle = nullptr;
 
-#ifdef WITH_CUDA
-    delete[]m_Data;
-    //cudaFree(m_Data);
-#endif // WITH_CUDA
-
+    delete[] m_Data;
     m_Data = nullptr;
 }
 
