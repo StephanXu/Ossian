@@ -148,12 +148,12 @@ public:
 				     waitLogId.set_value(std::string{id});
 			     });
 		auto distSink = std::make_shared<spdlog::sinks::dist_sink_mt>();
-		//auto stdSink  = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+		auto stdSink  = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 
 		auto logId      = waitLogId.get_future().get();
 		auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, logId);
 
-		//distSink->add_sink(stdSink);
+		distSink->add_sink(stdSink);
 		distSink->add_sink(onlineSink);
 
 		auto logger = std::make_shared<spdlog::logger>(loggerName, distSink);

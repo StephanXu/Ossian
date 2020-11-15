@@ -146,9 +146,9 @@ void ChassisCtrlTask::ChassisCtrl()
 		}
 	}
 	//m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
-	////如果超级电容快没电了
-	//if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
-	//	ChassisPowerCtrlByCurrent();
+	//如果超级电容快没电了
+	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+		ChassisPowerCtrlByCurrent();
 
 	/*for (size_t i = 0; i < kNumChassisMotors; ++i)
 		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/

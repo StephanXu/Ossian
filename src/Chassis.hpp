@@ -43,10 +43,12 @@ public:
 
 	OSSIAN_SERVICE_SETUP(Chassis(
 		ossian::MotorManager* motorManager,
-		ossian::IOData<ChassisMotorsModel>* ioData))
+		ossian::IOData<ChassisMotorsModel>* ioData,
+		CapacitorMt* spCap))
 		: m_MotorManager(motorManager)
 		, m_MotorsStatus()
 		, m_IOData(ioData)
+		, m_SpCap(spCap)
 	{
 		m_MotorMsgCheck.fill(false);
 	}
@@ -96,8 +98,23 @@ public:
 		m_Motors[LR]->Writer()->PackAndSend();
 	}
 
+	void SetCapPwr(const double power)
+	{
+		static std::chrono::high_resolution_clock::time_point lastSendSpCapTimestamp 
+			= std::chrono::high_resolution_clock::now();
+		long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::high_resolution_clock::now() - lastSendSpCapTimestamp).count();
+		if (interval > 100)   //不推荐以太高的频率发送功率数据，推荐10Hz
+		{
+			m_SpCap->SetPower(power);
+			lastSendSpCapTimestamp = std::chrono::high_resolution_clock::now();
+		}
+		
+	}
+
 private:
 	ossian::MotorManager* m_MotorManager;
+	CapacitorMt* m_SpCap;
 	ChassisMotorsModel m_MotorsStatus;
 	ossian::IOData<ChassisMotorsModel>* m_IOData;
 	std::array<std::shared_ptr<ossian::DJIMotor3508Mt>, kNumChassisMotors> m_Motors;
@@ -119,7 +136,7 @@ public:
 	//底盘功率控制
 	static constexpr double kBufferTotalCurrentLimit = 45000;
 	static constexpr double kPowerTotalCurrentLimit = 50000;
-	static constexpr double kSpCapWarnVoltage = 12;
+	static constexpr double kSpCapWarnVoltage = 13;
 
 	//遥控器解析
 	static constexpr size_t kChassisXChannel = 1; ///< 控制底盘 前后 速度的遥控器通道
@@ -347,14 +364,7 @@ public:
 			ChassisExpAxisSpeedSet();
 			ChassisCtrl();
 
-			/*static hrClock::time_point lastSendSpCapTimestamp;
-			long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-				hrClock::now() - lastSendSpCapTimestamp).count();
-			if (interval > 100)   //不推荐以太高的频率发送功率数据，推荐10Hz
-			{
-				m_SpCap->SetPower(m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower);
-				lastSendSpCapTimestamp = hrClock::now();
-			}*/
+			m_Chassis->SetCapPwr(m_ChassisSensorValues.refereeMaxPwr);
 		}
 	}
 
