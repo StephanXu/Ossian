@@ -22,7 +22,14 @@ class Capacitor : public ossian::IODataBuilder<Mutex, CapacitorStatus>
 #pragma pack(push,1)
 	struct SetPowerModel
 	{
+		SetPowerModel(const double power)
+		{
+			m_Power = static_cast<uint16_t>(power * 100);
+			m_SendBuf[0] = m_Power >> 8;
+			m_SendBuf[1] = m_Power;
+		}
 		uint16_t m_Power;
+		uint8_t m_SendBuf[8];
 	};
 
 	struct StatusModel
@@ -72,8 +79,8 @@ public:
 
 	auto SetPower(const double power) -> void
 	{
-		SetPowerModel data{static_cast<uint16_t>(power * 100)};
-		m_WriterDevice->WriteRaw(sizeof(SetPowerModel), reinterpret_cast<uint8_t*>(&data));
+		SetPowerModel data(power);
+		m_WriterDevice->WriteRaw(sizeof(data.m_SendBuf), data.m_SendBuf);
 	}
 };
 
