@@ -82,7 +82,11 @@ public:
 	{
 		httplib::Client cli(host.c_str(), port);
 		auto res = cli.Get(fmt::format("/api/argument/{}?pt=true", id).c_str());
-		if (!res || res->status != 200)
+		if (!res)
+		{
+			throw std::runtime_error(fmt::format("Fetch configuration from url failed, got no response."));
+		}
+		else if (res->status != 200)
 		{
 			throw std::runtime_error(fmt::format("Fetch configuration from url failed: {}", res->status));
 		}
