@@ -5,16 +5,16 @@
 #include <ossian/io/CAN.hpp>
 #include <ossian/GeneralIO.hpp>
 
-enum class GyroType
+enum class GyroTypeA204
 {
 	Pitch,
 	Yaw
 };
 
-template <GyroType Gt>
+template <GyroTypeA204 Gt>
 struct GyroA204Status
 {
-	static constexpr auto GType() -> GyroType { return Gt; }
+	static constexpr auto GType() -> GyroTypeA204 { return Gt; }
 
 	float m_ZAxisAngle;
 	int16_t m_XAxisSpeed;
@@ -24,7 +24,7 @@ struct GyroA204Status
 	uint16_t m_AdValue;
 };
 
-template <typename Mutex, GyroType Gt>
+template <typename Mutex, GyroTypeA204 Gt>
 class GyroA204 : public ossian::IODataBuilder<Mutex, GyroA204Status<Gt>>
 {
 	ossian::CANManager* m_CANManager;
@@ -116,10 +116,10 @@ private:
 	};
 };
 
-template <GyroType Gt>
+template <GyroTypeA204 Gt>
 using GyroA204Mt = GyroA204<std::mutex, Gt>;
 
-template <GyroType Gt>
+template <GyroTypeA204 Gt>
 using GyroA204St = GyroA204<ossian::null_mutex, Gt>;
 
 #endif // OSSIAN_GYRO_A204

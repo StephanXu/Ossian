@@ -105,20 +105,20 @@ struct GimbalStatus
 	GimbalCtrlMode m_CtrlMode;
 	double m_RelativeAngleToChassis; ///< 底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
 };
-class GimbalCtrlTask : public ossian::IExecutable, public ossian::IODataBuilder<std::mutex, GimbalStatus>
+class GimbalCtrlTask : public ossian::IExecutable, public ossian::IODataBuilder<ossian::null_mutex, GimbalStatus>
 {
 public:
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192.0;
 	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
 
 	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
-	static constexpr uint16_t kPitchEcdLimit0 = 6885;
-	static constexpr uint16_t kPitchEcdLimit1 = 226;
-	static constexpr uint16_t kPitchEcdMid = 7517;
+	static constexpr uint16_t kPitchEcdLimit0 = 6236;
+	static constexpr uint16_t kPitchEcdLimit1 = 7754;
+	static constexpr uint16_t kPitchEcdMid = 6906;
 
-	static constexpr uint16_t kYawEcdLimit0 = 1789;
-	static constexpr uint16_t kYawEcdLimit1 = 6273;
-	static constexpr uint16_t kYawEcdMid = 4082;
+	static constexpr uint16_t kYawEcdLimit0 = 2925;
+	static constexpr uint16_t kYawEcdLimit1 = 7019;
+	static constexpr uint16_t kYawEcdMid = 852;
 
 	//最大最小的 相对（中值的）角度
 	//确保 kMinRelativeAngle < kMaxRelativeAngle，包括符号
@@ -159,7 +159,7 @@ public:
 	static std::array<double, 5> PIDAngleSpeedYawParams;
 	static std::array<double, 5> PIDAutoAimInputParams;
 
-	static constexpr double kGimbalCtrlPeriod = 0.005;
+	static constexpr double kGimbalCtrlPeriod = 0.006;
 	//static double kAngleSpeedFilterCoef;
 
 	enum GimbalAngleMode
@@ -176,7 +176,7 @@ public:
 		ossian::IOData<RemoteStatus>* remote,
 		Gimbal* gimbal,
 		ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
-		ossian::IOData<GyroA110Status>* gyroListener,
+		ossian::IOData<GyroA110Status<GyroType::Gimbal>>* gyroListener,
 		ossian::IOData<AutoAimStatus>* autoAimStatusListener,
 		ossian::IOData<GimbalStatus>* gimbalStatusSender))
 		: m_MotorsListener(motors)
@@ -260,13 +260,13 @@ public:
 		FirstOrderFilter ecdAngleFilter(0.25, kGimbalCtrlPeriod);
 		m_EcdAngleFilters.fill(ecdAngleFilter);
 
-		FirstOrderFilter gyroFilter(0.0001, kGimbalCtrlPeriod);
-		m_GyroSpeedFilters.fill(gyroFilter);
+		FirstOrderFilter rpmFilter(0.15, kGimbalCtrlPeriod);
+		m_AngleSpeedFilters.fill(rpmFilter);
 
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);
 
-		m_AutoAimPredictor.SetMatsForAutoAim(5);
+		m_AutoAimPredictor.SetMatsForAutoAim(3);
 
 		/*m_GyroA204YawListener->AddOnChange([](const GyroA204Status<GyroType::Yaw>& value) {
 			SPDLOG_INFO("@ImuYaw=[$ZAngleYaw={},$ZSpeedYaw={}]",
@@ -274,9 +274,13 @@ public:
 		m_GyroA204PitchListener->AddOnChange([](const GyroA204Status<GyroType::Pitch>& value) {
 			SPDLOG_INFO("@ImuPitch=[$ZAnglePitch={},$ZSpeedPitch={}]",
 				value.m_ZAxisAngle, value.m_ZAxisSpeed); });*/
-		/*m_GyroListener->AddOnChange([](const GyroModel& value) {
-			SPDLOG_INFO("@GyroOnChange=[$roll={},$pitch={},$yaw={}]",
-				value.m_Wx, value.m_Wy, value.m_Wz); });*/
+		/*m_GyroListener->AddOnChange([](const GyroA110Status<GyroType::Gimbal>& value) {
+			SPDLOG_INFO("@GyroGimbalOnChange=[$yaw={},$yawSpeed={},$pitch={},$pitchSpeed={}]",
+				value.m_Yaw, value.m_ZAngleSpeed, value.m_Pitch, value.m_YAngleSpeed); });*/
+
+		/*m_GyroListener->AddOnChange([](const GyroA110Status<GyroType::Gimbal>& value) {
+			SPDLOG_INFO("@GimbalImu=[$yaw={},$yawSpeed={}]", value.m_Yaw, value.m_ZAngleSpeed);
+		});*/
 
 		//m_VoltageSetFilters[Pitch].SetState(0.09, 0.002);
 		//m_VoltageSetFilters[Yaw].SetState(0.09, 0.002);
@@ -291,6 +295,7 @@ public:
 
 	void UpdateGimbalSensorFeedback()
 	{
+		m_MotorsStatus = m_MotorsListener->Get();
 		m_GimbalSensorValues.rc = m_RCListener->Get();
 		m_GimbalSensorValues.relativeAngle[Pitch] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Pitch], kPitchEcdMid);
 		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawEcdMid);
@@ -302,7 +307,11 @@ public:
 		m_GimbalSensorValues.imu.m_Pitch *= kDegreeToRadCoef;
 		m_GimbalSensorValues.imu.m_ZAxisSpeed *= kDegreeToRadCoef;
 		m_GimbalSensorValues.imu.m_Yaw *= kDegreeToRadCoef;
-
+		m_GimbalSensorValues.imu.m_ZAxisSpeed = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_ZAxisSpeed
+				- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_XAxisSpeed;
+		/*SPDLOG_INFO("@RotYaw=[$YawAngle={},$YawSpeed={}]",
+			m_GimbalSensorValues.imu.m_Yaw,
+			m_GimbalSensorValues.imu.m_ZAxisSpeed);*/
 		/*if(!m_FlagInitGimbal)
 			m_GimbalSensorValues.imuPitch.m_ZAxisAngle = ClampLoop(static_cast<double>(m_GimbalSensorValues.imuPitch.m_ZAxisAngle), m_GyroAngleZeroPoints[Pitch], m_GyroAngleZeroPoints[Pitch] + M_PI * 2);*/
 
@@ -367,7 +376,7 @@ public:
 
 		while (true)
 		{
-			while (1000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			while (6000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 			}
@@ -376,7 +385,8 @@ public:
 			/*SPDLOG_INFO("@Interval=[$t={}]",
 				std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
 
-			m_MotorsStatus = m_MotorsListener->Get();
+			
+			//m_EcdYaw = m_MotorsStatus.m_Encoding[Yaw];
 
 			UpdateGimbalSensorFeedback();
 
@@ -388,10 +398,10 @@ public:
 			//[TODO] 模式切换过渡
 
 			GimbalExpAngleSet(Pitch);
-			GimbalExpAngleSet(Yaw);
+			//GimbalExpAngleSet(Yaw);
 
 			GimbalCtrl(Pitch);
-			GimbalCtrl(Yaw);
+			//GimbalCtrl(Yaw);
 		}
 	}
 
@@ -400,7 +410,7 @@ private:
 	ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config;
 	Gimbal* m_Gimbal;
 	ossian::IOData<RemoteStatus>* m_RCListener;  //遥控器
-	ossian::IOData<GyroA110Status>* m_GyroListener;
+	ossian::IOData<GyroA110Status<GyroType::Gimbal>>* m_GyroListener;
 	ossian::IOData<AutoAimStatus>* m_AutoAimStatusListener;
 
 	std::array<GimbalAngleMode, 2> m_CurGimbalAngleMode;
@@ -412,7 +422,7 @@ private:
 	{
 		double relativeAngle[kNumGimbalMotors];
 		RemoteStatus rc;	 //遥控器数据
-		GyroA110Status imu;
+		GyroA110Status<GyroType::Gimbal> imu;
 		AutoAimStatus autoAimStatus;
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
@@ -420,6 +430,7 @@ private:
 	bool m_FlagInitGimbal, m_FlagInitGyro; //上电后陀螺仪静置5秒用于自校正
 	std::chrono::high_resolution_clock::time_point m_TimestampInit;
 	GimbalStatus m_Status;
+	//std::atomic<uint16_t> m_EcdYaw;
 	ossian::IOData<GimbalStatus>* m_GimbalStatusSender;
 
 	std::array<double, kNumGimbalMotors> m_AngleInput;
@@ -427,7 +438,7 @@ private:
 	std::array<std::chrono::high_resolution_clock::time_point, kNumGimbalMotors> m_LastEcdTimeStamp;
 
 	std::array<FirstOrderFilter, kNumGimbalMotors> m_EcdAngleFilters;
-	std::array<FirstOrderFilter, kNumGimbalMotors> m_GyroSpeedFilters; //陀螺仪角速度滤波，去除摩擦轮共振干扰
+	std::array<FirstOrderFilter, kNumGimbalMotors> m_AngleSpeedFilters;
 	/*double m_YawAdd, m_PitchAdd; //角度增量rad
 	double m_LastYaw, m_LastPitch;*/
 	std::array<double, kNumGimbalMotors> m_GyroAngleSet; //累加 陀螺仪模式

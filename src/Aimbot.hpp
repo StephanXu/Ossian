@@ -135,7 +135,7 @@ private:
         {
             if (m_AreaContour > minArea
                 && m_LongAxis / m_MinorAxis >= ellipseMinAspectRatio
-                && fabs(m_Angle)<10)
+                /*&& fabs(m_Angle)<20*/)
             {
                 return true;
             }
@@ -438,12 +438,19 @@ private:
 				cv::Point3d(bigArmorWidth  / 2,  smallArmorHeight / 2, 0),	//br
 				cv::Point3d(-bigArmorWidth / 2,  smallArmorHeight / 2, 0)	//bl
 			};
-            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1766.669912681928, 0, 761.7515960733542,
+            /*const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1766.669912681928, 0, 761.7515960733542,
             0, 1766.25803717183, 565.6503462949001,
-            0, 0, 1);
+            0, 0, 1);//英雄
             const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.0760893012372638, 0.402763931163976, 
-                0.0004829922498116148, 0.0008781734366235105, -2.225999824210345);
+                0.0004829922498116148, 0.0008781734366235105, -2.225999824210345);//英雄*/
 			
+            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1201.272906093099, 0, 720.7178008246367,
+            0, 1200.451601887255, 558.7057961657713,
+            0, 0, 1); //组合步兵
+            const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.1073888954328674, 0.1397253257391509,
+                -0.0002076292945543101, -0.0006440365960271107, -0.06107364163854555); //组合步兵
+
+
 			// tmp
 			static cv::Mat rvec, tvec;
             std::vector<cv::Point2d> targetPts = {
@@ -491,6 +498,7 @@ private:
 
         //cv::cuda::demosaicing(dFrame, dFrame, cv::cuda::COLOR_BayerRG2BGR_MHT, 0, cudaStream);
         cv::cuda::cvtColor(dFrame, dFrame, cv::COLOR_BayerRG2RGB, 0, cudaStream);
+        cv::cuda::flip(dFrame, dFrame, 0, cudaStream); //交大云台
 
         cv::cuda::cvtColor(dFrame, grayBrightness, cv::COLOR_BGR2GRAY, 0, cudaStream);
         cv::cuda::threshold(grayBrightness, binaryBrightness, thresBrightness, 255, cv::THRESH_BINARY, cudaStream);
@@ -633,6 +641,7 @@ private:
     
     ossian::UARTManager* m_UARTManager;
 #ifdef VISION_ONLY
+    std::shared_ptr<ossian::UARTDevice> m_PLCDevice;
     AimbotPLCSendMsg m_AimbotPLCSendMsg{};
     uint8_t m_PLCSendBuf[kSendBufSize];
     KalmanFilter m_AutoAimPredictor{ 4,2,0 };

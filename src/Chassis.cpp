@@ -32,8 +32,8 @@ void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 
 	double curBuf  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer;
 	double curPwr  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower;
-	double maxBuf = m_ChassisSensorValues.refereeMaxBuf;
-	double maxPwr = m_ChassisSensorValues.refereeMaxPwr;   //[TODO] 根据2020裁判系统串口协议修改
+	double maxBuf = 60; // [TODO] 根据飞坡增益修改 250J
+	double maxPwr = m_ChassisSensorValues.refereeRobotStatus.m_ChassisMaxPower;  
 	double warnBuf = maxBuf * 0.9;
 	double warnPwr = maxPwr * 0.9;
 	
@@ -91,8 +91,8 @@ void ChassisCtrlTask::RCToChassisSpeed()
 
 void ChassisCtrlTask::ChassisModeSet()
 {
-	if (0/*m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
-		|| m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init*/)
+	if (m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
+		|| m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init)
 	{
 		m_CurChassisMode = Disable;
 	}
@@ -105,9 +105,9 @@ void ChassisCtrlTask::ChassisModeSet()
 		switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
 		{
 		case kRCSwUp:
-			m_CurChassisMode = Follow_Chassis_Yaw; break;  //Follow_Gimbal_Yaw
+			m_CurChassisMode = Top; break;  //Follow_Gimbal_Yaw
 		case kRCSwMid:
-			m_CurChassisMode = Openloop_Z;  break;
+			m_CurChassisMode = Follow_Gimbal_Yaw;  break;
 		case kRCSwDown:
 			m_CurChassisMode = Disable; break;   //Top
 		default:
@@ -145,7 +145,7 @@ void ChassisCtrlTask::ChassisCtrl()
 			//m_PIDChassisSpeed[i].PrintDetails(i);
 		}
 	}
-	//m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
+	m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
 	//如果超级电容快没电了
 	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		ChassisPowerCtrlByCurrent();
@@ -215,19 +215,22 @@ void ChassisCtrlTask::ChassisCtrl()
 */
 void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 {
+	if (m_CurChassisMode != Top)
+		m_TopWzFilter.Reset();
+
 	//[TODO] 检验三角函数的符号
 	if (m_CurChassisMode == Disable || m_CurChassisMode == Init)
 		m_VxSet = m_VySet = m_WzSet = 0;
 	else if (m_CurChassisMode == Follow_Gimbal_Yaw)
 	{
 		RCToChassisSpeed();
-		double cosine = cos(-m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
-		double sine = sin(-m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
+		double cosine = cos(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
+		double sine = sin(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
 		double vx = m_VxSet * cosine + m_VySet * sine;
 		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
-		m_WzSet = -m_PIDChassisAngle.Calc(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis, 0); //符号为负？
+		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis, 0); //符号为负？
 	}
 	else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{
@@ -241,13 +244,13 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 	else if (m_CurChassisMode == Top)
 	{
 		RCToChassisSpeed();
-		double cosine = cos(-m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
-		double sine = sin(-m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
+		double cosine = cos(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
+		double sine = sin(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
 		double vx = m_VxSet * cosine + m_VySet * sine;
 		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
-		m_WzSet = kTopWz;
+		m_WzSet = m_TopWzFilter.Calc(kTopWz);
 	}
 	else if (m_CurChassisMode == Openloop_Z)
 	{

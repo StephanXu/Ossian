@@ -2,9 +2,10 @@
 include(TestMacro)
 
 find_package(gflags REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 test_target(
 	NAME FetchConfig
 	SRCS "FetchConfig.cpp"
-	LIBS httplib::httplib gflags
+	LIBS httplib::httplib gflags fmt::fmt
 )

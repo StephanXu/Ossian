@@ -152,8 +152,8 @@ void Aimbot::Process(unsigned char* pImage)
     std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
     
 #ifdef VISION_ONLY
-    m_AimbotPLCSendMsg.m_Pitch = -deltaPitch * kRadToDegreeCoef * 1000.0;
-    m_AimbotPLCSendMsg.m_Yaw = -deltaYaw * kRadToDegreeCoef * 1000.0;
+    m_AimbotPLCSendMsg.m_Pitch = deltaPitch * kRadToDegreeCoef * 1000.0;
+    m_AimbotPLCSendMsg.m_Yaw = deltaYaw * kRadToDegreeCoef * 1000.0;
     m_AimbotPLCSendMsg.m_FlagFound = foundArmor;
     m_AimbotPLCSendMsg.m_FlagFire = shootMode;
     std::memcpy(m_PLCSendBuf, &m_AimbotPLCSendMsg, kSendBufSize);

@@ -194,8 +194,9 @@ public:
 										 Chassis* chassis,
 										 ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
 										 ossian::IOData<PowerHeatData>* powerHeatDataListener,
+										 ossian::IOData<RobotStatus>* robotStatusListener,
 										 ossian::IOData<GimbalStatus>* gimbalStatusListener,
-										 ossian::IOData<GyroA110Status>* gyroListener))
+										 ossian::IOData<GyroA110Status<GyroType::Chassis>>* gyroListener))
 
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
@@ -203,6 +204,7 @@ public:
 		, m_Chassis(chassis)
 		, m_Config(config)
 		, m_RefereePowerHeatDataListener(powerHeatDataListener)
+		, m_RefereeRobotStatusListener(robotStatusListener)
 		, m_GimbalStatusListener(gimbalStatusListener)
 		, m_GyroListener(gyroListener)
 	{
@@ -239,6 +241,7 @@ public:
 		m_RCInputFilters[1].SetState(kVyFilterCoef, kChassisCtrlPeriod);
 		FirstOrderFilter rpmFdbFilter(kRPMFdbFilterCoef, kChassisCtrlPeriod);
 		m_RPMFdbFilters.fill(rpmFdbFilter);
+		m_TopWzFilter.SetState(0.9, kChassisCtrlPeriod);
 
 		PIDController pidWheelSpeed;
 		pidWheelSpeed.SetParams(PIDWheelSpeedParams);
@@ -246,23 +249,31 @@ public:
 
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
 		m_PIDChassisAngle.SetFlagAngleLoop();
+
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
 				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4],value.sw[0], value.sw[1]);});*/
+		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
+			SPDLOG_INFO("@KeyMouseData=[$X={},$Y={},$Z={},$ClickLeft={},$ClickRight={},$Keyboard={}]",
+				value.mouse[0], value.mouse[1], value.mouse[2], (int)value.click[0], (int)value.click[1],value.keyboard);});*/
 
 		/*m_RefereePowerHeatDataListener->AddOnChange([](const PowerHeatData& value) {
-			SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
+			SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={}]",
 				value.m_ChassisPower,
-				value.m_ChassisPowerBuffer,
-				80); });*/
+				value.m_ChassisPowerBuffer); 
+		});
+		m_RefereeRobotStatusListener->AddOnChange([](const RobotStatus& value) {
+			SPDLOG_INFO("@ChassisPowerLimit=[$MaxPower={}]",
+				value.m_ChassisMaxPower);
+		});
 		m_SpCapListener->AddOnChange([](const CapacitorStatus& value) {
 			SPDLOG_INFO("@SpCap=[$InputV={},$CapV={},$InputI={},$TargetP={}]",
 				value.m_InputVoltage, value.m_CapacitorVoltage, value.m_TestCurrent, value.m_TargetPower);
-		});
+		});*/
 
-		m_GyroListener->AddOnChange([](const GyroA110Status& value) {
+		/*m_GyroListener->AddOnChange([](const GyroA110Status<GyroType::Chassis>& value) {
 			SPDLOG_INFO("@ChassisImu=[$yaw={},$yawSpeed={}]", value.m_Yaw, value.m_ZAngleSpeed);
-		});
+		});*/
 	}
 
 	void InitChassis()
@@ -296,6 +307,7 @@ public:
 
 	void UpdateChassisSensorFeedback()
 	{
+		m_MotorsStatus = m_MotorsListener->Get();
 		m_ChassisSensorValues.rc = m_RCListener->Get();
 		m_ChassisSensorValues.spCap = m_SpCapListener->Get();
 		m_ChassisSensorValues.gimbalStatus = m_GimbalStatusListener->Get();
@@ -307,11 +319,12 @@ public:
 		m_ChassisSensorValues.imu.m_Pitch *= kDegreeToRadCoef;
 		m_ChassisSensorValues.imu.m_ZAxisSpeed *= kDegreeToRadCoef;
 		m_ChassisSensorValues.imu.m_Yaw *= kDegreeToRadCoef;
-		/*m_ChassisSensorValues.gimbalCtrlMode = m_GimbalCtrlTask->GimbalCtrlSrc();
-		m_ChassisSensorValues.relativeAngle = m_GimbalCtrlTask->RelativeAngleToChassis();*/
+		//m_ChassisSensorValues.gimbalCtrlMode = m_GimbalCtrlTask->GimbalCtrlSrc();
 
 		m_ChassisSensorValues.refereePowerHeatData = m_RefereePowerHeatDataListener->Get();
 		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000.0; //v
+
+		m_ChassisSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();
 		/*SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower,
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
@@ -343,7 +356,7 @@ public:
 		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			while (1000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			while (12000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 			}
@@ -351,7 +364,7 @@ public:
 						std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
 
 			lastTime = Clock::now();
-			m_MotorsStatus = m_MotorsListener->Get();
+			
 
 			UpdateChassisSensorFeedback();
 
@@ -364,7 +377,7 @@ public:
 			ChassisExpAxisSpeedSet();
 			ChassisCtrl();
 
-			m_Chassis->SetCapPwr(m_ChassisSensorValues.refereeMaxPwr);
+			m_Chassis->SetCapPwr(m_ChassisSensorValues.refereeRobotStatus.m_ChassisMaxPower);
 		}
 	}
 
@@ -376,6 +389,7 @@ private:
 	
 	Chassis* m_Chassis;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
+	ossian::IOData<RobotStatus>* m_RefereeRobotStatusListener;
 
 	bool m_FlagInitChassis;
 	ChassisMotorsModel m_MotorsStatus;
@@ -383,11 +397,11 @@ private:
 	struct ChassisSensorFeedback
 	{
 		RemoteStatus rc;
-		GyroA110Status imu;
+		GyroA110Status<GyroType::Chassis> imu;
 		///< 底盘imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 		CapacitorStatus spCap;              ///< 超级电容数据
 		PowerHeatData refereePowerHeatData; ///< 裁判系统数据
-		int refereeMaxPwr = 80, refereeMaxBuf = 60;
+		RobotStatus refereeRobotStatus;
 		GimbalStatus gimbalStatus;
 	} m_ChassisSensorValues;
 
@@ -397,13 +411,14 @@ private:
 
 	ChassisMode m_CurChassisMode;
 	ossian::IOData<GimbalStatus>* m_GimbalStatusListener;
-	ossian::IOData<GyroA110Status>* m_GyroListener;
+	ossian::IOData<GyroA110Status<GyroType::Chassis>>* m_GyroListener;
 	Eigen::Vector4d m_WheelSpeedSet;
 	Eigen::Matrix<double, 4, 3> m_WheelKinematicMat;
 	std::array<double, kNumChassisMotors> m_CurrentSend;
 
 	std::array<FirstOrderFilter, 2> m_RCInputFilters;
 	std::array<FirstOrderFilter, kNumChassisMotors> m_RPMFdbFilters;
+	FirstOrderFilter m_TopWzFilter;
 	PIDController m_PIDChassisAngle;                                ///< 底盘要旋转的角度--->底盘旋转角速度  底盘跟随角度环
 	std::array<PIDController, kNumChassisMotors> m_PIDChassisSpeed; ///< 麦轮转速--->3508电流
 };

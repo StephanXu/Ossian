@@ -375,12 +375,6 @@
           "title": "Gun",
           "description": "",
           "properties": {
-            "fricSpeed12": {
-              "type": "number",
-              "title": "FricSpeed12",
-              "description": "",
-              "component": "text"
-            },
             "fricSpeed15": {
               "type": "number",
               "title": "FricSpeed15",
@@ -390,6 +384,12 @@
             "fricSpeed18": {
               "type": "number",
               "title": "FricSpeed18",
+              "description": "",
+              "component": "text"
+            },
+            "fricSpeed22": {
+              "type": "number",
+              "title": "FricSpeed12",
               "description": "",
               "component": "text"
             },

@@ -34,7 +34,7 @@ template <typename Mutex, GyroType Gt>
 class GyroA110 : public ossian::IODataBuilder<Mutex, GyroA110Status<Gt>>
 {
 	ossian::CANManager* m_CANManager;
-	ossian::IOData<GyroA110Status>* m_IOData;
+	ossian::IOData<GyroA110Status<Gt>>* m_IOData;
 
 public:
 	OSSIAN_SERVICE_SETUP (GyroA110(ossian::CANManager* ioManager, ossian::IOData<GyroA110Status<Gt>>* ioData))

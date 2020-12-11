@@ -190,7 +190,7 @@ struct RefereeWarning
 struct RobotStatus
 {
 	static constexpr uint16_t cmdId = 0x0201;
-	static constexpr size_t length  = 15;
+	static constexpr size_t length  = 18;
 
 	/**
 	 * @brief 机器人 ID：
@@ -213,6 +213,9 @@ struct RobotStatus
 	uint16_t m_Shooter17HeatLimit;         ///< 机器人 17mm 枪口热量上限 
 	uint16_t m_Shooter42CoolingRate;       ///< 机器人 42mm 枪口每秒冷却值 
 	uint16_t m_Shooter42HeatLimit;         ///< 机器人 42mm 枪口热量上限 
+	uint8_t m_Shooter17SpeedLimit;		   ///< 机器人 17mm 枪口上限速度 单位 m/s
+	uint8_t m_Shooter42SpeedLimit;		   ///< 机器人 42mm 枪口上限速度 单位 m/s
+	uint8_t m_ChassisMaxPower;			   ///< 机器人底盘最大功率 单位 w
 	uint8_t m_MainsPowerGimbalOutput : 1;  ///< 主控电源输出情况：0 bit：gimbal 口输出： 1 为有 24V 输出，0 为无 24v 输出；
 	uint8_t m_MainsPowerChassisOutput : 1; ///< 主控电源输出情况：1 bit：chassis 口输出：1 为有 24V 输出，0 为无 24v 输出； 
 	uint8_t m_MainsPowerShooterOutput : 1; ///< 主控电源输出情况：2 bit：shooter 口输出：1 为有 24V 输出，0 为无 24v 输出；
@@ -225,14 +228,15 @@ struct RobotStatus
 struct PowerHeatData
 {
 	static constexpr uint16_t cmdId = 0x0202;
-	static constexpr size_t length  = 14;
+	static constexpr size_t length  = 16;
 
-	uint16_t m_ChassisVolt;        ///< 底盘输出电压 单位 毫伏 
-	uint16_t m_ChassisCurrent;     ///< 底盘输出电流 单位 毫安 
-	float m_ChassisPower;          ///< （四字节）底盘输出功率 单位 W 瓦
-	uint16_t m_ChassisPowerBuffer; ///< 底盘功率缓冲 单位 J 焦耳 备注：飞坡根据规则增加至 250J 
-	uint16_t m_Shooter17Heat;      ///< 17mm 枪口热量 
-	uint16_t m_Shooter42Heat;      ///< 42mm 枪口热量 
+	uint16_t m_ChassisVolt;			///< 底盘输出电压 单位 毫伏 
+	uint16_t m_ChassisCurrent;		///< 底盘输出电流 单位 毫安 
+	float m_ChassisPower;			///< （四字节）底盘输出功率 单位 W 瓦
+	uint16_t m_ChassisPowerBuffer;	///< 底盘功率缓冲 单位 J 焦耳 备注：飞坡根据规则增加至 250J 
+	uint16_t m_Shooter17Heat;		///< 17mm 枪口热量 
+	uint16_t m_Shooter42Heat;		///< 42mm 枪口热量 
+	uint16_t m_MobileShooter17Heat;	///< 机动 17mm 枪口热量
 };
 
 /**

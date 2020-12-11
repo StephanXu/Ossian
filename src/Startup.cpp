@@ -61,7 +61,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IReferee, RefereeAllMessagesMt>(
 		[](IReferee& option)
 	{
-		option.AddReferee("/dev/ttyTHS2");
+		option.AddReferee("/dev/ttyUSB3");
 	});
 	app.AddService<RemoteMt>(
 		[](RemoteMt& option)
@@ -93,16 +93,21 @@ void Startup::ConfigServices(AppBuilder& app)
 	//	{
 	//		//option.Add("can1", 0x402, 0x403);
 	//	});
-	app.AddService<GyroA110Mt>(
-		[](GyroA110Mt& option)
+	app.AddService<GyroA110Mt<GyroType::Chassis>>(
+		[](GyroA110Mt<GyroType::Chassis>& option)
+	{
+		option.Add("can0", 0x511, 0x512, 0x513);
+	});
+	app.AddService<GyroA110Mt<GyroType::Gimbal>>(
+		[](GyroA110Mt<GyroType::Gimbal>& option)
 	{
 		option.Add("can1", 0x511, 0x512, 0x513);
 	});
-	app.AddService<PhototubeMt>(
-		[](PhototubeMt& option)
-	{
-		//option.Add("can0", 0x300);
-	});
+	//app.AddService<PhototubeMt>(
+	//	[](PhototubeMt& option)
+	//{
+	//	//option.Add("can0", 0x300);
+	//});
 	app.AddService<Chassis>(
 		[](Chassis& option)
 	{
@@ -120,9 +125,9 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Gun>(
 		[](Gun& option)
 	{
-		/*option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 2, 0x200);
-		option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 1, 0x200);
-		option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);*/
+		option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 3, 0x200);
+		option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 2, 0x200);
+		option.AddMotor(Gun::MotorPosition::Feed, "can1", 1, 0x200);
 	});
 #endif // !VISION_ONLY
 
@@ -141,9 +146,16 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOPeeker<0>>();
 	app.AddExecutable<IOPeeker<1>>();
 
+#ifndef VISION_ONLY
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
-	//app.AddExecutable<FricCtrlTask>();
-	//app.AddExecutable<FeedCtrlTask>();
+	app.AddExecutable<FricCtrlTask>();
+	app.AddExecutable<FeedCtrlTask>();
 	//app.AddExecutable<CameraPeeker>();
+#else
+	app.AddExecutable<CameraPeeker>();
+#endif // !VISION_ONLY
+
+	
+	
 }

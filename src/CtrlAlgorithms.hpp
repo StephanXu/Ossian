@@ -59,33 +59,98 @@ inline double RelativeEcdToRad(const uint16_t& ecd, const uint16_t& ecdMid)
 	return relativeEcd * kMotorEcdToRadCoef;
 }
 
-//斜坡函数
+//减速电机编码器，累积转过的机械角度统计
+class EncoderHelper
+{
+public:
+	static constexpr int kMaxEcd = 8191;
+	static constexpr int kHalfEcd = kMaxEcd / 2;
+
+	EncoderHelper() = default;
+
+	//设置减速比
+	void SetRatio(const double ratio)
+	{
+		m_HalfRatio = ratio / 2;
+		m_MotorEcdToRadCoef = 2 * M_PI / 8192.0 / ratio;
+	}
+	double CalcEcdSum(const uint16_t curEcd)
+	{
+		if (m_FlagFirstCalc)
+		{
+			m_EcdCnt = 0;
+			m_FlagFirstCalc = false;
+		}
+		else
+		{
+			int delta = static_cast<int>(curEcd) - static_cast<int>(m_LastEcd);
+			if (delta > kHalfEcd)
+				--m_EcdCnt;
+			else if (delta < -kHalfEcd)
+				++m_EcdCnt;
+
+			if (m_EcdCnt == m_HalfRatio)
+				m_EcdCnt = -(m_HalfRatio - 1);
+			else if(m_EcdCnt == -m_HalfRatio)
+				m_EcdCnt = m_HalfRatio - 1;
+		}
+
+		m_LastEcd = curEcd;
+		return (m_EcdCnt * kMaxEcd + curEcd) * m_MotorEcdToRadCoef;
+	}
+	void Reset()
+	{
+		m_FlagFirstCalc = true;
+		m_EcdCnt = 0;
+	}
+
+private:
+	int m_EcdCnt = 0;
+	int m_HalfRatio = 18;
+	double m_MotorEcdToRadCoef;
+	uint16_t m_LastEcd; //记录此时电机角度,下一次计算转过角度差用,用来判断是否转过1圈
+	bool m_FlagFirstCalc = true;
+};
+
+
+//斜坡函数，使目标输出值缓慢等于期望值
 class RampFunction
 {
 public:
 	RampFunction() = default;
-	RampFunction(double framePeriod, double lowerBnd, double upperBnd) : 
-		m_FramePeriod(framePeriod), m_LowerBnd(lowerBnd), m_UpperBnd(upperBnd) {}
-	void SetState(double framePeriod, double lowerBnd, double upperBnd)
+	//单位ms
+	RampFunction(double interval) : m_Interval(interval) {}
+	void SetState(double interval)
 	{
-		m_FramePeriod = framePeriod;
-		m_LowerBnd = lowerBnd;
-		m_UpperBnd = upperBnd;
+		m_Interval = interval;
 	}
 
-	double Calc(double curValue)
+	double Calc(const double curValue, const double finalValue, const double expDelta)
 	{
-		m_Result += curValue * m_FramePeriod;
-		m_Result = Clamp(m_Result, m_LowerBnd, m_UpperBnd);
+		double delta = finalValue - curValue;
+		double rampK = expDelta / m_Interval;
+		double result = curValue;
 
-		return m_Result;
+		if (delta > 0)
+		{
+			if (delta > rampK)
+				result += rampK;
+			else
+				result += delta;
+		}
+		else
+		{
+			if (delta < -rampK)
+				result += -rampK;
+			else
+				result += delta;
+		}
+
+		return result;
 	}
-	void Reset() { m_Result = 0; }
 
 private:
-	double m_FramePeriod;
-	double m_LowerBnd, m_UpperBnd;
-	double m_Result = 0;
+	double m_Interval;
 };
 
 
@@ -115,11 +180,14 @@ class PIDController
 {
 public:
 	static constexpr double DOUBLE_MAX = std::numeric_limits<double>::max() - 5;
+	static constexpr double DOUBLE_MIN = std::numeric_limits<double>::min() + 5;
+
 	PIDController(double kp=0, double ki=0, double kd=0) : m_Kp(kp), m_Ki(ki), m_Kd(kd)
 	{
 		m_Integral = m_LastError = 0.0;
 		m_ThresError1 = m_ThresError2 = DOUBLE_MAX;
-		m_ThresIntegral = m_ThresOutput = DOUBLE_MAX;
+		m_ThresIntegral = m_OutputUpperBnd = DOUBLE_MAX;
+		m_OutputLowerBnd = DOUBLE_MIN;
 		m_DeadValue = 0.0;
 		m_FlagAngleLoop = false;
 		m_CtrlInterval = 1;
@@ -131,12 +199,18 @@ public:
 		m_Kp = params[0];
 		m_Ki = params[1];
 		m_Kd = params[2];
-		m_ThresOutput = params[3];
+		m_OutputUpperBnd = params[3];
+		m_OutputLowerBnd = std::min(-m_OutputUpperBnd, m_OutputUpperBnd);
 		//若设置负数，则代表不设积分限制
 		if (params[4] >= 0)
 			m_ThresIntegral = params[4];
 	}
-	void SetCtrlPeriod(const double& t)
+	void SetOutputLimit(const double lowerBnd, const double upperBnd)
+	{
+		m_OutputLowerBnd = lowerBnd;
+		m_OutputUpperBnd = upperBnd;
+	}
+	void SetCtrlPeriod(const double t)
 	{
 		m_CtrlInterval = t;  //ms
 	}
@@ -145,11 +219,11 @@ public:
 		m_FlagAngleLoop = true;
 		m_DeadValue = 0.001;
 	}
-	void SetDeadBand(const double& db)
+	void SetDeadBand(const double db)
 	{
 		m_DeadValue = db;
 	}
-	void SetThresError(const double& th1, const double& th2)
+	void SetThresError(const double th1, const double th2)
 	{
 		m_ThresError1 = th1;
 		m_ThresError2 = th2;
@@ -198,7 +272,7 @@ public:
 
 		m_LastError = error;
 		//将pid输出做限幅处理
-		m_PIDOut = Clamp(m_PIDOut, -m_ThresOutput, m_ThresOutput);
+		m_PIDOut = Clamp(m_PIDOut, m_OutputLowerBnd, m_OutputUpperBnd);
 		return m_PIDOut;
 	}
 
@@ -207,7 +281,7 @@ private:
 	//hrClock::time_point m_LastTimestamp; //输入PID的上一条报文的时间戳
 	double m_LastError, /*m_Expectation,*/ m_Integral;
 	double m_ThresError1, m_ThresError2;  //ThresError1 > ThresError2
-	double m_ThresIntegral, m_ThresOutput;
+	double m_ThresIntegral, m_OutputLowerBnd, m_OutputUpperBnd;
 	double m_DeadValue; 
 	bool m_FlagAngleLoop;
 	double m_CtrlInterval;  //ms
