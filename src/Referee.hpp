@@ -332,6 +332,33 @@ struct BulletRemain
 };
 
 /**
+ * @brief 机器人RFID状态，发送范围：单一机器人。1Hz 周期发送(0x0209)
+ */
+struct RFIDStatus
+{
+	static constexpr uint16_t cmdId = 0x0209;
+	static constexpr size_t length = 4;
+
+	bool m_RFIDBaseBuff : 1;		///< 基地增益点RFID状态标志位
+	bool m_RFIDHighlandBuff : 1;	///< 高地增益点RFID状态标志位
+	bool m_RFIDWindmillBuff : 1;	///< 能量机关激活点RFID状态标志位
+	bool m_RFIDSlopeBuff : 1;		///< 飞坡增益点RFID状态标志位
+	bool m_RFIDSentryBuff : 1;		///< 前哨岗增益点RFID状态标志位
+	bool m_RFIDResourceBuff : 1;	///< 资源岛增益点RFID状态标志位
+	bool m_RFIDHealingBuff : 1;		///< 补血点增益点RFID状态标志位
+	bool m_RFIDEngineerBuff : 1;	///< 工程机器人补血卡RFID状态标志位
+	uint8_t m_Reserve0;				///< bit8-15: 保留
+	uint8_t m_Reserve1;				///< bit16-23: 保留
+	uint8_t m_Reserve2 : 2;			///< bit24-25: 保留
+	bool m_RFIDF1 : 1;				///< 人工智能挑战赛RFID状态 F1
+	bool m_RFIDF2 : 1;				///< 人工智能挑战赛RFID状态 F2
+	bool m_RFIDF3 : 1;				///< 人工智能挑战赛RFID状态 F3
+	bool m_RFIDF4 : 1;				///< 人工智能挑战赛RFID状态 F4
+	bool m_RFIDF5 : 1;				///< 人工智能挑战赛RFID状态 F5
+	bool m_RFIDF6 : 1;				///< 人工智能挑战赛RFID状态 F6
+};
+
+/**
  * @brief 裁判系统消息结构
  * 
  * @tparam MessageType 内含消息种类(e.g. ShootData)
@@ -574,7 +601,8 @@ using RefereeMt = Referee<std::mutex, MessageTypes...>;
 template <typename ...MessageTypes>
 using RefereeSt = Referee<ossian::null_mutex, MessageTypes...>;
 
-using RefereeAllMessagesMt = RefereeMt<BulletRemain,
+using RefereeAllMessagesMt = RefereeMt<RFIDStatus,
+                                       BulletRemain,
                                        ShootData,
                                        DamageStatus,
                                        AerialRobotStatus,
@@ -589,7 +617,8 @@ using RefereeAllMessagesMt = RefereeMt<BulletRemain,
                                        MatchStatus,
                                        MatchResult>;
 
-using RefereeAllMessagesSt = RefereeSt<BulletRemain,
+using RefereeAllMessagesSt = RefereeSt<RFIDStatus,
+                                       BulletRemain,
                                        ShootData,
                                        DamageStatus,
                                        AerialRobotStatus,
