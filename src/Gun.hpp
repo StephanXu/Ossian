@@ -256,7 +256,6 @@ public:
 			}
 			lastTime = Clock::now();
 
-			
 
 			UpdateFricSensorFeedback();
 			if (m_FlagInitFric)

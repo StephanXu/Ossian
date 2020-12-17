@@ -294,20 +294,23 @@ class KalmanFilter
 public:
 	KalmanFilter(int stateNum, int measureNum, int controlNum = 0) : n(stateNum), m(measureNum), u(controlNum) {}
 
-	//n=4 m=2
-	void SetMatsForAutoAim(double dt)
+	//dt单位ms n=6:状态空间[x,y,z,vx,vy,vz]  m=6:观测向量[x,y,z,vx,vy,vz]
+	void SetMatsForAutoAim(const double dt)
 	{
-		A = Eigen::MatrixXd(4, 4);
-		A << 1, 0, dt,  0,
-			 0, 1,  0, dt,
-			 0, 0,  1,  0,
-			 0, 0,  0,  1;
+		A = Eigen::MatrixXd(6, 6);
+		A << 1, 0, 0, dt,  0,  0,
+			 0, 1, 0,  0, dt,  0,
+			 0, 0, 1,  0,  0, dt,
+			 0, 0, 0,  1,  0,  0,
+			 0, 0, 0,  0,  1,  0,
+			 0, 0, 0,  0,  0,  1;
+
 
 		H = H.Identity(m,n);
 
-		Q = Q.Identity(n, n) * 1e-2; //bigger ---- slower regression
+		Q = Q.Identity(n, n) * 1e-1; //bigger ---- slower regression
 
-		R = R.Identity(m, m) * 1e-3; //smaller --- quicker regression
+		R = R.Identity(m, m) * 1e3; //smaller --- quicker regression
 
 		P0 = P0.Identity(n, n);
 
@@ -317,7 +320,8 @@ public:
 		I = I.Identity(n, n);
 	}
 	
-	void SetFixedMat(Eigen::MatrixXd _A, Eigen::MatrixXd _H, Eigen::MatrixXd _Q, Eigen::MatrixXd _R, Eigen::MatrixXd _B = Eigen::MatrixXd())
+	void SetFixedMat(const Eigen::MatrixXd& _A, const Eigen::MatrixXd& _H, const Eigen::MatrixXd& _Q, 
+						const Eigen::MatrixXd& _R, const Eigen::MatrixXd& _B = Eigen::MatrixXd())
 	{
 		A = _A;
 		H = _H;
@@ -327,7 +331,7 @@ public:
 		I = I.Identity(n, n);
 	}
 
-	void SetInitialState(Eigen::VectorXd _X0, Eigen::MatrixXd _P0)
+	void SetInitialState(const Eigen::VectorXd& _X0, const Eigen::MatrixXd& _P0)
 	{
 		X0 = _X0;
 		P0 = _P0;
@@ -341,27 +345,46 @@ public:
 	}
 
 	//U：控制向量
-	Eigen::VectorXd Predict(Eigen::VectorXd U)
+	Eigen::VectorXd Predict(const Eigen::VectorXd& U)
 	{
 		X = (A * X0) + (B * U);
 		P = (A * P0 * A.transpose()) + Q;
 		return X;
 	}
 
-	void Correct(double pitchMeasured, double yawMeasured)
+	//当前的装甲板中心坐标
+	void Correct(const Eigen::Vector3d& curCoord)
 	{
-		Eigen::Vector2d Z(pitchMeasured, yawMeasured);
+		static constexpr double kMaxSpeed = 5; // 1m/s == 1mm/ms
+		static std::chrono::high_resolution_clock::time_point lastTimestamp;
+		static Eigen::Vector3d lastCoord{};
+		static Eigen::VectorXd Z(6);  //观测向量
 
-		K = (P * H.transpose()) * (H * P * H.transpose() + R).inverse();
-		X = X + K * (Z - H * X);
-		P = (I - K * H) * P;
+		//速度单位：mm(装甲板坐标系长度单位)/ms
+		if (lastTimestamp == std::chrono::high_resolution_clock::time_point())
+		{
+			Z << curCoord(0), curCoord(1), curCoord(2), 0, 0, 0;
+		}
+		else
+		{
+			double interval = std::chrono::duration<double, std::milli>
+								(std::chrono::high_resolution_clock::now() - lastTimestamp).count();
+			Eigen::Vector3d speed = (curCoord - lastCoord) / interval;
 
-		X0 = X;
-		P0 = P;
+			for (size_t i = 0; i < 3; ++i)
+			{
+				speed(i) = Clamp(speed(i), -kMaxSpeed, kMaxSpeed);
+			}
+			Z << curCoord(0), curCoord(1), curCoord(2), speed(0), speed(1), speed(2);
+		}
+		lastCoord = curCoord;
+		lastTimestamp = std::chrono::high_resolution_clock::now();
+
+		Correct(Z);
 	}
 
 	//Z：观测向量
-	void Correct(Eigen::VectorXd Z)
+	void Correct(const Eigen::VectorXd& Z)
 	{
 		K = (P * H.transpose()) * (H * P * H.transpose() + R).inverse();
 		X = X + K * (Z - H * X);

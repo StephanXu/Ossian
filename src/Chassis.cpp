@@ -29,6 +29,10 @@ void ChassisCtrlTask::CalcWheelSpeedTarget()
 void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 {
 	//double curPwr, curBuf, maxPwr, maxBuf; //这四个量从裁判系统获取
+	/*double curPwr = 0;
+	for (size_t i = 0; i < kNumChassisMotors; ++i)
+		curPwr += 0.00000394047917046875 * fabs(m_MotorsStatus.m_Current[i]) * fabs(m_MotorsStatus.m_RPM[i]) + 1.4;
+	SPDLOG_INFO("@ChassisPower=[$pwr={}]", curPwr);*/
 
 	double curBuf  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer;
 	double curPwr  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower;
@@ -91,8 +95,8 @@ void ChassisCtrlTask::RCToChassisSpeed()
 
 void ChassisCtrlTask::ChassisModeSet()
 {
-	if (m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
-		|| m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init)
+	if (0/*m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
+		|| m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init*/)
 	{
 		m_CurChassisMode = Disable;
 	}
@@ -127,28 +131,30 @@ void ChassisCtrlTask::ChassisCtrl()
 		CalcWheelSpeedTarget();
 		for (size_t i = 0; i < kNumChassisMotors; ++i)
 		{
-			double set2 = m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef;
-			double get2 = m_RPMFdbFilters[i].Calc(m_MotorsStatus.m_RPM[i]);
-			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(set2, get2);
+			double set = m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef;
+			//double get = m_RPMFdbFilters[i].Calc(m_MotorsStatus.m_RPM[i]);
+			double get = m_MotorsStatus.m_RPM[i];
+			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(set, get);
 			//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
 			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
 			//SPDLOG_INFO("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
-			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]", 
-							i,
-							i,
-							set2, 
-							i,
-							get2,
-							i,
-							m_CurrentSend[i]);*/
+			if (i == 0)
+				SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]",
+					i,
+					i,
+					set,
+					i,
+					get,
+					i,
+					m_CurrentSend[i]);
 			//m_PIDChassisSpeed[i].PrintDetails(i);
 		}
 	}
-	m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
-	//如果超级电容快没电了
-	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
-		ChassisPowerCtrlByCurrent();
+	//m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
+	////如果超级电容快没电了
+	//if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+	//	ChassisPowerCtrlByCurrent();
 
 	/*for (size_t i = 0; i < kNumChassisMotors; ++i)
 		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
@@ -156,63 +162,77 @@ void ChassisCtrlTask::ChassisCtrl()
 }
 
 //功率控制：通过减小底盘电机的期望速度来实现
-/*
-void ChassisCtrlTask::ChassisCtrl()
-{
-	if (m_CurChassisMode == Disable)
-		m_CurrentSend.fill(0);
-	else
-	{
-		CalcWheelSpeedTarget();
-		auto CalcCurrent = [this]()->void
-		{
-			for (size_t i = 0; i < m_Motors.size(); ++i)
-			{
-				m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(
-					m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef,
-					m_Motors[i]->Get().m_RPM,
-					hrClock::now());
-				//SPDLOG_INFO("@PIDChassisSpeed{}=[$set={},$get={},$pidout={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef, m_Motors[i]->Get().m_RPM, m_CurrentSend[i]);
-			}
-		};
-		m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
-		SPDLOG_INFO("@Capacitor=[$inputV={},$curV={},$inputC={},$targetP={}]", 
-			m_ChassisSensorValues.spCap.m_InputVoltage, m_ChassisSensorValues.spCap.m_CapacitorVoltage, 
-			m_ChassisSensorValues.spCap.m_TestCurrent, m_ChassisSensorValues.spCap.m_TargetPower);
-		//如果超级电容快没电了
-		if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
-		{
-			for (int cnt = 0; ; ++cnt)
-			{
-				m_WheelSpeedSet *= 0.9;
-				CalcCurrent();
-				double totalCurrent = 0;
-				std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [&totalCurrent](double x) {
-					totalCurrent += fabs(x); });
-				if (totalCurrent * m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt < 
-					m_ChassisSensorValues.refereeMaxPwr)
-					break;
-				if (cnt >= 10)
-				{
-					std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this, totalCurrent](double& x) {
-						x = x / totalCurrent * m_ChassisSensorValues.refereeMaxPwr / 
-							m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt; });
-					break;
-				}
-			}
-		}
-		else
-			CalcCurrent();
-	}
+//void ChassisCtrlTask::ChassisCtrl()
+//{
+//	if (m_CurChassisMode == Disable || m_CurChassisMode == Init)
+//		m_CurrentSend.fill(0);
+//	else
+//	{
+//		static auto CalcCurrent = [this]()->void
+//		{
+//			for (size_t i = 0; i < kNumChassisMotors; ++i)
+//			{
+//				double set = m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef;
+//				double get = m_MotorsStatus.m_RPM[i];
+//				//double get = m_RPMFdbFilters[i].Calc(m_MotorsStatus.m_RPM[i]);
+//				m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(set, get);
+//				//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
+//				/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
+//					m_Motors[i]->Get().m_RPM);*/
+//					//SPDLOG_INFO("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
+//				SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]",
+//					i,
+//					i,
+//					set,
+//					i,
+//					get,
+//					i,
+//					m_CurrentSend[i]);
+//			}
+//		};
+//		static constexpr double maxBuf = 60;
+//		static constexpr double warnBuf = maxBuf * 0.1;
+//		double maxPwr = m_ChassisSensorValues.refereeRobotStatus.m_ChassisMaxPower;
+//		if (m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer < warnBuf)
+//			maxPwr = (warnBuf - m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer) / 0.02; 
+//
+//		CalcWheelSpeedTarget();
+//		m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
+//		//如果超级电容快没电了
+//		if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+//		{
+//			for (int cnt = 0; ; ++cnt)
+//			{
+//				CalcCurrent();
+//				double totalMotorPower = 0;
+//				for (size_t i = 0; i < kNumChassisMotors; ++i)
+//					totalMotorPower += (0.00000394047917046875 * fabs(m_CurrentSend[i]) / 819.2 * fabs(m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef) + 1.4);
+//				//SPDLOG_INFO("@ChassisPower=[$pwr={}]", totalMotorPower);
+//				std::cerr << "[ChassisPower] " << "Max= " << (int)m_ChassisSensorValues.refereeRobotStatus.m_ChassisMaxPower << " SetTot= " << totalMotorPower << std::endl;
+//
+//				if (totalMotorPower < maxPwr)
+//					break;
+//				if (cnt >= 10)
+//				{
+//					std::for_each(m_CurrentSend.begin(), m_CurrentSend.end(), [this, totalMotorPower, maxPwr](double& x) {
+//						x *= (maxPwr / totalMotorPower); });
+//					break;
+//				}
+//
+//				m_WheelSpeedSet *= 0.9;
+//			}
+//		}
+//		else
+//			CalcCurrent();
+//	}
+//
+//	/*for (size_t i = 0; i < kNumChassisMotors; ++i)
+//		std::cerr << m_CurrentSend[i] << '\t';
+//	std::cerr<< std::endl;*/
+//
+//	m_Chassis->SendCurrentToMotors(m_CurrentSend);
+//}
 
-	for (size_t i = 0; i < m_Motors.size(); ++i)
-		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);
-
-	for (size_t i = 0; i < m_Motors.size(); ++i)
-		m_Motors[i]->SetVoltage(m_CurrentSend[i]);
-	m_Motors[LR]->Writer()->PackAndSend();
-}
-*/
 void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 {
 	if (m_CurChassisMode != Top)

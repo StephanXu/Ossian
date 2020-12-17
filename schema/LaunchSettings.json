@@ -24,6 +24,12 @@
               "title": "Argument Id",
               "description": "Id of argument schema.",
               "component": "text"
+            },
+            "port": {
+              "type": "number",
+              "title": "Port",
+              "description": "",
+              "component": "text"
             }
           }
         },

@@ -71,10 +71,6 @@ Aimbot::Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
     Aimbot::Armor::frameCenter.x = *m_Config->Instance()->vision->camera->frameWidth;
     Aimbot::Armor::frameCenter.y = *m_Config->Instance()->vision->camera->frameHeight;
 
-#ifdef VISION_ONLY
-    m_AutoAimPredictor.SetMatsForAutoAim(10);
-#endif // VISION_ONLY
-
 #ifdef WITH_CUDA
     /*cudaError_t cudaStatus = cudaMallocManaged(&m_pBinary, 1440 * 1080 * sizeof(unsigned char));
     if (cudaStatus != cudaSuccess)         
@@ -132,16 +128,12 @@ void Aimbot::Process(unsigned char* pImage)
     static PoseSolver angleSolver;
     if (foundArmor)
     {
-        std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox); //rad, mm
-        shootMode = (deltaPitch < 0.1 && deltaYaw < 0.1);
+        std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox, true); //rad, mm
+        shootMode = (fabs(deltaPitch) < 0.1 && fabs(deltaYaw) < 0.1);
+        deltaPitch = DeadbandLimit(deltaPitch, 0.05);
+        deltaYaw = DeadbandLimit(deltaYaw, 0.05);
         /*Math::RegularizeErrAngle(deltaYaw, 'y');
         Math::RegularizeErrAngle(deltaPitch, 'p');*/
-
-        /*auto filterdAngles = m_AutoAimPredictor.Predict();
-        std::cerr << filterdAngles << std::endl;
-        m_AutoAimPredictor.Correct(deltaPitch, deltaYaw);
-        deltaPitch = filterdAngles(0);
-        deltaYaw = filterdAngles(1);*/
     }
     else
     {
@@ -160,6 +152,7 @@ void Aimbot::Process(unsigned char* pImage)
     m_UARTManager->WriteTo(m_PLCDevice.get(), sizeof(AimbotPLCSendMsg), m_PLCSendBuf);
 #else
     m_AutoAimStatus.m_Found = foundArmor;
+    m_AutoAimStatus.m_FlagFire = shootMode;
     m_AutoAimStatus.m_Pitch = deltaPitch;
     m_AutoAimStatus.m_Yaw = deltaYaw;
     m_AutoAimStatus.m_Dist = dist;

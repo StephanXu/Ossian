@@ -12,7 +12,7 @@ int main()
 	onlineDbg.StartLogging("OnlineLog",
 	                       "Camera",
 	                       "Test of HKCamera.",
-						   "5fa7c5d407f435000123982e");
+						   "5fc1e5c7011e5c00014e69bf");
 	SPDLOG_INFO("Start testing...");
 
 	HKCamera camera(0, 1440, 1080);

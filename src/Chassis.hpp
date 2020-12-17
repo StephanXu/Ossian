@@ -76,6 +76,7 @@ public:
 		motor->Lock();
 		m_MotorsStatus.m_RPM[position] = status.m_RPM;
 		m_MotorsStatus.m_Encoding[position] = status.m_Encoding;
+		m_MotorsStatus.m_Current[position] = status.m_Current;
 		motor->UnLock();
 
 		m_MotorMsgCheck[position] = true;
@@ -128,7 +129,7 @@ public:
 	static constexpr double kWheelRadius = 76.0 / 1000.0;  ///< m
 	static constexpr double kWheelXn = 175.0 / 1000.0; ///< m
 	static constexpr double kWheelYn = 232.5 / 1000;   ///< m
-	static constexpr double kWheelSpeedLimit = 1000;            ///< 单个麦轮的最大转速rpm
+	static constexpr double kWheelSpeedLimit = 300;            ///< 单个麦轮的最大转速rpm
 	static constexpr double kWheelSpeedToMotorRPMCoef = 3591 / 187.0;
 	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
 	//static constexpr double CHASSIS_MOTOR_RPM_TO_VECTOR_SEN = 0.000415809748903494517209f;
@@ -153,11 +154,11 @@ public:
 	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
 	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 	static constexpr double kChassisAngleWzRCSen = 0.000005; ///< 跟随底盘yaw模式下，遥控器的yaw遥杆（max 660）增加到车体角度的比例
-	static constexpr double kChassisCtrlPeriod = 0.012;  //底盘控制周期s，用于低通滤波器
+	static constexpr double kChassisCtrlPeriod = 0.002;  //底盘控制周期s，用于低通滤波器
 
 	//底盘运动
-	static constexpr double kChassisVxLimit = 4.5; ///< m/s
-	static constexpr double kChassisVyLimit = 3.5; ///< m/s
+	static constexpr double kChassisVxLimit = 3; ///< m/s
+	static constexpr double kChassisVyLimit = 1.5; ///< m/s
 	static double kTopWz;                          ///< 底盘陀螺旋转速度 rad/s
 
 	//pid参数 [TODO]底盘旋转角速度闭环
@@ -356,7 +357,7 @@ public:
 		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			while (12000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			while (2000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 			}

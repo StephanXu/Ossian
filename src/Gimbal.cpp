@@ -13,11 +13,11 @@ std::array<double, 5> GimbalCtrlTask::PIDAutoAimInputParams;
 
 void GimbalCtrlTask::GimbalCtrlModeSet()
 {
-	if (0&&m_FlagInitGimbal)
+	if (m_FlagInitGimbal)
 	{
 		static bool firstClosing = true;
-		if (/*fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.05 
-			&&*/ fabs(m_GimbalSensorValues.relativeAngle[Yaw]) < 0.05)
+		if (fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.05 
+			&& fabs(m_GimbalSensorValues.relativeAngle[Yaw]) < 0.05)
 		{
 			if (firstClosing)
 			{
@@ -81,7 +81,7 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
 	{
 	case kRCSwUp:
-		m_GimbalCtrlMode = GimbalCtrlMode::RC; break;
+		m_GimbalCtrlMode = GimbalCtrlMode::Aimbot; break;
 	case kRCSwMid:
 		m_GimbalCtrlMode = GimbalCtrlMode::RC; break; //Aimbot
 	case kRCSwDown:
@@ -172,48 +172,48 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 	{
 		double angleSpeedSet = 0;
 		double gyroSpeed = (position == Pitch ? m_GimbalSensorValues.imu.m_YAngleSpeed : m_GimbalSensorValues.imu.m_ZAngleSpeed);
-		////////double filteredRPM = m_RPMFilters[position].Calc(m_MotorsStatus.m_RPM[position]);
-		////////gyroSpeed = m_AngleSpeedFilters[position].Calc(gyroSpeed);
-		//if (m_CurGimbalAngleMode[position] == Gyro)
-		//{
-		//	double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw);
-		//	
-		//	angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
-		//	SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={},$pidoutAG{}={}]",
-		//		position,
-		//		position,
-		//		m_GyroAngleSet[position],
-		//		position,
-		//		gyro,
-		//		position,
-		//		angleSpeedSet);
-		//}
-		//else if (m_CurGimbalAngleMode[position] == Encoding)
-		//{
-		//	//[TODO]用电机转速rpm换算出云台角速度
-		//	double curEcdAngle = m_EcdAngleFilters[position].Calc(m_GimbalSensorValues.relativeAngle[position]);
-		//	/*//初始时刻，无法通过差分计算出角速度
-		//	if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
-		//	{
-		//		m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
-		//		m_LastEcdAngle[position] = curEcdAngle;
-		//		return;
-		//	}
-		//	double interval = std::chrono::duration_cast<std::chrono::microseconds>(m_Motors[position]->TimeStamp() -
-		//		m_LastEcdTimeStamp[position]).count() / 1000000.0;
+		//////double filteredRPM = m_RPMFilters[position].Calc(m_MotorsStatus.m_RPM[position]);
+		//////gyroSpeed = m_AngleSpeedFilters[position].Calc(gyroSpeed);
+		if (m_CurGimbalAngleMode[position] == Gyro)
+		{
+			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw);
+			
+			angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
+			SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={},$pidoutAG{}={}]",
+				position,
+				position,
+				m_GyroAngleSet[position],
+				position,
+				gyro,
+				position,
+				angleSpeedSet);
+		}
+		else if (m_CurGimbalAngleMode[position] == Encoding)
+		{
+			//[TODO]用电机转速rpm换算出云台角速度
+			double curEcdAngle = m_EcdAngleFilters[position].Calc(m_GimbalSensorValues.relativeAngle[position]);
+			/*//初始时刻，无法通过差分计算出角速度
+			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
+			{
+				m_LastEcdTimeStamp[position] = m_Motors[position]->TimeStamp();
+				m_LastEcdAngle[position] = curEcdAngle;
+				return;
+			}
+			double interval = std::chrono::duration_cast<std::chrono::microseconds>(m_Motors[position]->TimeStamp() -
+				m_LastEcdTimeStamp[position]).count() / 1000000.0;
 
-		//	double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
-		//	angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
-		//	SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
-		//	position,
-		//	position,
-		//	m_EcdAngleSet[position],
-		//	position,
-		//	curEcdAngle,
-		//	position,
-		//	angleSpeedSet);
-		//	//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
-		//}
+			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
+			angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
+			SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
+			position,
+			position,
+			m_EcdAngleSet[position],
+			position,
+			curEcdAngle,
+			position,
+			angleSpeedSet);
+			//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
+		}
 
 		m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
 		

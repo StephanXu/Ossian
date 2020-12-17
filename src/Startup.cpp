@@ -40,7 +40,8 @@ void Startup::ConfigServices(AppBuilder& app)
 {
 	app.AddService<Utils::ConfigLoader<Config::ConfigSchema>>()
 	   .LoadFromUrl(*m_AppConfig->ossian->onlineArguments->server,
-	                *m_AppConfig->ossian->onlineArguments->argId);
+	                *m_AppConfig->ossian->onlineArguments->argId,
+					*m_AppConfig->ossian->onlineArguments->port);
 	app.AddService<OnlineDebug>(
 		[config = m_AppConfig](OnlineDebug& option)
 		{
@@ -61,12 +62,12 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IReferee, RefereeAllMessagesMt>(
 		[](IReferee& option)
 	{
-		option.AddReferee("/dev/ttyUSB3");
+		option.AddReferee("/dev/ttyUSB2");
 	});
 	app.AddService<RemoteMt>(
 		[](RemoteMt& option)
 	{
-		option.Add("/dev/ttyUSB0",
+		option.Add("/dev/ttyUSB1",
 			100000,
 			ossian::UARTProperties::FlowControlNone,
 			ossian::UARTProperties::DataBits8,
@@ -151,7 +152,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<GimbalCtrlTask>();
 	app.AddExecutable<FricCtrlTask>();
 	app.AddExecutable<FeedCtrlTask>();
-	//app.AddExecutable<CameraPeeker>();
+	app.AddExecutable<CameraPeeker>();
 #else
 	app.AddExecutable<CameraPeeker>();
 #endif // !VISION_ONLY

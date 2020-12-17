@@ -104,6 +104,7 @@ struct GimbalStatus
 {
 	GimbalCtrlMode m_CtrlMode;
 	double m_RelativeAngleToChassis; ///< 底盘坐标系与云台坐标系的夹角 当前yaw编码值减去中值 rad
+	bool m_AutoAimShoot;
 };
 class GimbalCtrlTask : public ossian::IExecutable, public ossian::IODataBuilder<ossian::null_mutex, GimbalStatus>
 {
@@ -266,8 +267,6 @@ public:
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);
 
-		m_AutoAimPredictor.SetMatsForAutoAim(3);
-
 		/*m_GyroA204YawListener->AddOnChange([](const GyroA204Status<GyroType::Yaw>& value) {
 			SPDLOG_INFO("@ImuYaw=[$ZAngleYaw={},$ZSpeedYaw={}]",
 				value.m_ZAxisAngle, value.m_ZAxisSpeed); });
@@ -393,15 +392,16 @@ public:
 			GimbalCtrlModeSet();
 			m_Status.m_CtrlMode = m_GimbalCtrlMode;
 			m_Status.m_RelativeAngleToChassis = m_GimbalSensorValues.relativeAngle[Yaw];
+			m_Status.m_AutoAimShoot = m_GimbalSensorValues.autoAimStatus.m_FlagFire;
 			m_GimbalStatusSender->Set(m_Status);
 			GimbalCtrlInputProc();
 			//[TODO] 模式切换过渡
 
 			GimbalExpAngleSet(Pitch);
-			//GimbalExpAngleSet(Yaw);
+			GimbalExpAngleSet(Yaw);
 
 			GimbalCtrl(Pitch);
-			//GimbalCtrl(Yaw);
+			GimbalCtrl(Yaw);
 		}
 	}
 
@@ -449,7 +449,6 @@ private:
 	std::array<PIDController, kNumGimbalMotors> m_PIDAngleEcd, m_PIDAngleGyro, m_PIDAngleSpeed;
 	std::array<double, kNumGimbalMotors> m_VoltageSend;
 
-	KalmanFilter m_AutoAimPredictor{ 4,2,0 };
 	//std::array<FirstOrderFilter, kNumGimbalMotors> m_VoltageSetFilters;
 };
 

@@ -24,6 +24,7 @@ struct MultipleMotorsStatus
 	{ \
 		uint16_t m_Encoding[n]; \
 		int16_t m_RPM[n]; \
+		int16_t m_Current[n]; \
 	}
 
 #pragma pack(push,1)

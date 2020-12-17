@@ -131,7 +131,7 @@ void HKCamera::SetDevice(const int camIndex)
     if (MV_OK != MV_CC_SetEnumValue(m_Handle, "ExposureAuto", 0))
         throw std::runtime_error("Set ExposureAuto fail");
 
-    if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 750))
+    if (MV_OK != MV_CC_SetFloatValue(m_Handle, "ExposureTime", 750)) //750
         throw std::runtime_error("Set ExposureTime fail");
 
     if (MV_OK != MV_CC_SetEnumValue(m_Handle, "PixelFormat", 0x01080009))

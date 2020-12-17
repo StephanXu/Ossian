@@ -3,6 +3,8 @@
 
 //#define _DEBUG
 
+#define USE_PREDICTION
+
 #include <ossian/Factory.hpp>
 #include <ossian/Configuration.hpp>
 #include <opencv2/opencv.hpp>
@@ -31,6 +33,7 @@ namespace Utils = ossian::Utils;
 struct AutoAimStatus
 {
     bool m_Found;
+    bool m_FlagFire;
     double m_Pitch; //rad
     double m_Yaw;   //rad
     double m_Dist;  //mm
@@ -336,6 +339,10 @@ private:
                              0, -sin(rotAngle),  cos(rotAngle);
 
             m_CamToGblTran << cameraToGimbalX, cameraToGimbalY, cameraToGimbalZ;
+
+#ifdef USE_PREDICTION
+            m_AutoAimPredictor.SetMatsForAutoAim(700); //ms
+#endif // USE_PREDICTION
         }
 
         //Yaw: 逆时针正 顺时针负 ; Pitch:下负 上正
@@ -344,6 +351,13 @@ private:
             PNPSolver(bbox, armorType);
             double yaw = 0, pitch = 0, dist = 0;
             Eigen::Vector3d posInGimbal = /*m_CamToGblRot * */m_WorldToCamTran + m_CamToGblTran;
+
+#ifdef USE_PREDICTION
+            auto filteredState = m_AutoAimPredictor.Predict(); //Vector6d [x,y,z,vx,vy,vz]
+            m_AutoAimPredictor.Correct(posInGimbal);
+            posInGimbal << filteredState(0), filteredState(1), filteredState(2);
+#endif // USE_PREDICTION
+
             dist = posInGimbal(2) * scaleDist;
             yaw = atan2(posInGimbal(0), posInGimbal(2));
             pitch = atan2(posInGimbal(1), posInGimbal(2));
@@ -420,10 +434,10 @@ private:
         void PNPSolver(const cv::Rect2d& bbox, ArmorType armorType)
         {
 			// constants
-            const static double smallArmorWidth = 130.0; // mm
-            const static double smallArmorHeight = 71.0;
-			const static double bigArmorWidth = 210.0;
-			const static double bigArmorHeight = 60.0;
+            const static double smallArmorWidth = 133.0; // mm
+            const static double smallArmorHeight = 56.0;
+			const static double bigArmorWidth = 235.0;
+			const static double bigArmorHeight = 56.0;
             const static std::vector<cv::Point3d> smallArmorVertex =
             {
                 cv::Point3d(-smallArmorWidth / 2, -smallArmorHeight / 2, 0),	//tl
@@ -459,12 +473,17 @@ private:
                 bbox.br(),
                 bbox.tl() + cv::Point2d(0,bbox.height) };
             if (armorType == ArmorType::Small)
-                cv::solvePnPRansac(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, tvec, false, 100, 8.0, 0.99, cv::noArray(), cv::SOLVEPNP_IPPE);
+                cv::solvePnP(smallArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, tvec);
             else if (armorType == ArmorType::Big)
-                cv::solvePnPRansac(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, tvec, false, 100, 8.0, 0.99, cv::noArray(), cv::SOLVEPNP_IPPE);
+                cv::solvePnP(bigArmorVertex, targetPts, cameraMatrix, distCoeffs, rvec, tvec);
             //[TODO] 解算风车装甲板姿态
             cv::cv2eigen(tvec, m_WorldToCamTran);
         }
+
+        private:
+#ifdef USE_PREDICTION
+            KalmanFilter m_AutoAimPredictor{ 6,6,0 };
+#endif // USE_PREDICTION
     };
    
     enum class AlgorithmState
@@ -498,7 +517,7 @@ private:
 
         //cv::cuda::demosaicing(dFrame, dFrame, cv::cuda::COLOR_BayerRG2BGR_MHT, 0, cudaStream);
         cv::cuda::cvtColor(dFrame, dFrame, cv::COLOR_BayerRG2RGB, 0, cudaStream);
-        cv::cuda::flip(dFrame, dFrame, 0, cudaStream); //交大云台
+        //cv::cuda::flip(dFrame, dFrame, 0, cudaStream); //交大云台
 
         cv::cuda::cvtColor(dFrame, grayBrightness, cv::COLOR_BGR2GRAY, 0, cudaStream);
         cv::cuda::threshold(grayBrightness, binaryBrightness, thresBrightness, 255, cv::THRESH_BINARY, cudaStream);
@@ -523,9 +542,9 @@ private:
         binaryBrightness.download(debugBinaryBrightness);
         binaryColor.download(debugBinaryColor);
         binary.download(debugBinary);
-        cv::imshow("BinaryBrightness", debugBinaryBrightness);
+        /*cv::imshow("BinaryBrightness", debugBinaryBrightness);
         cv::imshow("BinaryColor", debugBinaryColor);
-        cv::imshow("DebugBinary", debugBinary);
+        cv::imshow("DebugBinary", debugBinary);*/
         //cv::waitKey(10);
 #endif // _DEBUG
 
@@ -638,13 +657,12 @@ private:
     std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;
     std::atomic_bool m_Valid = false;
     ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config = nullptr;
-    
+
     ossian::UARTManager* m_UARTManager;
 #ifdef VISION_ONLY
     std::shared_ptr<ossian::UARTDevice> m_PLCDevice;
     AimbotPLCSendMsg m_AimbotPLCSendMsg{};
     uint8_t m_PLCSendBuf[kSendBufSize];
-    KalmanFilter m_AutoAimPredictor{ 4,2,0 };
 #endif // VISION_ONLY
 };
 

@@ -42,7 +42,7 @@ void FricCtrlTask::FricModeSet()
 	}
 	else
 	{
-		m_FricMode = FricMode::Disable;
+		m_FricMode = FricMode::Enable;
 	}
 	//lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
 
@@ -73,32 +73,30 @@ void FricCtrlTask::FricExpSpeedSet()
 			break;
 		}
 		}
-		//m_FricSpeedSet = kFricSpeed30;//!!!!!!!!!!!!
+		m_FricSpeedSet = kFricSpeed15;//!!!!!!!!!!!!
 	}
 }
 
 void FricCtrlTask::FricCtrl()
 {
 	static std::array<double, kNumGunFricMotors> currentSend{};
-	if (m_FricMode == FricMode::Disable)
+	/*if (m_FricMode == FricMode::Disable)
 		currentSend.fill(0);
-	else
+	else*/
 	{
 		for (size_t i = 0; i < kNumGunFricMotors; ++i)
 		{
 			double set = (i == 0 ? -m_FricSpeedSet : m_FricSpeedSet);
-			double get = m_RPMFdbFilters[i].Calc(m_FricMotorsStatus.m_RPM[i]);
-			//double get = m_FricMotorsStatus.m_RPM[i];
+			//double get = m_RPMFdbFilters[i].Calc(m_FricMotorsStatus.m_RPM[i]);
+			double get = m_FricMotorsStatus.m_RPM[i];
 			currentSend[i] = m_PIDFricSpeed[i].Calc(set, get);
 
-			/*SPDLOG_INFO("@PIDFric{}=[$setFC{}={},$getFC{}={},$pidoutFC{}={}]",
+			SPDLOG_INFO("@PIDFric{}=[$setFC{}={},$getFC{}={}]",
 				i,
 				i,
 				set,
 				i,
-				get,
-				i,
-				currentSend[i]);*/
+				get);
 		}
 	}
 	
@@ -115,8 +113,8 @@ void FeedCtrlTask::FeedModeSet()
 	if (overheat)
 		std::cerr << "[Feed] OverHeat!!!" << std::endl;
 	//若摩擦轮停转，则拨弹轮停转
-	if (overheat 
-		|| m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
+	if (/*overheat 
+		|| */m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
 		|| m_FeedSensorValues.fricStatus.m_Mode == FricMode::Disable
 		|| m_FeedSensorValues.fricStatus.m_FlagLowRPM)
 	{
@@ -124,10 +122,27 @@ void FeedCtrlTask::FeedModeSet()
 	}
 	else
 	{
-		if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
-			m_FeedMode = FeedMode::Semi;
+		if (m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Aimbot)
+		{
+			if (m_FeedSensorValues.gimbalStatus.m_AutoAimShoot)
+				m_FeedMode = FeedMode::Auto;
+			else 
+				m_FeedMode = FeedMode::Disable;
+		}
+		else if (m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Windmill)
+		{
+			if (m_FeedSensorValues.gimbalStatus.m_AutoAimShoot)
+				m_FeedMode = FeedMode::Burst;
+			else
+				m_FeedMode = FeedMode::Disable;
+		}
 		else
-			m_FeedMode = FeedMode::Disable;
+		{
+			if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
+				m_FeedMode = FeedMode::Semi;
+			else
+				m_FeedMode = FeedMode::Disable;
+		}
 		//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
 		/*int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
 		if (thumbWheelValue > 0)
@@ -183,7 +198,9 @@ void FeedCtrlTask::FeedRotateCtrl(bool disable, double expDeltaAngle)
 				m_FeedMotorEcdSumSet,
 				m_FeedSensorValues.feedAngle,
 				std::fabs(speedSet));
-
+			
+			if (speedSet > 0)
+				speedSet = 0;
 			double rpmSet = speedSet * kSpeedToMotorRPMCoef;
 			//double rpmGet = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
 			current = m_PIDFeedSpeed.Calc(rpmSet, m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
@@ -193,8 +210,8 @@ void FeedCtrlTask::FeedRotateCtrl(bool disable, double expDeltaAngle)
 				m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed],
 				current);
 			
-			if (current > 0)
-				current = 0;
+			/*if (current > 0)
+				current = 0;*/
 		}		
 		
 	}
