@@ -88,4 +88,15 @@ public:
 };
 } // ossian
 
+#define OSSIAN_EXPORT_GENERAL_IO(IOType, StatusType, Method) \
+	template <typename Mutex = std::mutex> \
+	using IOType = ossian::GeneralIO<StatusType, Method, Mutex>; \
+	using IOType##Mt = IOType<std::mutex>; \
+	using IOType##St = IOType<ossian::null_mutex>;
+
+#define OSSIAN_EXPORT_GENERAL_CAN_IO(IOType, StatusType) \
+	OSSIAN_EXPORT_GENERAL_IO(IOType, StatusType, ossian::CANManager)
+#define OSSIAN_EXPORT_GENERAL_UART_IO(IOType, StatusType) \
+	OSSIAN_EXPORT_GENERAL_IO(IOType, StatusType, ossian::UARTManager)
+
 #endif // OSSIAN_CORE_GENERAL_IO
