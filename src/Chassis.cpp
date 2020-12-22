@@ -95,8 +95,8 @@ void ChassisCtrlTask::RCToChassisSpeed()
 
 void ChassisCtrlTask::ChassisModeSet()
 {
-	if (0/*m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
-		|| m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init*/)
+	if (m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
+		|| m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init)
 	{
 		m_CurChassisMode = Disable;
 	}

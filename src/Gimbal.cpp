@@ -81,7 +81,7 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
 	{
 	case kRCSwUp:
-		m_GimbalCtrlMode = GimbalCtrlMode::Aimbot; break;
+		m_GimbalCtrlMode = GimbalCtrlMode::RC; break;
 	case kRCSwMid:
 		m_GimbalCtrlMode = GimbalCtrlMode::RC; break; //Aimbot
 	case kRCSwDown:

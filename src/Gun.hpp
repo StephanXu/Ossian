@@ -445,7 +445,7 @@ public:
 	void FeedModeSet();
 
 	//发送电流给2006
-	void FeedRotateCtrl(bool disable=true, double expDeltaAngle=0);
+	void FeedRotateCtrl(bool disable = true, bool continuous = false, double expDeltaAngle = 0);
 
 	void FeedCtrl();
 
