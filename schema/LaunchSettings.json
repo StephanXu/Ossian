@@ -13,6 +13,18 @@
           "type": "object",
           "description": "Fetch online arguments.",
           "properties": {
+            "enableOnline": {
+              "type": "boolean",
+              "title": "Enable Online",
+              "description": "Enable online arguments",
+              "component": "switch"
+            },
+            "localFilename": {
+              "type": "string",
+              "title": "Local filename",
+              "description": "Local config filename",
+              "component": "text" 
+            },
             "server": {
               "type": "string",
               "title": "Server",
@@ -38,6 +50,48 @@
           "type": "object",
           "description": "Plot status online.",
           "properties": {
+            "enableOnline": {
+              "type": "boolean",
+              "title": "Enable Online",
+              "description": "",
+              "component": "switch"
+            },
+            "enableStdlog": {
+              "type": "boolean",
+              "title": "Enable stdout log",
+              "description": "",
+              "component": "switch"
+            },
+            "level": {
+              "type": "string",
+              "title": "Level",
+              "description": "",
+              "component": "select",
+              "enum": [
+                "trace",
+                "debug",
+                "info",
+                "warn",
+                "error",
+                "critical",
+                "off"
+              ],
+              "enumName": [
+                "Trace",
+                "Debug",
+                "Info",
+                "Warn",
+                "Error",
+                "Critical",
+                "Off"
+              ]
+            },
+            "offlineLogFilename": {
+              "type": "string",
+              "title": "Offline Log Filename",
+              "description": "Offline log filename when online debug disabled",
+              "component": "text"
+            },
             "loggerUrl": {
               "type": "string",
               "title": "Logger URL",

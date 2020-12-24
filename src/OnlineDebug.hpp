@@ -129,36 +129,53 @@ public:
 	 * @param loggerName The logger name. In order to access logger through spdlog::get("loggerName").
 	 * @param logName The log name to display on online board.
 	 * @param logDescription The description to display on online board.
+	 * @param argumentId The argument id that connect to the log
+	 * @param logLevel Log level
+	 * @param isOffline Set true to enable offline log file instead of online debug.
+	 * @param offlineLogFilename Filename to store offline log file
 	 */
 	auto StartLogging(std::string loggerName,
-	                  std::string logName,
-	                  std::string logDescription,
-	                  std::string argumentId) const -> std::string
+	                  const std::string logName,
+	                  const std::string logDescription,
+	                  const std::string argumentId,
+	                  bool enableStdlog              = true,
+	                  int logLevel                   = 0,
+	                  bool isOffline                 = false,
+	                  std::string offlineLogFilename = "") const -> void
 	{
 		if (!m_Valid)
 		{
 			throw std::runtime_error("OnlineDebug is not valid");
 		}
 
-		std::promise<std::string> waitLogId;
-		m_Hub->Invoke("CreateLog", logName, logDescription, argumentId)
-		     .Then<std::string>(
-			     [&waitLogId](const std::string& id, std::exception_ptr)
-			     {
-				     waitLogId.set_value(std::string{id});
-			     });
 		auto distSink = std::make_shared<spdlog::sinks::dist_sink_mt>();
-		//auto stdSink  = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-
-		auto logId      = waitLogId.get_future().get();
-		auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, logId);
-
-		//distSink->add_sink(stdSink);
-		distSink->add_sink(onlineSink);
+		if (!isOffline)
+		{
+			std::promise<std::string> waitLogId;
+			m_Hub->Invoke("CreateLog", logName, logDescription, argumentId)
+			     .Then<std::string>(
+				     [&waitLogId](const std::string& id, std::exception_ptr)
+				     {
+					     waitLogId.set_value(std::string{id});
+				     });
+			auto logId            = waitLogId.get_future().get();
+			const auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, logId);
+			distSink->add_sink(onlineSink);
+			if (enableStdlog)
+			{
+				const auto stdSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+				distSink->add_sink(stdSink);
+			}
+		}
+		else
+		{
+			const auto offlineFileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(offlineLogFilename);
+			distSink->add_sink(offlineFileSink);
+		}
 
 		auto logger = std::make_shared<spdlog::logger>(loggerName, distSink);
 		logger->set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
-		logger->set_level(spdlog::level::level_enum::trace);
+		logger->set_level(static_cast<spdlog::level::level_enum>(logLevel));
 		spdlog::register_logger(logger);
 		spdlog::set_default_logger(logger);
 		std::thread([logger]()
@@ -169,8 +186,6 @@ public:
 				logger->flush();
 			}
 		}).detach();
-
-		return logId;
 	}
 };
 

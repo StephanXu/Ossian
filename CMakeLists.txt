@@ -97,7 +97,7 @@ target_compile_definitions(Ossian
 # Copy AppSettings.json to build directory.
 add_custom_target(AppSettingsFile ALL
     COMMAND ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/AppSettings.json
-    ${CMAKE_CURRENT_BINARY_DIR}/AppSettings.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/AppSettings.*
+    ${CMAKE_CURRENT_BINARY_DIR}/
 )
 add_dependencies(Ossian AppSettingsFile)
