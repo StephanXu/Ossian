@@ -156,10 +156,6 @@ public:
 	static constexpr int16_t kGunRCDeadband = 50; //拨轮死区
 	static constexpr size_t kShootModeChannel = 1;
 
-	static constexpr uint8_t kRCSwUp = 1;
-	static constexpr uint8_t kRCSwMid = 3;
-	static constexpr uint8_t kRCSwDown = 2;
-
 	//pid参数
 	static std::array<double, 5> PIDFricSpeedParams;
 
@@ -198,7 +194,7 @@ public:
 		kFricSpeed30 = *m_Config->Instance()->control->gun->fricSpeed30;
 
 		m_FlagInitFric = true;
-		m_FricMode = FricMode::Disable;
+		m_CurFricMode = FricMode::Disable;
 
 		PIDController pidFricSpeed;
 		pidFricSpeed.SetParams(PIDFricSpeedParams);
@@ -210,7 +206,7 @@ public:
 
 	void InitFric()
 	{
-		m_FricMode = FricMode::Disable;
+		m_CurFricMode = m_LastFricMode = FricMode::Disable;
 
 		std::for_each(m_PIDFricSpeed.begin(), m_PIDFricSpeed.end(), [](PIDController& x) {x.Reset(); });
 		std::for_each(m_RPMFdbFilters.begin(), m_RPMFdbFilters.end(), [](FirstOrderFilter& x) { x.Reset(); });
@@ -222,6 +218,7 @@ public:
 	{
 		m_FricMotorsStatus = m_MotorsFricListener->Get();
 		m_FricSensorValues.rc = m_RCListener->Get();
+		m_FricSensorValues.keyboardMode = (m_FricSensorValues.rc.sw[0] == kRCSwUp && m_FricSensorValues.rc.sw[1] == kRCSwUp);
 		m_FricSensorValues.gimbalStatus = m_GimbalStatusListener->Get();
 		m_FricSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();
 
@@ -230,7 +227,7 @@ public:
 
 	/*bool Stopped() 
 	{ 
-		return (m_FricMode == FricMode::Disable
+		return (m_CurFricMode == FricMode::Disable
 			|| std::abs(m_FricMotorsStatus.m_RPM[FricBelow]) < kFricLowSpeed
 			|| std::abs(m_FricMotorsStatus.m_RPM[FricUpper]) < kFricLowSpeed);
 	}*/
@@ -262,7 +259,7 @@ public:
 				InitFric();
 
 			FricModeSet();
-			m_Status.m_Mode = m_FricMode;
+			m_Status.m_Mode = m_CurFricMode;
 			m_Status.m_FlagLowRPM = (std::abs(m_FricMotorsStatus.m_RPM[FricBelow]) < kFricLowSpeed
 									 || std::abs(m_FricMotorsStatus.m_RPM[FricUpper]) < kFricLowSpeed);
 			m_FricStatusSender->Set(m_Status);
@@ -291,11 +288,12 @@ private:
 		GimbalStatus gimbalStatus;
 		//double refereeCurHeat, refereeHeatLimit;
 		RobotStatus refereeRobotStatus;
+		bool keyboardMode;
 
 	} m_FricSensorValues;
 
 	bool m_FlagInitFric;
-	FricMode m_FricMode;
+	FricMode m_CurFricMode, m_LastFricMode;
 
 	int16_t m_FricSpeedSet;
 	std::array<PIDController, 2> m_PIDFricSpeed;
@@ -318,10 +316,6 @@ public:
 	//遥控器解析
 	static constexpr int16_t kGunRCDeadband = 100; //拨轮死区
 	static constexpr size_t kShootModeChannel = 1; //右开关1, 拨轮4
-
-	static constexpr uint8_t kRCSwUp = 1;
-	static constexpr uint8_t kRCSwMid = 3;
-	static constexpr uint8_t kRCSwDown = 2;
 
 	//枪口热量机制
 	static constexpr int kHeatPerBullet = 10;
@@ -423,6 +417,7 @@ public:
 
 		m_FeedMotorStatus = m_MotorFeedListener->Get();
 		m_FeedSensorValues.rc = m_RCListener->Get();
+		m_FeedSensorValues.keyboardMode = (m_FeedSensorValues.rc.sw[0] == kRCSwUp && m_FeedSensorValues.rc.sw[1] == kRCSwUp);
 		//m_FeedSensorValues.gimbalCtrlMode = m_GimbalCtrlTask->GimbalCtrlSrc();  //[TODO] 增加对自瞄模式射击的处理
 		m_FeedSensorValues.feedAngle = m_FeedEcdHelper.CalcEcdSum(m_FeedMotorStatus.m_Encoding[Feed]);
 		if (std::fabs(m_FeedMotorEcdSumSet - m_FeedSensorValues.feedAngle) < 0.05)
@@ -500,6 +495,7 @@ private:
 		GimbalStatus gimbalStatus;
 		FricStatus fricStatus;
 		//double refereeCurHeat, refereeHeatLimit;
+		bool keyboardMode;
 	} m_FeedSensorValues;
 
 	bool m_FlagInitFeed, m_FlagInPosition;

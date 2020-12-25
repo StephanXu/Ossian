@@ -129,7 +129,11 @@ void Aimbot::Process(unsigned char* pImage)
     if (foundArmor)
     {
         std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox, true); //rad, mm
-        shootMode = (fabs(deltaPitch) < 0.1 && fabs(deltaYaw) < 0.1);
+        if(armorType == ArmorType::Big)
+            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.1);
+        else if(armorType == ArmorType::Small)
+            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.05);
+
         deltaPitch = DeadbandLimit(deltaPitch, 0.05);
         deltaYaw = DeadbandLimit(deltaYaw, 0.05);
         /*Math::RegularizeErrAngle(deltaYaw, 'y');

@@ -120,7 +120,7 @@ void CANBus::Read() const
 		memcpy(buffer.get(), rawFrame.data, length);
 		auto end = std::chrono::high_resolution_clock::now();
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-		SPDLOG_TRACE("CAN received {} bytes finished with: {} microseconds", length, duration.count());
+		//SPDLOG_TRACE("CAN received {} bytes finished with: {} microseconds", length, duration.count());
 
 		start = std::chrono::high_resolution_clock::now();
 		auto it = m_DeviceMap.find(id);
@@ -130,7 +130,7 @@ void CANBus::Read() const
 		}
 		end = std::chrono::high_resolution_clock::now();
 		duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-		SPDLOG_TRACE("CANDevice callback finished with: {} microseconds", duration.count());
+		//SPDLOG_TRACE("CANDevice callback finished with: {} microseconds", duration.count());
 
 	}
 }
@@ -144,7 +144,7 @@ void CANBus::WriteRaw(const unsigned id, const size_t length, const uint8_t* dat
 		ss << fmt::format("{:02x}", data[i]);
 		ss << " ";
 	}
-	SPDLOG_TRACE("CAN Write: id={:#x} len={} data={}", id, length, ss.str());
+	//SPDLOG_TRACE("CAN Write: id={:#x} len={} data={}", id, length, ss.str());
 #endif
 	if (true == m_IsOpened)
 	{

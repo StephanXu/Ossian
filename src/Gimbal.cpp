@@ -56,7 +56,8 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 			else
 			{
 				m_GimbalCtrlMode = GimbalCtrlMode::Init;
-				if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid)  //右侧开关保持居中，云台归中，否则失能
+				if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid
+					&& m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwUp)  //右侧开关保持居中或上，云台归中，否则失能
 					m_GimbalCtrlMode = GimbalCtrlMode::Disable;
 				m_CurGimbalAngleMode.fill(Encoding);
 				
@@ -67,7 +68,8 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 		else
 		{
 			m_GimbalCtrlMode = GimbalCtrlMode::Init;
-			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid)  //右侧开关保持居中，云台归中，否则失能
+			if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwMid
+				&& m_GimbalSensorValues.rc.sw[kGimbalModeChannel] != kRCSwUp)  //右侧开关保持居中，云台归中，否则失能
 				m_GimbalCtrlMode = GimbalCtrlMode::Disable;
 			m_CurGimbalAngleMode.fill(Encoding);
 			
@@ -78,26 +80,55 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 
 	}
 
-	switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
+	if (m_GimbalSensorValues.keyboardMode)
 	{
-	case kRCSwUp:
-		m_GimbalCtrlMode = GimbalCtrlMode::RC; break;
-	case kRCSwMid:
-		m_GimbalCtrlMode = GimbalCtrlMode::RC; break; //Aimbot
-	case kRCSwDown:
-		m_GimbalCtrlMode = GimbalCtrlMode::Disable; break;  //Mouse
-	default:
-		m_GimbalCtrlMode = GimbalCtrlMode::Disable; break;
+		//键鼠，长按右键自瞄
+		if (m_GimbalSensorValues.rc.click[1])
+			m_GimbalCtrlMode = GimbalCtrlMode::Aimbot;
+		else
+			m_GimbalCtrlMode = GimbalCtrlMode::RC;
+
+		if (m_GimbalSensorValues.rc.sw[kGimbalModeChannel] == kRCSwDown)
+			m_GimbalCtrlMode = GimbalCtrlMode::Disable;
 	}
+	else
+	{
+		//遥控器
+		switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
+		{
+		case kRCSwUp:
+			m_GimbalCtrlMode = GimbalCtrlMode::RC; break;
+		case kRCSwMid:
+			m_GimbalCtrlMode = GimbalCtrlMode::RC; break; //Aimbot
+		case kRCSwDown:
+			m_GimbalCtrlMode = GimbalCtrlMode::Disable; break;  //Mouse
+		default:
+			m_GimbalCtrlMode = GimbalCtrlMode::Disable; break;
+		}
+	}
+	
+
+	
 }
 
 void GimbalCtrlTask::GimbalCtrlInputProc()
 {
 	if (m_GimbalCtrlMode == GimbalCtrlMode::RC)
 	{
-		//遥控器传来的角度期望rad
-		m_AngleInput[Pitch] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kPitchChannel], kGimbalRCDeadband) * kPitchRCSen; 
-		m_AngleInput[Yaw] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kYawChannel], kGimbalRCDeadband) * kYawRCSen; 
+		if (m_GimbalSensorValues.keyboardMode)
+		{
+			//键鼠
+			m_AngleInput[Pitch] = m_GimbalSensorValues.rc.mouse[1] * kPitchMouseSen;
+			m_AngleInput[Yaw] = m_GimbalSensorValues.rc.mouse[0] * kYawMouseSen;
+		}
+		else
+		{
+			//遥控器
+			//遥控器传来的角度期望rad
+			m_AngleInput[Pitch] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kPitchChannel], kGimbalRCDeadband) * kPitchRCSen;
+			m_AngleInput[Yaw] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kYawChannel], kGimbalRCDeadband) * kYawRCSen;
+		}
+		
 		//SPDLOG_INFO("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
 		//std::cerr << "AngleInput: " << m_AngleInput[Pitch] << '\t' << m_AngleInput[Yaw] << std::endl;
 	}
@@ -204,25 +235,25 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
 			angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
-			SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
+			/*SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
 			position,
 			position,
 			m_EcdAngleSet[position],
 			position,
 			curEcdAngle,
 			position,
-			angleSpeedSet);
+			angleSpeedSet);*/
 			//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
 		}
 
 		m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
 		
-		SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
+		/*SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
 			position,
 			position,
 			angleSpeedSet,
 			position,
-			gyroSpeed);
+			gyroSpeed);*/
 	}
 	m_Gimbal->SendVoltageToMotors(m_VoltageSend);
 }

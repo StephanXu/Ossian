@@ -144,12 +144,11 @@ public:
 	static constexpr size_t kPitchChannel = 3;
 	static constexpr size_t kGimbalModeChannel = 1; //选择云台状态的开关通道
 
-	static constexpr uint8_t kRCSwUp = 1;
-	static constexpr uint8_t kRCSwMid = 3;
-	static constexpr uint8_t kRCSwDown = 2;
-
 	static constexpr double kYawRCSen = -0.00005; //-0.000005
-	static constexpr double kPitchRCSen = 0.000006; //0.005
+	static constexpr double kPitchRCSen = 0.00001; //0.005
+
+	static constexpr double kYawMouseSen = -0.00006;
+	static constexpr double kPitchMouseSen = -0.00005;
 
 	//pid参数
 	static std::array<double, 5> PIDAngleEcdPitchParams;
@@ -296,6 +295,8 @@ public:
 	{
 		m_MotorsStatus = m_MotorsListener->Get();
 		m_GimbalSensorValues.rc = m_RCListener->Get();
+		m_GimbalSensorValues.keyboardMode = (m_GimbalSensorValues.rc.sw[0] == kRCSwUp && m_GimbalSensorValues.rc.sw[1] == kRCSwUp);
+
 		m_GimbalSensorValues.relativeAngle[Pitch] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Pitch], kPitchEcdMid);
 		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawEcdMid);
 
@@ -424,6 +425,7 @@ private:
 		RemoteStatus rc;	 //遥控器数据
 		GyroA110Status<GyroType::Gimbal> imu;
 		AutoAimStatus autoAimStatus;
+		bool keyboardMode;
 		//double gyroX, gyroY, gyroZ, gyroSpeedX, gyroSpeedY, gyroSpeedZ; 	 //云台imu数据 [TODO] gyroSpeedZ = cos(pitch) * gyroSpeedZ - sin(pitch) * gyroSpeedX
 	} m_GimbalSensorValues;
 

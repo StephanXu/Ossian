@@ -77,13 +77,34 @@ void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 
 void ChassisCtrlTask::RCToChassisSpeed()
 {
-	double vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;		// m/s
-	double vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * kChassisVyRCSen;       // m/s
-	if (m_CurChassisMode == Openloop_Z)
-		m_WzSet = -m_ChassisSensorValues.rc.ch[kChassisZChannel] * kChassisWzRCSen;
-	else if (m_CurChassisMode == Follow_Chassis_Yaw)
-		m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[kChassisZChannel] * kChassisAngleWzRCSen, -M_PI, M_PI);
-	//[TODO] 键盘操作
+	bool keyboardMode = (m_ChassisSensorValues.rc.sw[0] == kRCSwUp && m_ChassisSensorValues.rc.sw[1] == kRCSwUp);
+	double vxChannelSet = 0, vyChannelSet = 0;
+	if (keyboardMode)
+	{
+		//键鼠
+		if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Forward"))
+			vxChannelSet = -kChassisVxLimit;
+		else if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Backward"))
+			vxChannelSet = kChassisVxLimit;
+		else if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Leftward"))
+			vyChannelSet = kChassisVyLimit;
+		else if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Rightward"))
+			vyChannelSet = -kChassisVyLimit;
+		else
+			vxChannelSet = vyChannelSet = 0;
+	}
+	else
+	{
+		//遥控器
+		vxChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisXChannel], kChassisRCDeadband) * kChassisVxRCSen;	// m/s
+		vyChannelSet = DeadbandLimit(m_ChassisSensorValues.rc.ch[kChassisYChannel], kChassisRCDeadband) * kChassisVyRCSen;   // m/s
+		if (m_CurChassisMode == Openloop_Z)
+			m_WzSet = -m_ChassisSensorValues.rc.ch[kChassisZChannel] * kChassisWzRCSen;
+		else if (m_CurChassisMode == Follow_Chassis_Yaw)
+			m_AngleSet = ClampLoop(m_AngleSet - m_ChassisSensorValues.rc.ch[kChassisZChannel] * kChassisAngleWzRCSen, -M_PI, M_PI);
+	}
+	
+	
 
 	//一阶低通滤波代替斜坡函数作为底盘速度输入
 	m_VxSet = m_RCInputFilters[0].Calc(vxChannelSet);//0.167
@@ -95,6 +116,8 @@ void ChassisCtrlTask::RCToChassisSpeed()
 
 void ChassisCtrlTask::ChassisModeSet()
 {
+	static uint16_t lastKeyboard;
+
 	if (m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
 		|| m_ChassisSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init)
 	{
@@ -106,20 +129,41 @@ void ChassisCtrlTask::ChassisModeSet()
 	}
 	else
 	{
-		switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
+		if (m_ChassisSensorValues.keyboardMode)
 		{
-		case kRCSwUp:
-			m_CurChassisMode = Top; break;  //Follow_Gimbal_Yaw
-		case kRCSwMid:
-			m_CurChassisMode = Follow_Gimbal_Yaw;  break;
-		case kRCSwDown:
-			m_CurChassisMode = Disable; break;   //Top
-		default:
-			m_CurChassisMode = Disable; break;
+			//键鼠
+			if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("TopMode") &&
+				!(lastKeyboard & kKeyboardMapChassis.at("TopMode")))
+			{
+				if (m_LastChassisMode != Top)
+					m_CurChassisMode = Top;
+				else
+					m_CurChassisMode = Follow_Gimbal_Yaw;
+			}
+			else if(m_LastChassisMode == Top)
+				m_CurChassisMode = Top;
+			else
+				m_CurChassisMode = Follow_Gimbal_Yaw;
 		}
-
+		else
+		{
+			//遥控器
+			switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
+			{
+			case kRCSwUp:
+				m_CurChassisMode = Top; break;  //Follow_Gimbal_Yaw
+			case kRCSwMid:
+				m_CurChassisMode = Follow_Gimbal_Yaw;  break;
+			case kRCSwDown:
+				m_CurChassisMode = Disable; break;   //Top
+			default:
+				m_CurChassisMode = Disable; break;
+			}
+		}
 	}
-	
+
+	m_LastChassisMode = m_CurChassisMode;
+	lastKeyboard = m_ChassisSensorValues.rc.keyboard;
 }
 
 void ChassisCtrlTask::ChassisCtrl()
@@ -139,7 +183,7 @@ void ChassisCtrlTask::ChassisCtrl()
 			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
 			//SPDLOG_INFO("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
-			if (i == 0)
+			/*if (i == 0)
 				SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]",
 					i,
 					i,
@@ -147,7 +191,7 @@ void ChassisCtrlTask::ChassisCtrl()
 					i,
 					get,
 					i,
-					m_CurrentSend[i]);
+					m_CurrentSend[i]);*/
 			//m_PIDChassisSpeed[i].PrintDetails(i);
 		}
 	}

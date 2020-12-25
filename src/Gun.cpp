@@ -17,43 +17,44 @@ std::array<double, 5> FeedCtrlTask::PIDFeedSpeedParams;
 
 void FricCtrlTask::FricModeSet()
 {
-	//static uint8_t lastSw = kRCSwUp;
+	static uint16_t lastKeyboard;
 
-	//遥控器右侧开关上拨一次，开启摩擦轮；再上拨一次，关闭摩擦轮
-	
+	if (m_FricSensorValues.keyboardMode)
+	{
+		//键鼠
+		if (m_FricSensorValues.rc.keyboard & kKeyboardMapFric.at("FricOn") && !(lastKeyboard & kKeyboardMapFric.at("FricOn")))
+		{
+			if (m_LastFricMode == FricMode::Disable)
+				m_CurFricMode = FricMode::Enable;
+			else if (m_LastFricMode == FricMode::Enable)
+				m_CurFricMode = FricMode::Disable;
+		}
+		else
+			m_CurFricMode = m_LastFricMode;
+	}
+	else
+	{
+		//遥控器模式下，摩擦轮常开
+		m_CurFricMode = FricMode::Enable;
+	}
+
 	//如果云台失能，则摩擦轮也失能
 	if (m_FricSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
 		|| m_FricSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Init)
 	{
-		m_FricMode = FricMode::Disable;
+		m_CurFricMode = FricMode::Disable;
 	}
-	else if (m_FricSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
-	{
-		m_FricMode = FricMode::Enable;
-		/*switch (m_FricMode)
-		{
-		case FricMode::Disable:
-			m_FricMode = FricMode::Enable; break;
-		case FricMode::Enable:
-			m_FricMode = FricMode::Disable; break;
-		default:
-			m_FricMode = FricMode::Disable; break;
-		}*/
-	}
-	else
-	{
-		m_FricMode = FricMode::Enable;
-	}
-	//lastSw = m_FricSensorValues.rc.sw[kShootModeChannel];
 
+	m_LastFricMode = m_CurFricMode;
+	lastKeyboard = m_FricSensorValues.rc.keyboard;
 }
 
 //[TODO] 读取场地加成RFID状态，叠加射击速度加成
 void FricCtrlTask::FricExpSpeedSet()
 {
-	if (m_FricMode == FricMode::Disable)
+	if (m_CurFricMode == FricMode::Disable)
 		m_FricSpeedSet = 0;
-	else if (m_FricMode == FricMode::Enable)
+	else if (m_CurFricMode == FricMode::Enable)
 	{
 		switch (m_FricSensorValues.refereeRobotStatus.m_Shooter17SpeedLimit)
 		{
@@ -80,7 +81,7 @@ void FricCtrlTask::FricExpSpeedSet()
 void FricCtrlTask::FricCtrl()
 {
 	static std::array<double, kNumGunFricMotors> currentSend{};
-	/*if (m_FricMode == FricMode::Disable)
+	/*if (m_CurFricMode == FricMode::Disable)
 		currentSend.fill(0);
 	else*/
 	{
@@ -91,12 +92,12 @@ void FricCtrlTask::FricCtrl()
 			double get = m_FricMotorsStatus.m_RPM[i];
 			currentSend[i] = m_PIDFricSpeed[i].Calc(set, get);
 
-			SPDLOG_INFO("@PIDFric{}=[$setFC{}={},$getFC{}={}]",
+			/*SPDLOG_INFO("@PIDFric{}=[$setFC{}={},$getFC{}={}]",
 				i,
 				i,
 				set,
 				i,
-				get);
+				get);*/
 		}
 	}
 	
@@ -109,9 +110,9 @@ void FeedCtrlTask::FeedModeSet()
 	//若超热量则拨弹轮停转
 	bool overheat = (m_CurBulletShotNum.load() >= (m_FeedSensorValues.refereeRobotStatus.m_Shooter17HeatLimit
 		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet);
-	
-	if (overheat)
-		std::cerr << "[Feed] OverHeat!!!" << std::endl;
+	/*if (overheat)
+		std::cerr << "[Feed] OverHeat!!!" << std::endl;*/
+
 	//若摩擦轮停转，则拨弹轮停转
 	if (/*overheat 
 		|| */m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
@@ -138,19 +139,46 @@ void FeedCtrlTask::FeedModeSet()
 		}
 		else
 		{
-			if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
-				m_FeedMode = FeedMode::Burst;
+			if (m_FeedSensorValues.keyboardMode)
+			{
+				//键鼠模式，单击左键单发，长按左键连发
+				static int pressCnt = 0; //统计左键连续按下的时长
+
+				if (m_FeedSensorValues.rc.click[0])
+				{
+					++pressCnt;
+					m_FeedMode = FeedMode::Semi;
+
+					if(pressCnt > 300)
+						m_FeedMode = FeedMode::Auto;
+				}
+				else
+				{
+					pressCnt = 0;
+					m_FeedMode = FeedMode::Disable;
+				}
+					
+			}
 			else
-				m_FeedMode = FeedMode::Disable;
+			{
+				//遥控器模式
+				if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
+					m_FeedMode = FeedMode::Burst;
+				else
+					m_FeedMode = FeedMode::Disable;
+
+				//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
+				/*int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
+				if (thumbWheelValue > 0)
+					m_FeedMode = FeedMode::Semi;
+				else if (thumbWheelValue == 0)
+					m_FeedMode = FeedMode::Stop;
+				else
+					m_FeedMode = FeedMode::Auto;*/
+			}
+			
 		}
-		//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
-		/*int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
-		if (thumbWheelValue > 0)
-			m_FeedMode = FeedMode::Semi;
-		else if (thumbWheelValue == 0)
-			m_FeedMode = FeedMode::Stop;
-		else
-			m_FeedMode = FeedMode::Auto;*/
+		
 	}
 	
 	//若卡弹则拨弹轮反转
@@ -203,6 +231,8 @@ void FeedCtrlTask::FeedRotateCtrl(bool disable, bool continuous, double expDelta
 			//	speedSet = 0;
 			if (continuous)
 				speedSet = -100;
+			else
+				speedSet = -20;
 
 			double rpmSet = speedSet * kSpeedToMotorRPMCoef;
 			//double rpmGet = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
@@ -213,8 +243,8 @@ void FeedCtrlTask::FeedRotateCtrl(bool disable, bool continuous, double expDelta
 				m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed],
 				current);
 			
-			if (current > 0)
-				current = 0;
+			/*if (current > 0)
+				current = 0;*/
 		}		
 		
 	}

@@ -145,10 +145,6 @@ public:
 	static constexpr size_t kChassisZChannel = 2; ///< 控制底盘 旋转 速度的遥控器通道 仅当使用Openloop_Z模式时可用
 	static constexpr size_t kChassisModeChannel = 0; ///< 选择底盘状态的开关通道
 
-	static constexpr uint8_t kRCSwUp = 1;
-	static constexpr uint8_t kRCSwMid = 3;
-	static constexpr uint8_t kRCSwDown = 2;
-
 	static constexpr int16_t kChassisRCDeadband = 10;     ///< 摇杆死区
 	static constexpr double kChassisVxRCSen = -0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例0.006
 	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
@@ -158,7 +154,7 @@ public:
 
 	//底盘运动
 	static constexpr double kChassisVxLimit = 3; ///< m/s
-	static constexpr double kChassisVyLimit = 1.5; ///< m/s
+	static constexpr double kChassisVyLimit = 2; ///< m/s
 	static double kTopWz;                          ///< 底盘陀螺旋转速度 rad/s
 
 	//pid参数 [TODO]底盘旋转角速度闭环
@@ -302,6 +298,7 @@ public:
 
 			m_FlagInitChassis = false;
 			flagStartInit = true;
+			m_CurChassisMode = m_LastChassisMode = Disable;
 		}
 		
 	}
@@ -310,6 +307,8 @@ public:
 	{
 		m_MotorsStatus = m_MotorsListener->Get();
 		m_ChassisSensorValues.rc = m_RCListener->Get();
+		m_ChassisSensorValues.keyboardMode = (m_ChassisSensorValues.rc.sw[0] == kRCSwUp && m_ChassisSensorValues.rc.sw[1] == kRCSwUp);
+
 		m_ChassisSensorValues.spCap = m_SpCapListener->Get();
 		m_ChassisSensorValues.gimbalStatus = m_GimbalStatusListener->Get();
 
@@ -404,13 +403,14 @@ private:
 		PowerHeatData refereePowerHeatData; ///< 裁判系统数据
 		RobotStatus refereeRobotStatus;
 		GimbalStatus gimbalStatus;
+		bool keyboardMode;
 	} m_ChassisSensorValues;
 
 	double m_VxSet, m_VySet, m_WzSet; //三轴速度期望
 	double m_AngleSet;                //底盘角度目标值
 
 
-	ChassisMode m_CurChassisMode;
+	ChassisMode m_CurChassisMode, m_LastChassisMode;
 	ossian::IOData<GimbalStatus>* m_GimbalStatusListener;
 	ossian::IOData<GyroA110Status<GyroType::Chassis>>* m_GyroListener;
 	Eigen::Vector4d m_WheelSpeedSet;

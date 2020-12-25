@@ -69,7 +69,7 @@ public:
 		                                  const size_t length,
 		                                  const uint8_t* data)
 		{
-			SPDLOG_TRACE("MotorManager Received: {}", length);
+			//SPDLOG_TRACE("MotorManager Received: {}", length);
 			auto motor = std::static_pointer_cast<MotorType>(m_Motors[device]);
 			motor->Parse(data, length);
 			callback(motor);
