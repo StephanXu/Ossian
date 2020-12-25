@@ -51,7 +51,7 @@ Startup::Startup()
 void Startup::ConfigServices(AppBuilder& app)
 {
 	const auto argumentConfig = m_AppConfig->ossian->onlineArguments;
-	if (argumentConfig->enableOnline)
+	if (*argumentConfig->enableOnline)
 	{
 		app.AddService<Utils::ConfigLoader<Config::ConfigSchema>>()
 		   .LoadFromUrl(*argumentConfig->server,
@@ -67,7 +67,7 @@ void Startup::ConfigServices(AppBuilder& app)
 		[config = m_AppConfig](OnlineDebug& option)
 		{
 			const auto logConfig = config->ossian->onlineDebug;
-			if (logConfig->enableOnline)
+			if (*logConfig->enableOnline)
 			{
 				option.Connect(*logConfig->loggerUrl);
 				option.StartLogging("OnlineLog",
