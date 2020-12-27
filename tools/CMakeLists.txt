@@ -9,3 +9,5 @@ test_target(
 	SRCS "FetchConfig.cpp"
 	LIBS httplib::httplib gflags fmt::fmt
 )
+
+install(TARGETS FetchConfig DESTINATION bin)

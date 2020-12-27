@@ -16,7 +16,6 @@ target_include_directories(OssianCore
 
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-find_package(Protobuf REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(mimalloc 1.6 REQUIRED)
 find_package(Boost REQUIRED)
@@ -24,10 +23,10 @@ find_package(Boost REQUIRED)
 target_compile_features(OssianCore PUBLIC cxx_std_17)
 target_link_libraries(OssianCore
 		PRIVATE
+			httplib::httplib
 			fmt::fmt
 			spdlog::spdlog
 			ZLIB::ZLIB
-			protobuf::libprotobuf
 			mimalloc
 			Boost::boost
 			"$<$<BOOL:${ENABLE_GPERF}>:-lprofiler>"

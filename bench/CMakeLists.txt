@@ -9,7 +9,6 @@ target_sources(VideoBench
         )
 target_link_libraries(VideoBench
         PRIVATE
-            proto
             benchmark::benchmark_main
         )
 

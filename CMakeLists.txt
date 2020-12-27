@@ -101,3 +101,10 @@ add_custom_target(AppSettingsFile ALL
     ${CMAKE_CURRENT_BINARY_DIR}/
 )
 add_dependencies(Ossian AppSettingsFile)
+
+# Install
+install(TARGETS Ossian RUNTIME DESTINATION bin)
+# [ATTENTION]: We need the AppSettings file copied correctly as install command
+# can not directly copy them from source directory.
+file(GLOB_RECURSE APP_SETTINGS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/AppSettings.*.json)
+install(FILES ${APP_SETTINGS_FILES} DESTINATION etc/Ossian)

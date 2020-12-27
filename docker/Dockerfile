@@ -48,7 +48,6 @@ RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install zlib:x64-linu
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install libpng:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install libwebp[nearlossless,simd]:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install opengl:x64-linux
-RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install protobuf:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install szip:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install tiff:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install eigen3:x64-linux
@@ -57,7 +56,6 @@ RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install hdf5[szip,zli
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install opencv[nonfree,contrib,eigen,ffmpeg]:x64-linux
 # opencv installing end
 
-RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install protobuf:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install fmt:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install spdlog:x64-linux
 RUN VCPKG_FORCE_SYSTEM_BINARIES=1 .$dir_prefix/vcpkg/vcpkg install gtest:x64-linux

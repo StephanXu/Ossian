@@ -1,8 +1,8 @@
 
 #include <benchmark/benchmark.h>
-#include "Config.pb.h"
 
 #include <cmath>
+#include <cstring>
 #include <unordered_map>
 #include <typeindex>
 #include <memory>
@@ -27,32 +27,6 @@ static void BMNativeTime(benchmark::State& state)
 		int result = state.range(0) * state.range(0);
 		//benchmark::DoNotOptimize(v.data());
 		//benchmark::ClobberMemory();
-	}
-}
-
-static void BMProtobufParam(benchmark::State& state)
-{
-	OssianConfig::Configuration config;
-	auto aimbot = config.mutable_aimbot();
-	aimbot->set_areanormalizedbase(1.25);
-	for (auto _ : state)
-	{
-		float result = aimbot->areanormalizedbase() + 202;
-	}
-}
-
-struct config
-{
-	float aimbot;
-};
-
-static void BMNoProtobufParam(benchmark::State& state)
-{
-	config c;
-	c.aimbot = 100;
-	for (auto _ : state)
-	{
-		float result = c.aimbot + 202;
 	}
 }
 
@@ -235,9 +209,6 @@ static void BMNativeFunction(benchmark::State& state)
 		NativeFunction(a);
 	}
 }
-
-BENCHMARK(BMProtobufParam);
-BENCHMARK(BMNoProtobufParam);
 
 BENCHMARK(BMPow)->Arg(8);
 BENCHMARK(BMNativeTime)->Arg(8);
