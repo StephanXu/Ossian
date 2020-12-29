@@ -2,15 +2,15 @@
 #define OSSIAN_CORE_CONFIGURATION
 
 #include <spdlog/spdlog.h>
+#include <httplib/httplib.h>
+#include <nlohmann/json.hpp>
 
 #include <string>
 #include <variant>
 #include <any>
 #include <memory>
 
-#include "Http.hpp"
 #include "ApplicationBuilder.hpp"
-#include <nlohmann/json.hpp>
 
 namespace ossian
 {

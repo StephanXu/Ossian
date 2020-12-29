@@ -106,7 +106,7 @@ RUN apt install -y libcpprest-dev \
 RUN cd $dir_prefix \
     && git clone https://github.com/yhirose/cpp-httplib.git -n \
     && cd cpp-httplib \
-    && git checkout 3da4a0ac69574c4998af05009d237454c481e071 \
+    && git checkout f94c3f1dc9107b57e17e273edfda2d622dd64b21 \
     && mkdir build \
     && cd build \
     && cmake .. \
