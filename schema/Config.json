@@ -1,7 +1,7 @@
 {
   "type": "object",
-  "title": "Ossian Configuration",
-  "description": "Configuration of project ossian.",
+  "title": "12.29·¢²¼»á",
+  "description": "An extraordinary example.",
   "properties": {
     "connection": {
       "type": "object",
@@ -389,7 +389,7 @@
             },
             "fricSpeed22": {
               "type": "number",
-              "title": "FricSpeed12",
+              "title": "FricSpeed22",
               "description": "",
               "component": "text"
             },
@@ -399,7 +399,6 @@
               "description": "",
               "component": "text"
             }
-
           }
         }
       }
@@ -556,6 +555,43 @@
             }
           }
         },
+        "pidAngleGyroPitchAutoAim": {
+          "type": "object",
+          "title": "pidAngleGyroPitchAutoAim",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
         "pidAngleSpeedPitch": {
           "type": "object",
           "title": "pidAngleSpeedPitch",
@@ -633,6 +669,43 @@
         "pidAngleGyroYaw": {
           "type": "object",
           "title": "pidAngleGyroYaw",
+          "description": "",
+          "properties": {
+            "kP": {
+              "type": "number",
+              "title": "kP",
+              "description": "",
+              "component": "text"
+            },
+            "kI": {
+              "type": "number",
+              "title": "kI",
+              "description": "",
+              "component": "text"
+            },
+            "kD": {
+              "type": "number",
+              "title": "kD",
+              "description": "",
+              "component": "text"
+            },
+            "thOut": {
+              "type": "number",
+              "title": "thOut",
+              "description": "",
+              "component": "text"
+            },
+            "thIOut": {
+              "type": "number",
+              "title": "thIOut",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
+        "pidAngleGyroYawAutoAim": {
+          "type": "object",
+          "title": "pidAngleGyroYawAutoAim",
           "description": "",
           "properties": {
             "kP": {

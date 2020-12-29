@@ -270,7 +270,7 @@ void FeedCtrlTask::FeedCtrl()
 	} 
 	else if (m_FeedMode == FeedMode::Auto)
 	{
-		m_PIDFeedAngle.SetOutputLimit(-100, 100);
+		m_PIDFeedAngle.SetOutputLimit(-60, 60);
 		FeedRotateCtrl(false, true, kDeltaAnglePerBullet);
 	}
 	else if (m_FeedMode == FeedMode::Burst)

@@ -3,9 +3,11 @@
 
 std::array<double, 5> GimbalCtrlTask::PIDAngleEcdPitchParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleGyroPitchParams;
+std::array<double, 5> GimbalCtrlTask::PIDAngleGyroPitchAutoAimParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleSpeedPitchParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleEcdYawParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleGyroYawParams;
+std::array<double, 5> GimbalCtrlTask::PIDAngleGyroYawAutoAimParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleSpeedYawParams;
 std::array<double, 5> GimbalCtrlTask::PIDAutoAimInputParams;
 
@@ -45,10 +47,12 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 				/*m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 				m_PIDAngleEcd[Pitch].Reset();
 				m_PIDAngleGyro[Pitch].Reset();
+				m_PIDAngleGyroAutoAim[Pitch].Reset();
 				m_PIDAngleSpeed[Pitch].Reset();
 
 				m_PIDAngleEcd[Yaw].Reset();
 				m_PIDAngleGyro[Yaw].Reset();
+				m_PIDAngleGyroAutoAim[Yaw].Reset();
 				m_PIDAngleSpeed[Yaw].Reset();*/
 				
 				m_FlagInitGimbal = false;
@@ -209,7 +213,10 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 		{
 			double gyro = (position == Pitch ? m_GimbalSensorValues.imu.m_Pitch : m_GimbalSensorValues.imu.m_Yaw);
 			
-			angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
+			if(m_GimbalCtrlMode == GimbalCtrlMode::Aimbot || m_GimbalCtrlMode == GimbalCtrlMode::Windmill)
+				angleSpeedSet = m_PIDAngleGyroAutoAim[position].Calc(m_GyroAngleSet[position], gyro);
+			else
+				angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
 			SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={},$pidoutAG{}={}]",
 				position,
 				position,

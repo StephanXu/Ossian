@@ -147,15 +147,17 @@ public:
 	static constexpr double kYawRCSen = -0.00005; //-0.000005
 	static constexpr double kPitchRCSen = 0.00001; //0.005
 
-	static constexpr double kYawMouseSen = -0.00006;
-	static constexpr double kPitchMouseSen = -0.00005;
+	static constexpr double kYawMouseSen = -0.00012;
+	static constexpr double kPitchMouseSen = -0.0001;
 
 	//pid参数
 	static std::array<double, 5> PIDAngleEcdPitchParams;
 	static std::array<double, 5> PIDAngleGyroPitchParams;
+	static std::array<double, 5> PIDAngleGyroPitchAutoAimParams;
 	static std::array<double, 5> PIDAngleSpeedPitchParams;
 	static std::array<double, 5> PIDAngleEcdYawParams;
 	static std::array<double, 5> PIDAngleGyroYawParams;
+	static std::array<double, 5> PIDAngleGyroYawAutoAimParams;
 	static std::array<double, 5> PIDAngleSpeedYawParams;
 	static std::array<double, 5> PIDAutoAimInputParams;
 
@@ -199,6 +201,12 @@ public:
 		PIDAngleGyroPitchParams[3] = *m_Config->Instance()->pids->pidAngleGyroPitch->thOut;
 		PIDAngleGyroPitchParams[4] = *m_Config->Instance()->pids->pidAngleGyroPitch->thIOut;
 
+		PIDAngleGyroPitchAutoAimParams[0] = *m_Config->Instance()->pids->pidAngleGyroPitchAutoAim->kP;
+		PIDAngleGyroPitchAutoAimParams[1] = *m_Config->Instance()->pids->pidAngleGyroPitchAutoAim->kI;
+		PIDAngleGyroPitchAutoAimParams[2] = *m_Config->Instance()->pids->pidAngleGyroPitchAutoAim->kD;
+		PIDAngleGyroPitchAutoAimParams[3] = *m_Config->Instance()->pids->pidAngleGyroPitchAutoAim->thOut;
+		PIDAngleGyroPitchAutoAimParams[4] = *m_Config->Instance()->pids->pidAngleGyroPitchAutoAim->thIOut;
+
 		PIDAngleSpeedPitchParams[0] = *m_Config->Instance()->pids->pidAngleSpeedPitch->kP;
 		PIDAngleSpeedPitchParams[1] = *m_Config->Instance()->pids->pidAngleSpeedPitch->kI;
 		PIDAngleSpeedPitchParams[2] = *m_Config->Instance()->pids->pidAngleSpeedPitch->kD;
@@ -216,6 +224,12 @@ public:
 		PIDAngleGyroYawParams[2] = *m_Config->Instance()->pids->pidAngleGyroYaw->kD;
 		PIDAngleGyroYawParams[3] = *m_Config->Instance()->pids->pidAngleGyroYaw->thOut;
 		PIDAngleGyroYawParams[4] = *m_Config->Instance()->pids->pidAngleGyroYaw->thIOut;
+
+		PIDAngleGyroYawAutoAimParams[0] = *m_Config->Instance()->pids->pidAngleGyroYawAutoAim->kP;
+		PIDAngleGyroYawAutoAimParams[1] = *m_Config->Instance()->pids->pidAngleGyroYawAutoAim->kI;
+		PIDAngleGyroYawAutoAimParams[2] = *m_Config->Instance()->pids->pidAngleGyroYawAutoAim->kD;
+		PIDAngleGyroYawAutoAimParams[3] = *m_Config->Instance()->pids->pidAngleGyroYawAutoAim->thOut;
+		PIDAngleGyroYawAutoAimParams[4] = *m_Config->Instance()->pids->pidAngleGyroYawAutoAim->thIOut;
 
 		PIDAngleSpeedYawParams[0] = *m_Config->Instance()->pids->pidAngleSpeedYaw->kP;
 		PIDAngleSpeedYawParams[1] = *m_Config->Instance()->pids->pidAngleSpeedYaw->kI;
@@ -241,6 +255,9 @@ public:
 		m_PIDAngleGyro[Pitch].SetParams(PIDAngleGyroPitchParams);
 		m_PIDAngleGyro[Pitch].SetFlagAngleLoop();
 
+		m_PIDAngleGyroAutoAim[Pitch].SetParams(PIDAngleGyroPitchAutoAimParams);
+		m_PIDAngleGyroAutoAim[Pitch].SetFlagAngleLoop();
+
 		m_PIDAngleSpeed[Pitch].SetParams(PIDAngleSpeedPitchParams);
 
 		m_PIDAutoAimInput[Pitch].SetParams(PIDAutoAimInputParams);
@@ -251,6 +268,9 @@ public:
 
 		m_PIDAngleGyro[Yaw].SetParams(PIDAngleGyroYawParams);
 		m_PIDAngleGyro[Yaw].SetFlagAngleLoop();
+
+		m_PIDAngleGyroAutoAim[Yaw].SetParams(PIDAngleGyroYawAutoAimParams);
+		m_PIDAngleGyroAutoAim[Yaw].SetFlagAngleLoop();
 
 		m_PIDAngleSpeed[Yaw].SetParams(PIDAngleSpeedYawParams);
 
@@ -448,7 +468,7 @@ private:
 
 	//设定角度--->旋转角速度  旋转角速度-->6020控制电压
 	std::array<PIDController, kNumGimbalMotors> m_PIDAutoAimInput;
-	std::array<PIDController, kNumGimbalMotors> m_PIDAngleEcd, m_PIDAngleGyro, m_PIDAngleSpeed;
+	std::array<PIDController, kNumGimbalMotors> m_PIDAngleEcd, m_PIDAngleGyro, m_PIDAngleGyroAutoAim, m_PIDAngleSpeed;
 	std::array<double, kNumGimbalMotors> m_VoltageSend;
 
 	//std::array<FirstOrderFilter, kNumGimbalMotors> m_VoltageSetFilters;
