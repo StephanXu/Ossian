@@ -2,13 +2,13 @@
 #define OSSIAN_CORE_CONFIGURATION
 
 #include <spdlog/spdlog.h>
-#include <httplib.h>
 
 #include <string>
 #include <variant>
 #include <any>
 #include <memory>
 
+#include "Http.hpp"
 #include "ApplicationBuilder.hpp"
 #include <nlohmann/json.hpp>
 
