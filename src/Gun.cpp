@@ -74,7 +74,7 @@ void FricCtrlTask::FricExpSpeedSet()
 			break;
 		}
 		}
-		m_FricSpeedSet = kFricSpeed18;//!!!!!!!!!!!!
+		m_FricSpeedSet = kFricSpeed15;//!!!!!!!!!!!!
 	}
 }
 
@@ -163,7 +163,7 @@ void FeedCtrlTask::FeedModeSet()
 			{
 				//遥控器模式
 				if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
-					m_FeedMode = FeedMode::Burst;
+					m_FeedMode = FeedMode::Semi;
 				else
 					m_FeedMode = FeedMode::Disable;
 

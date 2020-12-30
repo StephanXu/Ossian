@@ -8,6 +8,7 @@
 #include <Config.schema.hpp>
 #include <ossian/Configuration.hpp>
 #include <spdlog/spdlog.h>
+#include <Eigen/Dense>
 
 #include "CtrlAlgorithms.hpp"
 #include "InputAdapter.hpp"
@@ -18,7 +19,6 @@
 
 #include <chrono>
 #include <memory>
-#include <Eigen/Dense>
 #include <cmath>
 #include <array>
 #include <thread>

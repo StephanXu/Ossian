@@ -12,7 +12,6 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(mimalloc 1.6 REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(CUDA)
-find_package(httplib)
 
 message(STATUS "CUDA_FOUND: ${CUDA_FOUND}")
 

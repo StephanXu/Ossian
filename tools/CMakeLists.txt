@@ -7,7 +7,7 @@ find_package(fmt CONFIG REQUIRED)
 test_target(
 	NAME FetchConfig
 	SRCS "FetchConfig.cpp"
-	LIBS httplib::httplib gflags fmt::fmt
+	LIBS gflags fmt::fmt
 )
 
 install(TARGETS FetchConfig DESTINATION bin)

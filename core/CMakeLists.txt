@@ -23,7 +23,6 @@ find_package(Boost REQUIRED)
 target_compile_features(OssianCore PUBLIC cxx_std_17)
 target_link_libraries(OssianCore
 		PRIVATE
-			httplib::httplib
 			fmt::fmt
 			spdlog::spdlog
 			ZLIB::ZLIB
