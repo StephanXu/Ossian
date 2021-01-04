@@ -2,7 +2,6 @@
 #define OSSIAN_CORE_CONFIGURATION
 
 #include <spdlog/spdlog.h>
-#include <httplib/httplib.h>
 #include <nlohmann/json.hpp>
 
 #include <string>
@@ -11,6 +10,7 @@
 #include <memory>
 
 #include "ApplicationBuilder.hpp"
+#include "Http.hpp"
 
 namespace ossian
 {

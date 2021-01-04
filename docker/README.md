@@ -56,4 +56,4 @@ If you connect the development container through IDEs support CMake. You may nee
 |---|---|
 | Vcpkg toolchain path | /usr/local/Ossian/vcpkg/scripts/buildsystems/vcpkg.cmake |
 | CMake path | /usr/local/bin/cmake |
-| CMake arguments | -DCMAKE_PREFIX_PATH="/opt/MVS/include;/opt/MVS/lib/64;/usr/local/Ossian/libs/release/SignalR-Client-Cpp/lib;/usr/local/Ossian/libs/release/SignalR-Client-Cpp/include;/usr/local/Ossian/libs/cpp-httplib;/usr/local/Ossian/libs/release/gflags" |
+| CMake arguments | -DCMAKE_PREFIX_PATH="/opt/MVS/include;/opt/MVS/lib/64;/usr/local/Ossian/libs/release/SignalR-Client-Cpp/lib;/usr/local/Ossian/libs/release/SignalR-Client-Cpp/include;/usr/local/Ossian/libs/release/gflags" |

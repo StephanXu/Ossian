@@ -20,7 +20,15 @@
 
 namespace ossian
 {
-class ApplicationBuilder;
+template <class InterfaceType,
+          class ServiceType = InterfaceType>
+class BaseServiceBuilder;
+
+template <class InterfaceType,
+          class ServiceType = InterfaceType,
+          typename Enabled = void>
+class ServiceBuilder;
+
 
 class IStartup
 {
@@ -28,124 +36,6 @@ public:
 	virtual ~IStartup() = default;
 	virtual auto ConfigServices(ApplicationBuilder& app) -> void = 0;
 	virtual auto ConfigPipeline(ApplicationBuilder& app) -> void = 0;
-};
-
-template <typename BuilderType>
-class CustomBuilder
-{
-public:
-	using _OssianServiceBuilderType = BuilderType;
-};
-
-class DefaultServiceBuilder
-{
-public:
-	DefaultServiceBuilder(ApplicationBuilder& DIConfig)
-	{
-	}
-};
-
-using DefaultBuilder = CustomBuilder<DefaultServiceBuilder>;
-
-template <class InterfaceType,
-          class ServiceType = InterfaceType>
-class BaseServiceBuilder
-{
-public:
-	BaseServiceBuilder(ApplicationBuilder& appBuilder,
-	                   std::function<void(ServiceType&)> configureProc) : m_AppBuilder(appBuilder),
-	                                                                      m_ConfigureProc(configureProc)
-	{
-		static_assert(std::is_base_of<InterfaceType, ServiceType>::value,
-			"ServiceType has to be derived from InterfaceType");
-	}
-
-	//BaseServiceBuilder(const BaseServiceBuilder<InterfaceType, ServiceType>&) = delete;
-
-	virtual ~BaseServiceBuilder()
-	{
-		SPDLOG_TRACE("Register DI: {}\t{}", typeid(InterfaceType).name(), typeid(ServiceType).name());
-		m_AppBuilder.template Add<InterfaceType>(
-			InstanceFactory<typename ServiceType::_OssianServiceInjectorType>::Value(m_ConfigureProc));
-	}
-
-
-	BaseServiceBuilder& AddConfig(std::function<void(ServiceType&)> configureProc)
-	{
-		m_ConfigureProc = [configureProc, oldConfigureProc = m_ConfigureProc](ServiceType& service)
-		{
-			oldConfigureProc(service);
-			configureProc(service);
-		};
-		return *this;
-	}
-
-protected:
-	ApplicationBuilder& m_AppBuilder;
-	std::function<void(ServiceType&)> m_ConfigureProc;
-};
-
-template <class InterfaceType,
-          class ServiceType = InterfaceType,
-          typename Enabled = void>
-class ServiceBuilder : BaseServiceBuilder<InterfaceType, ServiceType>
-{
-public:
-	ServiceBuilder(ApplicationBuilder& DIConfig,
-	               std::function<void(ServiceType&)> configureProc)
-		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
-	{
-	}
-};
-
-
-template <class InterfaceType, class ServiceType>
-using IsNeedBaseServiceBuilder = std::is_constructible<typename ServiceType::_OssianServiceBuilderType,
-                                                       ApplicationBuilder&,
-                                                       BaseServiceBuilder<InterfaceType, ServiceType>&>;
-
-template <class ServiceType>
-using IsValidCustomServiceBuilder = std::is_base_of<
-	CustomBuilder<typename ServiceType::_OssianServiceBuilderType>, ServiceType>;
-
-/**
- * Custom builder without BaseServiceBuilder
- */
-template <class InterfaceType,
-          class ServiceType>
-class ServiceBuilder<InterfaceType,
-                     ServiceType,
-                     std::enable_if_t<IsValidCustomServiceBuilder<ServiceType>::value &&
-                                      !IsNeedBaseServiceBuilder<InterfaceType, ServiceType>::value>>
-	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::_OssianServiceBuilderType
-{
-public:
-	ServiceBuilder(ApplicationBuilder& DIConfig,
-	               std::function<void(ServiceType&)> configureProc)
-		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
-		  , ServiceType::_OssianServiceBuilderType(DIConfig)
-	{
-	}
-};
-
-/**
- * Custom builder with BaseServiceBuilder
- */
-template <class InterfaceType,
-          class ServiceType>
-class ServiceBuilder<InterfaceType,
-                     ServiceType,
-                     std::enable_if_t<IsValidCustomServiceBuilder<ServiceType>::value &&
-                                      IsNeedBaseServiceBuilder<InterfaceType, ServiceType>::value>>
-	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::_OssianServiceBuilderType
-{
-public:
-	ServiceBuilder(ApplicationBuilder& DIConfig,
-	               std::function<void(ServiceType&)> configureProc)
-		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
-		  , ServiceType::_OssianServiceBuilderType(DIConfig, *this)
-	{
-	}
 };
 
 /**
@@ -247,6 +137,127 @@ public:
 private:
 	DI::DIConfiguration m_DIConfig;
 	std::unique_ptr<IStartup> m_Startup;
+};
+
+
+// Service Builders
+
+template <typename BuilderType>
+class CustomBuilder
+{
+public:
+	using _OssianServiceBuilderType = BuilderType;
+};
+
+class DefaultServiceBuilder
+{
+public:
+	DefaultServiceBuilder(ApplicationBuilder& DIConfig)
+	{
+	}
+};
+
+using DefaultBuilder = CustomBuilder<DefaultServiceBuilder>;
+
+template <class InterfaceType,
+          class ServiceType>
+class BaseServiceBuilder
+{
+public:
+	BaseServiceBuilder(ApplicationBuilder& appBuilder,
+	                   std::function<void(ServiceType&)> configureProc) : m_AppBuilder(appBuilder),
+	                                                                      m_ConfigureProc(configureProc)
+	{
+		static_assert(std::is_base_of<InterfaceType, ServiceType>::value,
+			"ServiceType has to be derived from InterfaceType");
+	}
+
+	//BaseServiceBuilder(const BaseServiceBuilder<InterfaceType, ServiceType>&) = delete;
+
+	virtual ~BaseServiceBuilder()
+	{
+		SPDLOG_TRACE("Register DI: {}\t{}", typeid(InterfaceType).name(), typeid(ServiceType).name());
+		m_AppBuilder.template Add<InterfaceType>(
+			InstanceFactory<typename ServiceType::_OssianServiceInjectorType>::Value(m_ConfigureProc));
+	}
+
+
+	BaseServiceBuilder& AddConfig(std::function<void(ServiceType&)> configureProc)
+	{
+		m_ConfigureProc = [configureProc, oldConfigureProc = m_ConfigureProc](ServiceType& service)
+		{
+			oldConfigureProc(service);
+			configureProc(service);
+		};
+		return *this;
+	}
+
+protected:
+	ApplicationBuilder& m_AppBuilder;
+	std::function<void(ServiceType&)> m_ConfigureProc;
+};
+
+template <class InterfaceType,
+          class ServiceType,
+          typename Enabled>
+class ServiceBuilder : BaseServiceBuilder<InterfaceType, ServiceType>
+{
+public:
+	ServiceBuilder(ApplicationBuilder& DIConfig,
+	               std::function<void(ServiceType&)> configureProc)
+		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
+	{
+	}
+};
+
+
+template <class InterfaceType, class ServiceType>
+using IsNeedBaseServiceBuilder = std::is_constructible<typename ServiceType::_OssianServiceBuilderType,
+                                                       ApplicationBuilder&,
+                                                       BaseServiceBuilder<InterfaceType, ServiceType>&>;
+
+template <class ServiceType>
+using IsValidCustomServiceBuilder = std::is_base_of<
+	CustomBuilder<typename ServiceType::_OssianServiceBuilderType>, ServiceType>;
+
+/**
+ * Custom builder without BaseServiceBuilder
+ */
+template <class InterfaceType,
+          class ServiceType>
+class ServiceBuilder<InterfaceType,
+                     ServiceType,
+                     std::enable_if_t<IsValidCustomServiceBuilder<ServiceType>::value &&
+                                      !IsNeedBaseServiceBuilder<InterfaceType, ServiceType>::value>>
+	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::_OssianServiceBuilderType
+{
+public:
+	ServiceBuilder(ApplicationBuilder& DIConfig,
+	               std::function<void(ServiceType&)> configureProc)
+		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
+		  , ServiceType::_OssianServiceBuilderType(DIConfig)
+	{
+	}
+};
+
+/**
+ * Custom builder with BaseServiceBuilder
+ */
+template <class InterfaceType,
+          class ServiceType>
+class ServiceBuilder<InterfaceType,
+                     ServiceType,
+                     std::enable_if_t<IsValidCustomServiceBuilder<ServiceType>::value &&
+                                      IsNeedBaseServiceBuilder<InterfaceType, ServiceType>::value>>
+	: BaseServiceBuilder<InterfaceType, ServiceType>, public ServiceType::_OssianServiceBuilderType
+{
+public:
+	ServiceBuilder(ApplicationBuilder& DIConfig,
+	               std::function<void(ServiceType&)> configureProc)
+		: BaseServiceBuilder<InterfaceType, ServiceType>(DIConfig, configureProc)
+		  , ServiceType::_OssianServiceBuilderType(DIConfig, *this)
+	{
+	}
 };
 } // namespace ossian
 

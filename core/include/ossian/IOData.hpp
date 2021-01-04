@@ -28,7 +28,7 @@ namespace ossian
 template <typename DataType>
 class IOData
 {
-	using OnReceiveProcType = void(const DataType& value);
+	using OnReceiveProcType = void(const DataType& value, const DataType& lastValue);
 public:
 	virtual ~IOData() = default;
 
@@ -116,7 +116,7 @@ class IODataImpl : public IOData<DataType>
 {
 public:
 	using Type = DataType;
-	using OnReceiveProcType = void(const DataType& value);
+	using OnReceiveProcType = void(const DataType& value, const DataType& lastValue);
 
 	OSSIAN_SERVICE_SETUP(IODataImpl()) = default;
 	~IODataImpl()                      = default;
@@ -143,11 +143,12 @@ public:
 	auto Set(const DataType& value) noexcept -> void override
 	{
 		m_Mutex.lock();
+		DataType last = m_Payload;
 		m_Payload     = value;
 		m_RefreshFlag = true;
 		m_Mutex.unlock();
 		m_ConditionVariable.notify_all();
-		m_OnChange(value);
+		m_OnChange(value, last);
 	}
 
 	auto Get() noexcept -> DataType override
@@ -191,17 +192,17 @@ public:
 
 	auto AddOnChange(std::function<OnReceiveProcType> callback) -> void override
 	{
-		m_OnChange = [callback, onChange = m_OnChange](const DataType& value)
+		m_OnChange = [callback, onChange = m_OnChange](const DataType& value, const DataType& lastValue)
 		{
-			onChange(value);
-			callback(value);
+			onChange(value, lastValue);
+			callback(value, lastValue);
 		};
 	}
 
 private:
 	DataType m_Payload = {};
 	Mutex m_Mutex;
-	std::function<OnReceiveProcType> m_OnChange = [](const DataType&)
+	std::function<OnReceiveProcType> m_OnChange = [](const DataType&, const DataType&)
 	{
 	};
 	typename ConditionVariable<Mutex>::Type m_ConditionVariable;

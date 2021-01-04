@@ -180,8 +180,6 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<GimbalCtrlTask>();
 	app.AddExecutable<FricCtrlTask>();
 	app.AddExecutable<FeedCtrlTask>();
-	app.AddExecutable<CameraPeeker>();
-#else
-	app.AddExecutable<CameraPeeker>();
 #endif // !VISION_ONLY
+	app.AddExecutable<CameraPeeker>();
 }

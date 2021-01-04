@@ -104,18 +104,6 @@ RUN apt install -y libcpprest-dev \
     && make install
 
 RUN cd $dir_prefix \
-    && git clone https://github.com/yhirose/cpp-httplib.git -n \
-    && cd cpp-httplib \
-    && git checkout f94c3f1dc9107b57e17e273edfda2d622dd64b21 \
-    && mkdir build \
-    && cd build \
-    && cmake .. \
-        -DCMAKE_INSTALL_PREFIX=$dir_prefix/libs/cpp-httplib/ \
-    && make -j$((`nproc`+1)) \
-    && make install \
-    && cd ../.. \    
-
-RUN cd $dir_prefix \
     && git clone https://github.com/gflags/gflags.git -n \
     && cd gflags \
     && git checkout e171aa2d15ed9eb17054558e0b3a6a413bb01067 \

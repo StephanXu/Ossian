@@ -381,7 +381,7 @@ public:
 			SPDLOG_INFO("@Phototube=[$status_pt={}]", value.m_Status);
 		});*/
 		//如果射击数据（0x0207）有更新，则累加已发射的子弹数
-		m_RefereeShootDataListener->AddOnChange([this](const ShootData& value)
+		m_RefereeShootDataListener->AddOnChange([this](const ShootData& value, const ShootData& lastValue)
 		{
 			++m_CurBulletShotNum;
 		});
