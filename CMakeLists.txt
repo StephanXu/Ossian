@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13.0)
+cmake_minimum_required(VERSION 3.16.0)
 
 project(Ossian VERSION 1.0)
 
@@ -45,6 +45,32 @@ target_sources(Ossian
             src/GyroA110.cpp
             src/TOFNooploop.cpp
             src/Phototube.cpp
+        )
+target_precompile_headers(Ossian
+        PRIVATE
+            src/ColorFilter.hpp
+            src/Startup.hpp
+            src/Utils.hpp
+            src/WindmillDetection.hpp
+            src/OnlineDebug.hpp
+            src/Remote.hpp
+            src/Capacitor.hpp
+            src/Referee.hpp
+            src/IOPeeker.hpp
+            src/CameraPeeker.hpp
+            src/Gyro.hpp
+            src/GyroA204.hpp
+            src/GyroA110.hpp
+            src/TOFNooploop.hpp
+            src/Phototube.hpp
+            <mutex>
+            <atomic>
+            <tuple>
+            <thread>
+            <vector>
+            <chrono>
+            <array>
+            <functional>
         )
 target_include_directories(Ossian
         PRIVATE
