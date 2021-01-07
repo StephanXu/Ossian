@@ -238,7 +238,7 @@ public:
 
 	void PrintDetails(int index)
 	{
-		SPDLOG_INFO("@PIDDetails{}=[$pout{}={},$iout{}={},$dout{}={}]", index, index, m_POut, index, m_IOut, index, m_DOut);
+		SPDLOG_TRACE("@PIDDetails{}=[$pout{}={},$iout{}={},$dout{}={}]", index, index, m_POut, index, m_IOut, index, m_DOut);
 	}
 
 	double Calc(double expectation, double feedback)

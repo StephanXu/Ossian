@@ -32,7 +32,7 @@ Startup::Startup()
 	spdlog::set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
 	spdlog::set_level(spdlog::level::trace);
 
-	SPDLOG_INFO("MI_VERSION: {}", mi_version());
+	SPDLOG_TRACE("MI_VERSION: {}", mi_version());
 
 	// Load configuration
 	std::string mode           = std::getenv("OSSIAN_CONFIG");

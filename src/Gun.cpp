@@ -68,8 +68,8 @@ void FricCtrlTask::FricExpSpeedSet()
 			m_FricSpeedSet = kFricSpeed30; break;
 		default:
 		{
-			std::cerr << "[Fric] RefereeRobotStatus.m_Shooter17SpeedLimit Load Failed = " 
-				<< m_FricSensorValues.refereeRobotStatus.m_Shooter17SpeedLimit << std::endl;
+			/*std::cerr << "[Fric] RefereeRobotStatus.m_Shooter17SpeedLimit Load Failed = " 
+				<< m_FricSensorValues.refereeRobotStatus.m_Shooter17SpeedLimit << std::endl;*/
 			m_FricSpeedSet = 0; 
 			break;
 		}
@@ -92,7 +92,7 @@ void FricCtrlTask::FricCtrl()
 			double get = m_FricMotorsStatus.m_RPM[i];
 			currentSend[i] = m_PIDFricSpeed[i].Calc(set, get);
 
-			/*SPDLOG_INFO("@PIDFric{}=[$setFC{}={},$getFC{}={}]",
+			/*SPDLOG_TRACE("@PIDFric{}=[$setFC{}={},$getFC{}={}]",
 				i,
 				i,
 				set,
@@ -184,8 +184,8 @@ void FeedCtrlTask::FeedModeSet()
 	//若卡弹则拨弹轮反转
 	bool jammed = (!(m_FeedMode == FeedMode::Disable || m_FeedMode == FeedMode::Stop) 
 				  && m_FeedMotorStatus.m_RPM[Feed] < kFeedJamRPM);
-	if (jammed)
-		std::cerr << "[Feed] Jammed!!!" << std::endl;
+	/*if (jammed)
+		std::cerr << "[Feed] Jammed!!!" << std::endl;*/
 		//m_FeedMode = FeedMode::Reverse; 
 	
 	if (m_FeedMode==FeedMode::Semi || m_FeedMode==FeedMode::Burst) 
@@ -198,7 +198,7 @@ void FeedCtrlTask::FeedModeSet()
 	}
 	//std::cerr << "FeedMode = " << (int)m_FeedMode << std::endl;
 	//m_FeedMode = FeedMode::Disable;
-	//SPDLOG_INFO("@FeedMode=[$mode={}]", m_FeedMode);
+	//SPDLOG_TRACE("@FeedMode=[$mode={}]", m_FeedMode);
 	if (m_FeedMode != FeedMode::Ready)
 		m_LastFeedMode = m_FeedMode;
 }
@@ -222,7 +222,7 @@ void FeedCtrlTask::FeedRotateCtrl(bool disable, bool continuous, double expDelta
 			//std::cerr << m_FeedMotorEcdSumSet << '\t' << m_FeedSensorValues.feedAngle << std::endl;
 			double speedSet = m_PIDFeedAngle.Calc(m_FeedMotorEcdSumSet, m_FeedSensorValues.feedAngle);  //拨盘速度，正负号！
 				//std::cerr << deltaAngle << '\t' << sumPerCtrlDeltaAngleGet << '\t' << speedSet << std::endl;
-			SPDLOG_INFO("@PIDFeedAngle=[$setFdA={},$getFdA={},$pidoutFdA={}]",
+			SPDLOG_TRACE("@PIDFeedAngle=[$setFdA={},$getFdA={},$pidoutFdA={}]",
 				m_FeedMotorEcdSumSet,
 				m_FeedSensorValues.feedAngle,
 				speedSet);
@@ -238,7 +238,7 @@ void FeedCtrlTask::FeedRotateCtrl(bool disable, bool continuous, double expDelta
 			//double rpmGet = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
 			current = m_PIDFeedSpeed.Calc(rpmSet, m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
 
-			SPDLOG_INFO("@PIDFeedSpeed=[$setFdS={},$getFdS={},$pidoutFdS={}]",
+			SPDLOG_TRACE("@PIDFeedSpeed=[$setFdS={},$getFdS={},$pidoutFdS={}]",
 				rpmSet,
 				m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed],
 				current);

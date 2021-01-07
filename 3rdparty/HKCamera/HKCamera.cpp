@@ -204,7 +204,7 @@ void HKCamera::StartGrabFrame()
         throw std::runtime_error("Start Grabbing fail");
 
     memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-    SPDLOG_INFO("payloadSize={}", m_PayloadSize);
+    SPDLOG_TRACE("payloadSize={}", m_PayloadSize);
 
     m_Data = new unsigned char[m_PayloadSize];
     if (!m_Data)

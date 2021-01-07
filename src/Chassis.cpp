@@ -22,7 +22,7 @@ void ChassisCtrlTask::CalcWheelSpeedTarget()
 		double scaleWheelSpeed = kWheelSpeedLimit / maxWheelSpeedItem;
 		m_WheelSpeedSet *= scaleWheelSpeed;
 	}*/
-	/*SPDLOG_INFO("@WheelSpeedSet=[$wheel0={},$wheel1={},$wheel2={},$wheel3={}]", 
+	/*SPDLOG_TRACE("@WheelSpeedSet=[$wheel0={},$wheel1={},$wheel2={},$wheel3={}]", 
 		m_WheelSpeedSet(0), m_WheelSpeedSet(1), m_WheelSpeedSet(2), m_WheelSpeedSet(3));*/
 }
 
@@ -32,7 +32,7 @@ void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 	/*double curPwr = 0;
 	for (size_t i = 0; i < kNumChassisMotors; ++i)
 		curPwr += 0.00000394047917046875 * fabs(m_MotorsStatus.m_Current[i]) * fabs(m_MotorsStatus.m_RPM[i]) + 1.4;
-	SPDLOG_INFO("@ChassisPower=[$pwr={}]", curPwr);*/
+	SPDLOG_TRACE("@ChassisPower=[$pwr={}]", curPwr);*/
 
 	double curBuf  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer;
 	double curPwr  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower;
@@ -179,12 +179,12 @@ void ChassisCtrlTask::ChassisCtrl()
 			//double get = m_RPMFdbFilters[i].Calc(m_MotorsStatus.m_RPM[i]);
 			double get = m_MotorsStatus.m_RPM[i];
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(set, get);
-			//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
-			/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
+			//SPDLOG_TRACE("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
+			/*SPDLOG_TRACE("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
-			//SPDLOG_INFO("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
+			//SPDLOG_TRACE("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
 			/*if (i == 0)
-				SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]",
+				SPDLOG_TRACE("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]",
 					i,
 					i,
 					set,
@@ -201,7 +201,7 @@ void ChassisCtrlTask::ChassisCtrl()
 	//	ChassisPowerCtrlByCurrent();
 
 	/*for (size_t i = 0; i < kNumChassisMotors; ++i)
-		SPDLOG_INFO("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
+		SPDLOG_TRACE("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
 	m_Chassis->SendCurrentToMotors(m_CurrentSend);
 }
 
@@ -220,11 +220,11 @@ void ChassisCtrlTask::ChassisCtrl()
 //				double get = m_MotorsStatus.m_RPM[i];
 //				//double get = m_RPMFdbFilters[i].Calc(m_MotorsStatus.m_RPM[i]);
 //				m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(set, get);
-//				//SPDLOG_INFO("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
-//				/*SPDLOG_INFO("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
+//				//SPDLOG_TRACE("@MotorSpeed{}=[$rpm{}={}]", i, i, m_Motors[i]->Get().m_RPM);
+//				/*SPDLOG_TRACE("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 //					m_Motors[i]->Get().m_RPM);*/
-//					//SPDLOG_INFO("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
-//				SPDLOG_INFO("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]",
+//					//SPDLOG_TRACE("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
+//				SPDLOG_TRACE("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]",
 //					i,
 //					i,
 //					set,
@@ -251,7 +251,7 @@ void ChassisCtrlTask::ChassisCtrl()
 //				double totalMotorPower = 0;
 //				for (size_t i = 0; i < kNumChassisMotors; ++i)
 //					totalMotorPower += (0.00000394047917046875 * fabs(m_CurrentSend[i]) / 819.2 * fabs(m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef) + 1.4);
-//				//SPDLOG_INFO("@ChassisPower=[$pwr={}]", totalMotorPower);
+//				//SPDLOG_TRACE("@ChassisPower=[$pwr={}]", totalMotorPower);
 //				std::cerr << "[ChassisPower] " << "Max= " << (int)m_ChassisSensorValues.refereeRobotStatus.m_ChassisMaxPower << " SetTot= " << totalMotorPower << std::endl;
 //
 //				if (totalMotorPower < maxPwr)
@@ -301,7 +301,7 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		RCToChassisSpeed();		
 		double deltaAngle = ClampLoop(m_AngleSet - m_ChassisSensorValues.imu.m_Yaw, -M_PI, M_PI);
 		m_WzSet = m_PIDChassisAngle.Calc(deltaAngle, 0); //符号为负？
-		SPDLOG_INFO("@PIDChassisYawAngle=[$set={},$get={},$pidout={}]", deltaAngle, 0, m_WzSet);
+		SPDLOG_TRACE("@PIDChassisYawAngle=[$set={},$get={},$pidout={}]", deltaAngle, 0, m_WzSet);
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 	}
@@ -322,6 +322,6 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		m_VxSet = Clamp(m_VxSet, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(m_VySet, -kChassisVyLimit, kChassisVyLimit);
 
-		//SPDLOG_INFO("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
+		//SPDLOG_TRACE("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
 	}
 }

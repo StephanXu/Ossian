@@ -200,7 +200,7 @@ public:
 			if (0xA5 == inModel.beginCode && 0xAA == inModel.endCode)
 			{
 				m_InModel.store(inModel);
-				//SPDLOG_INFO("damn {}\t{}\t{}\t{}", inModel.beginCode, inModel.gimbalIndex, inModel.pitchMotor, inModel.yawMotor);
+				//SPDLOG_TRACE("damn {}\t{}\t{}\t{}", inModel.beginCode, inModel.gimbalIndex, inModel.pitchMotor, inModel.yawMotor);
 			}
 			std::this_thread::sleep_for(std::chrono::microseconds(interval));
 		}

@@ -287,17 +287,17 @@ public:
 		m_VoltageSend.fill(0);
 
 		/*m_GyroA204YawListener->AddOnChange([](const GyroA204Status<GyroType::Yaw>& value) {
-			SPDLOG_INFO("@ImuYaw=[$ZAngleYaw={},$ZSpeedYaw={}]",
+			SPDLOG_TRACE("@ImuYaw=[$ZAngleYaw={},$ZSpeedYaw={}]",
 				value.m_ZAxisAngle, value.m_ZAxisSpeed); });
 		m_GyroA204PitchListener->AddOnChange([](const GyroA204Status<GyroType::Pitch>& value) {
-			SPDLOG_INFO("@ImuPitch=[$ZAnglePitch={},$ZSpeedPitch={}]",
+			SPDLOG_TRACE("@ImuPitch=[$ZAnglePitch={},$ZSpeedPitch={}]",
 				value.m_ZAxisAngle, value.m_ZAxisSpeed); });*/
 		/*m_GyroListener->AddOnChange([](const GyroA110Status<GyroType::Gimbal>& value) {
-			SPDLOG_INFO("@GyroGimbalOnChange=[$yaw={},$yawSpeed={},$pitch={},$pitchSpeed={}]",
+			SPDLOG_TRACE("@GyroGimbalOnChange=[$yaw={},$yawSpeed={},$pitch={},$pitchSpeed={}]",
 				value.m_Yaw, value.m_ZAngleSpeed, value.m_Pitch, value.m_YAngleSpeed); });*/
 
 		/*m_GyroListener->AddOnChange([](const GyroA110Status<GyroType::Gimbal>& value) {
-			SPDLOG_INFO("@GimbalImu=[$yaw={},$yawSpeed={}]", value.m_Yaw, value.m_ZAngleSpeed);
+			SPDLOG_TRACE("@GimbalImu=[$yaw={},$yawSpeed={}]", value.m_Yaw, value.m_ZAngleSpeed);
 		});*/
 
 		//m_VoltageSetFilters[Pitch].SetState(0.09, 0.002);
@@ -329,7 +329,11 @@ public:
 		m_GimbalSensorValues.imu.m_Yaw *= kDegreeToRadCoef;
 		m_GimbalSensorValues.imu.m_ZAxisSpeed = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_ZAxisSpeed
 				- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_XAxisSpeed;
-		/*SPDLOG_INFO("@RotYaw=[$YawAngle={},$YawSpeed={}]",
+		SPDLOG_TRACE("@RelativeAngle=[$PitchAngle={},$YawAngle={}]",
+			m_GimbalSensorValues.relativeAngle[Pitch],
+			m_GimbalSensorValues.relativeAngle[Yaw]);
+		//std::cout << m_GimbalSensorValues.relativeAngle[Pitch] << ' ' << m_GimbalSensorValues.relativeAngle[Yaw] << std::endl;
+		/*SPDLOG_TRACE("@RotYaw=[$YawAngle={},$YawSpeed={}]",
 			m_GimbalSensorValues.imu.m_Yaw,
 			m_GimbalSensorValues.imu.m_ZAxisSpeed);*/
 		/*if(!m_FlagInitGimbal)
@@ -357,10 +361,10 @@ public:
 		//m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wz
 		//	- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wx;
 
-		/*SPDLOG_INFO("@IMUAngle=[$GPitch={},$GYaw={}]",
+		/*SPDLOG_TRACE("@IMUAngle=[$GPitch={},$GYaw={}]",
 			m_GimbalSensorValues.imuPitch.m_ZAxisAngle,
 			m_GimbalSensorValues.imuYaw.m_ZAxisAngle);
-		SPDLOG_INFO("@IMUSpeed=[$WPitch={},$WYaw={}]",
+		SPDLOG_TRACE("@IMUSpeed=[$WPitch={},$WYaw={}]",
 			m_GimbalSensorValues.imuPitch.m_ZAxisSpeed,
 			m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);*/
 		/*SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
@@ -368,7 +372,7 @@ public:
 			m_GimbalSensorValues.imu.m_Hy,
 			m_GimbalSensorValues.imu.m_Hz);*/
 
-		/*SPDLOG_INFO("@MotorEncoder=[$EPitch={},$EYaw={}]",
+		/*SPDLOG_TRACE("@MotorEncoder=[$EPitch={},$EYaw={}]",
 			m_MotorsStatus.m_Encoding[Pitch],
 			m_MotorsStatus.m_Encoding[Yaw]);*/
 
@@ -402,7 +406,7 @@ public:
 			}
 			lastTime = Clock::now();
 
-			/*SPDLOG_INFO("@Interval=[$t={}]",
+			/*SPDLOG_TRACE("@Interval=[$t={}]",
 				std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
 
 			

@@ -133,7 +133,7 @@ void GimbalCtrlTask::GimbalCtrlInputProc()
 			m_AngleInput[Yaw] = DeadbandLimit(m_GimbalSensorValues.rc.ch[kYawChannel], kGimbalRCDeadband) * kYawRCSen;
 		}
 		
-		//SPDLOG_INFO("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
+		//SPDLOG_TRACE("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
 		//std::cerr << "AngleInput: " << m_AngleInput[Pitch] << '\t' << m_AngleInput[Yaw] << std::endl;
 	}
 	else if (m_GimbalCtrlMode == GimbalCtrlMode::Aimbot)
@@ -188,7 +188,7 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 			m_EcdAngleSet[position] += angleInput;
 			m_EcdAngleSet[position] = Clamp(m_EcdAngleSet[position], kMinRelativeAngle[position], 
 											kMaxRelativeAngle[position]);
-			//SPDLOG_INFO("@RelativeAngleYaw=[$min={},$max={}]", kMinRelativeAngle[Yaw], kMaxRelativeAngle[Yaw]);
+			//SPDLOG_TRACE("@RelativeAngleYaw=[$min={},$max={}]", kMinRelativeAngle[Yaw], kMaxRelativeAngle[Yaw]);
 		}
 	}
 	else if (m_GimbalCtrlMode == GimbalCtrlMode::Init)
@@ -217,7 +217,7 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 				angleSpeedSet = m_PIDAngleGyroAutoAim[position].Calc(m_GyroAngleSet[position], gyro);
 			else
 				angleSpeedSet = m_PIDAngleGyro[position].Calc(m_GyroAngleSet[position], gyro);
-			SPDLOG_INFO("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={},$pidoutAG{}={}]",
+			SPDLOG_TRACE("@pidAngleGyro{}=[$SetAG{}={},$GetAG{}={},$pidoutAG{}={}]",
 				position,
 				position,
 				m_GyroAngleSet[position],
@@ -242,7 +242,7 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
 			angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
-			/*SPDLOG_INFO("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
+			/*SPDLOG_TRACE("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
 			position,
 			position,
 			m_EcdAngleSet[position],
@@ -255,7 +255,7 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 
 		m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
 		
-		/*SPDLOG_INFO("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
+		/*SPDLOG_TRACE("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
 			position,
 			position,
 			angleSpeedSet,

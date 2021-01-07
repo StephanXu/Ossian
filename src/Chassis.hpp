@@ -248,28 +248,28 @@ public:
 		m_PIDChassisAngle.SetFlagAngleLoop();
 
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
-			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
+			SPDLOG_TRACE("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
 				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4],value.sw[0], value.sw[1]);});*/
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
-			SPDLOG_INFO("@KeyMouseData=[$X={},$Y={},$Z={},$ClickLeft={},$ClickRight={},$Keyboard={}]",
+			SPDLOG_TRACE("@KeyMouseData=[$X={},$Y={},$Z={},$ClickLeft={},$ClickRight={},$Keyboard={}]",
 				value.mouse[0], value.mouse[1], value.mouse[2], (int)value.click[0], (int)value.click[1],value.keyboard);});*/
 
 		/*m_RefereePowerHeatDataListener->AddOnChange([](const PowerHeatData& value) {
-			SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={}]",
+			SPDLOG_TRACE("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={}]",
 				value.m_ChassisPower,
 				value.m_ChassisPowerBuffer); 
 		});
 		m_RefereeRobotStatusListener->AddOnChange([](const RobotStatus& value) {
-			SPDLOG_INFO("@ChassisPowerLimit=[$MaxPower={}]",
+			SPDLOG_TRACE("@ChassisPowerLimit=[$MaxPower={}]",
 				value.m_ChassisMaxPower);
 		});
 		m_SpCapListener->AddOnChange([](const CapacitorStatus& value) {
-			SPDLOG_INFO("@SpCap=[$InputV={},$CapV={},$InputI={},$TargetP={}]",
+			SPDLOG_TRACE("@SpCap=[$InputV={},$CapV={},$InputI={},$TargetP={}]",
 				value.m_InputVoltage, value.m_CapacitorVoltage, value.m_TestCurrent, value.m_TargetPower);
 		});*/
 
 		/*m_GyroListener->AddOnChange([](const GyroA110Status<GyroType::Chassis>& value) {
-			SPDLOG_INFO("@ChassisImu=[$yaw={},$yawSpeed={}]", value.m_Yaw, value.m_ZAngleSpeed);
+			SPDLOG_TRACE("@ChassisImu=[$yaw={},$yawSpeed={}]", value.m_Yaw, value.m_ZAngleSpeed);
 		});*/
 	}
 
@@ -325,7 +325,7 @@ public:
 		m_ChassisSensorValues.refereePowerHeatData.m_ChassisVolt /= 1000.0; //v
 
 		m_ChassisSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();
-		/*SPDLOG_INFO("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
+		/*SPDLOG_TRACE("@RefereePowerHeatData=[$ChassisPower={},$ChassisPowerBuffer={},$MaxPower={}]",
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower,
 			m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
 			80);*/
@@ -360,7 +360,7 @@ public:
 			{
 				std::this_thread::yield();
 			}
-			/*SPDLOG_INFO("@Interval=[$t={}]",
+			/*SPDLOG_TRACE("@Interval=[$t={}]",
 						std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
 
 			lastTime = Clock::now();

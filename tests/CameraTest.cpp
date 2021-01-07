@@ -13,7 +13,7 @@ int main()
 	                       "Camera",
 	                       "Test of HKCamera.",
 						   "5fc1e5c7011e5c00014e69bf");
-	SPDLOG_INFO("Start testing...");
+	SPDLOG_TRACE("Start testing...");
 
 	HKCamera camera(0, 1440, 1080);
 	auto timeStamp = std::chrono::system_clock::now();
@@ -23,10 +23,10 @@ int main()
 			if (pFrameInfo)
 			{
 				auto currentTime = std::chrono::system_clock::now();
-				SPDLOG_INFO("GetOneFrame succeed, width:{}, height:{}",
+				SPDLOG_TRACE("GetOneFrame succeed, width:{}, height:{}",
 							 pFrameInfo->nWidth,
 							 pFrameInfo->nHeight);
-				SPDLOG_INFO("@Fps=[$FPS={}]",
+				SPDLOG_TRACE("@Fps=[$FPS={}]",
 							 1.0f / static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(currentTime - timeStamp).count()) * 1000000);
 				timeStamp = currentTime;
 			}

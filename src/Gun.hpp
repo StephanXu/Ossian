@@ -246,7 +246,7 @@ public:
 		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			//SPDLOG_INFO("@FricInterval=[$timefric={}]", std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count());
+			//SPDLOG_TRACE("@FricInterval=[$timefric={}]", std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count());
 			while (1000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
@@ -374,11 +374,11 @@ public:
 		kFeedAutoSpeed = *m_Config->Instance()->control->gun->kfeedautospeed();*/
 
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
-			SPDLOG_INFO("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
+			SPDLOG_TRACE("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
 				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4], value.sw[0], value.sw[1]); });*/
 		/*m_PhototubeListener->AddOnChange([this](const PhototubeStatus& value)
 		{
-			SPDLOG_INFO("@Phototube=[$status_pt={}]", value.m_Status);
+			SPDLOG_TRACE("@Phototube=[$status_pt={}]", value.m_Status);
 		});*/
 		//如果射击数据（0x0207）有更新，则累加已发射的子弹数
 		m_RefereeShootDataListener->AddOnChange([this](const ShootData& value, const ShootData& lastValue)
@@ -433,7 +433,7 @@ public:
 			m_CurBulletShotNum = 0;
 		lastHeat = m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat;
 
-		/*SPDLOG_INFO("@FeedAngle=[$FAngle={}]",
+		/*SPDLOG_TRACE("@FeedAngle=[$FAngle={}]",
 			m_FeedSensorValues.relativeAngle);*/
 	}
 

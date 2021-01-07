@@ -37,7 +37,7 @@ public:
 	void __cdecl write(const std::string& entry) override
 	{
 		m_Logger->info(entry);
-		//SPDLOG_INFO(entry);
+		//SPDLOG_TRACE(entry);
 	}
 };
 

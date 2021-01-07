@@ -83,7 +83,7 @@ Aimbot::Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
         throw std::runtime_error("cudaGetDeviceCount() failed");
     if (deviceCount < 1)
         throw std::runtime_error("cuda device not found");
-    SPDLOG_INFO("cudaEnabledDeviceCount={}", deviceCount);
+    SPDLOG_TRACE("cudaEnabledDeviceCount={}", deviceCount);
     cv::cuda::printCudaDeviceInfo(cv::cuda::getDevice());
     cudaSetDeviceFlags(cudaDeviceMapHost);
     cudaStatus = cudaSetDevice(0);
@@ -143,9 +143,9 @@ void Aimbot::Process(unsigned char* pImage)
     {
         deltaYaw = 0, deltaPitch = 0, dist = 0;
     }
-    //SPDLOG_INFO("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
+    //SPDLOG_TRACE("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
 
-    std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
+    //std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
     
 #ifdef VISION_ONLY
     m_AimbotPLCSendMsg.m_Pitch = deltaPitch * kRadToDegreeCoef * 1000.0;
