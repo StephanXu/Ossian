@@ -148,7 +148,7 @@ public:
 		m_RefreshFlag = true;
 		m_Mutex.unlock();
 		m_ConditionVariable.notify_all();
-		m_OnChange(value, last);
+		CallOnChange(value, last);
 	}
 
 	auto Get() noexcept -> DataType override
@@ -192,19 +192,22 @@ public:
 
 	auto AddOnChange(std::function<OnReceiveProcType> callback) -> void override
 	{
-		m_OnChange = [callback, onChange = m_OnChange](const DataType& value, const DataType& lastValue)
-		{
-			onChange(value, lastValue);
-			callback(value, lastValue);
-		};
+		m_OnChange.push_back(callback);
 	}
 
 private:
+
+	auto CallOnChange(const DataType& val, const DataType& lastVal) -> void
+	{
+		for (auto&& cb : m_OnChange)
+		{
+			cb(val, lastVal);
+		}
+	}
+
 	DataType m_Payload = {};
 	Mutex m_Mutex;
-	std::function<OnReceiveProcType> m_OnChange = [](const DataType&, const DataType&)
-	{
-	};
+	std::vector<std::function<OnReceiveProcType>> m_OnChange;
 	typename ConditionVariable<Mutex>::Type m_ConditionVariable;
 	bool m_RefreshFlag;
 };

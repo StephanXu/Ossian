@@ -1,4 +1,3 @@
-
 #include <benchmark/benchmark.h>
 
 #include <cmath>
@@ -84,22 +83,22 @@ static void BMTypeIndexPtrHashMap(benchmark::State& state)
 class IInterface
 {
 public:
-	virtual auto GetStatus(int foo)->int = 0;
+	virtual auto GetStatus(int foo) -> int = 0;
 };
 
-class AddImpl final :public IInterface
+class AddImpl final : public IInterface
 {
 public:
-	auto GetStatus(int foo)->int override
+	auto GetStatus(int foo) -> int override
 	{
 		return foo + 100;
 	}
 };
 
-class MinusImpl final :public IInterface
+class MinusImpl final : public IInterface
 {
 public:
-	auto GetStatus(int foo)->int override
+	auto GetStatus(int foo) -> int override
 	{
 		return foo - 100;
 	}
@@ -127,12 +126,12 @@ struct MinusTemplateImpl
 	auto GetStatus(int foo) { return foo - 100; }
 };
 
-template<class Operation>
+template <class Operation>
 class TemplateInterface : public IInterface
 {
 	Operation m_Operation;
 public:
-	auto GetStatus(int bar)->int final
+	auto GetStatus(int bar) -> int final
 	{
 		return m_Operation.GetStatus(bar);
 	}
@@ -210,6 +209,83 @@ static void BMNativeFunction(benchmark::State& state)
 	}
 }
 
+template <typename T>
+using CallbackType = void(const T& val, const T& lastVal);
+
+template <typename T>
+class CallbackChainByArray
+{
+	std::vector<std::function<CallbackType<T>>> m_Callbacks;
+public:
+	auto AddCallback(CallbackType<T> callback)
+	{
+		m_Callbacks.push_back(callback);
+	}
+
+	auto Call(const T& val, const T& lastVal)
+	{
+		for (auto&& cb : m_Callbacks)
+		{
+			cb(val, lastVal);
+		}
+	}
+};
+
+template <typename T>
+class CallbackChainByEmbeddedFunction
+{
+	std::function<CallbackType<T>> m_Callback = [](const T& val, const T& lastVal){};
+public:
+	auto AddCallback(CallbackType<T> callback)
+	{
+		m_Callback = [callback, localCallback = m_Callback](const T& val, const T& lastVal)
+		{
+			localCallback(val, lastVal);
+			callback(val, lastVal);
+		};
+	}
+
+	auto Call(const T& val, const T& lastVal)
+	{
+		m_Callback(val, lastVal);
+	}
+};
+
+static void BMCallbackChainByArray(benchmark::State& state)
+{
+	CallbackChainByArray<float> cbc;
+	for (int i = 0; i < 100; ++i)
+	{
+		cbc.AddCallback([](const float& val, const float& lastVal)
+			{
+				float tmp = val;
+				tmp += lastVal;
+			});
+	}
+	for (auto _:state)
+	{
+		cbc.Call(1,2);
+	}
+}
+
+static void BMCallbackChainByEmbeddedFunction(benchmark::State& state)
+{
+	CallbackChainByEmbeddedFunction<float> cbc;
+	for (int i = 0; i < 100; ++i)
+	{
+		cbc.AddCallback([](const float& val, const float& lastVal)
+			{
+				float tmp = val;
+				tmp += lastVal;
+			});
+	}
+	for (auto _ : state)
+	{
+		cbc.Call(1, 2);
+	}
+}
+
+
 BENCHMARK(BMPow)->Arg(8);
 BENCHMARK(BMNativeTime)->Arg(8);
 
@@ -226,3 +302,6 @@ BENCHMARK(BMMemSet);
 
 BENCHMARK(BMFunctional);
 BENCHMARK(BMNativeFunction);
+
+BENCHMARK(BMCallbackChainByArray);
+BENCHMARK(BMCallbackChainByEmbeddedFunction);
