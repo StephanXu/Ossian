@@ -1,6 +1,6 @@
 ﻿/**
  * @file MultiThread.hpp
- * @author Xu Zihan (stephanxu@foxmail.com)
+ * @author Xu Zihan (im.xuzihan@outlook.com)
  * @brief 提供多线程支持
  * @version 0.1
  * @date 2019-10-04

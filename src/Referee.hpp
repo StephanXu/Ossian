@@ -1,6 +1,6 @@
 ﻿/**
  * @file Referee.hpp
- * @author Xu Zihan (mrxzh@outlook.com)
+ * @author Xu Zihan (im.xuzihan@outlook.com)
  * @brief Referee I/O logic
  * @version 0.1
  * @date 2020-03-19

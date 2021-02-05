@@ -12,7 +12,6 @@
 #include <unordered_map>
 #include <functional>
 #include <vector>
-#include <typeinfo>
 #include <typeindex>
 #include <string>
 #include <algorithm>
@@ -21,7 +20,7 @@ namespace ossian
 {
 namespace DI
 {
-class DuplicateRegistration : std::exception
+class DuplicateRegistration final : std::exception
 {
 };
 
@@ -86,7 +85,7 @@ public:
  * @tparam Deleter 实例deleter（被使用于 std::unique_ptr）
  */
 template <class T, class Deleter>
-class InstanceContainer : public AbstractInstanceContainer
+class InstanceContainer final : public AbstractInstanceContainer
 {
 public:
 	explicit InstanceContainer(std::unique_ptr<T, Deleter>&& p)
@@ -94,7 +93,7 @@ public:
 	{
 	}
 
-	void* Get() { return static_cast<void*>(m_Pointer.get()); }
+	void* Get() override { return static_cast<void*>(m_Pointer.get()); }
 
 private:
 	std::unique_ptr<T, Deleter> m_Pointer;
@@ -108,7 +107,7 @@ private:
  * @return std::unique_ptr<AbstractInstanceContainer> 创建的实例容器
  */
 template <class T, class Deleter>
-std::unique_ptr<AbstractInstanceContainer> WrapIntoInsatanceContainer(std::unique_ptr<T, Deleter>&& ptr)
+std::unique_ptr<AbstractInstanceContainer> WrapIntoInstanceContainer(std::unique_ptr<T, Deleter>&& ptr)
 {
 	return std::make_unique<InstanceContainer<T, Deleter>>(std::move(ptr));
 }
@@ -129,7 +128,7 @@ class ServiceCollection
 	using const_reverse_iterator = typename std::vector<T*>::const_reverse_iterator;
 	friend class DIConfiguration;
 
-	ServiceCollection(std::vector<T*> servicesTypeIndex) : m_Services(servicesTypeIndex)
+	explicit ServiceCollection(std::vector<T*> servicesTypeIndex) : m_Services(servicesTypeIndex)
 	{
 	}
 
@@ -269,7 +268,7 @@ public:
 		node.m_Initializer             = [instanceFactory](Injector& inj)
 		{
 			// 此处无法支持同一个服务注册到两个接口
-			auto instance = WrapIntoInsatanceContainer(inj.Inject(instanceFactory));
+			auto instance = WrapIntoInstanceContainer(inj.Inject(instanceFactory));
 			inj.m_InstanceMap.put<InstanceType>(std::move(instance));
 		};
 		node.m_HasInitializer = true;
@@ -290,7 +289,7 @@ public:
 			{
 				services.push_back(static_cast<InterfaceType*>(inj.GetInstance(item)));
 			}
-			auto instance = WrapIntoInsatanceContainer(
+			auto instance = WrapIntoInstanceContainer(
 				std::unique_ptr<ServiceCollection<InterfaceType>>(new ServiceCollection<InterfaceType>(services)));
 			inj.m_InstanceMap.put<ServiceCollection<InterfaceType>>(std::move(instance));
 		};

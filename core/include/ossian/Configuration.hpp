@@ -86,7 +86,7 @@ public:
 		{
 			throw std::runtime_error(fmt::format("Fetch configuration from url failed, got no response."));
 		}
-		else if (res->status != 200)
+		if (res->status != 200)
 		{
 			throw std::runtime_error(fmt::format("Fetch configuration from url failed: {}", res->status));
 		}

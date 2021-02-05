@@ -1,6 +1,6 @@
 ﻿/**
  * @file IOData.hpp
- * @author Xu Zihan (mrxzh@outlook.com)
+ * @author Xu Zihan (im.xuzihan@outlook.com)
  * @brief A basic data listener.
  * @version 0.1
  * @date 2020-03-27
@@ -112,7 +112,7 @@ struct ConditionVariable<std::mutex>
  * @tparam std::mutex 
  */
 template <typename DataType, typename Mutex = std::mutex>
-class IODataImpl : public IOData<DataType>
+class IODataImpl final : public IOData<DataType>
 {
 public:
 	using Type = DataType;
@@ -209,7 +209,7 @@ private:
 	Mutex m_Mutex;
 	std::vector<std::function<OnReceiveProcType>> m_OnChange;
 	typename ConditionVariable<Mutex>::Type m_ConditionVariable;
-	bool m_RefreshFlag;
+	bool m_RefreshFlag{};
 };
 
 /**

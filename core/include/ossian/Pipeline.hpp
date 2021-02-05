@@ -1,6 +1,6 @@
 ﻿/**
  * @file Pipeline.hpp
- * @author Xu Zihan (stephanxu@foxmail.com)
+ * @author Xu Zihan (im.xuzihan@outlook.com)
  * @brief 处理管道相关支持
  * @version 0.1
  * @date 2019-10-04
@@ -10,8 +10,6 @@
  */
 #ifndef OSSIAN_CORE_PIPELINE
 #define OSSIAN_CORE_PIPELINE
-
-#include <vector>
 
 namespace ossian
 {

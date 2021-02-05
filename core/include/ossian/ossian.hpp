@@ -1,6 +1,6 @@
 ﻿/**
  * @file ossian.hpp
- * @author Xu Zihan (stephanxu@foxmail.com)
+ * @author Xu Zihan (im.xuzihan@outlook.com)
  * @brief 包含所有Ossian Core的头文件
  * @version 0.2
  * @date 2020-1-29
@@ -29,7 +29,7 @@
 #include "ossian/io/UART.hpp"
 #include "ossian/io/IOError.hpp"
 
-// MOTORS
+// Motors
 #include "ossian/motors/Motor.hpp"
 #include "ossian/motors/DJIMotor.hpp"
 

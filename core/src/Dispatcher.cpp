@@ -1,4 +1,4 @@
-#include <spdlog/spdlog.h>
+
 #include <mimalloc.h>
 #ifdef ENABLE_GPERF
 #include <gperftools/profiler.h>
@@ -7,8 +7,7 @@
 #include "ossian/Dispatcher.hpp"
 #include "ossian/Pipeline.hpp"
 
-#include <chrono>
-#include <iostream>
+#include <thread>
 
 namespace ossian
 {
@@ -17,7 +16,7 @@ Dispatcher::Dispatcher(DI::Injector&& injector)
 {
 }
 
-void Dispatcher::Run()
+void Dispatcher::Run() const
 {
 	auto executables = m_Injector.GetInstance<DI::ServiceCollection<IExecutable>>();
 	std::vector<std::thread> threads;

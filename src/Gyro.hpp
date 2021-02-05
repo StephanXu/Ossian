@@ -1,6 +1,6 @@
 ﻿/**
  * @file Gyro.hpp
- * @author Xu Zihan (mrxzh@outlook.com)
+ * @author Xu Zihan (im.xuzihan@outlook.com)
  * @brief Gyro I/O logic
  * @version 0.1
  * @date 2020-03-27

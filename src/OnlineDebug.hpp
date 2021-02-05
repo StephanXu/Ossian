@@ -1,6 +1,6 @@
 ﻿/**
  * @file OnlineDebug.hpp
- * @author Xu Zihan (mrxzh@outlook.com)
+ * @author Xu Zihan (im.xuzihan@outlook.com)
  * @brief Online debug logic
  * @version 0.1
  * @date 2020-02-23

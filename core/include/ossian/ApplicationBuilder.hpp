@@ -1,6 +1,6 @@
 /**
  * @file Config.hpp
- * @author Xu Zihan (stephanxu@foxmail.com)
+ * @author Xu Zihan (im.xuzihan@outlook.com)
  * @brief 配置器的相关实现
  * @version 0.1
  * @date 2019-10-25
