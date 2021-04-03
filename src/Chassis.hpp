@@ -377,7 +377,7 @@ public:
 			ChassisExpAxisSpeedSet();
 			ChassisCtrl();
 
-			m_Chassis->SetCapPwr(m_ChassisSensorValues.refereeRobotStatus.m_ChassisMaxPower);
+			m_Chassis->SetCapPwr(m_ChassisSensorValues.refereeRobotStatus.m_ChassisPowerLimit);
 		}
 	}
 

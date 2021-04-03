@@ -73,22 +73,25 @@ struct MatchResult
 struct RobotHP
 {
 	static constexpr uint16_t cmdId = 0x0003;
-	static constexpr size_t length  = 28;
+	static constexpr size_t length  = 32;
 
-	uint16_t m_Red1HP;     ///< 红1英雄
-	uint16_t m_Red2HP;     ///< 红2工程
-	uint16_t m_Red3HP;     ///< 红3步兵
-	uint16_t m_Red4HP;     ///< 红4步兵
-	uint16_t m_Red5HP;     ///< 红5步兵
-	uint16_t m_Red7HP;     ///< 红7哨兵
-	uint16_t m_RedBaseHP;  ///< 红基地
-	uint16_t m_Blue1HP;    ///< 蓝1英雄
-	uint16_t m_Blue2HP;    ///< 蓝2工程
-	uint16_t m_Blue3HP;    ///< 蓝3步兵
-	uint16_t m_Blue4HP;    ///< 蓝4步兵
-	uint16_t m_Blue5HP;    ///< 蓝5步兵
-	uint16_t m_Blue7HP;    ///< 蓝7哨兵
-	uint16_t m_BlueBaseHP; ///< 蓝基地
+	uint16_t m_Red1HP;			///< 红1英雄
+	uint16_t m_Red2HP;			///< 红2工程
+	uint16_t m_Red3HP;			///< 红3步兵
+	uint16_t m_Red4HP;			///< 红4步兵
+	uint16_t m_Red5HP;			///< 红5步兵
+	uint16_t m_Red7HP;			///< 红7哨兵
+	uint16_t m_RedOutpostHP;	///< 红前哨站
+	uint16_t m_RedBaseHP;		///< 红基地
+
+	uint16_t m_Blue1HP;			///< 蓝1英雄
+	uint16_t m_Blue2HP;			///< 蓝2工程
+	uint16_t m_Blue3HP;			///< 蓝3步兵
+	uint16_t m_Blue4HP;			///< 蓝4步兵
+	uint16_t m_Blue5HP;			///< 蓝5步兵
+	uint16_t m_Blue7HP;			///< 蓝7哨兵
+	uint16_t m_BlueOutpostHP;	///< 蓝前哨站
+	uint16_t m_BlueBaseHP;		///< 蓝基地
 };
 
 /**
@@ -190,22 +193,46 @@ struct RefereeWarning
 struct RobotStatus
 {
 	static constexpr uint16_t cmdId = 0x0201;
-	static constexpr size_t length  = 18;
+	static constexpr size_t length  = 27;
 
 	/**
-	 * @brief 机器人 ID：
-	 * 1：红方英雄机器人；
-	 * 2：红方工程机器人；
-	 * 3/4/5：红方步兵机器人；
-	 * 6：红方空中机器人；
-	 * 7：红方哨兵机器人；
-	 * 11：蓝方英雄机器人；
-	 * 12：蓝方工程机器人；
-	 * 13/14/15：蓝方步兵机器人；
-	 * 16：蓝方空中机器人；
-	 * 17：蓝方哨兵机器人
+	* @brief 机器人 ID：
+	* 本机器人 ID：
+	* 1：红方英雄机器人；
+	* 2：红方工程机器人；
+	* 3/4/5：红方步兵机器人；
+	* 6：红方空中机器人；
+	* 7：红方哨兵机器人；
+	* 8：红方飞镖机器人；
+	* 9：红方雷达站；
+	* 101：蓝方英雄机器人；
+	* 102：蓝方工程机器人；
+	* 103/104/105：蓝方步兵机器人；
+	* 106：蓝方空中机器人；
+	* 107：蓝方哨兵机器人；
+	* 108：蓝方飞镖机器人；
+	* 109：蓝方雷达站
 	 */
+
 	uint8_t m_RobotId;
+	uint8_t m_RobotLevel;					///< 机器人等级 1：一级；2：二级；3：三级
+	uint16_t m_RemainHp;					///< 机器人剩余血量
+	uint16_t m_MaxHp;						///< 机器人上限血量
+	uint16_t m_Shooter17Id1CoolingRate;		///< 机器人 1 号 17mm 枪口每秒冷却值
+	uint16_t m_Shooter17Id1HeatLimit;		///< 机器人 1 号 17mm 枪口热量上限
+	uint16_t m_Shooter17Id1SpeedLimit;		///< 机器人 1 号 17mm 枪口上限速度 单位 m/s
+	uint16_t m_Shooter17Id2CoolingRate;		///< 机器人 2 号 17mm 枪口每秒冷却值
+	uint16_t m_Shooter17Id2HeatLimit;		///< 机器人 2 号 17mm 枪口热量上限
+	uint16_t m_Shooter17Id2SpeedLimit;		///< 机器人 2 号 17mm 枪口上限速度 单位 m/s
+	uint16_t m_Shooter42Id1CoolingRate;		///< 机器人 42mm 枪口每秒冷却值
+	uint16_t m_Shooter42Id1HeatLimit;		///< 机器人 42mm 枪口热量上限
+	uint16_t m_Shooter42Id1SpeedLimit;		///< 机器人 42mm 枪口上限速度 单位 m/s
+	uint16_t m_ChassisPowerLimit;			///< 机器人底盘功率上限
+	uint8_t m_MainsPowerGimbalOutput : 1;   ///< 主控电源输出情况：0 bit：gimbal 口输出： 1 为有 24V 输出，0 为无 24v 输出；
+	uint8_t m_MainsPowerChassisOutput : 1;  ///< 主控电源输出情况：1 bit：chassis 口输出：1 为有 24V 输出，0 为无 24v 输出； 
+	uint8_t m_MainsPowerShooterOutput : 1;  ///< 主控电源输出情况：2 bit：shooter 口输出：1 为有 24V 输出，0 为无 24v 输出；
+
+	/*uint8_t m_RobotId;
 	uint8_t m_RobotLevel;                  ///< 机器人等级 1：一级；2：二级；3：三级
 	uint16_t m_RemainHp;                   ///< 机器人剩余血量
 	uint16_t m_MaxHp;                      ///< 机器人上限血量
@@ -218,7 +245,7 @@ struct RobotStatus
 	uint8_t m_ChassisMaxPower;			   ///< 机器人底盘最大功率 单位 w
 	uint8_t m_MainsPowerGimbalOutput : 1;  ///< 主控电源输出情况：0 bit：gimbal 口输出： 1 为有 24V 输出，0 为无 24v 输出；
 	uint8_t m_MainsPowerChassisOutput : 1; ///< 主控电源输出情况：1 bit：chassis 口输出：1 为有 24V 输出，0 为无 24v 输出； 
-	uint8_t m_MainsPowerShooterOutput : 1; ///< 主控电源输出情况：2 bit：shooter 口输出：1 为有 24V 输出，0 为无 24v 输出；
+	uint8_t m_MainsPowerShooterOutput : 1; ///< 主控电源输出情况：2 bit：shooter 口输出：1 为有 24V 输出，0 为无 24v 输出；*/
 };
 
 
@@ -230,13 +257,13 @@ struct PowerHeatData
 	static constexpr uint16_t cmdId = 0x0202;
 	static constexpr size_t length  = 16;
 
-	uint16_t m_ChassisVolt;			///< 底盘输出电压 单位 毫伏 
-	uint16_t m_ChassisCurrent;		///< 底盘输出电流 单位 毫安 
-	float m_ChassisPower;			///< （四字节）底盘输出功率 单位 W 瓦
-	uint16_t m_ChassisPowerBuffer;	///< 底盘功率缓冲 单位 J 焦耳 备注：飞坡根据规则增加至 250J 
-	uint16_t m_Shooter17Heat;		///< 17mm 枪口热量 
-	uint16_t m_Shooter42Heat;		///< 42mm 枪口热量 
-	uint16_t m_MobileShooter17Heat;	///< 机动 17mm 枪口热量
+	uint16_t m_ChassisVolt;					///< 底盘输出电压 单位 毫伏 
+	uint16_t m_ChassisCurrent;				///< 底盘输出电流 单位 毫安 
+	float m_ChassisPower;					///< （四字节）底盘输出功率 单位 W 瓦
+	uint16_t m_ChassisPowerBuffer;			///< 底盘功率缓冲 单位 J 焦耳 备注：飞坡根据规则增加至 250J 
+	uint16_t m_Shooter17Id1Heat;			///< 1号 17mm 枪口热量 
+	uint16_t m_Shooter17Id2Heat;			///< 2号 17mm 枪口热量 
+	uint16_t m_Shooter42Id1Heat;			///< 42mm 枪口热量 
 };
 
 /**
@@ -313,9 +340,10 @@ struct DamageStatus
 struct ShootData
 {
 	static constexpr uint16_t cmdId = 0x0207;
-	static constexpr size_t length  = 6;
+	static constexpr size_t length  = 7;
 
 	uint8_t m_BulletType; ///< 弹丸类型: 1：17mm 弹丸 2：42mm 弹丸 
+	uint8_t m_ShooterId;  ///< 发射机构 ID：1：1 号 17mm 发射机构  2：2 号 17mm 发射机构  3：42mm 发射机构
 	uint8_t m_BulletFreq; ///< 弹丸射频 单位 Hz
 	float m_BulletSpeed;  ///< （四字节）弹丸射速 单位 m/s 
 };
@@ -326,9 +354,11 @@ struct ShootData
 struct BulletRemain
 {
 	static constexpr uint16_t cmdId = 0x0208;
-	static constexpr size_t length  = 2;
+	static constexpr size_t length  = 6;
 
-	uint16_t m_BulletRemainingNum; ///< 弹丸剩余发射数目
+	uint16_t m_BulletRemainingNum17mm;	///< 17mm 子弹剩余发射数目
+	uint16_t m_BulletRemainingNum42mm;	///< 42mm 子弹剩余发射数目
+	uint16_t m_CoinRemainingNum;		///< 剩余金币数量
 };
 
 /**

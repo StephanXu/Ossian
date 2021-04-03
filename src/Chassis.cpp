@@ -37,7 +37,7 @@ void ChassisCtrlTask::ChassisPowerCtrlByCurrent()
 	double curBuf  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer;
 	double curPwr  = m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower;
 	double maxBuf = 60; // [TODO] 根据飞坡增益修改 250J
-	double maxPwr = m_ChassisSensorValues.refereeRobotStatus.m_ChassisMaxPower;  
+	double maxPwr = m_ChassisSensorValues.refereeRobotStatus.m_ChassisPowerLimit;
 	double warnBuf = maxBuf * 0.9;
 	double warnPwr = maxPwr * 0.9;
 	
@@ -195,10 +195,10 @@ void ChassisCtrlTask::ChassisCtrl()
 			//m_PIDChassisSpeed[i].PrintDetails(i);
 		}
 	}
-	//m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
-	////如果超级电容快没电了
-	//if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
-	//	ChassisPowerCtrlByCurrent();
+	m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
+	//如果超级电容快没电了
+	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+		ChassisPowerCtrlByCurrent();
 
 	/*for (size_t i = 0; i < kNumChassisMotors; ++i)
 		SPDLOG_TRACE("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/

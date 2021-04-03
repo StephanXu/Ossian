@@ -56,7 +56,7 @@ void FricCtrlTask::FricExpSpeedSet()
 		m_FricSpeedSet = 0;
 	else if (m_CurFricMode == FricMode::Enable)
 	{
-		switch (m_FricSensorValues.refereeRobotStatus.m_Shooter17SpeedLimit)
+		switch (m_FricSensorValues.refereeRobotStatus.m_Shooter17Id1SpeedLimit)
 		{
 		case 15:
 			m_FricSpeedSet = kFricSpeed15; break;
@@ -74,7 +74,7 @@ void FricCtrlTask::FricExpSpeedSet()
 			break;
 		}
 		}
-		m_FricSpeedSet = kFricSpeed15;//!!!!!!!!!!!!
+		//m_FricSpeedSet = kFricSpeed15;//!!!!!!!!!!!!
 	}
 }
 
@@ -108,14 +108,14 @@ void FricCtrlTask::FricCtrl()
 void FeedCtrlTask::FeedModeSet()
 {
 	//若超热量则拨弹轮停转
-	bool overheat = (m_CurBulletShotNum.load() >= (m_FeedSensorValues.refereeRobotStatus.m_Shooter17HeatLimit
-		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat) / kHeatPerBullet);
+	bool overheat = (m_CurBulletShotNum.load() >= (m_FeedSensorValues.refereeRobotStatus.m_Shooter17Id1HeatLimit
+		- m_FeedSensorValues.refereePowerHeatData.m_Shooter17Id1Heat) / kHeatPerBullet);
 	/*if (overheat)
 		std::cerr << "[Feed] OverHeat!!!" << std::endl;*/
 
 	//若摩擦轮停转，则拨弹轮停转
-	if (/*overheat 
-		|| */m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
+	if (overheat 
+		|| m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
 		|| m_FeedSensorValues.fricStatus.m_Mode == FricMode::Disable
 		|| m_FeedSensorValues.fricStatus.m_FlagLowRPM)
 	{

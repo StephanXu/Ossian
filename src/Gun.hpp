@@ -429,9 +429,10 @@ public:
 		m_FeedSensorValues.refereeRobotStatus = m_RefereeRobotStatusListener->Get();
 
 		//如果当前获取的热量低于历史热量，则将已发射的子弹数清零
-		if (m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat < lastHeat)
+		if (m_FeedSensorValues.refereePowerHeatData.m_Shooter17Id1Heat < m_FeedSensorValues.refereeRobotStatus.m_Shooter17Id1HeatLimit / 2 
+			&& m_FeedMode == Disable)
 			m_CurBulletShotNum = 0;
-		lastHeat = m_FeedSensorValues.refereePowerHeatData.m_Shooter17Heat;
+		lastHeat = m_FeedSensorValues.refereePowerHeatData.m_Shooter17Id1Heat;
 
 		/*SPDLOG_TRACE("@FeedAngle=[$FAngle={}]",
 			m_FeedSensorValues.relativeAngle);*/
