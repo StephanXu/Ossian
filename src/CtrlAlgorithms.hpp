@@ -308,9 +308,9 @@ public:
 
 		H = H.Identity(m,n);
 
-		Q = Q.Identity(n, n) * 1e-1; //bigger ---- slower regression
+		Q = Q.Identity(n, n) * 1e-6; //bigger ---- slower regression
 
-		R = R.Identity(m, m) * 1e3; //smaller --- quicker regression
+		R = R.Identity(m, m) * 1e-2; //smaller --- quicker regression
 
 		P0 = P0.Identity(n, n);
 

@@ -145,7 +145,7 @@ public:
 	static constexpr size_t kGimbalModeChannel = 1; //选择云台状态的开关通道
 
 	static constexpr double kYawRCSen = -0.00005; //-0.000005
-	static constexpr double kPitchRCSen = 0.00001; //0.005
+	static constexpr double kPitchRCSen = 0.00005; //0.005 0.00001
 
 	static constexpr double kYawMouseSen = -0.00012;
 	static constexpr double kPitchMouseSen = -0.0001;

@@ -138,9 +138,9 @@ void GimbalCtrlTask::GimbalCtrlInputProc()
 	}
 	else if (m_GimbalCtrlMode == GimbalCtrlMode::Aimbot)
 	{ 
-		/*auto filterdAngles = m_AutoAimPredictor.Predict();
-		std::cerr << filterdAngles << std::endl;
-		m_AutoAimPredictor.Correct(m_GimbalSensorValues.autoAimStatus.m_Pitch, m_GimbalSensorValues.autoAimStatus.m_Yaw);*/
+		//auto filterdAngles = m_AutoAimPredictor.Predict();
+		//std::cerr << filterdAngles << std::endl;
+		//m_AutoAimPredictor.Correct(m_GimbalSensorValues.autoAimStatus.m_Pitch, m_GimbalSensorValues.autoAimStatus.m_Yaw);
 
 		m_AngleInput[Pitch] = m_PIDAutoAimInput[Pitch].Calc(m_GimbalSensorValues.autoAimStatus.m_Pitch, 0);
 		m_AngleInput[Yaw] = m_PIDAutoAimInput[Yaw].Calc(m_GimbalSensorValues.autoAimStatus.m_Yaw, 0);

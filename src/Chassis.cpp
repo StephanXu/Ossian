@@ -161,6 +161,8 @@ void ChassisCtrlTask::ChassisModeSet()
 			}
 		}
 	}
+	if (m_LastChassisMode == Top && m_CurChassisMode == Follow_Gimbal_Yaw)
+		m_TopWzFilter.Reset();
 
 	m_LastChassisMode = m_CurChassisMode;
 	lastKeyboard = m_ChassisSensorValues.rc.keyboard;
@@ -295,6 +297,7 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
 		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis, 0); //符号为负？
+		//m_WzSet = m_TopWzFilter.Calc(m_WzSet);
 	}
 	else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{

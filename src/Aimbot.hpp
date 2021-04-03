@@ -126,6 +126,21 @@ private:
             m_AreaEllipse = CV_PI * m_MinorAxis / 2 * m_LongAxis / 2;
             m_AreaContour = cv::contourArea(contour);
             m_Solidity = m_AreaContour / m_AreaEllipse;
+
+            while (m_Angle >= 90) m_Angle -= 180;
+            while (m_Angle < -90) m_Angle += 180;
+            if (m_Angle >= 45.0)
+            {
+                std::swap(m_LongAxis, m_MinorAxis);
+                m_Angle -= 90.0;
+            }
+            else if (m_Angle < -45.0)
+            {
+                std::swap(m_LongAxis, m_MinorAxis);
+                m_Angle += 90.0;
+            }
+
+            
         }
         ~LightBar() = default;
 
@@ -137,8 +152,7 @@ private:
         bool IsLegal() const noexcept
         {
             if (m_AreaContour > minArea
-                && m_LongAxis / m_MinorAxis >= ellipseMinAspectRatio
-                /*&& fabs(m_Angle)<20*/)
+                && m_LongAxis / m_MinorAxis >= ellipseMinAspectRatio)
             {
                 return true;
             }
