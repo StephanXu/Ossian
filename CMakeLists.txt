@@ -45,6 +45,7 @@ target_sources(Ossian
             src/GyroA110.cpp
             src/TOFNooploop.cpp
             src/Phototube.cpp
+            src/ClientGraphic.cpp
         )
 target_precompile_headers(Ossian
         PRIVATE
@@ -63,6 +64,7 @@ target_precompile_headers(Ossian
             src/GyroA110.hpp
             src/TOFNooploop.hpp
             src/Phototube.hpp
+            src/ClientGraphic.hpp
             <mutex>
             <atomic>
             <tuple>

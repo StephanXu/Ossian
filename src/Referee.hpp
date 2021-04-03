@@ -19,7 +19,6 @@
 #include <spdlog/spdlog.h>
 
 #include <mutex>
-#include <typeindex>
 
 #pragma pack(push,1)
 
@@ -75,23 +74,23 @@ struct RobotHP
 	static constexpr uint16_t cmdId = 0x0003;
 	static constexpr size_t length  = 32;
 
-	uint16_t m_Red1HP;			///< 红1英雄
-	uint16_t m_Red2HP;			///< 红2工程
-	uint16_t m_Red3HP;			///< 红3步兵
-	uint16_t m_Red4HP;			///< 红4步兵
-	uint16_t m_Red5HP;			///< 红5步兵
-	uint16_t m_Red7HP;			///< 红7哨兵
-	uint16_t m_RedOutpostHP;	///< 红前哨站
-	uint16_t m_RedBaseHP;		///< 红基地
+	uint16_t m_Red1HP;       ///< 红1英雄
+	uint16_t m_Red2HP;       ///< 红2工程
+	uint16_t m_Red3HP;       ///< 红3步兵
+	uint16_t m_Red4HP;       ///< 红4步兵
+	uint16_t m_Red5HP;       ///< 红5步兵
+	uint16_t m_Red7HP;       ///< 红7哨兵
+	uint16_t m_RedOutpostHP; ///< 红前哨站
+	uint16_t m_RedBaseHP;    ///< 红基地
 
-	uint16_t m_Blue1HP;			///< 蓝1英雄
-	uint16_t m_Blue2HP;			///< 蓝2工程
-	uint16_t m_Blue3HP;			///< 蓝3步兵
-	uint16_t m_Blue4HP;			///< 蓝4步兵
-	uint16_t m_Blue5HP;			///< 蓝5步兵
-	uint16_t m_Blue7HP;			///< 蓝7哨兵
-	uint16_t m_BlueOutpostHP;	///< 蓝前哨站
-	uint16_t m_BlueBaseHP;		///< 蓝基地
+	uint16_t m_Blue1HP;       ///< 蓝1英雄
+	uint16_t m_Blue2HP;       ///< 蓝2工程
+	uint16_t m_Blue3HP;       ///< 蓝3步兵
+	uint16_t m_Blue4HP;       ///< 蓝4步兵
+	uint16_t m_Blue5HP;       ///< 蓝5步兵
+	uint16_t m_Blue7HP;       ///< 蓝7哨兵
+	uint16_t m_BlueOutpostHP; ///< 蓝前哨站
+	uint16_t m_BlueBaseHP;    ///< 蓝基地
 };
 
 /**
@@ -215,37 +214,22 @@ struct RobotStatus
 	 */
 
 	uint8_t m_RobotId;
-	uint8_t m_RobotLevel;					///< 机器人等级 1：一级；2：二级；3：三级
-	uint16_t m_RemainHp;					///< 机器人剩余血量
-	uint16_t m_MaxHp;						///< 机器人上限血量
-	uint16_t m_Shooter17Id1CoolingRate;		///< 机器人 1 号 17mm 枪口每秒冷却值
-	uint16_t m_Shooter17Id1HeatLimit;		///< 机器人 1 号 17mm 枪口热量上限
-	uint16_t m_Shooter17Id1SpeedLimit;		///< 机器人 1 号 17mm 枪口上限速度 单位 m/s
-	uint16_t m_Shooter17Id2CoolingRate;		///< 机器人 2 号 17mm 枪口每秒冷却值
-	uint16_t m_Shooter17Id2HeatLimit;		///< 机器人 2 号 17mm 枪口热量上限
-	uint16_t m_Shooter17Id2SpeedLimit;		///< 机器人 2 号 17mm 枪口上限速度 单位 m/s
-	uint16_t m_Shooter42Id1CoolingRate;		///< 机器人 42mm 枪口每秒冷却值
-	uint16_t m_Shooter42Id1HeatLimit;		///< 机器人 42mm 枪口热量上限
-	uint16_t m_Shooter42Id1SpeedLimit;		///< 机器人 42mm 枪口上限速度 单位 m/s
-	uint16_t m_ChassisPowerLimit;			///< 机器人底盘功率上限
-	uint8_t m_MainsPowerGimbalOutput : 1;   ///< 主控电源输出情况：0 bit：gimbal 口输出： 1 为有 24V 输出，0 为无 24v 输出；
-	uint8_t m_MainsPowerChassisOutput : 1;  ///< 主控电源输出情况：1 bit：chassis 口输出：1 为有 24V 输出，0 为无 24v 输出； 
-	uint8_t m_MainsPowerShooterOutput : 1;  ///< 主控电源输出情况：2 bit：shooter 口输出：1 为有 24V 输出，0 为无 24v 输出；
-
-	/*uint8_t m_RobotId;
 	uint8_t m_RobotLevel;                  ///< 机器人等级 1：一级；2：二级；3：三级
 	uint16_t m_RemainHp;                   ///< 机器人剩余血量
 	uint16_t m_MaxHp;                      ///< 机器人上限血量
-	uint16_t m_Shooter17CoolingRate;       ///< 机器人 17mm 枪口每秒冷却值 
-	uint16_t m_Shooter17HeatLimit;         ///< 机器人 17mm 枪口热量上限 
-	uint16_t m_Shooter42CoolingRate;       ///< 机器人 42mm 枪口每秒冷却值 
-	uint16_t m_Shooter42HeatLimit;         ///< 机器人 42mm 枪口热量上限 
-	uint8_t m_Shooter17SpeedLimit;		   ///< 机器人 17mm 枪口上限速度 单位 m/s
-	uint8_t m_Shooter42SpeedLimit;		   ///< 机器人 42mm 枪口上限速度 单位 m/s
-	uint8_t m_ChassisMaxPower;			   ///< 机器人底盘最大功率 单位 w
+	uint16_t m_Shooter17Id1CoolingRate;    ///< 机器人 1 号 17mm 枪口每秒冷却值
+	uint16_t m_Shooter17Id1HeatLimit;      ///< 机器人 1 号 17mm 枪口热量上限
+	uint16_t m_Shooter17Id1SpeedLimit;     ///< 机器人 1 号 17mm 枪口上限速度 单位 m/s
+	uint16_t m_Shooter17Id2CoolingRate;    ///< 机器人 2 号 17mm 枪口每秒冷却值
+	uint16_t m_Shooter17Id2HeatLimit;      ///< 机器人 2 号 17mm 枪口热量上限
+	uint16_t m_Shooter17Id2SpeedLimit;     ///< 机器人 2 号 17mm 枪口上限速度 单位 m/s
+	uint16_t m_Shooter42Id1CoolingRate;    ///< 机器人 42mm 枪口每秒冷却值
+	uint16_t m_Shooter42Id1HeatLimit;      ///< 机器人 42mm 枪口热量上限
+	uint16_t m_Shooter42Id1SpeedLimit;     ///< 机器人 42mm 枪口上限速度 单位 m/s
+	uint16_t m_ChassisPowerLimit;          ///< 机器人底盘功率上限
 	uint8_t m_MainsPowerGimbalOutput : 1;  ///< 主控电源输出情况：0 bit：gimbal 口输出： 1 为有 24V 输出，0 为无 24v 输出；
 	uint8_t m_MainsPowerChassisOutput : 1; ///< 主控电源输出情况：1 bit：chassis 口输出：1 为有 24V 输出，0 为无 24v 输出； 
-	uint8_t m_MainsPowerShooterOutput : 1; ///< 主控电源输出情况：2 bit：shooter 口输出：1 为有 24V 输出，0 为无 24v 输出；*/
+	uint8_t m_MainsPowerShooterOutput : 1; ///< 主控电源输出情况：2 bit：shooter 口输出：1 为有 24V 输出，0 为无 24v 输出；
 };
 
 
@@ -257,13 +241,13 @@ struct PowerHeatData
 	static constexpr uint16_t cmdId = 0x0202;
 	static constexpr size_t length  = 16;
 
-	uint16_t m_ChassisVolt;					///< 底盘输出电压 单位 毫伏 
-	uint16_t m_ChassisCurrent;				///< 底盘输出电流 单位 毫安 
-	float m_ChassisPower;					///< （四字节）底盘输出功率 单位 W 瓦
-	uint16_t m_ChassisPowerBuffer;			///< 底盘功率缓冲 单位 J 焦耳 备注：飞坡根据规则增加至 250J 
-	uint16_t m_Shooter17Id1Heat;			///< 1号 17mm 枪口热量 
-	uint16_t m_Shooter17Id2Heat;			///< 2号 17mm 枪口热量 
-	uint16_t m_Shooter42Id1Heat;			///< 42mm 枪口热量 
+	uint16_t m_ChassisVolt;        ///< 底盘输出电压 单位 毫伏 
+	uint16_t m_ChassisCurrent;     ///< 底盘输出电流 单位 毫安 
+	float m_ChassisPower;          ///< （四字节）底盘输出功率 单位 W 瓦
+	uint16_t m_ChassisPowerBuffer; ///< 底盘功率缓冲 单位 J 焦耳 备注：飞坡根据规则增加至 250J 
+	uint16_t m_Shooter17Id1Heat;   ///< 1号 17mm 枪口热量 
+	uint16_t m_Shooter17Id2Heat;   ///< 2号 17mm 枪口热量 
+	uint16_t m_Shooter42Id1Heat;   ///< 42mm 枪口热量 
 };
 
 /**
@@ -356,9 +340,9 @@ struct BulletRemain
 	static constexpr uint16_t cmdId = 0x0208;
 	static constexpr size_t length  = 6;
 
-	uint16_t m_BulletRemainingNum17mm;	///< 17mm 子弹剩余发射数目
-	uint16_t m_BulletRemainingNum42mm;	///< 42mm 子弹剩余发射数目
-	uint16_t m_CoinRemainingNum;		///< 剩余金币数量
+	uint16_t m_BulletRemainingNum17mm; ///< 17mm 子弹剩余发射数目
+	uint16_t m_BulletRemainingNum42mm; ///< 42mm 子弹剩余发射数目
+	uint16_t m_CoinRemainingNum;       ///< 剩余金币数量
 };
 
 /**
@@ -367,26 +351,151 @@ struct BulletRemain
 struct RFIDStatus
 {
 	static constexpr uint16_t cmdId = 0x0209;
-	static constexpr size_t length = 4;
+	static constexpr size_t length  = 4;
 
-	bool m_RFIDBaseBuff : 1;		///< 基地增益点RFID状态标志位
-	bool m_RFIDHighlandBuff : 1;	///< 高地增益点RFID状态标志位
-	bool m_RFIDWindmillBuff : 1;	///< 能量机关激活点RFID状态标志位
-	bool m_RFIDSlopeBuff : 1;		///< 飞坡增益点RFID状态标志位
-	bool m_RFIDSentryBuff : 1;		///< 前哨岗增益点RFID状态标志位
-	bool m_RFIDResourceBuff : 1;	///< 资源岛增益点RFID状态标志位
-	bool m_RFIDHealingBuff : 1;		///< 补血点增益点RFID状态标志位
-	bool m_RFIDEngineerBuff : 1;	///< 工程机器人补血卡RFID状态标志位
-	uint8_t m_Reserve0;				///< bit8-15: 保留
-	uint8_t m_Reserve1;				///< bit16-23: 保留
-	uint8_t m_Reserve2 : 2;			///< bit24-25: 保留
-	bool m_RFIDF1 : 1;				///< 人工智能挑战赛RFID状态 F1
-	bool m_RFIDF2 : 1;				///< 人工智能挑战赛RFID状态 F2
-	bool m_RFIDF3 : 1;				///< 人工智能挑战赛RFID状态 F3
-	bool m_RFIDF4 : 1;				///< 人工智能挑战赛RFID状态 F4
-	bool m_RFIDF5 : 1;				///< 人工智能挑战赛RFID状态 F5
-	bool m_RFIDF6 : 1;				///< 人工智能挑战赛RFID状态 F6
+	bool m_RFIDBaseBuff : 1;     ///< 基地增益点RFID状态标志位
+	bool m_RFIDHighlandBuff : 1; ///< 高地增益点RFID状态标志位
+	bool m_RFIDWindmillBuff : 1; ///< 能量机关激活点RFID状态标志位
+	bool m_RFIDSlopeBuff : 1;    ///< 飞坡增益点RFID状态标志位
+	bool m_RFIDSentryBuff : 1;   ///< 前哨岗增益点RFID状态标志位
+	bool m_RFIDResourceBuff : 1; ///< 资源岛增益点RFID状态标志位
+	bool m_RFIDHealingBuff : 1;  ///< 补血点增益点RFID状态标志位
+	bool m_RFIDEngineerBuff : 1; ///< 工程机器人补血卡RFID状态标志位
+	uint8_t m_Reserve0;          ///< bit8-15: 保留
+	uint8_t m_Reserve1;          ///< bit16-23: 保留
+	uint8_t m_Reserve2 : 2;      ///< bit24-25: 保留
+	bool m_RFIDF1 : 1;           ///< 人工智能挑战赛RFID状态 F1
+	bool m_RFIDF2 : 1;           ///< 人工智能挑战赛RFID状态 F2
+	bool m_RFIDF3 : 1;           ///< 人工智能挑战赛RFID状态 F3
+	bool m_RFIDF4 : 1;           ///< 人工智能挑战赛RFID状态 F4
+	bool m_RFIDF5 : 1;           ///< 人工智能挑战赛RFID状态 F5
+	bool m_RFIDF6 : 1;           ///< 人工智能挑战赛RFID状态 F6
 };
+
+// ====================================================================
+// 机器人间交互数据 开始
+// ====================================================================
+
+/**
+ * @brief 机器人间交互数据头
+ */
+struct InteractiveHeader
+{
+	static constexpr size_t LENGTH = 6;
+
+	uint16_t m_DataCmdId;  ///< 数据段的内容ID
+	uint16_t m_SenderID;   ///< 发送者ID
+	uint16_t m_ReceiverID; ///< 接收者ID
+};
+
+/**
+ * @brief 客户端删除图形
+ */
+struct GraphicDelete
+{
+	static constexpr size_t LENGTH = 2;
+
+	uint8_t m_OperateType; ///< 图形操作: 0: 空操作 1: 删除图层 2: 删除所有
+	uint8_t m_Layer;       ///< 图层数：0-9
+};
+
+/**
+ * @brief 图形数据，用于绘制图形以及配置字符选项
+ */
+struct GraphicData
+{
+	static constexpr size_t LENGTH = 15;
+
+	uint8_t m_GraphicName[3];   ///< 图形名: 在删除，修改等操作中，作为客户端的索引
+	uint32_t m_OperateType : 3; ///< 图形操作: 0: 空操作 1: 增加 2: 修改 3: 删除
+	uint32_t m_GraphicType : 3;
+	uint32_t m_Layer : 4;
+	uint32_t m_Color : 4;
+	uint32_t m_StartAngle : 9;
+	uint32_t m_EndAngle : 9;
+	uint32_t m_Width : 10;
+	uint32_t m_StartX : 11;
+	uint32_t m_StartY : 11;
+	uint32_t m_Radius : 10;
+	uint32_t m_EndX : 11;
+	uint32_t m_EndY : 11;
+};
+
+/**
+ * @brief 删除图形选项
+ */
+struct DeleteClientGraphic
+{
+	static constexpr uint16_t cmdId       = 0x3010;
+	static constexpr uint16_t DATA_CMD_ID = 0x0100;
+	static constexpr size_t length        = InteractiveHeader::LENGTH + GraphicDelete::LENGTH;
+
+	InteractiveHeader m_Header;
+	GraphicDelete m_DeleteOption;
+};
+
+
+template <size_t N>
+struct ConvertNToCmdIdOffset
+{
+};
+
+template <>
+struct ConvertNToCmdIdOffset<1>
+{
+	static constexpr std::size_t value = 0;
+};
+
+template <>
+struct ConvertNToCmdIdOffset<2>
+{
+	static constexpr std::size_t value = 1;
+};
+
+template <>
+struct ConvertNToCmdIdOffset<5>
+{
+	static constexpr std::size_t value = 2;
+};
+
+template <>
+struct ConvertNToCmdIdOffset<7>
+{
+	static constexpr std::size_t value = 3;
+};
+
+/**
+ * @brief 增加/修改图形
+ * @tparam N 修改图形的个数，取值范围: {1, 2, 5, 7}
+ */
+template <size_t N>
+struct ClientGraphicShapeModify
+{
+	static constexpr uint16_t cmdId       = 0x3010;
+	static constexpr uint16_t DATA_CMD_ID = 0x0101 + ConvertNToCmdIdOffset<N>::value;
+	static constexpr size_t length        = InteractiveHeader::LENGTH + GraphicData::LENGTH * N;
+
+	InteractiveHeader m_Header;
+	GraphicData m_GraphicData[N];
+};
+
+/**
+ * @brief 增加/修改文本
+ */
+struct ClientGraphicTextModify
+{
+	static constexpr uint16_t cmdId       = 0x3010;
+	static constexpr uint16_t DATA_CMD_ID = 0x0110;
+	static constexpr size_t length        = InteractiveHeader::LENGTH + GraphicData::LENGTH + sizeof(uint8_t) * 30;
+
+	InteractiveHeader m_Header;
+	GraphicData m_GraphicData;
+	uint8_t m_Data[30];
+};
+
+// ====================================================================
+// 机器人间交互数据 结束
+// ====================================================================
 
 /**
  * @brief 裁判系统消息结构
@@ -511,23 +620,24 @@ public:
 
 	virtual ~Referee() = default;
 
-	auto AddReferee(std::string location) -> void override
+	auto AddReferee(const std::string location) -> void override
 	{
 		using namespace ossian::UARTProperties;
-		m_UARTManager->AddDevice(location,
-		                         115200,
-		                         FlowControl::FlowControlNone,
-		                         DataBits::DataBits8,
-		                         StopBits::StopBits1,
-		                         Parity::ParityNone)
-		             ->SetCallback(
-			             [this](const std::shared_ptr<ossian::BaseDevice>& device,
-			                    const size_t length,
-			                    const uint8_t* data)
-			             {
-				             SPDLOG_TRACE("Referee Receive: {}", length);
-				             ParseReferee(data, length);
-			             });
+		m_RefereeDevice =
+			m_UARTManager->AddDevice(location,
+			                         115200,
+			                         FlowControl::FlowControlNone,
+			                         DataBits::DataBits8,
+			                         StopBits::StopBits1,
+			                         Parity::ParityNone)
+			             ->SetCallback(
+				             [this](const std::shared_ptr<ossian::BaseDevice>& device,
+				                    const size_t length,
+				                    const uint8_t* data)
+				             {
+					             SPDLOG_TRACE("Referee Receive: {}", length);
+					             ParseReferee(data, length);
+				             });
 	}
 
 private:
@@ -563,7 +673,7 @@ private:
 			std::get<Index>(m_Container)->Set(reinterpret_cast<const RefereeMessage<MessageType>*>(data)->m_Payload);
 		}
 		SPDLOG_TRACE("Matched message: {:x}\t Message Length: {}\t Matched: {}",
-		              MessageType::cmdId, RefereeMessage<MessageType>::length, Index);
+		             MessageType::cmdId, RefereeMessage<MessageType>::length, Index);
 		return RefereeMessage<MessageType>::length;
 	}
 
@@ -622,6 +732,7 @@ private:
 	}
 
 	ossian::UARTManager* m_UARTManager;
+	std::shared_ptr<ossian::BaseDevice> m_RefereeDevice;
 	Container m_Container;
 };
 
