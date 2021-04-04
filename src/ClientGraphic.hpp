@@ -243,10 +243,10 @@ public:
 	}
 
 	template <typename StyleType>
-	auto AddElement(uint8_t layer) -> ClientGraphic&
+	auto AddElement(uint8_t layer) -> ClientGraphicElement<StyleType>*
 	{
 		m_Elements.push_back(std::make_shared<ClientGraphicElement<StyleType>>(GetNextGraphicName(), layer));
-		return *this;
+		return m_Elements.back().get();
 	}
 
 	auto Render(bool repaint = false) -> void

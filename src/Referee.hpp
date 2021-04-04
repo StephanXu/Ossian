@@ -20,6 +20,8 @@
 
 #include <mutex>
 
+#include "DJICRCHelper.hpp"
+
 #pragma pack(push,1)
 
 /**
@@ -613,9 +615,12 @@ public:
 		refereeMessage->m_Header.m_CmdId = MessageType::cmdId;
 		refereeMessage->m_Header.m_DataLength = MessageType::length;
 		refereeMessage->m_Header.m_Seq = 0; //[TODO]
-		refereeMessage->m_Header.m_CRC8 = 0; //[TODO]
+		refereeMessage->m_Header.m_CRC8 = DJICRCHelper::GetCRC8Checksum(reinterpret_cast<uint8_t*>(&refereeMessage->m_Header), 4, 0xff);
 		refereeMessage->m_Payload = m_Msg;
-		refereeMessage->m_Tail.m_CRC16 = 0; //[TODO]
+		refereeMessage->m_Tail.m_CRC16 = DJICRCHelper::GetCRC16Checksum(reinterpret_cast<uint8_t*>(&refereeMessage->m_Header),
+		                                                                sizeof(FrameHeaderWithCmd) +
+		                                                                MessageType::length,
+		                                                                0xffff);
 		return buffer;
 	}
 
