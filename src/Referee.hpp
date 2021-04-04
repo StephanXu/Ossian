@@ -49,8 +49,8 @@ struct FrameTail
  */
 struct MatchStatus
 {
-	static constexpr uint16_t cmdId = 0x0001;
-	static constexpr size_t length  = 3;
+	static constexpr uint16_t CMD_ID = 0x0001;
+	static constexpr size_t LENGTH   = 3;
 
 	uint8_t m_GameType : 4;     ///< 比赛类型：1:机甲大师赛 2:单项赛 3:人工智能挑战赛
 	uint8_t m_GameProgress : 4; ///< 当前比赛阶段：0:未开始比赛 1:准备阶段 2:自检阶段 3:5s倒计时 4:对战中 5:比赛结算中
@@ -62,8 +62,8 @@ struct MatchStatus
  */
 struct MatchResult
 {
-	static constexpr uint16_t cmdId = 0x0002;
-	static constexpr size_t length  = 1;
+	static constexpr uint16_t CMD_ID = 0x0002;
+	static constexpr size_t LENGTH   = 1;
 
 	uint8_t m_Winner; ///< 比赛结果：0:平局 1:红方胜利 2:蓝方胜利
 };
@@ -73,8 +73,8 @@ struct MatchResult
  */
 struct RobotHP
 {
-	static constexpr uint16_t cmdId = 0x0003;
-	static constexpr size_t length  = 32;
+	static constexpr uint16_t CMD_ID = 0x0003;
+	static constexpr size_t LENGTH   = 32;
 
 	uint16_t m_Red1HP;       ///< 红1英雄
 	uint16_t m_Red2HP;       ///< 红2工程
@@ -100,8 +100,8 @@ struct RobotHP
  */
 struct VenueEvent
 {
-	static constexpr uint16_t cmdId = 0x0101;
-	static constexpr size_t length  = 4;
+	static constexpr uint16_t CMD_ID = 0x0101;
+	static constexpr size_t LENGTH   = 4;
 
 	uint8_t m_TarmacOccupation : 2; ///< 己方停机坪占领状态：0 为无机器人占领；1 为空中机器人已占领但未停桨；2 为空中机器人已占领并停桨
 
@@ -130,8 +130,8 @@ struct VenueEvent
  */
 struct SupplyStation
 {
-	static constexpr uint16_t cmdId = 0x0102;
-	static constexpr size_t length  = 3;
+	static constexpr uint16_t CMD_ID = 0x0102;
+	static constexpr size_t LENGTH   = 3;
 
 	uint8_t m_SupplyProjectileId; ///< 补给站口ID：1:1号补给口 2:2号补给口
 
@@ -157,8 +157,8 @@ struct SupplyStation
  */
 struct SupplyStationQuery
 {
-	static constexpr uint16_t cmdId = 0x0103;
-	static constexpr size_t length  = 2;
+	static constexpr uint16_t CMD_ID = 0x0103;
+	static constexpr size_t LENGTH   = 2;
 
 	uint8_t m_SupplyProjectileId; ///< 补给站补弹口ID：1:1号补给口
 
@@ -181,8 +181,8 @@ struct SupplyStationQuery
  */
 struct RefereeWarning
 {
-	static constexpr uint16_t cmdId = 0x0104;
-	static constexpr size_t length  = 2;
+	static constexpr uint16_t CMD_ID = 0x0104;
+	static constexpr size_t LENGTH   = 2;
 
 	uint8_t m_Level;       ///< 警告等级
 	uint8_t m_FoulRobotId; ///< 犯规机器人ID：1级以及5级警告时，机器人ID为0，二三四级警告时，机器人ID为犯规机器人ID
@@ -193,8 +193,8 @@ struct RefereeWarning
  */
 struct RobotStatus
 {
-	static constexpr uint16_t cmdId = 0x0201;
-	static constexpr size_t length  = 27;
+	static constexpr uint16_t CMD_ID = 0x0201;
+	static constexpr size_t LENGTH   = 27;
 
 	/**
 	* @brief 机器人 ID：
@@ -240,8 +240,8 @@ struct RobotStatus
  */
 struct PowerHeatData
 {
-	static constexpr uint16_t cmdId = 0x0202;
-	static constexpr size_t length  = 16;
+	static constexpr uint16_t CMD_ID = 0x0202;
+	static constexpr size_t LENGTH   = 16;
 
 	uint16_t m_ChassisVolt;        ///< 底盘输出电压 单位 毫伏 
 	uint16_t m_ChassisCurrent;     ///< 底盘输出电流 单位 毫安 
@@ -257,8 +257,8 @@ struct PowerHeatData
  */
 struct RobotPosition
 {
-	static constexpr uint16_t cmdId = 0x0203;
-	static constexpr size_t length  = 16;
+	static constexpr uint16_t CMD_ID = 0x0203;
+	static constexpr size_t LENGTH   = 16;
 
 	float m_X;   ///< （四字节）位置 x 坐标，单位 m 
 	float m_Y;   ///< （四字节）位置 y 坐标，单位 m 
@@ -271,8 +271,8 @@ struct RobotPosition
  */
 struct RobotRuneBuff
 {
-	static constexpr uint16_t cmdId = 0x0204;
-	static constexpr size_t length  = 1;
+	static constexpr uint16_t CMD_ID = 0x0204;
+	static constexpr size_t LENGTH   = 1;
 
 	bool m_HealingStatus : 1;             ///< 机器人血量补血状态
 	bool m_BarrelCoolingAcceleration : 1; ///< 枪口热量冷却加速
@@ -286,8 +286,8 @@ struct RobotRuneBuff
  */
 struct AerialRobotStatus
 {
-	static constexpr uint16_t cmdId = 0x0205;
-	static constexpr size_t length  = 3;
+	static constexpr uint16_t CMD_ID = 0x0205;
+	static constexpr size_t LENGTH   = 3;
 
 	uint8_t m_EnergyPoint; ///< 积累的能量点
 	uint8_t m_AttackTime;  ///< 可攻击时间 单位 s。30s 递减至 0
@@ -298,8 +298,8 @@ struct AerialRobotStatus
  */
 struct DamageStatus
 {
-	static constexpr uint16_t cmdId = 0x0206;
-	static constexpr size_t length  = 1;
+	static constexpr uint16_t CMD_ID = 0x0206;
+	static constexpr size_t LENGTH   = 1;
 
 	/**
 	 * @brief 装甲ID
@@ -325,8 +325,8 @@ struct DamageStatus
  */
 struct ShootData
 {
-	static constexpr uint16_t cmdId = 0x0207;
-	static constexpr size_t length  = 7;
+	static constexpr uint16_t CMD_ID = 0x0207;
+	static constexpr size_t LENGTH   = 7;
 
 	uint8_t m_BulletType; ///< 弹丸类型: 1：17mm 弹丸 2：42mm 弹丸 
 	uint8_t m_ShooterId;  ///< 发射机构 ID：1：1 号 17mm 发射机构  2：2 号 17mm 发射机构  3：42mm 发射机构
@@ -339,8 +339,8 @@ struct ShootData
  */
 struct BulletRemain
 {
-	static constexpr uint16_t cmdId = 0x0208;
-	static constexpr size_t length  = 6;
+	static constexpr uint16_t CMD_ID = 0x0208;
+	static constexpr size_t LENGTH   = 6;
 
 	uint16_t m_BulletRemainingNum17mm; ///< 17mm 子弹剩余发射数目
 	uint16_t m_BulletRemainingNum42mm; ///< 42mm 子弹剩余发射数目
@@ -352,8 +352,8 @@ struct BulletRemain
  */
 struct RFIDStatus
 {
-	static constexpr uint16_t cmdId = 0x0209;
-	static constexpr size_t length  = 4;
+	static constexpr uint16_t CMD_ID = 0x0209;
+	static constexpr size_t LENGTH   = 4;
 
 	bool m_RFIDBaseBuff : 1;     ///< 基地增益点RFID状态标志位
 	bool m_RFIDHighlandBuff : 1; ///< 高地增益点RFID状态标志位
@@ -375,7 +375,7 @@ struct RFIDStatus
 };
 
 // ====================================================================
-// 机器人间交互数据 开始
+// 机器人间交互数据 开始(0x0301)
 // ====================================================================
 
 /**
@@ -428,9 +428,9 @@ struct GraphicData
  */
 struct DeleteClientGraphic
 {
-	static constexpr uint16_t cmdId       = 0x3010;
+	static constexpr uint16_t CMD_ID      = 0x0301;
 	static constexpr uint16_t DATA_CMD_ID = 0x0100;
-	static constexpr size_t length        = InteractiveHeader::LENGTH + GraphicDelete::LENGTH;
+	static constexpr size_t LENGTH        = InteractiveHeader::LENGTH + GraphicDelete::LENGTH;
 
 	InteractiveHeader m_Header;
 	GraphicDelete m_DeleteOption;
@@ -473,9 +473,9 @@ struct ConvertNToCmdIdOffset<7>
 template <size_t N>
 struct ClientGraphicShapeModify
 {
-	static constexpr uint16_t cmdId       = 0x3010;
+	static constexpr uint16_t CMD_ID      = 0x0301;
 	static constexpr uint16_t DATA_CMD_ID = 0x0101 + ConvertNToCmdIdOffset<N>::value;
-	static constexpr size_t length        = InteractiveHeader::LENGTH + GraphicData::LENGTH * N;
+	static constexpr size_t LENGTH        = InteractiveHeader::LENGTH + GraphicData::LENGTH * N;
 
 	InteractiveHeader m_Header;
 	GraphicData m_GraphicData[N];
@@ -486,9 +486,9 @@ struct ClientGraphicShapeModify
  */
 struct ClientGraphicTextModify
 {
-	static constexpr uint16_t cmdId       = 0x3010;
+	static constexpr uint16_t CMD_ID      = 0x0301;
 	static constexpr uint16_t DATA_CMD_ID = 0x0110;
-	static constexpr size_t length        = InteractiveHeader::LENGTH + GraphicData::LENGTH + sizeof(uint8_t) * 30;
+	static constexpr size_t LENGTH        = InteractiveHeader::LENGTH + GraphicData::LENGTH + sizeof(uint8_t) * 30;
 
 	InteractiveHeader m_Header;
 	GraphicData m_GraphicData;
@@ -507,7 +507,7 @@ struct ClientGraphicTextModify
 template <typename MessageType>
 struct RefereeMessage
 {
-	static constexpr size_t length = sizeof(FrameHeaderWithCmd) + MessageType::length + sizeof(FrameTail);
+	static constexpr size_t LENGTH = sizeof(FrameHeaderWithCmd) + MessageType::LENGTH + sizeof(FrameTail);
 
 	FrameHeaderWithCmd m_Header;
 	MessageType m_Payload;
@@ -524,7 +524,7 @@ struct RefereeMessage
 template <typename T>
 struct IsValidModel
 {
-	static constexpr bool value = {sizeof(T) == T::length};
+	static constexpr bool value = {sizeof(T) == T::LENGTH};
 };
 
 /**
@@ -592,6 +592,7 @@ struct CountOf<T, std::tuple<U, Types...>>
 class IRefereeBuffer
 {
 public:
+	virtual ~IRefereeBuffer() = default;
 	virtual auto PackToNativeBuffer() const -> std::unique_ptr<uint8_t[]> = 0;
 	virtual auto Size() const -> size_t = 0;
 };
@@ -612,21 +613,19 @@ public:
 		auto buffer = std::unique_ptr<uint8_t[]>(reinterpret_cast<uint8_t*>(new RefereeMessage<MessageType>()));
 		auto* refereeMessage = reinterpret_cast<RefereeMessage<MessageType>*>(buffer.get());
 		refereeMessage->m_Header.m_SOF = 0xA5;
-		refereeMessage->m_Header.m_CmdId = MessageType::cmdId;
-		refereeMessage->m_Header.m_DataLength = MessageType::length;
+		refereeMessage->m_Header.m_CmdId = MessageType::CMD_ID;
+		refereeMessage->m_Header.m_DataLength = MessageType::LENGTH;
 		refereeMessage->m_Header.m_Seq = 0; //[TODO]
-		refereeMessage->m_Header.m_CRC8 = DJICRCHelper::GetCRC8Checksum(reinterpret_cast<uint8_t*>(&refereeMessage->m_Header), 4, 0xff);
+		refereeMessage->m_Header.m_CRC8 = DJICRCHelper::GetCRC8Checksum(buffer.get(), 4, 0xff);
 		refereeMessage->m_Payload = m_Msg;
-		refereeMessage->m_Tail.m_CRC16 = DJICRCHelper::GetCRC16Checksum(reinterpret_cast<uint8_t*>(&refereeMessage->m_Header),
-		                                                                sizeof(FrameHeaderWithCmd) +
-		                                                                MessageType::length,
-		                                                                0xffff);
+		refereeMessage->m_Tail.m_CRC16 = DJICRCHelper::GetCRC16Checksum(
+			buffer.get(), sizeof(FrameHeaderWithCmd) + MessageType::LENGTH, 0xffff);
 		return buffer;
 	}
 
 	auto Size() const -> size_t
 	{
-		return RefereeMessage<MessageType>::length;
+		return RefereeMessage<MessageType>::LENGTH;
 	}
 };
 
@@ -636,6 +635,8 @@ public:
 class IReferee
 {
 public:
+	virtual ~IReferee() = default;
+	
 	/**
 	 * @brief Initialize referee system.
 	 * 
@@ -646,6 +647,8 @@ public:
 	virtual auto SendMessage(const IRefereeBuffer& refereeBuffer) const -> void = 0;
 
 	virtual auto Id() const -> uint16_t = 0;
+
+	virtual auto Id(const uint16_t id) -> void = 0;
 };
 
 /**
@@ -661,6 +664,7 @@ public:
 	OSSIAN_SERVICE_SETUP(Referee(ossian::UARTManager* uartManager,
 		ossian::IOData<MessageTypes>*...listeners))
 		: m_UARTManager(uartManager)
+		  , m_Id(0)
 		  , m_Container(std::make_tuple(listeners...))
 	{
 	}
@@ -695,7 +699,12 @@ public:
 
 	auto Id() const -> uint16_t override
 	{
-		return 0; // [TODO]: RETURN CORRECT ID
+		return m_Id;
+	}
+
+	auto Id(const uint16_t id) -> void override
+	{
+		m_Id = id;
 	}
 
 private:
@@ -717,11 +726,11 @@ private:
 	auto ReadData(const uint8_t* data, const size_t length) -> size_t
 	{
 		const auto cmdId{reinterpret_cast<const FrameHeaderWithCmd*>(data)->m_CmdId};
-		if (MessageType::cmdId != cmdId)
+		if (MessageType::CMD_ID != cmdId)
 		{
 			return 0;
 		}
-		if (length < RefereeMessage<MessageType>::length)
+		if (length < RefereeMessage<MessageType>::LENGTH)
 		{
 			throw std::runtime_error("Referee: Buffer is incomplete");
 		}
@@ -731,8 +740,8 @@ private:
 			std::get<Index>(m_Container)->Set(reinterpret_cast<const RefereeMessage<MessageType>*>(data)->m_Payload);
 		}
 		SPDLOG_TRACE("Matched message: {:x}\t Message Length: {}\t Matched: {}",
-		             MessageType::cmdId, RefereeMessage<MessageType>::length, Index);
-		return RefereeMessage<MessageType>::length;
+		             MessageType::CMD_ID, RefereeMessage<MessageType>::LENGTH, Index);
+		return RefereeMessage<MessageType>::LENGTH;
 	}
 
 	/**
@@ -791,6 +800,7 @@ private:
 
 	ossian::UARTManager* m_UARTManager;
 	std::shared_ptr<ossian::BaseDevice> m_RefereeDevice;
+	uint16_t m_Id;
 	Container m_Container;
 };
 

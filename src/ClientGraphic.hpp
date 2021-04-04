@@ -155,16 +155,17 @@ public:
 	}
 };
 
-class IClientGrpahicElement
+class IClientGraphicElement
 {
 public:
+	virtual ~IClientGraphicElement() = default;
 	virtual auto FillGraphicData(GraphicData& graphicData) -> void = 0;
 	virtual auto IsText() const -> bool = 0;
 	virtual auto IsModified() const -> bool = 0;
 };
 
 template <typename StyleType>
-class ClientGraphicElement : public IClientGrpahicElement
+class ClientGraphicElement : public IClientGraphicElement
 {
 public:
 	explicit ClientGraphicElement(const std::array<uint8_t, 3> name,
@@ -174,9 +175,7 @@ public:
 		std::copy(name.begin(), name.end(), m_GraphicName);
 	}
 
-	virtual ~ClientGraphicElement()
-	{
-	}
+	virtual ~ClientGraphicElement() = default;
 
 	auto FillGraphicData(GraphicData& graphicData) -> void override
 	{
@@ -197,6 +196,7 @@ public:
 			graphicData.m_OperateType = 2;
 		}
 		m_Style.FillGraphicData(graphicData);
+		m_IsModified = false;
 	}
 
 	auto GetStyleRef() -> StyleType&
@@ -220,8 +220,8 @@ public:
 	auto IsText() const -> bool override { return std::is_same_v<StyleType, TextStyle>; }
 
 	auto IsModified() const -> bool override { return m_IsModified; }
-private:
 
+private:
 	uint8_t m_GraphicName[3] = {0, 0, 0};
 	uint8_t m_Layer;
 
@@ -242,17 +242,17 @@ public:
 	}
 
 	template <typename StyleType>
-	auto AddElement(uint8_t layer) -> ClientGraphicElement<StyleType>*
+	auto AddElement(const uint8_t layer) -> std::shared_ptr<ClientGraphicElement<StyleType>>
 	{
 		m_Elements.push_back(std::make_shared<ClientGraphicElement<StyleType>>(GetNextGraphicName(), layer));
-		return dynamic_cast<ClientGraphicElement<StyleType>*>(m_Elements.back().get());
+		return std::dynamic_pointer_cast<ClientGraphicElement<StyleType>>(m_Elements.back());
 	}
 
-	auto Render(bool repaint = false) -> void
+	auto Render(const bool repaint = false) -> void
 	{
 		for (auto&& element : m_Elements)
 		{
-			if (element->IsModified())
+			if (element->IsModified() || repaint)
 			{
 				if (element->IsText())
 				{
@@ -292,7 +292,7 @@ private:
 	}
 
 	uint16_t m_Id = 0;
-	std::vector<std::shared_ptr<IClientGrpahicElement>> m_Elements{};
+	std::vector<std::shared_ptr<IClientGraphicElement>> m_Elements{};
 	std::array<uint8_t, 3> m_Name{'0', '0', '0'};
 	const IReferee* m_Referee;
 };
@@ -307,7 +307,7 @@ public:
 
 	auto AddOrGetGraphicClient(uint16_t id) -> std::shared_ptr<ClientGraphic>
 	{
-		auto it = m_Client.find(id);
+		const auto it = m_Client.find(id);
 		if (it != m_Client.end())
 		{
 			return it->second;
