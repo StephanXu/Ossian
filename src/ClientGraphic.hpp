@@ -1,6 +1,14 @@
 #ifndef OSSIAN_CLIENT_GRAPHIC
 #define OSSIAN_CLIENT_GRAPHIC
 
+#include <ossian/Factory.hpp>
+
+#include <vector>
+#include <unordered_map>
+#include <string>
+#include <memory>
+#include <array>
+
 #include "Referee.hpp"
 
 //[ATTENTION]: We didn't check any range of arguments
@@ -147,39 +155,171 @@ public:
 	}
 };
 
-
-class ClientGraphicElement
+class IClientGrpahicElement
 {
 public:
-	explicit ClientGraphicElement(const std::string name,
-	                              const uint8_t layer,
-	                              IClientGraphicElementStyle& style)
-		: m_GraphicName{0, 0, 0}
-		  , m_Layer(layer)
-		  , m_Style(style)
-		  , m_IsInitialized(false)
+	virtual auto FillGraphicData(GraphicData& graphicData) -> void = 0;
+	virtual auto IsText() const -> bool = 0;
+	virtual auto IsModified() const -> bool = 0;
+};
+
+template <typename StyleType>
+class ClientGraphicElement : public IClientGrpahicElement
+{
+public:
+	explicit ClientGraphicElement(const std::array<int, 3> name,
+	                              const uint8_t layer)
+		: m_Layer(layer),
+		  m_Style(StyleType())
 	{
-		std::copy(name.begin(),
-		          name.begin() + std::min(3, static_cast<int>(name.length())),
-		          m_GraphicName);
+		std::copy(name.begin(), name.end(), m_GraphicName);
 	}
 
-	auto FillGraphicData(GraphicData& graphicData) const -> void
+	virtual ~ClientGraphicElement()
+	{
+	}
+
+	auto FillGraphicData(GraphicData& graphicData) -> void override
 	{
 		std::copy(m_GraphicName, m_GraphicName + 3, graphicData.m_GraphicName);
-		graphicData.m_OperateType = m_IsInitialized ? 2 : 1;
+		if (m_IsWaitDelete)
+		{
+			graphicData.m_OperateType = 3;
+			m_IsWaitDelete            = false;
+			m_IsInitialized           = false;
+		}
+		else if (!m_IsInitialized)
+		{
+			graphicData.m_OperateType = 1;
+			m_IsInitialized           = true;
+		}
+		else
+		{
+			graphicData.m_OperateType = 2;
+		}
 		m_Style.FillGraphicData(graphicData);
+	}
+
+	auto GetStyleRef() -> StyleType&
+	{
+		return m_Style;
+	}
+
+	auto Save() -> void
+	{
+		m_IsModified = true;
+	}
+
+	auto Delete() -> void
+	{
+		m_IsWaitDelete = true;
+		m_IsModified   = true;
 	}
 
 	auto Layer() const -> uint8_t { return m_Layer; }
 
+	auto IsText() const -> bool override { return std::is_same_v<StyleType, TextStyle>; }
+
+	auto IsModified() const -> bool override { return m_IsModified; }
 private:
-	uint8_t m_GraphicName[3];
+
+	uint8_t m_GraphicName[3] = {0, 0, 0};
 	uint8_t m_Layer;
 
-	IClientGraphicElementStyle& m_Style;
+	StyleType& m_Style;
 
-	bool m_IsInitialized;
+	bool m_IsInitialized = false;
+	bool m_IsModified    = true;
+	bool m_IsWaitDelete  = false;
+};
+
+class ClientGraphic
+{
+public:
+	explicit ClientGraphic(const uint16_t id, const IReferee* referee)
+		: m_Id(id),
+		  m_Referee(referee)
+	{
+	}
+
+	template <typename StyleType>
+	auto AddElement(uint8_t layer) -> ClientGraphic&
+	{
+		m_Elements.push_back(std::make_shared<ClientGraphicElement<StyleType>>(GetNextGraphicName(), layer));
+		return *this;
+	}
+
+	auto Render(bool repaint = false) -> void
+	{
+		for (auto&& element : m_Elements)
+		{
+			if (element->IsModified())
+			{
+				if (element->IsText())
+				{
+					ClientGraphicTextModify buffer;
+					buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
+					buffer.m_Header.m_ReceiverID = m_Id;
+					buffer.m_Header.m_SenderID   = m_Referee->Id();
+					element->FillGraphicData(buffer.m_GraphicData);
+					m_Referee->SendMessage(RefereeBuffer<ClientGraphicTextModify>(buffer));
+				}
+				else
+				{
+					ClientGraphicShapeModify<1> buffer;
+					buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
+					buffer.m_Header.m_ReceiverID = m_Id;
+					buffer.m_Header.m_SenderID   = m_Referee->Id();
+					element->FillGraphicData(buffer.m_GraphicData[0]);
+					m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<1>>(buffer));
+				}
+			}
+		}
+	}
+
+private:
+
+	auto GetNextGraphicName() -> std::array<uint8_t, 3>
+	{
+		for (size_t i = 0; i < m_Name.size(); ++i)
+		{
+			if (++m_Name[i] <= '9')
+			{
+				return m_Name;
+			}
+			m_Name[i] = '0';
+		}
+		throw std::bad_alloc(); //[TODO]: Would better define a new exception type.
+	}
+
+	uint16_t m_Id = 0;
+	std::vector<std::shared_ptr<IClientGrpahicElement>> m_Elements{};
+	std::array<uint8_t, 3> m_Name{'0', '0', '0'};
+	const IReferee* m_Referee;
+};
+
+class ClientGraphicManager
+{
+public:
+	OSSIAN_SERVICE_SETUP(ClientGraphicManager(IReferee* referee))
+		: m_Referee(referee)
+	{
+	}
+
+	auto AddOrGetGraphicClient(uint16_t id) -> std::shared_ptr<ClientGraphic>
+	{
+		auto it = m_Client.find(id);
+		if (it != m_Client.end())
+		{
+			return it->second;
+		}
+		m_Client.insert(std::make_pair(id, std::make_shared<ClientGraphic>(id, m_Referee)));
+		return m_Client[id];
+	}
+
+private:
+	std::unordered_map<uint16_t, std::shared_ptr<ClientGraphic>> m_Client;
+	IReferee* m_Referee;
 };
 
 

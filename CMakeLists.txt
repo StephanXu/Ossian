@@ -46,6 +46,7 @@ target_sources(Ossian
             src/TOFNooploop.cpp
             src/Phototube.cpp
             src/ClientGraphic.cpp
+            src/DJICRCHelper.cpp
         )
 target_precompile_headers(Ossian
         PRIVATE
@@ -65,6 +66,7 @@ target_precompile_headers(Ossian
             src/TOFNooploop.hpp
             src/Phototube.hpp
             src/ClientGraphic.hpp
+            src/DJICRCHelper.hpp
             <mutex>
             <atomic>
             <tuple>

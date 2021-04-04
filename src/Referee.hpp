@@ -587,6 +587,44 @@ struct CountOf<T, std::tuple<U, Types...>>
 	static constexpr std::size_t value = 0 + CountOf<T, std::tuple<Types...>>::value;
 };
 
+class IRefereeBuffer
+{
+public:
+	virtual auto PackToNativeBuffer() const -> std::unique_ptr<uint8_t[]> = 0;
+	virtual auto Size() const -> size_t = 0;
+};
+
+template <typename MessageType>
+class RefereeBuffer : public IRefereeBuffer
+{
+	MessageType m_Msg;
+
+public:
+	explicit RefereeBuffer(MessageType& msg)
+		: m_Msg(msg)
+	{
+	}
+
+	auto PackToNativeBuffer() const -> std::unique_ptr<uint8_t[]> override
+	{
+		auto buffer = std::unique_ptr<uint8_t[]>(reinterpret_cast<uint8_t*>(new RefereeMessage<MessageType>()));
+		auto* refereeMessage = reinterpret_cast<RefereeMessage<MessageType>*>(buffer.get());
+		refereeMessage->m_Header.m_SOF = 0xA5;
+		refereeMessage->m_Header.m_CmdId = MessageType::cmdId;
+		refereeMessage->m_Header.m_DataLength = MessageType::length;
+		refereeMessage->m_Header.m_Seq = 0; //[TODO]
+		refereeMessage->m_Header.m_CRC8 = 0; //[TODO]
+		refereeMessage->m_Payload = m_Msg;
+		refereeMessage->m_Tail.m_CRC16 = 0; //[TODO]
+		return buffer;
+	}
+
+	auto Size() const -> size_t
+	{
+		return RefereeMessage<MessageType>::length;
+	}
+};
+
 /**
  * @brief Interface of Referee system service.
  */
@@ -599,6 +637,10 @@ public:
 	 * @param location The location of referee system (e.g. /dev/ttyTHS2).
 	 */
 	virtual auto AddReferee(std::string location) -> void = 0;
+
+	virtual auto SendMessage(const IRefereeBuffer& refereeBuffer) const -> void = 0;
+
+	virtual auto Id() const -> uint16_t = 0;
 };
 
 /**
@@ -638,6 +680,17 @@ public:
 					             SPDLOG_TRACE("Referee Receive: {}", length);
 					             ParseReferee(data, length);
 				             });
+	}
+
+	auto SendMessage(const IRefereeBuffer& refereeBuffer) const -> void override
+	{
+		const auto buffer = refereeBuffer.PackToNativeBuffer();
+		m_RefereeDevice->WriteRaw(refereeBuffer.Size(), buffer.get());
+	}
+
+	auto Id() const -> uint16_t override
+	{
+		return 0; // [TODO]: RETURN CORRECT ID
 	}
 
 private:
