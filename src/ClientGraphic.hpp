@@ -167,10 +167,9 @@ template <typename StyleType>
 class ClientGraphicElement : public IClientGrpahicElement
 {
 public:
-	explicit ClientGraphicElement(const std::array<int, 3> name,
+	explicit ClientGraphicElement(const std::array<uint8_t, 3> name,
 	                              const uint8_t layer)
-		: m_Layer(layer),
-		  m_Style(StyleType())
+		: m_Layer(layer), m_Style()
 	{
 		std::copy(name.begin(), name.end(), m_GraphicName);
 	}
@@ -226,7 +225,7 @@ private:
 	uint8_t m_GraphicName[3] = {0, 0, 0};
 	uint8_t m_Layer;
 
-	StyleType& m_Style;
+	StyleType m_Style;
 
 	bool m_IsInitialized = false;
 	bool m_IsModified    = true;
@@ -246,7 +245,7 @@ public:
 	auto AddElement(uint8_t layer) -> ClientGraphicElement<StyleType>*
 	{
 		m_Elements.push_back(std::make_shared<ClientGraphicElement<StyleType>>(GetNextGraphicName(), layer));
-		return m_Elements.back().get();
+		return dynamic_cast<ClientGraphicElement<StyleType>*>(m_Elements.back().get());
 	}
 
 	auto Render(bool repaint = false) -> void
