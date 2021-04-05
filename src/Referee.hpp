@@ -610,16 +610,16 @@ public:
 
 	auto PackToNativeBuffer() const -> std::unique_ptr<uint8_t[]> override
 	{
+		static unsigned int idx = 0;
 		auto buffer = std::unique_ptr<uint8_t[]>(reinterpret_cast<uint8_t*>(new RefereeMessage<MessageType>()));
 		auto* refereeMessage = reinterpret_cast<RefereeMessage<MessageType>*>(buffer.get());
 		refereeMessage->m_Header.m_SOF = 0xA5;
 		refereeMessage->m_Header.m_CmdId = MessageType::CMD_ID;
 		refereeMessage->m_Header.m_DataLength = MessageType::LENGTH;
-		refereeMessage->m_Header.m_Seq = 0; //[TODO]
-		refereeMessage->m_Header.m_CRC8 = DJICRCHelper::GetCRC8Checksum(buffer.get(), 4, 0xff);
+		refereeMessage->m_Header.m_Seq = idx++; //[TODO]
+		DJICRCHelper::AppendCRC8Checksum(buffer.get(), 5);
 		refereeMessage->m_Payload = m_Msg;
-		refereeMessage->m_Tail.m_CRC16 = DJICRCHelper::GetCRC16Checksum(
-			buffer.get(), sizeof(FrameHeaderWithCmd) + MessageType::LENGTH, 0xffff);
+		DJICRCHelper::AppendCRC16Checksum(buffer.get(), RefereeMessage<MessageType>::LENGTH);
 		return buffer;
 	}
 

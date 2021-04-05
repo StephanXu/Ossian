@@ -195,6 +195,7 @@ public:
 		{
 			graphicData.m_OperateType = 2;
 		}
+		graphicData.m_Layer = m_Layer;
 		m_Style.FillGraphicData(graphicData);
 		m_IsModified = false;
 	}
@@ -256,7 +257,7 @@ public:
 			{
 				if (element->IsText())
 				{
-					ClientGraphicTextModify buffer;
+					ClientGraphicTextModify buffer{};
 					buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
 					buffer.m_Header.m_ReceiverID = m_Id;
 					buffer.m_Header.m_SenderID   = m_Referee->Id();
@@ -265,7 +266,7 @@ public:
 				}
 				else
 				{
-					ClientGraphicShapeModify<1> buffer;
+					ClientGraphicShapeModify<1> buffer{};
 					buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
 					buffer.m_Header.m_ReceiverID = m_Id;
 					buffer.m_Header.m_SenderID   = m_Referee->Id();
