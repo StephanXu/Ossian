@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <array>
+#include <cstring>
 
 #include "Referee.hpp"
 
@@ -160,6 +161,7 @@ class IClientGraphicElement
 public:
 	virtual ~IClientGraphicElement() = default;
 	virtual auto FillGraphicData(GraphicData& graphicData) -> void = 0;
+	virtual auto FillText(uint8_t* destTextBuffer, const size_t maxLength) const -> size_t = 0;
 	virtual auto IsText() const -> bool = 0;
 	virtual auto IsModified() const -> bool = 0;
 };
@@ -189,7 +191,7 @@ public:
 		else if (!m_IsInitialized)
 		{
 			graphicData.m_OperateType = 1;
-			m_IsInitialized           = true;
+			m_IsInitialized           = false;
 		}
 		else
 		{
@@ -198,6 +200,11 @@ public:
 		graphicData.m_Layer = m_Layer;
 		m_Style.FillGraphicData(graphicData);
 		m_IsModified = false;
+	}
+
+	auto FillText(uint8_t* destTextBuffer, const size_t maxLength) const -> size_t override
+	{
+		return FillTextHelper(destTextBuffer, maxLength);
 	}
 
 	auto GetStyleRef() -> StyleType&
@@ -231,6 +238,26 @@ private:
 	bool m_IsInitialized = false;
 	bool m_IsModified    = true;
 	bool m_IsWaitDelete  = false;
+
+	template <typename ST = StyleType, std::enable_if_t<!std::is_same_v<ST, TextStyle>, int>  = 0>
+	auto FillTextHelper(uint8_t* destTextBuffer, const size_t maxLength) const -> size_t
+	{
+		SPDLOG_WARN("ClientGraphic FillText: FillText be called by shape element");
+		return 0;
+	}
+
+	template <typename ST = StyleType, std::enable_if_t<std::is_same_v<ST, TextStyle>, int>  = 0>
+	auto FillTextHelper(uint8_t* destTextBuffer, const size_t maxLength) const -> size_t
+	{
+		auto length = m_Style.m_Text.length();
+		if (m_Style.m_Text.length() > maxLength)
+		{
+			SPDLOG_WARN("ClientGraphic FillText: Text length is bigger than maxLength.");
+			length = maxLength;
+		}
+		memcpy(destTextBuffer, m_Style.m_Text.c_str(), length);
+		return length;
+	}
 };
 
 class ClientGraphic
@@ -262,6 +289,7 @@ public:
 					buffer.m_Header.m_ReceiverID = m_Id;
 					buffer.m_Header.m_SenderID   = m_Referee->Id();
 					element->FillGraphicData(buffer.m_GraphicData);
+					element->FillText(buffer.m_Data, sizeof(buffer.m_Data));
 					m_Referee->SendMessage(RefereeBuffer<ClientGraphicTextModify>(buffer));
 				}
 				else
