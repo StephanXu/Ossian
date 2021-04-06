@@ -1,6 +1,6 @@
 ﻿#include "DJICRCHelper.hpp"
 
-auto DJICRCHelper::GetCRC8Checksum(unsigned char* pchMessage, size_t length,
+auto DJICRCHelper::GetCRC8Checksum(const unsigned char* pchMessage, size_t length,
 	unsigned char ucCRC8) noexcept -> unsigned char
 {
 	unsigned char tableIndex;
@@ -17,7 +17,7 @@ auto DJICRCHelper::GetCRC8Checksum(unsigned char* pchMessage, size_t length,
 ** Input: Data to Verify,Stream length=Data+checksum
 ** Output: True or False(CRC Verify Result)
 */
-auto DJICRCHelper::VerifyCRC8Checksum(unsigned char* pchMessage, size_t length) noexcept -> bool
+auto DJICRCHelper::VerifyCRC8Checksum(const unsigned char* pchMessage, size_t length) noexcept -> bool
 {
 	if (pchMessage == nullptr || length <= 2)
 		return false;
@@ -43,7 +43,7 @@ auto DJICRCHelper::AppendCRC8Checksum(unsigned char* pchMessage, size_t length) 
 ** Input: Data to check, Stream length, initialized checksum
 ** Output: CRC checksum
 */
-auto DJICRCHelper::GetCRC16Checksum(uint8_t* pchMessage, size_t length, uint16_t wCRC) noexcept -> unsigned short
+auto DJICRCHelper::GetCRC16Checksum(const uint8_t* pchMessage, size_t length, uint16_t wCRC) noexcept -> unsigned short
 {
 	if (pchMessage == nullptr)
 	{
@@ -52,7 +52,7 @@ auto DJICRCHelper::GetCRC16Checksum(uint8_t* pchMessage, size_t length, uint16_t
 	while (length--)
 	{
 		const auto chData = *pchMessage++;
-		wCRC = static_cast<uint16_t>(wCRC) >> 8 ^ m_WideCRCTable[static_cast<uint16_t>(wCRC) ^ static_cast<uint16_t>(chData) & 0x00ff];
+		wCRC = (static_cast<uint16_t>(wCRC) >> 8) ^ m_WideCRCTable[(static_cast<uint16_t>(wCRC) ^ static_cast<uint16_t>(chData)) & 0x00ff];
 	}
 	return wCRC;
 }
@@ -62,7 +62,7 @@ auto DJICRCHelper::GetCRC16Checksum(uint8_t* pchMessage, size_t length, uint16_t
 ** Input:Data to Verify, Stream length= Data + checksum
 ** Output:True or False (CRC Verify Result)
 */
-auto DJICRCHelper::VerifyCRC16Checksum(uint8_t* pchMessage, size_t length) noexcept -> bool
+auto DJICRCHelper::VerifyCRC16Checksum(const uint8_t* pchMessage, size_t length) noexcept -> bool
 {
 	if (pchMessage == nullptr || length <= 2)
 		return false;
@@ -82,6 +82,6 @@ auto DJICRCHelper::AppendCRC16Checksum(uint8_t* pchMessage, size_t length) noexc
 		return;
 	}
 	const auto wCRC = GetCRC16Checksum(static_cast<uint8_t*>(pchMessage), length - 2, m_CRC16Init);
-	pchMessage[length - 2] = static_cast<uint8_t>(wCRC & 0x00f);
-	pchMessage[length - 1] = static_cast<uint8_t>((wCRC >> 8) & 0x00f);
+	pchMessage[length - 2] = static_cast<uint8_t>(wCRC & 0x00ff);
+	pchMessage[length - 1] = static_cast<uint8_t>((wCRC >> 8) & 0x00ff);
 }

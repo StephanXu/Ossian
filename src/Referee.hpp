@@ -737,7 +737,16 @@ private:
 		{
 			//[TODO]: Check the thread safe rule for the separate lock design
 			//std::lock_guard<Mutex> guard{std::get<Index>(m_Mutexes)};
-			std::get<Index>(m_Container)->Set(reinterpret_cast<const RefereeMessage<MessageType>*>(data)->m_Payload);
+			const auto& msg = *reinterpret_cast<const RefereeMessage<MessageType>*>(data);
+			if (!DJICRCHelper::VerifyCRC16Checksum(data, RefereeMessage<MessageType>::LENGTH))
+			{
+				SPDLOG_ERROR("Referee message verify CRC16 failed. length={}", RefereeMessage<MessageType>::LENGTH);
+			}
+			if (!DJICRCHelper::VerifyCRC8Checksum(data, sizeof(FrameHeaderWithCmd) - 2))
+			{
+				SPDLOG_ERROR("Referee message verify CRC8 failed. length={}", sizeof(FrameHeaderWithCmd) - 2);
+			}
+			std::get<Index>(m_Container)->Set(msg.m_Payload);
 		}
 		SPDLOG_TRACE("Matched message: {:x}\t Message Length: {}\t Matched: {}",
 		             MessageType::CMD_ID, RefereeMessage<MessageType>::LENGTH, Index);
