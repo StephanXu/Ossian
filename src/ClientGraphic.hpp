@@ -9,6 +9,7 @@
 #include <memory>
 #include <array>
 #include <cstring>
+#include <queue>
 
 #include "Referee.hpp"
 
@@ -323,35 +324,103 @@ public:
 
 	auto Render(const bool repaint = false) -> void
 	{
+	    bool textProcessed{false};
+	    size_t sentBytes = 0;
 		for (auto&& element : m_Elements)
 		{
 			if (element->IsModified() || repaint)
 			{
 				if (element->IsText())
 				{
-					ClientGraphicTextModify buffer{};
-					buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
-					buffer.m_Header.m_ReceiverID = m_Id;
-					buffer.m_Header.m_SenderID   = m_Referee->Id();
-					element->FillGraphicData(buffer.m_GraphicData);
-					buffer.m_GraphicData.m_EndAngle = element->FillText(buffer.m_Data, sizeof(buffer.m_Data));
-					m_Referee->SendMessage(RefereeBuffer<ClientGraphicTextModify>(buffer));
+                    m_ModifiedTextElements.push(element);
 				}
 				else
 				{
-					ClientGraphicShapeModify<1> buffer{};
-					buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
-					buffer.m_Header.m_ReceiverID = m_Id;
-					buffer.m_Header.m_SenderID   = m_Referee->Id();
-					element->FillGraphicData(buffer.m_GraphicData[0]);
-					m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<1>>(buffer));
+                    m_ModifiedTextElements.push(element);
 				}
 			}
 		}
+		while (sentBytes < 1280 || // [TODO] 导出宏定义
+		       (m_ModifiedGraphElements.empty() && m_ModifiedTextElements.empty()))
+        {
+            if (!m_ModifiedTextElements.empty() && false == textProcessed)
+            {
+                auto element = m_ModifiedTextElements.front();
+                ClientGraphicTextModify buffer{};
+                buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
+                buffer.m_Header.m_ReceiverID = m_Id;
+                buffer.m_Header.m_SenderID   = m_Referee->Id();
+                element->FillGraphicData(buffer.m_GraphicData);
+                buffer.m_GraphicData.m_EndAngle = element->FillText(buffer.m_Data, sizeof(buffer.m_Data));
+                m_Referee->SendMessage(RefereeBuffer<ClientGraphicTextModify>(buffer));
+                sentBytes += buffer.LENGTH;
+                m_ModifiedTextElements.pop();
+            }
+            textProcessed = true;
+            if (!m_ModifiedGraphElements.empty() && true == textProcessed)
+            {
+                size_t elementsCount = m_ModifiedGraphElements.size();
+                if(elementsCount >= 7) // 7
+                {
+                    ClientGraphicShapeModify<7> buffer{};
+                    buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
+					buffer.m_Header.m_ReceiverID = m_Id;
+					buffer.m_Header.m_SenderID   = m_Referee->Id();
+                    for (int i = 0; i < 7; ++i) {
+                        auto element = m_ModifiedGraphElements.front();
+                        element->FillGraphicData(buffer.m_GraphicData[i]);
+                        m_ModifiedGraphElements.pop();
+                    }
+					m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<7>>(buffer));
+                    sentBytes += buffer.LENGTH;
+                }
+                else if (elementsCount >= 5) // 5
+                {
+                    ClientGraphicShapeModify<5> buffer{};
+                    buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
+                    buffer.m_Header.m_ReceiverID = m_Id;
+                    buffer.m_Header.m_SenderID   = m_Referee->Id();
+                    for (int i = 0; i < 5; ++i) {
+                        auto element = m_ModifiedGraphElements.front();
+                        element->FillGraphicData(buffer.m_GraphicData[i]);
+                        m_ModifiedGraphElements.pop();
+                    }
+                    m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<5>>(buffer));
+                    sentBytes += buffer.LENGTH;
+                }
+                else if (elementsCount >= 2) // 2
+                {
+                    ClientGraphicShapeModify<2> buffer{};
+                    buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
+                    buffer.m_Header.m_ReceiverID = m_Id;
+                    buffer.m_Header.m_SenderID   = m_Referee->Id();
+                    for (int i = 0; i < 7; ++i) {
+                        auto element = m_ModifiedGraphElements.front();
+                        element->FillGraphicData(buffer.m_GraphicData[i]);
+                        m_ModifiedGraphElements.pop();
+                    }
+                    m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<2>>(buffer));
+                    sentBytes += buffer.LENGTH;
+                }
+                else // 1
+                {
+                    ClientGraphicShapeModify<1> buffer{};
+                    buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
+                    buffer.m_Header.m_ReceiverID = m_Id;
+                    buffer.m_Header.m_SenderID   = m_Referee->Id();
+                    for (int i = 0; i < 1; ++i) {
+                        auto element = m_ModifiedGraphElements.front();
+                        element->FillGraphicData(buffer.m_GraphicData[i]);
+                        m_ModifiedGraphElements.pop();
+                    }
+                    m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<1>>(buffer));
+                    sentBytes += buffer.LENGTH;
+                }
+            }
+        }
 	}
 
 private:
-
 	auto GetNextGraphicName() -> std::array<uint8_t, 3>
 	{
 		for (size_t i = 0; i < m_Name.size(); ++i)
@@ -369,6 +438,9 @@ private:
 	std::vector<std::shared_ptr<IClientGraphicElement>> m_Elements{};
 	std::array<uint8_t, 3> m_Name{'0', '0', '0'};
 	const IReferee* m_Referee;
+
+	std::queue<std::shared_ptr<IClientGraphicElement>> m_ModifiedTextElements{};
+	std::queue<std::shared_ptr<IClientGraphicElement>> m_ModifiedGraphElements{};
 };
 
 class ClientGraphicManager
@@ -389,6 +461,11 @@ public:
 		m_Client.insert(std::make_pair(id, std::make_shared<ClientGraphic>(id, m_Referee)));
 		return m_Client[id];
 	}
+
+	auto GetGraphicClients() -> const std::unordered_map<uint16_t, std::shared_ptr<ClientGraphic>>&
+    {
+	    return m_Client;
+    }
 
 private:
 	std::unordered_map<uint16_t, std::shared_ptr<ClientGraphic>> m_Client;

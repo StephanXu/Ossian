@@ -18,6 +18,7 @@
 #include "TOFNooploop.hpp"
 #include "IOPeeker.hpp"
 #include "CameraPeeker.hpp"
+#include "ClientGraphicWorker.hpp"
 
 #include <Config.schema.hpp>
 #include <LaunchSettings.schema.hpp>
@@ -174,6 +175,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOWorker>();
 	app.AddExecutable<IOPeeker<0>>();
 	app.AddExecutable<IOPeeker<1>>();
+	app.AddExecutable<ClientGraphicWorker>();
 
 #ifndef VISION_ONLY
 	app.AddExecutable<ChassisCtrlTask>();

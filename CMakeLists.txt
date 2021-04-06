@@ -47,6 +47,7 @@ target_sources(Ossian
             src/Phototube.cpp
             src/ClientGraphic.cpp
             src/DJICRCHelper.cpp
+            src/ClientGraphicWorker.cpp
         )
 target_precompile_headers(Ossian
         PRIVATE
