@@ -8,7 +8,7 @@
 #include <chrono>
 #include "ClientGraphic.hpp"
 
-class ClientGraphicWorker : ossian::IExecutable {
+class ClientGraphicWorker : public ossian::IExecutable {
     const std::unordered_map<uint16_t, std::shared_ptr<ClientGraphic>> &m_GraphicClients;
 
 public:
