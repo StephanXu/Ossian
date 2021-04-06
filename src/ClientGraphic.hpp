@@ -141,18 +141,18 @@ public:
 	uint16_t m_StartX;
 	uint16_t m_StartY;
 	uint16_t m_Precision;
-
-	std::string m_Text;
+	float m_Value;
 
 	auto FillGraphicData(GraphicData& graphicData) const -> void override
 	{
-		graphicData.m_GraphicType = 5;
-		graphicData.m_Color       = m_Color;
-		graphicData.m_StartAngle  = m_FontSize;
-		graphicData.m_EndAngle    = m_Precision;
-		graphicData.m_Width       = m_Width;
-		graphicData.m_StartX      = m_StartX;
-		graphicData.m_StartY      = m_StartY;
+		graphicData.m_GraphicType  = 5;
+		graphicData.m_Color        = m_Color;
+		graphicData.m_StartAngle   = m_FontSize;
+		graphicData.m_EndAngle     = m_Precision;
+		graphicData.m_Width        = m_Width;
+		graphicData.m_StartX       = m_StartX;
+		graphicData.m_StartY       = m_StartY;
+		graphicData.m_Pack.m_Float = m_Value;
 	}
 };
 
@@ -164,17 +164,17 @@ public:
 	uint16_t m_Width;
 	uint16_t m_StartX;
 	uint16_t m_StartY;
-
-	std::string m_Text;
+	int32_t m_Value;
 
 	auto FillGraphicData(GraphicData& graphicData) const -> void override
 	{
-		graphicData.m_GraphicType = 6;
-		graphicData.m_Color       = m_Color;
-		graphicData.m_StartAngle  = m_FontSize;
-		graphicData.m_Width       = m_Width;
-		graphicData.m_StartX      = m_StartX;
-		graphicData.m_StartY      = m_StartY;
+		graphicData.m_GraphicType    = 6;
+		graphicData.m_Color          = m_Color;
+		graphicData.m_StartAngle     = m_FontSize;
+		graphicData.m_Width          = m_Width;
+		graphicData.m_StartX         = m_StartX;
+		graphicData.m_StartY         = m_StartY;
+		graphicData.m_Pack.m_Integer = m_Value;
 	}
 };
 
