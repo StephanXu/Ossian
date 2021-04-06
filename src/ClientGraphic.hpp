@@ -32,13 +32,13 @@ public:
 
 	auto FillGraphicData(GraphicData& graphicData) const -> void override
 	{
-		graphicData.m_GraphicType = 0;
-		graphicData.m_Color       = m_Color;
-		graphicData.m_Width       = m_Width;
-		graphicData.m_StartX      = m_StartX;
-		graphicData.m_StartY      = m_StartY;
-		graphicData.m_EndX        = m_EndX;
-		graphicData.m_EndY        = m_EndY;
+		graphicData.m_GraphicType          = 0;
+		graphicData.m_Color                = m_Color;
+		graphicData.m_Width                = m_Width;
+		graphicData.m_StartX               = m_StartX;
+		graphicData.m_StartY               = m_StartY;
+		graphicData.m_Pack.m_Config.m_EndX = m_EndX;
+		graphicData.m_Pack.m_Config.m_EndY = m_EndY;
 	}
 };
 
@@ -54,13 +54,13 @@ public:
 
 	auto FillGraphicData(GraphicData& graphicData) const -> void override
 	{
-		graphicData.m_GraphicType = 1;
-		graphicData.m_Color       = m_Color;
-		graphicData.m_Width       = m_Width;
-		graphicData.m_StartX      = m_StartX;
-		graphicData.m_StartY      = m_StartY;
-		graphicData.m_EndX        = m_EndX;
-		graphicData.m_EndY        = m_EndY;
+		graphicData.m_GraphicType          = 1;
+		graphicData.m_Color                = m_Color;
+		graphicData.m_Width                = m_Width;
+		graphicData.m_StartX               = m_StartX;
+		graphicData.m_StartY               = m_StartY;
+		graphicData.m_Pack.m_Config.m_EndX = m_EndX;
+		graphicData.m_Pack.m_Config.m_EndY = m_EndY;
 	}
 };
 
@@ -75,12 +75,12 @@ public:
 
 	auto FillGraphicData(GraphicData& graphicData) const -> void override
 	{
-		graphicData.m_GraphicType = 2;
-		graphicData.m_Color       = m_Color;
-		graphicData.m_Width       = m_Width;
-		graphicData.m_StartX      = m_CenterX;
-		graphicData.m_StartY      = m_CenterY;
-		graphicData.m_Radius      = m_Radius;
+		graphicData.m_GraphicType            = 2;
+		graphicData.m_Color                  = m_Color;
+		graphicData.m_Width                  = m_Width;
+		graphicData.m_StartX                 = m_CenterX;
+		graphicData.m_StartY                 = m_CenterY;
+		graphicData.m_Pack.m_Config.m_Radius = m_Radius;
 	}
 };
 
@@ -96,13 +96,13 @@ public:
 
 	auto FillGraphicData(GraphicData& graphicData) const -> void override
 	{
-		graphicData.m_GraphicType = 3;
-		graphicData.m_Color       = m_Color;
-		graphicData.m_Width       = m_Width;
-		graphicData.m_StartX      = m_CenterX;
-		graphicData.m_StartY      = m_CenterY;
-		graphicData.m_EndX        = m_HalfAxisX;
-		graphicData.m_EndY        = m_HalfAxisY;
+		graphicData.m_GraphicType          = 3;
+		graphicData.m_Color                = m_Color;
+		graphicData.m_Width                = m_Width;
+		graphicData.m_StartX               = m_CenterX;
+		graphicData.m_StartY               = m_CenterY;
+		graphicData.m_Pack.m_Config.m_EndX = m_HalfAxisX;
+		graphicData.m_Pack.m_Config.m_EndY = m_HalfAxisY;
 	}
 };
 
@@ -120,15 +120,61 @@ public:
 
 	auto FillGraphicData(GraphicData& graphicData) const -> void override
 	{
-		graphicData.m_GraphicType = 4;
+		graphicData.m_GraphicType          = 4;
+		graphicData.m_Color                = m_Color;
+		graphicData.m_StartAngle           = m_StartAngle;
+		graphicData.m_EndAngle             = m_EndAngle;
+		graphicData.m_Width                = m_Width;
+		graphicData.m_StartX               = m_CenterX;
+		graphicData.m_StartY               = m_CenterY;
+		graphicData.m_Pack.m_Config.m_EndX = m_HalfAxisX;
+		graphicData.m_Pack.m_Config.m_EndY = m_HalfAxisY;
+	}
+};
+
+class FloatStyle : public IClientGraphicElementStyle
+{
+public:
+	uint8_t m_Color;
+	uint16_t m_FontSize;
+	uint16_t m_Width;
+	uint16_t m_StartX;
+	uint16_t m_StartY;
+	uint16_t m_Precision;
+
+	std::string m_Text;
+
+	auto FillGraphicData(GraphicData& graphicData) const -> void override
+	{
+		graphicData.m_GraphicType = 5;
 		graphicData.m_Color       = m_Color;
-		graphicData.m_StartAngle  = m_StartAngle;
-		graphicData.m_EndAngle    = m_EndAngle;
+		graphicData.m_StartAngle  = m_FontSize;
+		graphicData.m_EndAngle    = m_Precision;
 		graphicData.m_Width       = m_Width;
-		graphicData.m_StartX      = m_CenterX;
-		graphicData.m_StartY      = m_CenterY;
-		graphicData.m_EndX        = m_HalfAxisX;
-		graphicData.m_EndY        = m_HalfAxisY;
+		graphicData.m_StartX      = m_StartX;
+		graphicData.m_StartY      = m_StartY;
+	}
+};
+
+class IntegerStyle : public IClientGraphicElementStyle
+{
+public:
+	uint8_t m_Color;
+	uint16_t m_FontSize;
+	uint16_t m_Width;
+	uint16_t m_StartX;
+	uint16_t m_StartY;
+
+	std::string m_Text;
+
+	auto FillGraphicData(GraphicData& graphicData) const -> void override
+	{
+		graphicData.m_GraphicType = 6;
+		graphicData.m_Color       = m_Color;
+		graphicData.m_StartAngle  = m_FontSize;
+		graphicData.m_Width       = m_Width;
+		graphicData.m_StartX      = m_StartX;
+		graphicData.m_StartY      = m_StartY;
 	}
 };
 
@@ -189,12 +235,13 @@ public:
 		else if (!m_IsInitialized)
 		{
 			graphicData.m_OperateType = 1;
-			m_IsInitialized           = false;
+			//m_IsInitialized           = true;
 		}
 		else
 		{
 			graphicData.m_OperateType = 2;
 		}
+		m_IsInitialized     = !m_IsInitialized;
 		graphicData.m_Layer = m_Layer;
 		m_Style.FillGraphicData(graphicData);
 		m_IsModified = false;

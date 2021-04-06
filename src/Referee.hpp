@@ -406,8 +406,24 @@ struct GraphicDelete
  */
 struct GraphicData
 {
-	static constexpr size_t LENGTH = 15;
+private:
+	struct PostGraphicConfig
+	{
+		uint32_t m_Radius : 10;
+		uint32_t m_EndX : 11;
+		uint32_t m_EndY : 11;
+	};
 
+	union FloatPack
+	{
+		int32_t m_Integer;
+		float m_Float;
+		PostGraphicConfig m_Config;
+	};
+public:
+	
+	static constexpr size_t LENGTH = 15;
+	
 	uint8_t m_GraphicName[3];   ///< 图形名: 在删除，修改等操作中，作为客户端的索引
 	uint32_t m_OperateType : 3; ///< 图形操作: 0: 空操作 1: 增加 2: 修改 3: 删除
 	uint32_t m_GraphicType : 3;
@@ -418,9 +434,7 @@ struct GraphicData
 	uint32_t m_Width : 10;
 	uint32_t m_StartX : 11;
 	uint32_t m_StartY : 11;
-	uint32_t m_Radius : 10;
-	uint32_t m_EndX : 11;
-	uint32_t m_EndY : 11;
+	FloatPack m_Pack;
 };
 
 /**
