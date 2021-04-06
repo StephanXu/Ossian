@@ -137,7 +137,6 @@ class TextStyle : public IClientGraphicElementStyle
 public:
 	uint8_t m_Color;
 	uint16_t m_FontSize;
-	uint16_t m_TextLength;
 	uint16_t m_Width;
 	uint16_t m_StartX;
 	uint16_t m_StartY;
@@ -149,7 +148,6 @@ public:
 		graphicData.m_GraphicType = 7;
 		graphicData.m_Color       = m_Color;
 		graphicData.m_StartAngle  = m_FontSize;
-		graphicData.m_EndAngle    = m_TextLength;
 		graphicData.m_Width       = m_Width;
 		graphicData.m_StartX      = m_StartX;
 		graphicData.m_StartY      = m_StartY;
@@ -289,7 +287,7 @@ public:
 					buffer.m_Header.m_ReceiverID = m_Id;
 					buffer.m_Header.m_SenderID   = m_Referee->Id();
 					element->FillGraphicData(buffer.m_GraphicData);
-					element->FillText(buffer.m_Data, sizeof(buffer.m_Data));
+					buffer.m_GraphicData.m_EndAngle = element->FillText(buffer.m_Data, sizeof(buffer.m_Data));
 					m_Referee->SendMessage(RefereeBuffer<ClientGraphicTextModify>(buffer));
 				}
 				else
