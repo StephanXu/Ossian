@@ -16,6 +16,7 @@
 #include "Gimbal.hpp"
 #include "Capacitor.hpp"
 #include "Referee.hpp"
+#include "ClientGraphic.hpp"
 
 #include <chrono>
 #include <memory>
@@ -137,7 +138,7 @@ public:
 	//底盘功率控制
 	static constexpr double kBufferTotalCurrentLimit = 45000;
 	static constexpr double kPowerTotalCurrentLimit = 50000;
-	static constexpr double kSpCapWarnVoltage = 13;
+	static constexpr double kSpCapWarnVoltage = 12;
 
 	//遥控器解析
 	static constexpr size_t kChassisXChannel = 1; ///< 控制底盘 前后 速度的遥控器通道
@@ -155,6 +156,12 @@ public:
 	//底盘运动
 	static constexpr double kChassisVxLimit = 3; ///< m/s
 	static constexpr double kChassisVyLimit = 2; ///< m/s
+
+	static constexpr double kChassisVxNormal = 2; ///< m/s 键鼠
+	static constexpr double kChassisVyNormal = 3; ///< m/s 键鼠
+	static constexpr double kChassisVxBoost  = 5; ///< m/s 键鼠
+	static constexpr double kChassisVyBoost  = 4; ///< m/s 键鼠
+
 	static double kTopWz;                          ///< 底盘陀螺旋转速度 rad/s
 
 	//pid参数 [TODO]底盘旋转角速度闭环
@@ -193,7 +200,8 @@ public:
 										 ossian::IOData<PowerHeatData>* powerHeatDataListener,
 										 ossian::IOData<RobotStatus>* robotStatusListener,
 										 ossian::IOData<GimbalStatus>* gimbalStatusListener,
-										 ossian::IOData<GyroA110Status<GyroType::Chassis>>* gyroListener))
+										 ossian::IOData<GyroA110Status<GyroType::Chassis>>* gyroListener,
+										 ClientGraphicManager* clientGraphicManager))
 
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
@@ -204,6 +212,7 @@ public:
 		, m_RefereeRobotStatusListener(robotStatusListener)
 		, m_GimbalStatusListener(gimbalStatusListener)
 		, m_GyroListener(gyroListener)
+		, m_ClientGraphicManager(clientGraphicManager)
 	{
 		PIDWheelSpeedParams[0] = *m_Config->Instance()->pids->pidWheelSpeed->kP;
 		PIDWheelSpeedParams[1] = *m_Config->Instance()->pids->pidWheelSpeed->kI;
@@ -247,6 +256,9 @@ public:
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
 		m_PIDChassisAngle.SetFlagAngleLoop();
 
+		m_GraphicClient = m_ClientGraphicManager->AddOrGetGraphicClient(0x0167);
+		m_ClientGraphicTextSpCapStatus = m_GraphicClient->AddElement<TextStyle>(0);
+		m_ClientGraphicValueSpCapStatus = m_GraphicClient->AddElement<FloatStyle>(0);
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_TRACE("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
 				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4],value.sw[0], value.sw[1]);});*/
@@ -331,6 +343,8 @@ public:
 			80);*/
 	}
 
+	void FillClientGraphics();
+
 	void CalcWheelSpeedTarget();
 
 	//功率控制：通过减小底盘电机的电流来实现
@@ -364,9 +378,9 @@ public:
 						std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count() / 1000.0);*/
 
 			lastTime = Clock::now();
-			
 
 			UpdateChassisSensorFeedback();
+			FillClientGraphics();
 
 			if (m_FlagInitChassis)
 				InitChassis();
@@ -378,6 +392,8 @@ public:
 			ChassisCtrl();
 
 			m_Chassis->SetCapPwr(m_ChassisSensorValues.refereeRobotStatus.m_ChassisPowerLimit);
+
+			m_GraphicClient->Render();
 		}
 	}
 
@@ -390,6 +406,11 @@ private:
 	Chassis* m_Chassis;
 	ossian::IOData<PowerHeatData>* m_RefereePowerHeatDataListener;
 	ossian::IOData<RobotStatus>* m_RefereeRobotStatusListener;
+
+	ClientGraphicManager* m_ClientGraphicManager;
+	std::shared_ptr<ClientGraphic> m_GraphicClient;
+	std::shared_ptr<ClientGraphicElement<TextStyle>> m_ClientGraphicTextSpCapStatus;
+	std::shared_ptr<ClientGraphicElement<FloatStyle>> m_ClientGraphicValueSpCapStatus;
 
 	bool m_FlagInitChassis;
 	ChassisMotorsModel m_MotorsStatus;

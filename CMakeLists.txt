@@ -58,7 +58,6 @@ target_precompile_headers(Ossian
             src/OnlineDebug.hpp
             src/Remote.hpp
             src/Capacitor.hpp
-            src/Referee.hpp
             src/IOPeeker.hpp
             src/CameraPeeker.hpp
             src/Gyro.hpp
@@ -66,7 +65,6 @@ target_precompile_headers(Ossian
             src/GyroA110.hpp
             src/TOFNooploop.hpp
             src/Phototube.hpp
-            src/ClientGraphic.hpp
             src/DJICRCHelper.hpp
             <mutex>
             <atomic>
@@ -108,7 +106,7 @@ set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
 target_link_options(Ossian PRIVATE "-fsanitize=leak")
 target_compile_options(Ossian
         PRIVATE
-            "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-Wall;-ggdb;-g3>>"
+            "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-ggdb;-g3>>"
             "$<${msvc_cxx}:$<$<CONFIG:Debug>:-W3>>"
         )
 target_link_options(Ossian

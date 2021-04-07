@@ -630,7 +630,7 @@ public:
 		refereeMessage->m_Header.m_SOF = 0xA5;
 		refereeMessage->m_Header.m_CmdId = MessageType::CMD_ID;
 		refereeMessage->m_Header.m_DataLength = MessageType::LENGTH;
-		refereeMessage->m_Header.m_Seq = idx++; //[TODO]
+		refereeMessage->m_Header.m_Seq = 0; //[TODO]
 		DJICRCHelper::AppendCRC8Checksum(buffer.get(), 5);
 		refereeMessage->m_Payload = m_Msg;
 		DJICRCHelper::AppendCRC16Checksum(buffer.get(), RefereeMessage<MessageType>::LENGTH);

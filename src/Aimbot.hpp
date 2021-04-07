@@ -3,7 +3,7 @@
 
 //#define _DEBUG
 
-#define USE_PREDICTION
+//#define USE_PREDICTION
 
 #include <ossian/Factory.hpp>
 #include <ossian/Configuration.hpp>

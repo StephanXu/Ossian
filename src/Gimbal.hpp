@@ -372,9 +372,9 @@ public:
 			m_GimbalSensorValues.imu.m_Hy,
 			m_GimbalSensorValues.imu.m_Hz);*/
 
-		/*SPDLOG_TRACE("@MotorEncoder=[$EPitch={},$EYaw={}]",
+		SPDLOG_TRACE("@MotorEncoder=[$EPitch={},$EYaw={}]",
 			m_MotorsStatus.m_Encoding[Pitch],
-			m_MotorsStatus.m_Encoding[Yaw]);*/
+			m_MotorsStatus.m_Encoding[Yaw]);
 
 	}
 

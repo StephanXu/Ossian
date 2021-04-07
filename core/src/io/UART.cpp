@@ -7,7 +7,9 @@
 #include <fcntl.h> 
 #include <mutex>
 #include <cstring>
+#include <sstream>
 #include <spdlog/spdlog.h>
+
 namespace ossian
 {
 // UARTBus
@@ -199,6 +201,15 @@ void UARTBus::WriteRaw(size_t length, const uint8_t* data) const
 			while (true)
 			{
 				const auto bytes = write(m_FD, data, sizeof(uint8_t) * length);
+#if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE)
+					std::stringstream ss;
+				for (size_t i{}; i < length; ++i)
+				{
+					ss << fmt::format("{:02x}", data[i]);
+					ss << " ";
+				}
+				SPDLOG_ERROR("UART Write: id={} len={} wbytes={} data={}", m_Location, length, bytes, ss.str());
+#endif
 				if ((bytes < 0) && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) //这几种错误码都说明还有数据待处理
 				{
 					continue;//继续接收数据
