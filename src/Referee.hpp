@@ -624,13 +624,12 @@ public:
 
 	auto PackToNativeBuffer() const -> std::unique_ptr<uint8_t[]> override
 	{
-		static unsigned int idx = 0;
 		auto buffer = std::unique_ptr<uint8_t[]>(reinterpret_cast<uint8_t*>(new RefereeMessage<MessageType>()));
 		auto* refereeMessage = reinterpret_cast<RefereeMessage<MessageType>*>(buffer.get());
 		refereeMessage->m_Header.m_SOF = 0xA5;
 		refereeMessage->m_Header.m_CmdId = MessageType::CMD_ID;
 		refereeMessage->m_Header.m_DataLength = MessageType::LENGTH;
-		refereeMessage->m_Header.m_Seq = 0; //[TODO]
+		refereeMessage->m_Header.m_Seq = 0;
 		DJICRCHelper::AppendCRC8Checksum(buffer.get(), 5);
 		refereeMessage->m_Payload = m_Msg;
 		DJICRCHelper::AppendCRC16Checksum(buffer.get(), RefereeMessage<MessageType>::LENGTH);
@@ -658,7 +657,7 @@ public:
 	 */
 	virtual auto AddReferee(std::string location) -> void = 0;
 
-	virtual auto SendMessage(const IRefereeBuffer& refereeBuffer) const -> void = 0;
+	virtual auto SendMessage(const IRefereeBuffer& refereeBuffer) const -> size_t = 0;
 
 	virtual auto Id() const -> uint16_t = 0;
 
@@ -705,10 +704,11 @@ public:
 				             });
 	}
 
-	auto SendMessage(const IRefereeBuffer& refereeBuffer) const -> void override
+	auto SendMessage(const IRefereeBuffer& refereeBuffer) const -> size_t override
 	{
 		const auto buffer = refereeBuffer.PackToNativeBuffer();
 		m_RefereeDevice->WriteRaw(refereeBuffer.Size(), buffer.get());
+		return refereeBuffer.Size();
 	}
 
 	auto Id() const -> uint16_t override
