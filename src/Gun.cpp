@@ -114,8 +114,8 @@ void FeedCtrlTask::FeedModeSet()
 		std::cerr << "[Feed] OverHeat!!!" << std::endl;*/
 
 	//若摩擦轮停转，则拨弹轮停转
-	if (overheat 
-		|| m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
+	if (/*overheat 
+		|| */m_FeedSensorValues.gimbalStatus.m_CtrlMode == GimbalCtrlMode::Disable
 		|| m_FeedSensorValues.fricStatus.m_Mode == FricMode::Disable
 		|| m_FeedSensorValues.fricStatus.m_FlagLowRPM)
 	{

@@ -130,9 +130,9 @@ void Aimbot::Process(unsigned char* pImage)
     {
         std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox, true); //rad, mm
         if(armorType == ArmorType::Big)
-            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.15);
+            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.2);
         else if(armorType == ArmorType::Small)
-            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.075);
+            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.1);
 
         /*deltaPitch = DeadbandLimit(deltaPitch, 0.05);
         deltaYaw = DeadbandLimit(deltaYaw, 0.05);*/
@@ -143,7 +143,7 @@ void Aimbot::Process(unsigned char* pImage)
     {
         deltaYaw = 0, deltaPitch = 0, dist = 0;
     }
-    //SPDLOG_TRACE("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
+    SPDLOG_TRACE("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
 
     //std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
     

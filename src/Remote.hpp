@@ -48,6 +48,7 @@ const std::map<std::string, uint16_t> kKeyboardMapChassis{
 	{"Backward", kKeyPressedOffsetS},
 	{"Leftward", kKeyPressedOffsetA},
 	{"Rightward", kKeyPressedOffsetD},
+	{"SpeedUp", kKeyPressedOffsetShift},
 	{"TopMode", kKeyPressedOffsetE}
 };
 

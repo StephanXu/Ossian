@@ -19,6 +19,7 @@
 #include "IOPeeker.hpp"
 #include "CameraPeeker.hpp"
 #include "ClientGraphicWorker.hpp"
+#include "ClientGraphic.hpp"
 
 #include <Config.schema.hpp>
 #include <LaunchSettings.schema.hpp>
@@ -91,7 +92,8 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IReferee, RefereeAllMessagesMt>(
 		[](IReferee& option)
 		{
-			option.AddReferee("/dev/ttyUSB1");
+			option.AddReferee("/dev/ttyUSB3");
+			option.Id(103);
 		});
 	app.AddService<RemoteMt>(
 		[](RemoteMt& option)
@@ -159,6 +161,8 @@ void Startup::ConfigServices(AppBuilder& app)
 			option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 2, 0x200);
 			option.AddMotor(Gun::MotorPosition::Feed, "can1", 1, 0x200);
 		});
+	app.AddService<ClientGraphicManager>();
+
 #endif // !VISION_ONLY
 
 	app.AddService<Aimbot>(

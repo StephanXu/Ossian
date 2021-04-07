@@ -10,6 +10,28 @@ std::array<double, 5> ChassisCtrlTask::PIDWheelSpeedParams;
 std::array<double, 5> ChassisCtrlTask::PIDChassisAngleParams;
 
 
+void ChassisCtrlTask::FillClientGraphics()
+{
+	auto& textStyleRef = m_ClientGraphicTextSpCapStatus->GetStyleRef();
+	textStyleRef.m_Color = 5;
+	textStyleRef.m_FontSize = 40;
+	textStyleRef.m_Width = 3;
+	textStyleRef.m_StartX = 360;
+	textStyleRef.m_StartY = 700; 
+	textStyleRef.m_Text = fmt::format("SPCAP: {.1f}V", m_ChassisSensorValues.spCap.m_CapacitorVoltage - kSpCapWarnVoltage);
+	m_ClientGraphicTextSpCapStatus->Save();
+
+	/*auto& floatStyleRef = m_ClientGraphicValueSpCapStatus->GetStyleRef();
+	floatStyleRef.m_Color = 5;
+	floatStyleRef.m_FontSize = 40;
+	floatStyleRef.m_Width = 3;
+	floatStyleRef.m_StartX = 420;
+	floatStyleRef.m_StartY = 700;
+	floatStyleRef.m_Value = m_ChassisSensorValues.spCap.m_CapacitorVoltage - kSpCapWarnVoltage;
+	floatStyleRef.m_Precision = 1;
+	m_ClientGraphicValueSpCapStatus->Save();*/
+}
+
 void ChassisCtrlTask::CalcWheelSpeedTarget()
 {
 	Eigen::Vector3d vSet(m_VxSet, m_VySet, m_WzSet);  //底盘三轴运动速度期望 m/s
@@ -83,15 +105,38 @@ void ChassisCtrlTask::RCToChassisSpeed()
 	{
 		//键鼠
 		if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Forward"))
-			vxChannelSet = -kChassisVxLimit;
+		{
+			if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("SpeedUp"))
+				vxChannelSet = -kChassisVxBoost;
+			else
+				vxChannelSet = -kChassisVxNormal;
+		}
 		else if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Backward"))
-			vxChannelSet = kChassisVxLimit;
-		else if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Leftward"))
-			vyChannelSet = kChassisVyLimit;
-		else if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Rightward"))
-			vyChannelSet = -kChassisVyLimit;
+		{
+			if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("SpeedUp"))
+				vxChannelSet = kChassisVxBoost;
+			else
+				vxChannelSet = kChassisVxNormal;
+		}
 		else
-			vxChannelSet = vyChannelSet = 0;
+			vxChannelSet = 0;
+
+		if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Leftward"))
+		{
+			if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("SpeedUp"))
+				vyChannelSet = kChassisVyBoost;
+			else
+				vyChannelSet = kChassisVyNormal;
+		}
+		else if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("Rightward"))
+		{
+			if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("SpeedUp"))
+				vyChannelSet = -kChassisVyBoost;
+			else
+				vyChannelSet = -kChassisVyNormal;
+		}
+		else
+			vyChannelSet = 0;
 	}
 	else
 	{
@@ -161,7 +206,8 @@ void ChassisCtrlTask::ChassisModeSet()
 			}
 		}
 	}
-	if (m_LastChassisMode == Top && m_CurChassisMode == Follow_Gimbal_Yaw)
+
+	if (m_LastChassisMode != Top && m_CurChassisMode == Top)
 		m_TopWzFilter.Reset();
 
 	m_LastChassisMode = m_CurChassisMode;
@@ -197,7 +243,7 @@ void ChassisCtrlTask::ChassisCtrl()
 			//m_PIDChassisSpeed[i].PrintDetails(i);
 		}
 	}
-	m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
+	//m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
 	//如果超级电容快没电了
 	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
 		ChassisPowerCtrlByCurrent();
@@ -297,7 +343,6 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
 		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis, 0); //符号为负？
-		//m_WzSet = m_TopWzFilter.Calc(m_WzSet);
 	}
 	else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{
