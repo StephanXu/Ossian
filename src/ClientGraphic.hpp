@@ -352,27 +352,25 @@ public:
                 buffer.m_Header.m_SenderID   = m_Referee->Id();
                 element->FillGraphicData(buffer.m_GraphicData);
                 buffer.m_GraphicData.m_EndAngle = element->FillText(buffer.m_Data, sizeof(buffer.m_Data));
-                m_Referee->SendMessage(RefereeBuffer<ClientGraphicTextModify>(buffer));
-                sentBytes += buffer.LENGTH;
+                sentBytes += m_Referee->SendMessage(RefereeBuffer<ClientGraphicTextModify>(buffer));
                 m_ModifiedTextElements.pop();
             }
             textProcessed = true;
             if (!m_ModifiedGraphElements.empty() && true == textProcessed)
             {
-                size_t elementsCount = m_ModifiedGraphElements.size();
+	            const size_t elementsCount = m_ModifiedGraphElements.size();
                 if(elementsCount >= 7) // 7
                 {
                     ClientGraphicShapeModify<7> buffer{};
                     buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
 					buffer.m_Header.m_ReceiverID = m_Id;
 					buffer.m_Header.m_SenderID   = m_Referee->Id();
-                    for (int i = 0; i < 7; ++i) {
+                    for (size_t i = 0; i < 7; ++i) {
                         auto element = m_ModifiedGraphElements.front();
                         element->FillGraphicData(buffer.m_GraphicData[i]);
                         m_ModifiedGraphElements.pop();
                     }
-					m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<7>>(buffer));
-                    sentBytes += buffer.LENGTH;
+                    sentBytes += m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<7>>(buffer));
                 }
                 else if (elementsCount >= 5) // 5
                 {
@@ -380,13 +378,12 @@ public:
                     buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
                     buffer.m_Header.m_ReceiverID = m_Id;
                     buffer.m_Header.m_SenderID   = m_Referee->Id();
-                    for (int i = 0; i < 5; ++i) {
+                    for (size_t i = 0; i < 5; ++i) {
                         auto element = m_ModifiedGraphElements.front();
                         element->FillGraphicData(buffer.m_GraphicData[i]);
                         m_ModifiedGraphElements.pop();
                     }
-                    m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<5>>(buffer));
-                    sentBytes += buffer.LENGTH;
+                    sentBytes += m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<5>>(buffer));
                 }
                 else if (elementsCount >= 2) // 2
                 {
@@ -394,13 +391,12 @@ public:
                     buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
                     buffer.m_Header.m_ReceiverID = m_Id;
                     buffer.m_Header.m_SenderID   = m_Referee->Id();
-                    for (int i = 0; i < 7; ++i) {
+                    for (size_t i = 0; i < 7; ++i) {
                         auto element = m_ModifiedGraphElements.front();
                         element->FillGraphicData(buffer.m_GraphicData[i]);
                         m_ModifiedGraphElements.pop();
                     }
-                    m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<2>>(buffer));
-                    sentBytes += buffer.LENGTH;
+                    sentBytes += m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<2>>(buffer));
                 }
                 else // 1
                 {
@@ -408,13 +404,12 @@ public:
                     buffer.m_Header.m_DataCmdId  = buffer.DATA_CMD_ID;
                     buffer.m_Header.m_ReceiverID = m_Id;
                     buffer.m_Header.m_SenderID   = m_Referee->Id();
-                    for (int i = 0; i < 1; ++i) {
+                    for (size_t i = 0; i < 1; ++i) {
                         auto element = m_ModifiedGraphElements.front();
                         element->FillGraphicData(buffer.m_GraphicData[i]);
                         m_ModifiedGraphElements.pop();
                     }
-                    m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<1>>(buffer));
-                    sentBytes += buffer.LENGTH;
+                    sentBytes += m_Referee->SendMessage(RefereeBuffer<ClientGraphicShapeModify<1>>(buffer));
                 }
             }
         }
