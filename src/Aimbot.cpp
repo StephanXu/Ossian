@@ -35,11 +35,13 @@ cv::Point2d Aimbot::Armor::frameCenter(0, 0);
 
 Aimbot::Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
                ossian::IOData<AutoAimStatus>* autoAimStatus,
+               ossian::IOData<ShootData>* shootDataStatus,
                ossian::UARTManager* uartManager)
 	: m_Valid(false)
     , m_Config(config)
     , m_AutoAimStatusSender(autoAimStatus)
     , m_UARTManager(uartManager)
+    , m_ShootDataListener(shootDataStatus)
 {
     Aimbot::LightBar::minArea = *m_Config->Instance()->vision->aimbot->lightbarMinArea;
     Aimbot::LightBar::ellipseMinAspectRatio = *m_Config->Instance()->vision->aimbot->lightBarEllipseMinAspectRatio;
@@ -126,13 +128,25 @@ void Aimbot::Process(unsigned char* pImage)
     
     double deltaYaw = 0, deltaPitch = 0, dist = 0;
     static PoseSolver angleSolver;
+
     if (foundArmor)
     {
-        std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox, true); //rad, mm
-        if(armorType == ArmorType::Big)
+        double bulletSpeed = m_ShootDataListener->Get().m_BulletSpeed;
+        if (fabs(bulletSpeed) <= DBL_EPSILON)
+        {
+            bulletSpeed = 15;
+        }
+            
+        std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox, true, bulletSpeed); //rad, mm
+        if (armorType == ArmorType::Big)
+        {
             shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.2);
-        else if(armorType == ArmorType::Small)
+        }
+        else if (armorType == ArmorType::Small)
+        {
             shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.1);
+        }
+            
 
         /*deltaPitch = DeadbandLimit(deltaPitch, 0.05);
         deltaYaw = DeadbandLimit(deltaYaw, 0.05);*/

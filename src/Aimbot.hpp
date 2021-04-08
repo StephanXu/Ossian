@@ -21,6 +21,7 @@
 
 #include "InputAdapter.hpp"
 #include "Utils.hpp"
+#include "Referee.hpp"
 
 #include <atomic>
 #include <tuple>
@@ -63,6 +64,7 @@ public:
     void Process(unsigned char* pImage);
     OSSIAN_SERVICE_SETUP(Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config, 
                                 ossian::IOData<AutoAimStatus>* autoAimStatus,
+                                ossian::IOData<ShootData>* shootDataStatus,
                                 ossian::UARTManager* uartManager));
     ~Aimbot()
     {
@@ -360,7 +362,8 @@ private:
         }
 
         //Yaw: 逆时针正 顺时针负 ; Pitch:下负 上正
-        std::tuple<double,double,double> Solve(ArmorType armorType, const cv::Rect2d& bbox,  bool EnableGravity=false)
+        std::tuple<double,double,double> Solve(ArmorType armorType, const cv::Rect2d& bbox,  
+            bool EnableGravity=false, double bulletSpeed=15)
         {
             PNPSolver(bbox, armorType);
             double yaw = 0, pitch = 0, dist = 0;
@@ -394,7 +397,10 @@ private:
             }*/
 
             if (EnableGravity)
-                pitch += GetPitch(dist/1000, posInGimbal(1)/1000, initV);
+            {
+                pitch += GetPitch(dist / 1000, posInGimbal(1) / 1000, bulletSpeed);
+            }
+               
 
             return std::make_tuple(yaw, pitch, dist);
         }
@@ -673,6 +679,8 @@ private:
     ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config = nullptr;
 
     ossian::UARTManager* m_UARTManager;
+    ossian::IOData<ShootData>* m_ShootDataListener;
+
 #ifdef VISION_ONLY
     std::shared_ptr<ossian::UARTDevice> m_PLCDevice;
     AimbotPLCSendMsg m_AimbotPLCSendMsg{};
