@@ -393,7 +393,7 @@ public:
 
 			m_Chassis->SetCapPwr(m_ChassisSensorValues.refereeRobotStatus.m_ChassisPowerLimit);
 
-			m_GraphicClient->Render();
+			// m_GraphicClient->Render();
 		}
 	}
 

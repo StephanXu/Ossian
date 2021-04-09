@@ -32,11 +32,12 @@ Startup::Startup()
 	const auto console = spdlog::stderr_color_mt("console");
 	spdlog::set_default_logger(console);
 	spdlog::set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
-	spdlog::set_level(spdlog::level::trace);
+	spdlog::set_level(spdlog::level::warn);
 
 	SPDLOG_TRACE("MI_VERSION: {}", mi_version());
 
 	// Load configuration
+
 	std::string mode           = std::getenv("OSSIAN_CONFIG");
 	std::string configFilename = fmt::format("AppSettings.{}.json", mode);
 	{
@@ -179,7 +180,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOWorker>();
 	app.AddExecutable<IOPeeker<0>>();
 	app.AddExecutable<IOPeeker<1>>();
-	app.AddExecutable<ClientGraphicWorker>();
+	// app.AddExecutable<ClientGraphicWorker>();
 
 #ifndef VISION_ONLY
 	app.AddExecutable<ChassisCtrlTask>();
