@@ -12,14 +12,14 @@ std::array<double, 5> ChassisCtrlTask::PIDChassisAngleParams;
 
 void ChassisCtrlTask::FillClientGraphics()
 {
-	auto& textStyleRef = m_ClientGraphicTextSpCapStatus->GetStyleRef();
-	textStyleRef.m_Color = 5;
-	textStyleRef.m_FontSize = 40;
-	textStyleRef.m_Width = 3;
-	textStyleRef.m_StartX = 360;
-	textStyleRef.m_StartY = 700; 
-	textStyleRef.m_Text = fmt::format("SPCAP: {.1f}V", m_ChassisSensorValues.spCap.m_CapacitorVoltage - kSpCapWarnVoltage);
-	m_ClientGraphicTextSpCapStatus->Save();
+	//auto& textStyleRef = m_ClientGraphicTextSpCapStatus->GetStyleRef();
+	//textStyleRef.m_Color = 5;
+	//textStyleRef.m_FontSize = 40;
+	//textStyleRef.m_Width = 3;
+	//textStyleRef.m_StartX = 360;
+	//textStyleRef.m_StartY = 700; 
+	//textStyleRef.m_Text = fmt::format("SPCAP: {.1f}V", m_ChassisSensorValues.spCap.m_CapacitorVoltage - kSpCapWarnVoltage);
+	//m_ClientGraphicTextSpCapStatus->Save();
 
 	/*auto& floatStyleRef = m_ClientGraphicValueSpCapStatus->GetStyleRef();
 	floatStyleRef.m_Color = 5;
