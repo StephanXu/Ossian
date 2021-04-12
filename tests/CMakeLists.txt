@@ -54,3 +54,9 @@ test_target(
 	SRCS "ConfigTest.cpp"
 	LIBS OssianCore spdlog::spdlog Schema mimalloc
 )
+
+test_target(
+	NAME ServoTest
+	SRCS "ServoMotorTest.cpp"
+)
+target_compile_definitions(ServoTest PRIVATE __linux__)

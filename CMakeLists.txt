@@ -48,6 +48,7 @@ target_sources(Ossian
             src/ClientGraphic.cpp
             src/DJICRCHelper.cpp
             src/ClientGraphicWorker.cpp
+            src/ServoMotor.cpp
         )
 target_precompile_headers(Ossian
         PRIVATE
