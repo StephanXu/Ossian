@@ -1,6 +1,7 @@
 ﻿#ifndef OSSIAN_DJI_CRC_HELPER
 #define OSSIAN_DJI_CRC_HELPER
 #include <cstdint>
+#include <cstdlib>
 
 class DJICRCHelper
 {

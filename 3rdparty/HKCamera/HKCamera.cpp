@@ -63,6 +63,7 @@ bool HKCamera::Initialize()
     if (MV_OK != MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &m_DeviceList))
         throw std::runtime_error("Enum devices fail");
     m_IsValid = true;
+    return m_IsValid;
 }
 
 std::vector<MV_CC_DEVICE_INFO> HKCamera::ListDevices()
