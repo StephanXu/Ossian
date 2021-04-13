@@ -119,7 +119,7 @@ void CANBus::Read() const
 		
 		const auto id = rawFrame.can_id;
 		const size_t length = rawFrame.can_dlc;
-		std::shared_ptr<uint8_t[]> buffer(new uint8_t[length]());
+		auto buffer = std::make_shared<uint8_t[]>(length);
 		memcpy(buffer.get(), rawFrame.data, length);
 		auto end = std::chrono::high_resolution_clock::now();
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
