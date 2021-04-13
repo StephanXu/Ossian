@@ -5,7 +5,7 @@
 
 class ServoMotor
 {
-	static constexpr char* PIPE_NAME = "servo_motor_fifo";
+	static constexpr char PIPE_NAME[] = "servo_motor_fifo";
 public:
 	OSSIAN_SERVICE_SETUP(ServoMotor());
 
