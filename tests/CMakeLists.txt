@@ -59,4 +59,3 @@ test_target(
 	NAME ServoTest
 	SRCS "ServoMotorTest.cpp"
 )
-target_compile_definitions(ServoTest PRIVATE __linux__)

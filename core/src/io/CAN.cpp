@@ -1,10 +1,13 @@
-﻿#include "ossian/io/CAN.hpp"
+﻿
+#if defined(__linux__) || defined(__APPLE__)
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <unistd.h>
+#endif // defined(__linux__) || defined(__APPLE__)
+#include <spdlog/spdlog.h>
 
 #include <functional>
 #include <unordered_map>
@@ -17,11 +20,11 @@
 #include <exception>
 #include <chrono>
 
-#include <spdlog/spdlog.h>
-
+#include "ossian/io/CAN.hpp"
 #include "ossian/io/IO.hpp"
 
 #ifdef __linux__
+
 namespace ossian
 {
 // CANBus
@@ -254,4 +257,5 @@ std::vector<CANBus*> CANManager::GetBuses() const
 }
 
 } // ossian
-#endif
+
+#endif // __linux__

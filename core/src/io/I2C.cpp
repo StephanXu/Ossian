@@ -1,11 +1,16 @@
-#include "ossian/io/I2C.hpp"
-#include <string>
-
+#ifdef __linux__
 #include <linux/ioctl.h>
 #include <linux/i2c-dev.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#endif // __linux__
+
+#include <string>
+
+#include "ossian/io/I2C.hpp"
+
+#ifdef __linux__
 
 namespace ossian
 {
@@ -129,3 +134,5 @@ bool I2CManager::DelBus(std::string const& location)
 	return m_BusMap.erase(location);
 }
 }
+
+#endif // __linux__

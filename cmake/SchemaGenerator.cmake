@@ -5,7 +5,12 @@ function(JSON_SCHEMA_GENERATE_CPP IS_ON_CONFIGURATION HDRS DEST)
     return()
   endif()
 
-  find_program(_QUICK_TYPE_EXECUTABLE "quicktype")
+  if (WIN32)
+    find_program(_QUICK_TYPE_EXECUTABLE "quicktype.cmd")
+  else()
+    find_program(_QUICK_TYPE_EXECUTABLE "quicktype")
+  endif()
+  message(STATUS "quicktype location: ${_QUICK_TYPE_EXECUTABLE}")
 
   foreach(FIL ${ARGN})
     get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
@@ -32,7 +37,8 @@ function(JSON_SCHEMA_GENERATE_CPP IS_ON_CONFIGURATION HDRS DEST)
                 --src-lang schema
                 --out "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.schema.hpp"
                 "${FIL}"
-            DEPENDS "${FIL}")
+            DEPENDS "${FIL}"
+            )
     else()
         execute_process(
             COMMAND ${_QUICK_TYPE_EXECUTABLE}
@@ -48,7 +54,14 @@ function(JSON_SCHEMA_GENERATE_CPP IS_ON_CONFIGURATION HDRS DEST)
                 --src-lang schema
                 --out "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.schema.hpp"
                 "${FIL}"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            RESULT_VARIABLE QUICK_TYPE_GENERATE_STATUS
+            )
+        if(QUICK_TYPE_GENERATE_STATUS AND NOT QUICK_TYPE_GENERATE_STATUS EQUAL 0)
+            message(STATUS "quicktype generate schema ${FIL} failed: ${QUICK_TYPE_GENERATE_STATUS}")
+        else()
+            message(STATUS "quicktype generate schema ${FIL} success")
+        endif()
     endif()
   endforeach()
 
