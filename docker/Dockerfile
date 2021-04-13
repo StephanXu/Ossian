@@ -6,20 +6,27 @@ LABEL description="Ossian development container"
 ENV dir_prefix=/usr/local/Ossian
 
 RUN apt update \ 
-    && apt install -y curl file gcc g++ gdb git build-essential tar unzip wget ninja-build yasm openssh-server rsync npm
+    && apt install -y curl file gcc g++ gdb git build-essential tar unzip wget ninja-build yasm openssh-server rsync npm software-properties-common \
+    && apt update \
+    && add-apt-repository ppa:ubuntu-toolchain-r/test -y \
+    && apt install -y gcc-10 g++-10
     
-RUN npm install -g npm \
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
+    && update-alternatives --config gcc \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 \
+    && update-alternatives --config g++
+
+RUN npm install -g npm@latest-6 \
     && npm install -g n \
     && n stable
 
-RUN npm install -g quicktype
+RUN npm install -g npm \ 
+    && npm install -g quicktype
 
-RUN apt install -y libssl-dev
-
-RUN mkdir -p /var/run/sshd
-
-RUN echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
-    ssh-keygen -A
+RUN apt install -y libssl-dev \
+    && mkdir -p /var/run/sshd \
+    && echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config \
+    && ssh-keygen -A
 
 RUN mkdir -p $dir_prefix
 
@@ -69,19 +76,19 @@ RUN cd $dir_prefix \
     && mkdir -p out/release \
     && cd out/release \
     && cmake ../.. \
-    && make -j$((`nproc`+1)) \
-    && make install \
+    && cmake --build . --config Release -j$((`nproc`+1)) \
+    && cmake --build . --target install \
     && cd ../.. \
     && mkdir -p out/debug \
     && cd out/debug \
     && cmake -DCMAKE_BUILD_TYPE=Debug ../.. \
-    && make -j$((`nproc`+1))
+    && cmake --build . --config Debug -j$((`nproc`+1))
 
 RUN apt install -y libcpprest-dev \
     && cd $dir_prefix \
     && git clone https://github.com/StephanXu/SignalR-Client-Cpp.git -n \
     && cd SignalR-Client-Cpp \
-    && git checkout 0b86c8ec6aa02f4dd3e92c172f9b0a516f06e728 \
+    && git checkout 296b1228af824c68ab8973e4dc1249e78ae547e7 \
     && git submodule update --init \
     && mkdir build.release \
     && cd build.release \
@@ -90,8 +97,8 @@ RUN apt install -y libcpprest-dev \
         -DUSE_CPPRESTSDK=true \
         -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/ \
         -DCMAKE_INSTALL_PREFIX=$dir_prefix/libs/release/SignalR-Client-Cpp \
-    && make -j$((`nproc`+1)) \
-    && make install \
+    && cmake --build . --config Release -j$((`nproc`+1)) \
+    && cmake --build . --target install \
     && cd .. \
     && mkdir build.debug \
     && cd build.debug \
@@ -100,8 +107,8 @@ RUN apt install -y libcpprest-dev \
         -DUSE_CPPRESTSDK=true \
         -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/ \
         -DCMAKE_INSTALL_PREFIX=$dir_prefix/libs/debug/SignalR-Client-Cpp/ \
-    && make -j$((`nproc`+1)) \
-    && make install
+    && cmake --build . --config Debug -j$((`nproc`+1)) \
+    && cmake --build . --target install
 
 RUN cd $dir_prefix \
     && git clone https://github.com/gflags/gflags.git -n \
@@ -112,16 +119,16 @@ RUN cd $dir_prefix \
     && cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=$dir_prefix/libs/release/gflags \
-    && make -j$((`nproc`+1)) \
-    && make install \
+    && cmake --build . --config Release -j$((`nproc`+1)) \
+    && cmake --build . --target install \
     && cd .. \
     && mkdir build.debug \
     && cd build.debug \
     && cmake .. \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_INSTALL_PREFIX=$dir_prefix/libs/debug/gfalgs \
-    && make -j$((`nproc`+1)) \
-    && make install \
+    && cmake --build . --config Debug -j$((`nproc`+1)) \
+    && cmake --build . --target install \
     && cd .. \
     && cd ..
 
