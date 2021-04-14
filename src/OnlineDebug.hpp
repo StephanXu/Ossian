@@ -207,7 +207,7 @@ public:
 
 		std::promise<std::string> waitLogId;
 		m_Hub->Invoke("CreateLog", logName, logDescription, argumentId)
-		     .Then<std::string>([&waitLogId](const std::string& id, std::exception_ptr)
+		     .Then<std::string>([&waitLogId](const std::string& id, const std::exception_ptr&)
 		     {
 			     waitLogId.set_value(std::string{id});
 		     });
@@ -230,7 +230,7 @@ public:
 			{
 				std::promise<bool> waitStatus;
 				m_Hub->Invoke("AddLog", logId, content)
-				     .Then<bool>([&](bool, std::exception_ptr)
+				     .Then<bool>([&](bool, const std::exception_ptr&)
 				     {
 					     stdLogger->trace("Uploaded: {}", content.size());
 					     waitStatus.set_value(true);
@@ -242,7 +242,7 @@ public:
 		{
 			std::promise<bool> waitStatus;
 			m_Hub->Invoke("AddLog", logId, content)
-			     .Then<bool>([&](bool, std::exception_ptr)
+			     .Then<bool>([&](bool, const std::exception_ptr&)
 			     {
 				     stdLogger->trace("Uploaded: {}", content.size());
 				     waitStatus.set_value(true);

@@ -35,6 +35,7 @@ function(JSON_SCHEMA_GENERATE_CPP IS_ON_CONFIGURATION HDRS DEST)
                 --member-style camel-case
                 --enumerator-style upper-underscore-case
                 --src-lang schema
+                --enum-type int
                 --out "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.schema.hpp"
                 "${FIL}"
             DEPENDS "${FIL}"
@@ -52,6 +53,7 @@ function(JSON_SCHEMA_GENERATE_CPP IS_ON_CONFIGURATION HDRS DEST)
                 --member-style camel-case
                 --enumerator-style upper-underscore-case
                 --src-lang schema
+                --enum-type int
                 --out "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.schema.hpp"
                 "${FIL}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

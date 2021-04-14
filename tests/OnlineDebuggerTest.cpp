@@ -6,7 +6,7 @@
 
 int main()
 {
-	const std::string demoArgumentId{"60762e7ddf537d0001ac0361"};
+	const std::string demoArgumentId{"607707c58b3d8600013b8c96"};
 	OnlineDebug onlineDbg;
 	onlineDbg.Connect("http://ossian.mrxzh.com/logger");
 	onlineDbg.StartLogging("OnlineLog",
@@ -15,7 +15,7 @@ int main()
 	                       demoArgumentId,
 	                       true,
 	                       0,
-	                       false,
+	                       true,
 	                       "offline-log.log");
 
 	std::default_random_engine random(std::time(nullptr));

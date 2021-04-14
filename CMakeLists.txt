@@ -64,6 +64,7 @@ target_precompile_headers(Ossian
             "src/Gyro.hpp"
             "src/GyroA204.hpp"
             "src/GyroA110.hpp"
+            "src/OnlineDebug.hpp"
             "src/TOFNooploop.hpp"
             "src/Phototube.hpp"
             "src/DJICRCHelper.hpp"

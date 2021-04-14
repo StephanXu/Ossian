@@ -68,13 +68,13 @@
               "description": "",
               "component": "select",
               "enum": [
-                "trace",
-                "debug",
-                "info",
-                "warn",
-                "error",
-                "critical",
-                "off"
+                "a_trace",
+                "b_debug",
+                "c_info",
+                "d_warn",
+                "e_error",
+                "f_critical",
+                "g_off"
               ],
               "enumName": [
                 "Trace",
