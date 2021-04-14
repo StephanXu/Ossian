@@ -1,16 +1,22 @@
+#include <spdlog/spdlog.h>
 #include "../src/OnlineDebug.hpp"
 
 #include <random>
+#include <string>
 
 int main()
 {
-	const std::string demoArgumentId{"5f8c2c540553361014548e5f"};
+	const std::string demoArgumentId{"60762e7ddf537d0001ac0361"};
 	OnlineDebug onlineDbg;
 	onlineDbg.Connect("http://ossian.mrxzh.com/logger");
 	onlineDbg.StartLogging("OnlineLog",
 	                       "OnlineDebuggerTest",
 	                       "Test of online debugger",
-	                       demoArgumentId);
+	                       demoArgumentId,
+	                       true,
+	                       0,
+	                       false,
+	                       "offline-log.log");
 
 	std::default_random_engine random(std::time(nullptr));
 	std::uniform_real_distribution<double> uniformDist(-10, 10);

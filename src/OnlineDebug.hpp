@@ -143,7 +143,7 @@ public:
 	                  bool isOffline                 = false,
 	                  std::string offlineLogFilename = "") const -> void
 	{
-		if (!m_Valid)
+		if (!m_Valid && !isOffline)
 		{
 			throw std::runtime_error("OnlineDebug is not valid");
 		}
@@ -153,8 +153,7 @@ public:
 		{
 			std::promise<std::string> waitLogId;
 			m_Hub->Invoke("CreateLog", logName, logDescription, argumentId)
-			     .Then<std::string>(
-				     [&waitLogId](const std::string& id, std::exception_ptr)
+			     .Then<std::string>([&waitLogId](const std::string& id, std::exception_ptr)
 				     {
 					     waitLogId.set_value(std::string{id});
 				     });
@@ -186,6 +185,67 @@ public:
 				logger->flush();
 			}
 		}).detach();
+	}
+
+	auto UploadOfflineLog(std::string logFilename,
+	                      const std::string logName,
+	                      const std::string logDescription,
+	                      const std::string argumentId) -> void
+	{
+		if (!m_Valid)
+		{
+			throw std::runtime_error("OnlineDebug is not valid");
+		}
+		const auto stdSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+		auto stdLogger     = std::make_shared<spdlog::logger>("stdLogger", stdSink);
+		stdLogger->set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
+
+		std::promise<std::string> waitLogId;
+		m_Hub->Invoke("CreateLog", logName, logDescription, argumentId)
+		     .Then<std::string>([&waitLogId](const std::string& id, std::exception_ptr)
+		     {
+			     waitLogId.set_value(std::string{id});
+		     });
+		auto logId = waitLogId.get_future().get();
+		stdLogger->info("Create log: {}", logId);
+
+
+		std::ifstream ifs(logFilename, std::ios::in);
+		std::string line{};
+		std::vector<std::string> content;
+		while (!ifs.eof())
+		{
+			std::getline(ifs, line);
+			if (ifs.fail())
+			{
+				break;
+			}
+			content.push_back(line);
+			if (content.size() > 100)
+			{
+				std::promise<bool> waitStatus;
+				m_Hub->Invoke("AddLog", logId, content)
+				     .Then<bool>([&](bool, std::exception_ptr)
+				     {
+					     stdLogger->trace("Uploaded: {}", content.size());
+					     waitStatus.set_value(true);
+				     });
+				waitStatus.get_future().get();
+				content.clear();
+			}
+		}
+		{
+			std::promise<bool> waitStatus;
+			m_Hub->Invoke("AddLog", logId, content)
+			     .Then<bool>([&](bool, std::exception_ptr)
+			     {
+				     stdLogger->trace("Uploaded: {}", content.size());
+				     waitStatus.set_value(true);
+			     });
+			waitStatus.get_future().get();
+			content.clear();
+		}
+		stdLogger->info("Upload success");
 	}
 };
 
