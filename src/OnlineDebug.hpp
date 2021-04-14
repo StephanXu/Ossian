@@ -132,7 +132,7 @@ public:
 	 * @param logDescription The description to display on online board.
 	 * @param argumentId The argument id that connect to the log
 	 * @param logLevel Log level
-	 * @param isOffline Set true to enable offline log file instead of online debug.
+	 * @param isOnline Set true to enable online debug instead of local log file.
 	 * @param offlineLogFilename Filename to store offline log file
 	 */
 	auto StartLogging(std::string loggerName,
@@ -141,16 +141,16 @@ public:
 	                  const std::string argumentId,
 	                  bool enableStdlog              = true,
 	                  int logLevel                   = 0,
-	                  bool isOffline                 = false,
+	                  bool isOnline                  = true,
 	                  std::string offlineLogFilename = "") const -> void
 	{
-		if (!m_Valid && !isOffline)
+		if (!m_Valid && isOnline)
 		{
 			throw std::runtime_error("OnlineDebug is not valid");
 		}
 
 		auto distSink = std::make_shared<spdlog::sinks::dist_sink_mt>();
-		if (!isOffline)
+		if (isOnline)
 		{
 			SPDLOG_TRACE("Start Create OnlineDebugger");
 			std::promise<std::string> waitLogId;
