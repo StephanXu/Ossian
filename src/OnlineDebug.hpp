@@ -114,6 +114,7 @@ public:
 	 */
 	auto Connect(std::string url)
 	{
+		SPDLOG_INFO("Connect to OnlineDebug: {}", url);
 		m_Hub.reset(new OnlineDebugHub{
 			std::move(
 				signalr::hub_connection_builder::create(url)
@@ -151,6 +152,7 @@ public:
 		auto distSink = std::make_shared<spdlog::sinks::dist_sink_mt>();
 		if (!isOffline)
 		{
+			SPDLOG_TRACE("Start Create OnlineDebugger");
 			std::promise<std::string> waitLogId;
 			m_Hub->Invoke("CreateLog", logName, logDescription, argumentId)
 			     .Then<std::string>([&waitLogId](const std::string& id, std::exception_ptr)
@@ -158,10 +160,12 @@ public:
 					     waitLogId.set_value(std::string{id});
 				     });
 			auto logId            = waitLogId.get_future().get();
+			SPDLOG_INFO("Create OnlineDebug logId: {}", logId);
 			const auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, logId);
 			distSink->add_sink(onlineSink);
 			if (enableStdlog)
 			{
+				SPDLOG_TRACE("Append stdlog with onlieDebugger");
 				const auto stdSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 				distSink->add_sink(stdSink);
 			}
@@ -177,6 +181,7 @@ public:
 		logger->set_level(static_cast<spdlog::level::level_enum>(logLevel));
 		spdlog::register_logger(logger);
 		spdlog::set_default_logger(logger);
+		SPDLOG_TRACE("Logger created");
 		std::thread([logger]()
 		{
 			while (true)

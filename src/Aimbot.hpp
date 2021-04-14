@@ -65,7 +65,10 @@ public:
     void Process(unsigned char* pImage);
     OSSIAN_SERVICE_SETUP(Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config, 
                                 ossian::IOData<AutoAimStatus>* autoAimStatus,
+#ifndef VISION_ONLY
+                                ossian::IOData<RobotStatus>* robotStatus,
                                 ossian::IOData<ShootData>* shootDataStatus,
+#endif // !VISION_ONLY
                                 ossian::UARTManager* uartManager));
     ~Aimbot()
     {
@@ -479,12 +482,23 @@ private:
             const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.0760893012372638, 0.402763931163976, 
                 0.0004829922498116148, 0.0008781734366235105, -2.225999824210345);//英雄*/
 			
-            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1769.844828845388, 0, 718.7847242857742,
-            0, 1769.677479561756, 542.4977222327369,
-            0, 0, 1); //组合步兵
-            const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.09623964734070083, 0.6713728356896519, 
-                -0.001002839237022281, -0.0004396521659829322, -3.774671626485426); //组合步兵
+            //const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1769.844828845388, 0, 718.7847242857742,
+            //0, 1769.677479561756, 542.4977222327369,
+            //0, 0, 1); //组合步兵
+            //const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.09623964734070083, 0.6713728356896519, 
+            //    -0.001002839237022281, -0.0004396521659829322, -3.774671626485426); //组合步兵
 
+            //const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1764.650199381256, 0, 730.3109193363629,
+            //0, 1764.413640636067, 582.6431141360831,
+            //0, 0, 1); //lyp步兵
+            //const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.06813703985752723, 0.08930622194625375,
+            //    0.0008550485333355045, 0.0003985532205708927, -0.3893873736338695); //lyp步兵
+
+            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 2345.92864474718, 0, 760.6855477252334,
+                0, 2345.049949354787, 539.6663442754968,
+                0, 0, 1); //wzj哨兵
+            const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.1078742114559475, 2.141571827724015, 
+                -0.001804108147783874, -0.001967844450693196, -20.18718624926334); //wzj哨兵
 
 			// tmp
 			static cv::Mat rvec, tvec;
@@ -515,7 +529,21 @@ private:
 
     bool DetectArmor(unsigned char* pImage, Armor& outTarget) noexcept
     {
+#ifdef VISION_ONLY
         static int enemyColor = (*m_Config->Instance()->vision->aimbot->enemyColor == Config::EnemyColor::BLUE) ? 0 : 2;
+#else
+        uint8_t myRobotId = m_RobotStatusListener->Get().m_RobotId;
+        static int enemyColor;
+        if (myRobotId >= 1 && myRobotId <= 9)           // 我方是红
+        {
+            enemyColor = 0;
+        }
+        else if (myRobotId >= 101 && myRobotId <= 109)  // 我方是蓝
+        {
+            enemyColor = 2;
+        }
+#endif // VISION_ONLY
+
         static int thresBrightness = *m_Config->Instance()->vision->aimbot->thresBrightness;
         static int thresColor = *m_Config->Instance()->vision->aimbot->thresColor;
 
@@ -671,16 +699,15 @@ private:
     std::vector<cv::Mat> channels;
 #endif // WITH_CUDA
 
-    double m_Yaw = 0;
-    double m_Pitch = 0;
-    std::mutex m_AngleLock;
-
     std::atomic<AlgorithmState> m_ArmorState = AlgorithmState::Detecting;
     std::atomic_bool m_Valid = false;
     ossian::Utils::ConfigLoader<Config::ConfigSchema>* m_Config = nullptr;
 
     ossian::UARTManager* m_UARTManager;
+    ossian::IOData<RobotStatus>* m_RobotStatusListener;
     ossian::IOData<ShootData>* m_ShootDataListener;
+
+    std::array<FirstOrderFilter, 2> m_AutoAimFilters; //[0|1] [Pitch|Yaw]
 
 #ifdef VISION_ONLY
     std::shared_ptr<ossian::UARTDevice> m_PLCDevice;

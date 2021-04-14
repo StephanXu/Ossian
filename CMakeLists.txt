@@ -57,7 +57,6 @@ target_precompile_headers(Ossian
             "src/Startup.hpp"
             "src/Utils.hpp"
             "src/WindmillDetection.hpp"
-            "src/OnlineDebug.hpp"
             "src/Remote.hpp"
             "src/Capacitor.hpp"
             "src/IOPeeker.hpp"

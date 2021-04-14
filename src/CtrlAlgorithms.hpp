@@ -155,11 +155,13 @@ private:
 
 
 // out = k / (k + T) * out + T / (k + T) * in
+// 系数越小，滞后越小
 // 一阶低通滤波器
 class FirstOrderFilter   
 {
 public:
 	FirstOrderFilter(double k=1,double t=1) : m_Coef(k),m_FramePeriod(t) {}  //参数取决于滤波时间和采样周期
+	//时间单位s
 	void SetState(double k, double t) { m_Coef = k; m_FramePeriod = t; }
 	double Calc(double curValue)
 	{

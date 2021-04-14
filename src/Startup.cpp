@@ -32,7 +32,7 @@ Startup::Startup()
 	const auto console = spdlog::stderr_color_mt("console");
 	spdlog::set_default_logger(console);
 	spdlog::set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
-	spdlog::set_level(spdlog::level::warn);
+	spdlog::set_level(spdlog::level::trace);
 
 	SPDLOG_TRACE("MI_VERSION: {}", mi_version());
 
@@ -72,7 +72,7 @@ void Startup::ConfigServices(AppBuilder& app)
 			const auto logConfig = config->ossian->onlineDebug;
 			if (*logConfig->enableOnline)
 			{
-				option.Connect(*logConfig->loggerUrl);
+				option.Connect("http://ossian.mrxzh.com/logger");
 				option.StartLogging("OnlineLog",
 				                    *logConfig->logName,
 				                    *logConfig->logDesc,
@@ -158,9 +158,15 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Gun>(
 		[](Gun& option)
 		{
-			option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 3, 0x200);
+			//组合步兵
+			//option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 3, 0x200);
+			//option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 2, 0x200);
+			//option.AddMotor(Gun::MotorPosition::Feed, "can1", 1, 0x200);
+
+			//lyp步兵
+			option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 1, 0x200);
 			option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 2, 0x200);
-			option.AddMotor(Gun::MotorPosition::Feed, "can1", 1, 0x200);
+			option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);
 		});
 	app.AddService<ClientGraphicManager>();
 
@@ -180,13 +186,13 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOWorker>();
 	app.AddExecutable<IOPeeker<0>>();
 	app.AddExecutable<IOPeeker<1>>();
-	// app.AddExecutable<ClientGraphicWorker>();
-
+	
 #ifndef VISION_ONLY
+	// app.AddExecutable<ClientGraphicWorker>();
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
 	app.AddExecutable<FricCtrlTask>();
 	app.AddExecutable<FeedCtrlTask>();
 #endif // !VISION_ONLY
-	app.AddExecutable<CameraPeeker>();
+	// app.AddExecutable<CameraPeeker>();
 }

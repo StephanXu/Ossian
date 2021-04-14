@@ -35,13 +35,19 @@ cv::Point2d Aimbot::Armor::frameCenter(0, 0);
 
 Aimbot::Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
                ossian::IOData<AutoAimStatus>* autoAimStatus,
+#ifndef VISION_ONLY
+               ossian::IOData<RobotStatus>* robotStatus,
                ossian::IOData<ShootData>* shootDataStatus,
+#endif // !VISION_ONLY
                ossian::UARTManager* uartManager)
 	: m_Valid(false)
     , m_Config(config)
     , m_AutoAimStatusSender(autoAimStatus)
     , m_UARTManager(uartManager)
+#ifndef VISION_ONLY
+    , m_RobotStatusListener(robotStatus)
     , m_ShootDataListener(shootDataStatus)
+#endif // !VISION_ONLY
 {
     Aimbot::LightBar::minArea = *m_Config->Instance()->vision->aimbot->lightbarMinArea;
     Aimbot::LightBar::ellipseMinAspectRatio = *m_Config->Instance()->vision->aimbot->lightBarEllipseMinAspectRatio;
@@ -72,6 +78,9 @@ Aimbot::Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
 
     Aimbot::Armor::frameCenter.x = *m_Config->Instance()->vision->camera->frameWidth;
     Aimbot::Armor::frameCenter.y = *m_Config->Instance()->vision->camera->frameHeight;
+
+    m_AutoAimFilters[0].SetState(0.25, 0.03);
+    m_AutoAimFilters[1].SetState(0.25, 0.03);
 
 #ifdef WITH_CUDA
     /*cudaError_t cudaStatus = cudaMallocManaged(&m_pBinary, 1440 * 1080 * sizeof(unsigned char));
@@ -131,13 +140,20 @@ void Aimbot::Process(unsigned char* pImage)
 
     if (foundArmor)
     {
+#ifdef VISION_ONLY
+        double bulletSpeed = Aimbot::PoseSolver::initV;
+#else
         double bulletSpeed = m_ShootDataListener->Get().m_BulletSpeed;
         if (fabs(bulletSpeed) <= DBL_EPSILON)
         {
             bulletSpeed = 15;
         }
-            
+#endif // VISION_ONLY
+
         std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox, true, bulletSpeed); //rad, mm
+        deltaPitch = m_AutoAimFilters[0].Calc(deltaPitch);
+        deltaYaw = m_AutoAimFilters[1].Calc(deltaYaw);
+
         if (armorType == ArmorType::Big)
         {
             shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.2);
@@ -156,6 +172,8 @@ void Aimbot::Process(unsigned char* pImage)
     else
     {
         deltaYaw = 0, deltaPitch = 0, dist = 0;
+        m_AutoAimFilters[0].Reset();
+        m_AutoAimFilters[1].Reset();
     }
     SPDLOG_TRACE("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
 

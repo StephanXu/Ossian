@@ -68,7 +68,7 @@ public:
 		motor->UnLock();
 
 		m_MotorMsgCheck[position] = true;
-		if (!(m_MotorMsgCheck[Pitch] && m_MotorMsgCheck[Yaw]))
+		if (!(m_MotorMsgCheck[Pitch] /*&& m_MotorMsgCheck[Yaw]*/))
 		{
 			return;
 		}
@@ -112,10 +112,20 @@ public:
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192.0;
 	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
 
-	//云台特殊位置 [TODO]在disable模式下，debug出限位和中值
-	static constexpr uint16_t kPitchEcdLimit0 = 6236;
+	//云台特殊位置 
+	//******************组合步兵************************
+	/*static constexpr uint16_t kPitchEcdLimit0 = 6236;
 	static constexpr uint16_t kPitchEcdLimit1 = 7754;
 	static constexpr uint16_t kPitchEcdMid = 6906;
+
+	static constexpr uint16_t kYawEcdLimit0 = 2925;
+	static constexpr uint16_t kYawEcdLimit1 = 7019;
+	static constexpr uint16_t kYawEcdMid = 852;*/
+
+	//******************lyp步兵************************
+	static constexpr uint16_t kPitchEcdLimit0 = 1900;
+	static constexpr uint16_t kPitchEcdLimit1 = 25;
+	static constexpr uint16_t kPitchEcdMid = 666;
 
 	static constexpr uint16_t kYawEcdLimit0 = 2925;
 	static constexpr uint16_t kYawEcdLimit1 = 7019;
@@ -329,9 +339,9 @@ public:
 		m_GimbalSensorValues.imu.m_Yaw *= kDegreeToRadCoef;
 		m_GimbalSensorValues.imu.m_ZAxisSpeed = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_ZAxisSpeed
 				- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_XAxisSpeed;
-		SPDLOG_TRACE("@RelativeAngle=[$PitchAngle={},$YawAngle={}]",
+		/*SPDLOG_TRACE("@RelativeAngle=[$PitchAngle={},$YawAngle={}]",
 			m_GimbalSensorValues.relativeAngle[Pitch],
-			m_GimbalSensorValues.relativeAngle[Yaw]);
+			m_GimbalSensorValues.relativeAngle[Yaw]);*/
 		//std::cout << m_GimbalSensorValues.relativeAngle[Pitch] << ' ' << m_GimbalSensorValues.relativeAngle[Yaw] << std::endl;
 		/*SPDLOG_TRACE("@RotYaw=[$YawAngle={},$YawSpeed={}]",
 			m_GimbalSensorValues.imu.m_Yaw,
@@ -361,21 +371,21 @@ public:
 		//m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wz
 		//	- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wx;
 
-		/*SPDLOG_TRACE("@IMUAngle=[$GPitch={},$GYaw={}]",
-			m_GimbalSensorValues.imuPitch.m_ZAxisAngle,
-			m_GimbalSensorValues.imuYaw.m_ZAxisAngle);
+		SPDLOG_TRACE("@IMUAngle=[$GPitch={},$GYaw={}]",
+			m_GimbalSensorValues.imu.m_Pitch,
+			m_GimbalSensorValues.imu.m_Yaw);
 		SPDLOG_TRACE("@IMUSpeed=[$WPitch={},$WYaw={}]",
-			m_GimbalSensorValues.imuPitch.m_ZAxisSpeed,
-			m_GimbalSensorValues.imuYaw.m_ZAxisSpeed);*/
+			m_GimbalSensorValues.imu.m_YAxisSpeed,
+			m_GimbalSensorValues.imu.m_ZAxisSpeed);
 		/*SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
 			m_GimbalSensorValues.imu.m_Hx,
 			m_GimbalSensorValues.imu.m_Hy,
 			m_GimbalSensorValues.imu.m_Hz);*/
 
-		SPDLOG_TRACE("@MotorEncoder=[$EPitch={},$EYaw={}]",
+		/*SPDLOG_TRACE("@MotorEncoder=[$EPitch={},$EYaw={}]",
 			m_MotorsStatus.m_Encoding[Pitch],
-			m_MotorsStatus.m_Encoding[Yaw]);
-
+			m_MotorsStatus.m_Encoding[Yaw]);*/
+		//std::cerr << m_GimbalSensorValues.imu.m_Pitch << '\t' << m_GimbalSensorValues.imu.m_Yaw << std::endl;
 	}
 
 
@@ -423,10 +433,10 @@ public:
 			//[TODO] 模式切换过渡
 
 			GimbalExpAngleSet(Pitch);
-			GimbalExpAngleSet(Yaw);
+			//GimbalExpAngleSet(Yaw);
 
 			GimbalCtrl(Pitch);
-			GimbalCtrl(Yaw);
+			//GimbalCtrl(Yaw);
 		}
 	}
 

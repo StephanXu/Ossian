@@ -15,7 +15,7 @@ std::array<double, 5> GimbalCtrlTask::PIDAutoAimInputParams;
 
 void GimbalCtrlTask::GimbalCtrlModeSet()
 {
-	if (m_FlagInitGimbal)
+	if (m_FlagInitGimbal&&0)
 	{
 		static bool firstClosing = true;
 		if (fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.05 
@@ -111,7 +111,12 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 		}
 	}
 	
-
+	m_CurGimbalAngleMode[Pitch] = Gyro;
+	m_CurGimbalAngleMode[Yaw] = Gyro;
+	m_EcdAngleSet[Pitch] = 0;
+	m_EcdAngleSet[Yaw] = 0;
+	m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
+	m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
 	
 }
 

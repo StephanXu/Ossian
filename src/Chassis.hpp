@@ -151,11 +151,11 @@ public:
 	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
 	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 	static constexpr double kChassisAngleWzRCSen = 0.000005; ///< 跟随底盘yaw模式下，遥控器的yaw遥杆（max 660）增加到车体角度的比例
-	static constexpr double kChassisCtrlPeriod = 0.002;  //底盘控制周期s，用于低通滤波器
+	static constexpr double kChassisCtrlPeriod = 0.008;  //底盘控制周期s，用于低通滤波器
 
 	//底盘运动
-	static constexpr double kChassisVxLimit = 3; ///< m/s
-	static constexpr double kChassisVyLimit = 2; ///< m/s
+	static constexpr double kChassisVxLimit = 3; ///< m/s 遥控器
+	static constexpr double kChassisVyLimit = 2; ///< m/s 遥控器
 
 	static constexpr double kChassisVxNormal = 2; ///< m/s 键鼠
 	static constexpr double kChassisVyNormal = 3; ///< m/s 键鼠
@@ -392,8 +392,6 @@ public:
 			ChassisCtrl();
 
 			m_Chassis->SetCapPwr(m_ChassisSensorValues.refereeRobotStatus.m_ChassisPowerLimit);
-
-			// m_GraphicClient->Render();
 		}
 	}
 
