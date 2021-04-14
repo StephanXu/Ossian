@@ -1,12 +1,12 @@
 #!/bin/bash
 NAME="SignalR-Client-Cpp"
-VERSION="0b86c8ec6aa02f4dd3e92c172f9b0a516f06e728"
-GITHUB_LINK="https://github.com/StephanXu/SignalR-Client-Cpp.git"
+VERSION="296b1228af824c68ab8973e4dc1249e78ae547e7"
+REPO_LINK="https://github.com/StephanXu/SignalR-Client-Cpp.git"
 source scripts/utilities.sh
 sudo apt update -y
 sudo apt install -y libcpprest-dev
 pushd source
-git clone "$GITHUB_LINK"
+git clone "$REPO_LINK"
 pushd $NAME
 git checkout -b "$VERSION"
 git submodule update --init

@@ -1,10 +1,10 @@
 #!/bin/bash
 NAME="json"
 VERSION="v3.9.1"
-GITHUB_LINK="https://github.com/nlohmann/json.git"
+REPO_LINK="https://github.com/nlohmann/json.git"
 source scripts/utilities.sh
 pushd source
-git clone --branch "$VERSION" "$GITHUB_LINK"
+git clone --branch "$VERSION" "$REPO_LINK"
 pushd $NAME
 mkdir build.release
 pushd build.release
