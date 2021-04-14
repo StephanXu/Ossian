@@ -72,7 +72,7 @@ void Startup::ConfigServices(AppBuilder& app)
 			const auto logConfig = config->ossian->onlineDebug;
 			if (*logConfig->enableOnline)
 			{
-				option.Connect("http://ossian.mrxzh.com/logger");
+				option.Connect(*logConfig->loggerUrl);
 				option.StartLogging("OnlineLog",
 				                    *logConfig->logName,
 				                    *logConfig->logDesc,
@@ -188,11 +188,11 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOPeeker<1>>();
 	
 #ifndef VISION_ONLY
-	// app.AddExecutable<ClientGraphicWorker>();
+	app.AddExecutable<ClientGraphicWorker>();
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
 	app.AddExecutable<FricCtrlTask>();
 	app.AddExecutable<FeedCtrlTask>();
 #endif // !VISION_ONLY
-	// app.AddExecutable<CameraPeeker>();
+	app.AddExecutable<CameraPeeker>();
 }
