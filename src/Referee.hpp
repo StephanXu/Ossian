@@ -26,6 +26,8 @@
 
 #pragma pack(push,1)
 
+static constexpr uint8_t REFEREE_SOF = 0xA5;
+
 /**
  * @brief 连命令码的帧头结构
  */
@@ -628,7 +630,7 @@ public:
 	{
 		auto buffer = std::unique_ptr<uint8_t[]>(reinterpret_cast<uint8_t*>(new RefereeMessage<MessageType>()));
 		auto* refereeMessage = reinterpret_cast<RefereeMessage<MessageType>*>(buffer.get());
-		refereeMessage->m_Header.m_SOF = 0xA5;
+		refereeMessage->m_Header.m_SOF = REFEREE_SOF;
 		refereeMessage->m_Header.m_CmdId = MessageType::CMD_ID;
 		refereeMessage->m_Header.m_DataLength = MessageType::LENGTH;
 		refereeMessage->m_Header.m_Seq = 0;
@@ -728,7 +730,6 @@ private:
 	static_assert((IsValidModel<MessageTypes>::value || ...), "There is a invalid model");
 	static_assert(((CountOf<MessageTypes, std::tuple<MessageTypes>>::value == 1) && ...),
 		"Redefined message in MessageTypes");
-    static constexpr uint8_t REFEREE_SOF = 0xA5;
 
     class RefereeParseFailed : public std::runtime_error
     {
@@ -759,9 +760,13 @@ private:
         {
             throw std::runtime_error("Referee: Listener could not be nullptr");
         }
-        if (m_MessageProcess.find(MessageType::CMD_ID) == m_MessageProcess.end())
+        if (m_MessageProcess.find(MessageType::CMD_ID) != m_MessageProcess.end())
         {
             SPDLOG_WARN("Referee: Duplicate message, replace process function");
+        }
+        else
+        {
+            SPDLOG_TRACE("Referee: Add listener: {}", typeid(listener).name());
         }
         m_MessageProcess[MessageType::CMD_ID] = [this, listener](const uint8_t* data, const size_t length) -> size_t
         {
@@ -818,6 +823,10 @@ private:
             if (processIt == m_MessageProcess.end())
             {
                 // Message not be listened, skip it.
+                if (length <= sizeof(FrameHeaderWithCmd))
+                {
+                    return 0;
+                }
                 const auto readLength = sizeof(FrameHeaderWithCmd) + header->m_DataLength + sizeof(FrameTail);
                 return readLength > length ? 0 : readLength;
             }
@@ -850,8 +859,12 @@ private:
 				--remainLength;
 				continue;
 			}
+
+			// readLength == 0 means buffer length less than either header length or message length.
 			auto readLength = ReadPack(currentPos, remainLength);
-			remainLength -= std::min(readLength, remainLength);
+			remainLength -= readLength != 0
+			        ? readLength
+			        : remainLength;
 		}
 	}
 
