@@ -91,6 +91,13 @@ public:
 	 * @param callback The callback process.
 	 */
 	virtual auto AddOnChange(std::function<OnReceiveProcType> callback) -> void = 0;
+
+    /**
+     * @brief Return the initialization status.
+     *
+     * @return True after the first 'Set'.
+     */
+	virtual auto IsInitialized() const -> bool = 0;
 };
 
 template <typename T>
@@ -147,6 +154,7 @@ public:
 		m_Payload     = value;
 		m_RefreshFlag = true;
 		m_Mutex.unlock();
+        m_IsInitialized = true;
 		m_ConditionVariable.notify_all();
 		CallOnChange(value, last);
 	}
@@ -195,6 +203,11 @@ public:
 		m_OnChange.push_back(callback);
 	}
 
+	auto IsInitialized() const -> bool override
+    {
+        return m_IsInitialized;
+    }
+
 private:
 
 	auto CallOnChange(const DataType& val, const DataType& lastVal) -> void
@@ -205,6 +218,7 @@ private:
 		}
 	}
 
+	bool m_IsInitialized = false;
 	DataType m_Payload = {};
 	Mutex m_Mutex;
 	std::vector<std::function<OnReceiveProcType>> m_OnChange;
