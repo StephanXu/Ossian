@@ -163,18 +163,18 @@ public:
 			SPDLOG_INFO("Create OnlineDebug logId: {}", logId);
 			const auto onlineSink = std::make_shared<online_logger_sink_mt>(*m_Hub, logId);
 			distSink->add_sink(onlineSink);
-			if (enableStdlog)
-			{
-				SPDLOG_TRACE("Append stdlog with onlieDebugger");
-				const auto stdSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-				distSink->add_sink(stdSink);
-			}
 		}
 		else
 		{
 			const auto offlineFileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(offlineLogFilename);
 			distSink->add_sink(offlineFileSink);
 		}
+        if (enableStdlog)
+        {
+            SPDLOG_TRACE("Append stdlog with onlieDebugger");
+            const auto stdSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            distSink->add_sink(stdSink);
+        }
 
 		auto logger = std::make_shared<spdlog::logger>(loggerName, distSink);
 		logger->set_pattern("[%Y-%m-%dT%T.%e%z] [%-5t] %^[%l]%$ %v");
@@ -182,14 +182,17 @@ public:
 		spdlog::register_logger(logger);
 		spdlog::set_default_logger(logger);
 		SPDLOG_TRACE("Logger created");
-		std::thread([logger]()
-		{
-			while (true)
-			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-				logger->flush();
-			}
-		}).detach();
+		if (isOnline)
+        {
+            std::thread([logger]()
+                        {
+                            while (true)
+                            {
+                                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                                logger->flush();
+                            }
+                        }).detach();
+        }
 	}
 
 	auto UploadOfflineLog(std::string logFilename,

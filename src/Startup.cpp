@@ -72,16 +72,17 @@ void Startup::ConfigServices(AppBuilder& app)
 			const auto logConfig = config->ossian->onlineDebug;
 			if (*logConfig->enableOnline)
 			{
-				option.Connect(*logConfig->loggerUrl);
-				option.StartLogging("OnlineLog",
-				                    *logConfig->logName,
-				                    *logConfig->logDesc,
-				                    *config->ossian->onlineArguments->argId,
-									*logConfig->enableStdlog,
-				                    static_cast<int>(*logConfig->level),
-				                    *logConfig->enableOnline,
-				                    *logConfig->offlineLogFilename);
-			}
+                option.Connect(*logConfig->loggerUrl);
+            }
+            option.StartLogging("OnlineLog",
+                                *logConfig->logName,
+                                *logConfig->logDesc,
+                                *config->ossian->onlineArguments->argId,
+                                *logConfig->enableStdlog,
+                                static_cast<int>(*logConfig->level),
+                                *logConfig->enableOnline,
+                                *logConfig->offlineLogFilename);
+
 		});
 
 	app.AddService<ossian::UARTManager>();
