@@ -19,6 +19,8 @@
 #include <spdlog/spdlog.h>
 
 #include <mutex>
+#include <utility>
+#include <unordered_map>
 
 #include "DJICRCHelper.hpp"
 
@@ -675,11 +677,11 @@ class Referee : public IReferee, public ossian::IODataBuilder<Mutex, MessageType
 {
 public:
 	OSSIAN_SERVICE_SETUP(Referee(ossian::UARTManager* uartManager,
-		ossian::IOData<MessageTypes>*...listeners))
+                              ossian::IOData<MessageTypes>*...listeners))
 		: m_UARTManager(uartManager)
 		  , m_Id(0)
-		  , m_Container(std::make_tuple(listeners...))
 	{
+        (AddListenMessage(listeners), ...);
 	}
 
 	virtual ~Referee() = default;
@@ -700,7 +702,7 @@ public:
 				                    const uint8_t* data)
 				             {
 					             SPDLOG_TRACE("Referee Receive: {}", length);
-					             ParseReferee(data, length);
+					             ParseRefereeBuffer(data, length);
 				             });
 	}
 
@@ -722,76 +724,111 @@ public:
 	}
 
 private:
-	using Container = std::tuple<ossian::IOData<MessageTypes>*...>;
+    using MessageProcessType = std::function<size_t(const uint8_t*, size_t)>;
 	static_assert((IsValidModel<MessageTypes>::value || ...), "There is a invalid model");
 	static_assert(((CountOf<MessageTypes, std::tuple<MessageTypes>>::value == 1) && ...),
 		"Redefined message in MessageTypes");
+    static constexpr uint8_t REFEREE_SOF = 0xA5;
+
+    class RefereeParseFailed : public std::runtime_error
+    {
+        std::string m_TypeName;
+        size_t m_BufferLength;
+    public:
+        RefereeParseFailed(std::string what, std::string typeName, size_t bufferLength)
+                : std::runtime_error(what)
+                , m_TypeName(std::move(typeName))
+                , m_BufferLength(bufferLength)
+        {
+        }
+
+        auto TypeName() const -> std::string { return m_TypeName; }
+        auto BufferLength() const -> size_t { return m_BufferLength; }
+    };
+
+    /**
+     * @brief Add a listener
+     *
+     * @tparam MessageType The message type to listen.
+     * @param listener The IOData listener.
+     */
+    template <typename MessageType>
+    auto AddListenMessage(ossian::IOData<MessageType>* listener) -> void
+    {
+        if (!listener)
+        {
+            throw std::runtime_error("Referee: Listener could not be nullptr");
+        }
+        if (m_MessageProcess.find(MessageType::CMD_ID) == m_MessageProcess.end())
+        {
+            SPDLOG_WARN("Referee: Duplicate message, replace process function");
+        }
+        m_MessageProcess[MessageType::CMD_ID] = [this, listener](const uint8_t* data, const size_t length) -> size_t
+        {
+            ReadData(data, length, listener);
+        };
+    }
 
 	/**
-	 * @brief Try to parse the buffer into specified message type.
+	 * @brief Parse specific message.
 	 * 
 	 * @tparam MessageType The message type to parse.
-	 * @tparam Index The Index of message type in listening sequence.
 	 * @param data Buffer to parse.
 	 * @param length Buffer's length.
+	 * @param listener IOData to set data.
 	 * @return size_t The length that have parsed.
 	 */
-	template <typename MessageType, size_t Index>
-	auto ReadData(const uint8_t* data, const size_t length) -> size_t
+	template <typename MessageType>
+	auto ReadData(const uint8_t* data, const size_t length, ossian::IOData<MessageType>* listener) -> size_t
 	{
-		const auto cmdId{reinterpret_cast<const FrameHeaderWithCmd*>(data)->m_CmdId};
-		if (MessageType::CMD_ID != cmdId)
-		{
-			return 0;
-		}
 		if (length < RefereeMessage<MessageType>::LENGTH)
 		{
-			throw std::runtime_error("Referee: Buffer is incomplete");
+			throw RefereeParseFailed("Buffer is incomplete", typeid(MessageType).name(), length);
 		}
-		{
-			//[TODO]: Check the thread safe rule for the separate lock design
-			//std::lock_guard<Mutex> guard{std::get<Index>(m_Mutexes)};
-			const auto& msg = *reinterpret_cast<const RefereeMessage<MessageType>*>(data);
-			if (!DJICRCHelper::VerifyCRC16Checksum(data, RefereeMessage<MessageType>::LENGTH))
-			{
-				SPDLOG_ERROR("Referee message verify CRC16 failed. length={}", RefereeMessage<MessageType>::LENGTH);
-			}
-			if (!DJICRCHelper::VerifyCRC8Checksum(data, sizeof(FrameHeaderWithCmd) - 2))
-			{
-				SPDLOG_ERROR("Referee message verify CRC8 failed. length={}", sizeof(FrameHeaderWithCmd) - 2);
-			}
-			std::get<Index>(m_Container)->Set(msg.m_Payload);
-		}
-		SPDLOG_TRACE("Matched message: {:x}\t Message Length: {}\t Matched: {}",
-		             MessageType::CMD_ID, RefereeMessage<MessageType>::LENGTH, Index);
+
+        const auto& msg = *reinterpret_cast<const RefereeMessage<MessageType>*>(data);
+        if (!DJICRCHelper::VerifyCRC8Checksum(data, sizeof(FrameHeaderWithCmd) - 2))
+        {
+            throw RefereeParseFailed("Message header CRC8 verify failed", typeid(MessageType).name(), length);
+        }
+        if (!DJICRCHelper::VerifyCRC16Checksum(data, RefereeMessage<MessageType>::LENGTH))
+        {
+            throw RefereeParseFailed("Message CRC16 verify failed", typeid(MessageType).name(), length);
+        }
+        listener->Set(msg.m_Payload);
+
+		SPDLOG_TRACE("Referee: Matched: {}, CMD_ID: {:x}, Message Length: {}",
+                     typeid(MessageType).name(), MessageType::CMD_ID, RefereeMessage<MessageType>::LENGTH);
 		return RefereeMessage<MessageType>::LENGTH;
 	}
 
 	/**
 	 * @brief Try to match a message type and parse.
-	 * 
-	 * @tparam Index 
+	 *
 	 * @param data Buffer.
 	 * @param length Buffer's length.
 	 * @return size_t The length that have parsed.
 	 */
-	template <size_t ...Index>
-	auto ReadPack(const uint8_t* data, const size_t length, std::index_sequence<Index...>) -> size_t
+	auto ReadPack(const uint8_t* data, const size_t length) -> size_t
 	{
 		try
 		{
-			auto readLength{(ReadData<NThTypeOf<Index, MessageTypes...>, Index>(data, length) + ...)};
-			if (0 == readLength && length > sizeof(FrameHeaderWithCmd))
-			{
-				readLength = sizeof(FrameHeaderWithCmd)
-				             + sizeof(FrameTail)
-				             + reinterpret_cast<const FrameHeaderWithCmd*>(data)->m_DataLength;
-			}
-			return readLength > length ? 0 : readLength;
+            const auto header = reinterpret_cast<const FrameHeaderWithCmd*>(data);
+            auto processIt = m_MessageProcess.find(header->m_CmdId);
+            if (processIt == m_MessageProcess.end())
+            {
+                // Message not be listened, skip it.
+                const auto readLength = sizeof(FrameHeaderWithCmd) + header->m_DataLength + sizeof(FrameTail);
+                return readLength > length ? 0 : readLength;
+            }
+            return processIt->second(data, length);
 		}
-		catch (std::runtime_error& err)
+		catch (RefereeParseFailed& err)
 		{
-			SPDLOG_WARN("{}", err.what());
+			SPDLOG_WARN("Referee: {}, MessageType: {}, bufferLength: {}",
+                        err.what(),
+                        err.TypeName(),
+                        err.BufferLength());
 			return 0;
 		}
 	}
@@ -802,29 +839,26 @@ private:
 	 * @param data Buffer.
 	 * @param length Buffer's length.
 	 */
-	auto ParseReferee(const uint8_t* data, const size_t length)
+	auto ParseRefereeBuffer(const uint8_t* data, const size_t length)
 	{
 		size_t remainLength = length;
 		while (remainLength > 0)
 		{
-			auto currentPos{data + (length - remainLength)};
-			if (currentPos[0] != 0xA5)
+			auto currentPos = data + (length - remainLength);
+			if (currentPos[0] != REFEREE_SOF)
 			{
 				--remainLength;
 				continue;
 			}
-			//[TODO]: Make sure remainLength won't be a minus value
-			auto readLength = ReadPack(currentPos,
-			                           remainLength,
-			                           std::index_sequence_for<MessageTypes...>());
-			remainLength -= readLength > 0 ? readLength : remainLength; ///< 避免因无法匹配进入死循环
+			auto readLength = ReadPack(currentPos, remainLength);
+			remainLength -= std::min(readLength, remainLength);
 		}
 	}
 
 	ossian::UARTManager* m_UARTManager;
 	std::shared_ptr<ossian::BaseDevice> m_RefereeDevice;
+    std::unordered_map<uint16_t, MessageProcessType> m_MessageProcess;
 	uint16_t m_Id;
-	Container m_Container;
 };
 
 template <typename ...MessageTypes>
