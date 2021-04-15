@@ -44,6 +44,7 @@ target_sources(Ossian
             "src/Gyro.cpp"
             "src/GyroA204.cpp"
             "src/GyroA110.cpp"
+            "src/GyroBlack.cpp"
             "src/TOFNooploop.cpp"
             "src/Phototube.cpp"
             "src/ClientGraphic.cpp"
