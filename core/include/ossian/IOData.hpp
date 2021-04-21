@@ -28,8 +28,9 @@ namespace ossian
 template <typename DataType>
 class IOData
 {
-	using OnReceiveProcType = void(const DataType& value, const DataType& lastValue);
+    using OnReceiveProcType = void(const DataType& value, const DataType& lastValue);
 public:
+
 	virtual ~IOData() = default;
 
 	/**
@@ -85,13 +86,16 @@ public:
 	 */
 	virtual auto TypeIndex() noexcept -> std::type_index = 0;
 
+	using CallbackHandle = typename std::vector<std::function<OnReceiveProcType>>::const_iterator;
+
 	/**
 	 * @brief Set a callback that be called when the payload is set.
 	 * 
 	 * @param callback The callback process.
 	 */
-	virtual auto AddOnChange(std::function<OnReceiveProcType> callback) -> void = 0;
+	virtual auto AddOnChange(std::function<OnReceiveProcType> callback) -> CallbackHandle = 0;
 
+	virtual auto RemoveOnChange(CallbackHandle iterator) -> void = 0;
     /**
      * @brief Return the initialization status.
      *
@@ -124,6 +128,7 @@ class IODataImpl final : public IOData<DataType>
 public:
 	using Type = DataType;
 	using OnReceiveProcType = void(const DataType& value, const DataType& lastValue);
+    using CallbackHandle = typename std::vector<std::function<OnReceiveProcType>>::const_iterator;
 
 	OSSIAN_SERVICE_SETUP(IODataImpl()) = default;
 	~IODataImpl()                      = default;
@@ -139,7 +144,7 @@ public:
 	auto operator=(IODataImpl&& listener) noexcept -> IODataImpl&
 	{
 		{
-			std::lock_guard<Mutex> guard{m_Mutex};
+			std::lock_guard<Mutex> guard(m_Mutex);
 			m_Payload = std::move(listener.m_Payload);
 		}
 		m_Mutex    = std::move(listener.m_Mutex);
@@ -161,7 +166,7 @@ public:
 
 	auto Get() noexcept -> DataType override
 	{
-		std::lock_guard<Mutex> guard{m_Mutex};
+		std::lock_guard<Mutex> guard(m_Mutex);
 		return m_Payload;
 	}
 
@@ -172,7 +177,7 @@ public:
 
 	auto WaitNextValue() -> DataType override
 	{
-		std::unique_lock<Mutex> lk{m_Mutex};
+		std::unique_lock<Mutex> lk(m_Mutex);
 		m_RefreshFlag = false;
 		m_ConditionVariable.wait(lk, [this]() { return m_RefreshFlag; });
 		return m_Payload;
@@ -198,10 +203,17 @@ public:
 		return std::type_index{typeid(DataType)};
 	}
 
-	auto AddOnChange(std::function<OnReceiveProcType> callback) -> void override
+	auto AddOnChange(std::function<OnReceiveProcType> callback) -> CallbackHandle override
 	{
+	    std::lock_guard<Mutex> lk(m_CallbackListMutex);
 		m_OnChange.push_back(callback);
 	}
+
+	auto RemoveOnChange(CallbackHandle iterator) -> void override
+    {
+        std::lock_guard<Mutex> lk(m_CallbackListMutex);
+	    m_OnChange.erase(iterator);
+    }
 
 	auto IsInitialized() const -> bool override
     {
@@ -212,6 +224,7 @@ private:
 
 	auto CallOnChange(const DataType& val, const DataType& lastVal) -> void
 	{
+	    std::lock_guard<Mutex> lk(m_CallbackListMutex);
 		for (auto&& cb : m_OnChange)
 		{
 			cb(val, lastVal);
@@ -221,6 +234,7 @@ private:
 	bool m_IsInitialized = false;
 	DataType m_Payload = {};
 	Mutex m_Mutex;
+	Mutex m_CallbackListMutex;
 	std::vector<std::function<OnReceiveProcType>> m_OnChange;
 	typename ConditionVariable<Mutex>::Type m_ConditionVariable;
 	bool m_RefreshFlag{};
