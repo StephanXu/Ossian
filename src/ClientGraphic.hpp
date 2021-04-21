@@ -324,6 +324,12 @@ public:
 
 	auto Render(const bool repaint = false) -> void
 	{
+	    if (0 == m_Referee->Id())
+        {
+	        spdlog::warn("ClientGraphic: Referee Id have not been set.");
+	        return;
+        }
+
 	    bool textProcessed{false};
 	    size_t sentBytes = 0;
 		for (auto&& element : m_Elements)

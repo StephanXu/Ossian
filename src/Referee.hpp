@@ -681,7 +681,6 @@ public:
 	OSSIAN_SERVICE_SETUP(Referee(ossian::UARTManager* uartManager,
                               ossian::IOData<MessageTypes>*...listeners))
 		: m_UARTManager(uartManager)
-		  , m_Id(0)
 	{
         (AddListenMessage(listeners), ...);
 	}
@@ -871,7 +870,7 @@ private:
 	ossian::UARTManager* m_UARTManager;
 	std::shared_ptr<ossian::BaseDevice> m_RefereeDevice;
     std::unordered_map<uint16_t, MessageProcessType> m_MessageProcess;
-	uint16_t m_Id;
+	uint16_t m_Id = 0;
 };
 
 template <typename ...MessageTypes>
