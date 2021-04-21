@@ -153,23 +153,28 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<Gimbal>(
 		[](Gimbal& option)
 		{
+			//*******************************组合步兵**************************
 			option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 7, 0x2ff);
 			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 6, 0x2ff);
+
+			//*******************************lyp步兵**************************
+			/*option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 7, 0x2ff);
+			option.AddMotor(Gimbal::MotorPosition::Yaw, "can0", 6, 0x2ff);*/
 		});
 	app.AddService<Gun>(
 		[](Gun& option)
 		{
-			//组合步兵
-			//option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 3, 0x200);
-			//option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 2, 0x200);
-			//option.AddMotor(Gun::MotorPosition::Feed, "can1", 1, 0x200);
-
-			//lyp步兵
-			option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 1, 0x200);
+			//*******************************组合步兵**************************
+			option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 3, 0x200);
 			option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 2, 0x200);
-			option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);
+			option.AddMotor(Gun::MotorPosition::Feed, "can1", 1, 0x200);
+
+			//*******************************lyp步兵**************************
+			/*option.AddMotor(Gun::MotorPosition::FricBelow, "can1", 1, 0x200);
+			option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 2, 0x200);
+			option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);*/
 		});
-	app.AddService<ClientGraphicManager>();
+	//app.AddService<ClientGraphicManager>();
 
 #endif // !VISION_ONLY
 
@@ -189,7 +194,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOPeeker<1>>();
 	
 #ifndef VISION_ONLY
-	app.AddExecutable<ClientGraphicWorker>();
+	/*app.AddExecutable<ClientGraphicWorker>();*/
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
 	app.AddExecutable<FricCtrlTask>();

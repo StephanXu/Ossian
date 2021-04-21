@@ -68,7 +68,7 @@ public:
 		motor->UnLock();
 
 		m_MotorMsgCheck[position] = true;
-		if (!(m_MotorMsgCheck[Pitch] /*&& m_MotorMsgCheck[Yaw]*/))
+		if (!(m_MotorMsgCheck[Pitch] && m_MotorMsgCheck[Yaw]))
 		{
 			return;
 		}
@@ -113,34 +113,20 @@ public:
 	static constexpr double kDegreeToRadCoef = M_PI / 180.0;
 
 	//云台特殊位置 
-	//******************组合步兵************************
-	/*static constexpr uint16_t kPitchEcdLimit0 = 6236;
-	static constexpr uint16_t kPitchEcdLimit1 = 7754;
-	static constexpr uint16_t kPitchEcdMid = 6906;
+	static uint16_t kPitchEcdMid;
+	static uint16_t kPitchEcdLimit0;
+	static uint16_t kPitchEcdLimit1;
 
-	static constexpr uint16_t kYawEcdLimit0 = 2925;
-	static constexpr uint16_t kYawEcdLimit1 = 7019;
-	static constexpr uint16_t kYawEcdMid = 852;*/
-
-	//******************lyp步兵************************
-	static constexpr uint16_t kPitchEcdLimit0 = 1900;
-	static constexpr uint16_t kPitchEcdLimit1 = 25;
-	static constexpr uint16_t kPitchEcdMid = 666;
-
-	static constexpr uint16_t kYawEcdLimit0 = 2925;
-	static constexpr uint16_t kYawEcdLimit1 = 7019;
-	static constexpr uint16_t kYawEcdMid = 852;
+	static uint16_t kYawEcdMid;
+	static uint16_t kYawEcdLimit0;
+	static uint16_t kYawEcdLimit1;
+	
 
 	//最大最小的 相对（中值的）角度
 	//确保 kMinRelativeAngle < kMaxRelativeAngle，包括符号
-	const std::array<double, 2> kMaxRelativeAngle = { std::max(RelativeEcdToRad(kPitchEcdLimit0, kPitchEcdMid),
-															   RelativeEcdToRad(kPitchEcdLimit1, kPitchEcdMid)),
-													  std::max(RelativeEcdToRad(kYawEcdLimit0, kYawEcdMid),
-														       RelativeEcdToRad(kYawEcdLimit1, kYawEcdMid)) };
-	const std::array<double, 2> kMinRelativeAngle = { std::min(RelativeEcdToRad(kPitchEcdLimit0, kPitchEcdMid),
-															   RelativeEcdToRad(kPitchEcdLimit1, kPitchEcdMid)),
-													  std::min(RelativeEcdToRad(kYawEcdLimit0, kYawEcdMid),
-															   RelativeEcdToRad(kYawEcdLimit1, kYawEcdMid)) };
+	std::array<double, 2> kMaxRelativeAngle;
+	std::array<double, 2> kMinRelativeAngle;
+
 	/*
 	static constexpr double   PITCH_MAX_RAD = kPitchMaxEcd * kMotorEcdToRadCoef;
 	static constexpr double   PITCH_MIN_RAD = kPitchMinEcd * kMotorEcdToRadCoef;
@@ -296,6 +282,24 @@ public:
 		m_LastEcdTimeStamp.fill(std::chrono::high_resolution_clock::time_point());
 		m_VoltageSend.fill(0);
 
+
+		kPitchEcdMid = *m_Config->Instance()->control->gimbal->pitchEcdMid;
+		kPitchEcdLimit0 = *m_Config->Instance()->control->gimbal->pitchEcdLimit0;
+		kPitchEcdLimit1 = *m_Config->Instance()->control->gimbal->pitchEcdLimit1;
+		kYawEcdMid = *m_Config->Instance()->control->gimbal->yawEcdMid;
+		kYawEcdLimit0 = *m_Config->Instance()->control->gimbal->yawEcdLimit0;
+		kYawEcdLimit1 = *m_Config->Instance()->control->gimbal->yawEcdLimit1;
+
+		kMaxRelativeAngle = { std::max(RelativeEcdToRad(kPitchEcdLimit0, kPitchEcdMid),
+															   RelativeEcdToRad(kPitchEcdLimit1, kPitchEcdMid)),
+													  std::max(RelativeEcdToRad(kYawEcdLimit0, kYawEcdMid),
+															   RelativeEcdToRad(kYawEcdLimit1, kYawEcdMid)) };
+		kMinRelativeAngle = { std::min(RelativeEcdToRad(kPitchEcdLimit0, kPitchEcdMid),
+																   RelativeEcdToRad(kPitchEcdLimit1, kPitchEcdMid)),
+														  std::min(RelativeEcdToRad(kYawEcdLimit0, kYawEcdMid),
+																   RelativeEcdToRad(kYawEcdLimit1, kYawEcdMid)) };
+
+
 		/*m_GyroA204YawListener->AddOnChange([](const GyroA204Status<GyroType::Yaw>& value) {
 			SPDLOG_TRACE("@ImuYaw=[$ZAngleYaw={},$ZSpeedYaw={}]",
 				value.m_ZAxisAngle, value.m_ZAxisSpeed); });
@@ -433,10 +437,10 @@ public:
 			//[TODO] 模式切换过渡
 
 			GimbalExpAngleSet(Pitch);
-			//GimbalExpAngleSet(Yaw);
+			GimbalExpAngleSet(Yaw);
 
 			GimbalCtrl(Pitch);
-			//GimbalCtrl(Yaw);
+			GimbalCtrl(Yaw);
 		}
 	}
 

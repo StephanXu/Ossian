@@ -1,7 +1,7 @@
 {
   "type": "object",
-  "title": "12.29发布会",
-  "description": "An extraordinary example.",
+  "title": "分区赛",
+  "description": "嘤嘤嘤",
   "properties": {
     "connection": {
       "type": "object",
@@ -330,6 +330,12 @@
               "title": "scaleDist",
               "description": "",
               "component": "text"
+            },
+            "kalmanDt": {
+              "type": "number",
+              "title": "kalmanDt",
+              "description": "",
+              "component": "text"
             }
           }
         }
@@ -370,6 +376,49 @@
             }
           }
         },
+        "gimbal": {
+          "type": "object",
+          "title": "Gimbal",
+          "description": "Settings of gimbal",
+          "properties": {
+            "pitchEcdMid": {
+              "type": "number",
+              "title": "pitchEcdMid",
+              "description": "",
+              "component": "text"
+            },
+            "pitchEcdLimit0": {
+              "type": "number",
+              "title": "pitchEcdLimit0",
+              "description": "",
+              "component": "text"
+            },
+            "pitchEcdLimit1": {
+              "type": "number",
+              "title": "pitchEcdLimit1",
+              "description": "",
+              "component": "text"
+            },
+            "yawEcdMid": {
+              "type": "number",
+              "title": "yawEcdMid",
+              "description": "",
+              "component": "text"
+            },
+            "yawEcdLimit0": {
+              "type": "number",
+              "title": "yawEcdLimit0",
+              "description": "",
+              "component": "text"
+            },
+            "yawEcdLimit1": {
+              "type": "number",
+              "title": "yawEcdLimit1",
+              "description": "",
+              "component": "text"
+            }
+          }
+        },
         "gun": {
           "type": "object",
           "title": "Gun",
@@ -396,6 +445,24 @@
             "fricSpeed30": {
               "type": "number",
               "title": "FricSpeed30",
+              "description": "",
+              "component": "text"
+            },
+            "feedSemiSpeed": {
+              "type": "number",
+              "title": "feedSemiSpeed",
+              "description": "",
+              "component": "text"
+            },
+            "feedBurstSpeed": {
+              "type": "number",
+              "title": "feedBurstSpeed",
+              "description": "",
+              "component": "text"
+            },
+            "feedAutoSpeed": {
+              "type": "number",
+              "title": "feedAutoSpeed",
               "description": "",
               "component": "text"
             }

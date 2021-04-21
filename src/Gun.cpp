@@ -5,10 +5,9 @@ int16_t FricCtrlTask::kFricSpeed18 = 0;
 int16_t FricCtrlTask::kFricSpeed22 = 0;
 int16_t FricCtrlTask::kFricSpeed30 = 0;
 
-//int16_t FeedCtrlTask::kFeedNormalSpeed = 0;
-//int16_t FeedCtrlTask::kFeedSemiSpeed = 0;
-//int16_t FeedCtrlTask::kFeedBurstSpeed = 0;
-//int16_t FeedCtrlTask::kFeedAutoSpeed = 0;
+int16_t FeedCtrlTask::kFeedSemiSpeed = 0;
+int16_t FeedCtrlTask::kFeedBurstSpeed = 0;
+int16_t FeedCtrlTask::kFeedAutoSpeed = 0;
 
 std::array<double, 5> FricCtrlTask::PIDFricSpeedParams;
 
@@ -162,19 +161,19 @@ void FeedCtrlTask::FeedModeSet()
 			else
 			{
 				//遥控器模式
-				if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
+				/*if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
 					m_FeedMode = FeedMode::Auto;
 				else
-					m_FeedMode = FeedMode::Disable;
+					m_FeedMode = FeedMode::Disable;*/
 
 				//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
-				/*int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
+				int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
 				if (thumbWheelValue > 0)
 					m_FeedMode = FeedMode::Semi;
 				else if (thumbWheelValue == 0)
 					m_FeedMode = FeedMode::Stop;
 				else
-					m_FeedMode = FeedMode::Auto;*/
+					m_FeedMode = FeedMode::Auto;
 			}
 			
 		}
@@ -204,7 +203,7 @@ void FeedCtrlTask::FeedModeSet()
 }
 
 //deltaAngle：拨盘的角度变化量
-void FeedCtrlTask::FeedRotateCtrl(bool disable, bool continuous, double expDeltaAngle)
+void FeedCtrlTask::FeedRotateCtrl(bool disable, double expDeltaAngle, int16_t feedSpeed)
 {
 	double current = 0;
 	if (disable)
@@ -214,27 +213,18 @@ void FeedCtrlTask::FeedRotateCtrl(bool disable, bool continuous, double expDelta
 		if (m_FlagInPosition)
 		{
 			m_FeedMotorEcdSumSet = ClampLoop(m_FeedSensorValues.feedAngle + expDeltaAngle, -M_PI, M_PI);
-			std::cerr << "Feed In Position" << std::endl;
+			//std::cerr << "Feed In Position" << std::endl;
 			m_FlagInPosition = false;
 		}
 		else
 		{
-			//std::cerr << m_FeedMotorEcdSumSet << '\t' << m_FeedSensorValues.feedAngle << std::endl;
-			double speedSet = m_PIDFeedAngle.Calc(m_FeedMotorEcdSumSet, m_FeedSensorValues.feedAngle);  //拨盘速度，正负号！
-				//std::cerr << deltaAngle << '\t' << sumPerCtrlDeltaAngleGet << '\t' << speedSet << std::endl;
-			SPDLOG_TRACE("@PIDFeedAngle=[$setFdA={},$getFdA={},$pidoutFdA={}]",
-				m_FeedMotorEcdSumSet,
-				m_FeedSensorValues.feedAngle,
-				speedSet);
-			
-			//if (speedSet > 0)
-			//	speedSet = 0;
-			if (continuous)
-				speedSet = -100;
-			else
-				speedSet = -20;
+			//double speedSet = m_PIDFeedAngle.Calc(m_FeedMotorEcdSumSet, m_FeedSensorValues.feedAngle);  //拨盘速度，正负号！
+			//SPDLOG_TRACE("@PIDFeedAngle=[$setFdA={},$getFdA={},$pidoutFdA={}]",
+			//	m_FeedMotorEcdSumSet,
+			//	m_FeedSensorValues.feedAngle,
+			//	speedSet);
 
-			double rpmSet = speedSet * kSpeedToMotorRPMCoef;
+			double rpmSet = feedSpeed * kSpeedToMotorRPMCoef;
 			//double rpmGet = m_RPMFdbFilter.Calc(m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
 			current = m_PIDFeedSpeed.Calc(rpmSet, m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed]);
 
@@ -242,9 +232,6 @@ void FeedCtrlTask::FeedRotateCtrl(bool disable, bool continuous, double expDelta
 				rpmSet,
 				m_FeedMotorStatus.m_RPM[FeedCtrlTask::Feed],
 				current);
-			
-			/*if (current > 0)
-				current = 0;*/
 		}		
 		
 	}
@@ -256,27 +243,24 @@ void FeedCtrlTask::FeedCtrl()
 {
 	
 	if (m_FeedMode == FeedMode::Disable || m_FeedMode == FeedMode::Ready)
-		FeedRotateCtrl(true);
+		FeedRotateCtrl(true, 0, 0);
 	else if (m_FeedMode == FeedMode::Stop)
-		FeedRotateCtrl(false, false, 0);
+		FeedRotateCtrl(false, 0, 0);
 	/*else if (m_FeedMode == FeedMode::Reload)
 		AutoReloadCtrl();
 	else if (m_FeedMode == FeedMode::Reverse)
 		FeedRotateCtrl(false, kFeedNormalSpeed, true);*/
 	else if (m_FeedMode == FeedMode::Semi)
 	{
-		m_PIDFeedAngle.SetOutputLimit(-15, 15);
-		FeedRotateCtrl(false, false, kDeltaAnglePerBullet);
+		FeedRotateCtrl(false, kDeltaAnglePerBullet, kFeedSemiSpeed);
 	} 
 	else if (m_FeedMode == FeedMode::Auto)
 	{
-		m_PIDFeedAngle.SetOutputLimit(-60, 60);
-		FeedRotateCtrl(false, true, kDeltaAnglePerBullet);
+		FeedRotateCtrl(false, kDeltaAnglePerBullet, kFeedAutoSpeed);
 	}
 	else if (m_FeedMode == FeedMode::Burst)
 	{
-		m_PIDFeedAngle.SetOutputLimit(-30, 30);
-		FeedRotateCtrl(false, false, kDeltaAnglePerBullet * kBurstBulletNum);
+		FeedRotateCtrl(false, kDeltaAnglePerBullet * kBurstBulletNum, kFeedBurstSpeed);
 	}
 }
 

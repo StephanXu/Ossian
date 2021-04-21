@@ -1,6 +1,13 @@
 ﻿
 #include "Gimbal.hpp"
 
+uint16_t GimbalCtrlTask::kPitchEcdMid;
+uint16_t GimbalCtrlTask::kPitchEcdLimit0;
+uint16_t GimbalCtrlTask::kPitchEcdLimit1;
+uint16_t GimbalCtrlTask::kYawEcdMid;
+uint16_t GimbalCtrlTask::kYawEcdLimit0;
+uint16_t GimbalCtrlTask::kYawEcdLimit1;
+
 std::array<double, 5> GimbalCtrlTask::PIDAngleEcdPitchParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleGyroPitchParams;
 std::array<double, 5> GimbalCtrlTask::PIDAngleGyroPitchAutoAimParams;
@@ -15,7 +22,7 @@ std::array<double, 5> GimbalCtrlTask::PIDAutoAimInputParams;
 
 void GimbalCtrlTask::GimbalCtrlModeSet()
 {
-	if (m_FlagInitGimbal&&0)
+	if (m_FlagInitGimbal)
 	{
 		static bool firstClosing = true;
 		if (fabs(m_GimbalSensorValues.relativeAngle[Pitch]) < 0.05 
@@ -110,13 +117,6 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 			m_GimbalCtrlMode = GimbalCtrlMode::Disable; break;
 		}
 	}
-	
-	m_CurGimbalAngleMode[Pitch] = Gyro;
-	m_CurGimbalAngleMode[Yaw] = Gyro;
-	m_EcdAngleSet[Pitch] = 0;
-	m_EcdAngleSet[Yaw] = 0;
-	m_GyroAngleSet[Pitch] = m_GimbalSensorValues.imu.m_Pitch;
-	m_GyroAngleSet[Yaw] = m_GimbalSensorValues.imu.m_Yaw;
 	
 }
 
@@ -247,25 +247,25 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
 			angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
-			/*SPDLOG_TRACE("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
-			position,
-			position,
-			m_EcdAngleSet[position],
-			position,
-			curEcdAngle,
-			position,
-			angleSpeedSet);*/
+			SPDLOG_TRACE("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
+							position,
+							position,
+							m_EcdAngleSet[position],
+							position,
+							curEcdAngle,
+							position,
+							angleSpeedSet);
 			//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
 		}
-
+		
 		m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
 		
-		/*SPDLOG_TRACE("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
+		SPDLOG_TRACE("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
 			position,
 			position,
 			angleSpeedSet,
 			position,
-			gyroSpeed);*/
+			gyroSpeed);
 	}
 	m_Gimbal->SendVoltageToMotors(m_VoltageSend);
 }

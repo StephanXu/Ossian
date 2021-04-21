@@ -326,12 +326,11 @@ public:
 	static constexpr int16_t kFeedJamRPM = 5;     //判断卡弹的拨弹轮转速阈值
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192.0 / kSpeedToMotorRPMCoef;  //电机编码值---拨盘旋转角度
 	static constexpr int kNumCells = 8;
-	static constexpr double kDeltaAnglePerBullet = -2.0 * M_PI / kNumCells;  //拨弹轮顺时针旋转
+	static constexpr double kDeltaAnglePerBullet = -2.0 * M_PI / kNumCells * 4;  //拨弹轮顺时针旋转
 
-	//static int16_t kFeedNormalSpeed; //自动补弹上膛或反转时，拨弹轮供弹的转速
-	//static int16_t kFeedSemiSpeed;   //单发时，拨弹轮供弹的转速
-	//static int16_t kFeedBurstSpeed;  //点射时，拨弹轮供弹的转速
-	//static int16_t kFeedAutoSpeed;   //连发时，拨弹轮供弹的转速   点射>连发>单发
+	static int16_t kFeedSemiSpeed;   //单发时，拨弹轮供弹的转速
+	static int16_t kFeedBurstSpeed;  //点射时，拨弹轮供弹的转速
+	static int16_t kFeedAutoSpeed;   //连发时，拨弹轮供弹的转速   点射>连发>单发
 
 	//pid参数
 	static std::array<double, 5> PIDFeedAngleParams;
@@ -368,10 +367,9 @@ public:
 		PIDFeedSpeedParams[3] = *m_Config->Instance()->pids->pidFeedSpeed->thOut;
 		PIDFeedSpeedParams[4] = *m_Config->Instance()->pids->pidFeedSpeed->thIOut;
 
-		/*kFeedNormalSpeed = *m_Config->Instance()->control->gun->kfeednormalspeed();
-		kFeedSemiSpeed = *m_Config->Instance()->control->gun->kfeedsemispeed();
-		kFeedBurstSpeed = *m_Config->Instance()->control->gun->kfeedburstspeed();
-		kFeedAutoSpeed = *m_Config->Instance()->control->gun->kfeedautospeed();*/
+		kFeedSemiSpeed = *m_Config->Instance()->control->gun->feedSemiSpeed;
+		kFeedBurstSpeed = *m_Config->Instance()->control->gun->feedBurstSpeed;
+		kFeedAutoSpeed = *m_Config->Instance()->control->gun->feedAutoSpeed;
 
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_TRACE("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
@@ -443,7 +441,7 @@ public:
 	void FeedModeSet();
 
 	//发送电流给2006
-	void FeedRotateCtrl(bool disable = true, bool continuous = false, double expDeltaAngle = 0);
+	void FeedRotateCtrl(bool disable, double expDeltaAngle, int16_t feedSpeed);
 
 	void FeedCtrl();
 

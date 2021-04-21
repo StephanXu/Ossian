@@ -29,6 +29,7 @@ double Aimbot::PoseSolver::initV = 0.0;
 double Aimbot::PoseSolver::initK = 0.0;
 double Aimbot::PoseSolver::gravity = 0.0;
 double Aimbot::PoseSolver::scaleDist = 0.0;
+double Aimbot::PoseSolver::kalmanDt = 0.0;
 Eigen::Vector3d Aimbot::PoseSolver::m_WorldToCamTran;
 
 cv::Point2d Aimbot::Armor::frameCenter(0, 0);
@@ -75,6 +76,7 @@ Aimbot::Aimbot(ossian::Utils::ConfigLoader<Config::ConfigSchema>* config,
     Aimbot::PoseSolver::initK = *m_Config->Instance()->vision->poseSolver->initK;
     Aimbot::PoseSolver::gravity = *m_Config->Instance()->vision->poseSolver->gravity;
     Aimbot::PoseSolver::scaleDist = *m_Config->Instance()->vision->poseSolver->scaleDist;
+    Aimbot::PoseSolver::kalmanDt = *m_Config->Instance()->vision->poseSolver->kalmanDt;
 
     Aimbot::Armor::frameCenter.x = *m_Config->Instance()->vision->camera->frameWidth;
     Aimbot::Armor::frameCenter.y = *m_Config->Instance()->vision->camera->frameHeight;
@@ -133,7 +135,7 @@ void Aimbot::Process(unsigned char* pImage)
     bool shootMode = false;  //[TODO] 删除，将发弹决策放到电控部分
 
     bool foundArmor = FindArmor(pImage, armorBBox, armorType);
-    double interval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
+    double procInterval = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count();
     
     double deltaYaw = 0, deltaPitch = 0, dist = 0;
     static PoseSolver angleSolver;
@@ -151,16 +153,16 @@ void Aimbot::Process(unsigned char* pImage)
 #endif // VISION_ONLY
 
         std::tie(deltaYaw, deltaPitch, dist) = angleSolver.Solve(armorType, armorBBox, true, bulletSpeed); //rad, mm
-        deltaPitch = m_AutoAimFilters[0].Calc(deltaPitch);
-        deltaYaw = m_AutoAimFilters[1].Calc(deltaYaw);
+        /*deltaPitch = m_AutoAimFilters[0].Calc(deltaPitch);
+        deltaYaw = m_AutoAimFilters[1].Calc(deltaYaw);*/
 
         if (armorType == ArmorType::Big)
         {
-            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.2);
+            shootMode = (fabs(deltaPitch) < 0.025 && fabs(deltaYaw) < 0.05);
         }
         else if (armorType == ArmorType::Small)
         {
-            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.1);
+            shootMode = (fabs(deltaPitch) < 0.025 && fabs(deltaYaw) < 0.025);
         }
             
 
@@ -175,7 +177,7 @@ void Aimbot::Process(unsigned char* pImage)
         m_AutoAimFilters[0].Reset();
         m_AutoAimFilters[1].Reset();
     }
-    SPDLOG_TRACE("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", interval, (int)foundArmor, deltaPitch, deltaYaw, dist);
+    SPDLOG_TRACE("@Aimbot=[$ms={},$found={},$pitch={},$yaw={},$dist={}]", procInterval, (int)foundArmor, deltaPitch, deltaYaw, dist);
 
     //std::cerr << "Aimbot: " << foundArmor << '\t' << deltaPitch << '\t' << deltaYaw << std::endl;
     

@@ -351,6 +351,8 @@ private:
         static double gravity;
         static double scaleDist; //单目测距补偿
 
+        static double kalmanDt;  //卡尔曼模型延时参数
+
         PoseSolver()
         {
             double rotAngle = -atan2((cameraToGimbalY + barrelToGimbalY), rotOverlapLen);
@@ -361,8 +363,9 @@ private:
             m_CamToGblTran << cameraToGimbalX, cameraToGimbalY, cameraToGimbalZ;
 
 #ifdef USE_PREDICTION
-            m_AutoAimPredictor.SetMatsForAutoAim(700); //ms
+            m_AutoAimPredictor.SetMatsForAutoAim(kalmanDt); //ms
 #endif // USE_PREDICTION
+
         }
 
         //Yaw: 逆时针正 顺时针负 ; Pitch:下负 上正
@@ -402,7 +405,7 @@ private:
 
             if (EnableGravity)
             {
-                pitch += GetPitch(dist / 1000, posInGimbal(1) / 1000, bulletSpeed);
+                pitch += GetPitch(dist / 1000.0, posInGimbal(1) / 1000.0, bulletSpeed);
             }
                
 
@@ -482,11 +485,11 @@ private:
             const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.0760893012372638, 0.402763931163976, 
                 0.0004829922498116148, 0.0008781734366235105, -2.225999824210345);//英雄*/
 			
-            //const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1769.844828845388, 0, 718.7847242857742,
-            //0, 1769.677479561756, 542.4977222327369,
-            //0, 0, 1); //组合步兵
-            //const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.09623964734070083, 0.6713728356896519, 
-            //    -0.001002839237022281, -0.0004396521659829322, -3.774671626485426); //组合步兵
+            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1769.844828845388, 0, 718.7847242857742,
+            0, 1769.677479561756, 542.4977222327369,
+            0, 0, 1); //组合步兵
+            const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.09623964734070083, 0.6713728356896519, 
+                -0.001002839237022281, -0.0004396521659829322, -3.774671626485426); //组合步兵
 
             //const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1764.650199381256, 0, 730.3109193363629,
             //0, 1764.413640636067, 582.6431141360831,
@@ -494,11 +497,17 @@ private:
             //const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.06813703985752723, 0.08930622194625375,
             //    0.0008550485333355045, 0.0003985532205708927, -0.3893873736338695); //lyp步兵
 
-            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 2345.92864474718, 0, 760.6855477252334,
-                0, 2345.049949354787, 539.6663442754968,
-                0, 0, 1); //wzj哨兵
-            const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.1078742114559475, 2.141571827724015, 
-                -0.001804108147783874, -0.001967844450693196, -20.18718624926334); //wzj哨兵
+            //const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 2345.92864474718, 0, 760.6855477252334,
+            //    0, 2345.049949354787, 539.6663442754968,
+            //    0, 0, 1); //wzj哨兵
+            //const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.1078742114559475, 2.141571827724015, 
+            //    -0.001804108147783874, -0.001967844450693196, -20.18718624926334); //wzj哨兵
+
+            //const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 2345.827763185386, 0, 695.6942944693086,
+            //0, 2343.585614459563, 557.5391192010054,
+            //0, 0, 1); //kfw哨兵
+            //const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.07651627773485795, 
+            //    1.100202395988293, -0.0005511681898589719, -0.001736047554587512, -11.93088253134059); //kfw哨兵
 
 			// tmp
 			static cv::Mat rvec, tvec;

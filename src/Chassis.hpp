@@ -157,8 +157,8 @@ public:
 	static constexpr double kChassisVxLimit = 3; ///< m/s 遥控器
 	static constexpr double kChassisVyLimit = 2; ///< m/s 遥控器
 
-	static constexpr double kChassisVxNormal = 2; ///< m/s 键鼠
-	static constexpr double kChassisVyNormal = 3; ///< m/s 键鼠
+	static constexpr double kChassisVxNormal = 3; ///< m/s 键鼠
+	static constexpr double kChassisVyNormal = 2; ///< m/s 键鼠
 	static constexpr double kChassisVxBoost  = 5; ///< m/s 键鼠
 	static constexpr double kChassisVyBoost  = 4; ///< m/s 键鼠
 
@@ -200,8 +200,8 @@ public:
 										 ossian::IOData<PowerHeatData>* powerHeatDataListener,
 										 ossian::IOData<RobotStatus>* robotStatusListener,
 										 ossian::IOData<GimbalStatus>* gimbalStatusListener,
-										 ossian::IOData<GyroA110Status<GyroType::Chassis>>* gyroListener,
-										 ClientGraphicManager* clientGraphicManager))
+										 ossian::IOData<GyroA110Status<GyroType::Chassis>>* gyroListener
+										 /*ClientGraphicManager* clientGraphicManager*/))
 
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
@@ -212,7 +212,7 @@ public:
 		, m_RefereeRobotStatusListener(robotStatusListener)
 		, m_GimbalStatusListener(gimbalStatusListener)
 		, m_GyroListener(gyroListener)
-		, m_ClientGraphicManager(clientGraphicManager)
+		//, m_ClientGraphicManager(clientGraphicManager)
 	{
 		PIDWheelSpeedParams[0] = *m_Config->Instance()->pids->pidWheelSpeed->kP;
 		PIDWheelSpeedParams[1] = *m_Config->Instance()->pids->pidWheelSpeed->kI;
@@ -256,9 +256,10 @@ public:
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
 		m_PIDChassisAngle.SetFlagAngleLoop();
 
-		m_GraphicClient = m_ClientGraphicManager->AddOrGetGraphicClient(0x0167);
-		m_ClientGraphicTextSpCapStatus = m_GraphicClient->AddElement<TextStyle>(0);
-		m_ClientGraphicValueSpCapStatus = m_GraphicClient->AddElement<FloatStyle>(0);
+		/*m_GraphicClient = m_ClientGraphicManager->AddOrGetGraphicClient(0x0167);
+		m_ClientGraphicTextSpCapStatus = m_GraphicClient->AddElement<TextStyle>(0);*/
+
+		//m_ClientGraphicValueSpCapStatus = m_GraphicClient->AddElement<FloatStyle>(0);
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
 			SPDLOG_TRACE("@RemoteData=[$ch0={},$ch1={},$ch2={},$ch3={},$ch4={},$sw0={},$sw1={}]",
 				value.ch[0], value.ch[1], value.ch[2], value.ch[3], value.ch[4],value.sw[0], value.sw[1]);});*/
@@ -370,7 +371,7 @@ public:
 		TimeStamp lastTime = Clock::now();
 		while (true)
 		{
-			while (2000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
+			while (12000 > std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - lastTime).count())
 			{
 				std::this_thread::yield();
 			}
@@ -380,7 +381,7 @@ public:
 			lastTime = Clock::now();
 
 			UpdateChassisSensorFeedback();
-			FillClientGraphics();
+			//FillClientGraphics();
 
 			if (m_FlagInitChassis)
 				InitChassis();

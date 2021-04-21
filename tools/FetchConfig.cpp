@@ -8,7 +8,7 @@
 #include "../core/include/ossian/Http.hpp"
 
 DEFINE_string(server, "ossian.mrxzh.com", "The server to fetch data.");
-DEFINE_string(id, "5fe867a1c95359000126eb54", "The id to fetch data.");
+DEFINE_string(id, "607fe7554433270001dda1c3", "The id to fetch data.");
 DEFINE_string(dest, "OssianConfig.json", "Path to save configuration file.");
 
 int main(int argc, char** argv)
