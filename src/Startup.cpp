@@ -185,6 +185,11 @@ void Startup::ConfigServices(AppBuilder& app)
 		option.AddPLCConnector("/dev/ttyUSB0");
 #endif // VISION_ONLY
 		});
+
+#ifdef VISION_ONLY
+#else
+	app.AddService<IVisionModeSwitcher, VisionModeSwitcherForRemote>();
+#endif // VISION_ONLY
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)

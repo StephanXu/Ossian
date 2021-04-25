@@ -21,6 +21,7 @@ namespace ossian
 class IExecutable
 {
 public:
+	virtual ~IExecutable() = default;
 	virtual void ExecuteProc() = 0;
 };
 

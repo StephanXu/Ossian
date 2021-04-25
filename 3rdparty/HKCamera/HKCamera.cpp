@@ -3,6 +3,7 @@
 #include "HKCamera.hpp"
 
 #include <cstring>
+#include <exception>
 
 HKCamera::HKCamera(const int camIndex, const int frameWidth, const int frameHeight) noexcept
 {

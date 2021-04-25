@@ -21,9 +21,8 @@
 
 #include <MvCameraControl.h>
 
-#include <exception>
+#include <functional>
 #include <vector>
-#include <memory>
 
 class HKCamera
 {
