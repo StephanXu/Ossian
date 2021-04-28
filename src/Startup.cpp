@@ -174,7 +174,7 @@ void Startup::ConfigServices(AppBuilder& app)
 			option.AddMotor(Gun::MotorPosition::FricUpper, "can1", 2, 0x200);
 			option.AddMotor(Gun::MotorPosition::Feed, "can1", 3, 0x200);*/
 		});
-	//app.AddService<ClientGraphicManager>();
+	app.AddService<ClientGraphicManager>();
 
 #endif // !VISION_ONLY
 
@@ -199,7 +199,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOPeeker<1>>();
 	
 #ifndef VISION_ONLY
-	/*app.AddExecutable<ClientGraphicWorker>();*/
+	app.AddExecutable<ClientGraphicWorker>();
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
 	app.AddExecutable<FricCtrlTask>();

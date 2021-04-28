@@ -182,14 +182,13 @@ public:
 
 	enum ChassisMode
 	{
-		Disable, ///< 失能
-		Init,	 ///< 初始化
-		Follow_Gimbal_Yaw, ///< 跟随云台
-
-		Follow_Chassis_Yaw,		 ///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
-
-		Top, ///< 小陀螺
-		Openloop_Z ///< 单独调试底盘
+		Disable,			///< 失能
+		Init,				///< 初始化
+		Follow_Gimbal_Yaw,  ///< 跟随云台
+		Follow_Chassis_Yaw,	///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
+		Top,				///< 小陀螺
+		Dodge,				///< 闪避，将两装甲板缝隙对准前方（缝隙 跟随 云台）
+		Openloop_Z			///< 单独调试底盘
 	};
 
 	OSSIAN_SERVICE_SETUP(ChassisCtrlTask(ossian::IOData<ChassisMotorsModel>* motors,
@@ -200,8 +199,9 @@ public:
 										 ossian::IOData<PowerHeatData>* powerHeatDataListener,
 										 ossian::IOData<RobotStatus>* robotStatusListener,
 										 ossian::IOData<GimbalStatus>* gimbalStatusListener,
-										 ossian::IOData<GyroA110Status<GyroType::Chassis>>* gyroListener
-										 /*ClientGraphicManager* clientGraphicManager*/))
+										 ossian::IOData<GyroA110Status<GyroType::Chassis>>* gyroListener,
+										 IReferee* referee,
+										 ClientGraphicManager* clientGraphicManager))
 
 		: m_MotorsListener(motors)
 		, m_RCListener(remote)
@@ -212,7 +212,7 @@ public:
 		, m_RefereeRobotStatusListener(robotStatusListener)
 		, m_GimbalStatusListener(gimbalStatusListener)
 		, m_GyroListener(gyroListener)
-		//, m_ClientGraphicManager(clientGraphicManager)
+		, m_ClientGraphicManager(clientGraphicManager)
 	{
 		PIDWheelSpeedParams[0] = *m_Config->Instance()->pids->pidWheelSpeed->kP;
 		PIDWheelSpeedParams[1] = *m_Config->Instance()->pids->pidWheelSpeed->kI;
@@ -256,8 +256,22 @@ public:
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
 		m_PIDChassisAngle.SetFlagAngleLoop();
 
-		/*m_GraphicClient = m_ClientGraphicManager->AddOrGetGraphicClient(0x0167);
-		m_ClientGraphicTextSpCapStatus = m_GraphicClient->AddElement<TextStyle>(0);*/
+		ossian::IOData<RobotStatus>::CallbackHandle handle = 
+			robotStatusListener->AddOnChange([=](const RobotStatus& value, const RobotStatus&) {
+				referee->Id(value.m_RobotId);
+				auto iterMapping = kRobotClientMapping.find(value.m_RobotId);
+				if (iterMapping != kRobotClientMapping.end())
+				{
+					m_GraphicClient = m_ClientGraphicManager->AddOrGetGraphicClient(iterMapping->second);
+					robotStatusListener->RemoveOnChange(handle);
+				}
+				else
+				{
+					SPDLOG_CRITICAL("Invalid Robot-Client Id");
+				}
+			});
+
+		m_ClientGraphicTextSpCapStatus = m_GraphicClient->AddElement<TextStyle>(0);
 
 		//m_ClientGraphicValueSpCapStatus = m_GraphicClient->AddElement<FloatStyle>(0);
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
@@ -381,7 +395,7 @@ public:
 			lastTime = Clock::now();
 
 			UpdateChassisSensorFeedback();
-			//FillClientGraphics();
+			FillClientGraphics();
 
 			if (m_FlagInitChassis)
 				InitChassis();

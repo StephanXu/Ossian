@@ -538,19 +538,39 @@ private:
 
     bool DetectArmor(unsigned char* pImage, Armor& outTarget) noexcept
     {
+        static int enemyColor = -1;
+
 #ifdef VISION_ONLY
-        static int enemyColor = (*m_Config->Instance()->vision->aimbot->enemyColor == Config::EnemyColor::BLUE) ? 0 : 2;
+        enemyColor = (*m_Config->Instance()->vision->aimbot->enemyColor == Config::EnemyColor::BLUE) ? 0 : 2;
 #else
-        uint8_t myRobotId = m_RobotStatusListener->Get().m_RobotId;
-        static int enemyColor;
-        if (myRobotId >= 1 && myRobotId <= 9)           // 我方是红
+        if (enemyColor == -1)
         {
-            enemyColor = 0;
+            if (m_RobotStatusListener->IsInitialized())
+            {
+                uint8_t myRobotId = m_RobotStatusListener->Get().m_RobotId;
+
+                if (myRobotId >= 1 && myRobotId <= 9)           // 我方是红
+                {
+                    enemyColor = 0;
+                }
+                else if (myRobotId >= 101 && myRobotId <= 109)  // 我方是蓝
+                {
+                    enemyColor = 2;
+                }
+                else
+                {
+                    enemyColor = -1;
+                    return false;
+                }
+            }
+            else
+            {
+                enemyColor = -1;
+                return false;
+            }
         }
-        else if (myRobotId >= 101 && myRobotId <= 109)  // 我方是蓝
-        {
-            enemyColor = 2;
-        }
+
+       
 #endif // VISION_ONLY
 
         static int thresBrightness = *m_Config->Instance()->vision->aimbot->thresBrightness;

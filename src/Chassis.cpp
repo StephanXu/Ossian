@@ -12,15 +12,17 @@ std::array<double, 5> ChassisCtrlTask::PIDChassisAngleParams;
 
 void ChassisCtrlTask::FillClientGraphics()
 {
-	/*auto& textStyleRef = m_ClientGraphicTextSpCapStatus->GetStyleRef();
+	auto& textStyleRef = m_ClientGraphicTextSpCapStatus->GetStyleRef();
 	textStyleRef.m_Color = 5;
 	textStyleRef.m_FontSize = 40;
 	textStyleRef.m_Width = 3;
-	textStyleRef.m_StartX = 360;
-	textStyleRef.m_StartY = 700; 
-	textStyleRef.m_Text = fmt::format("SPCAP: {:.1f}V", m_ChassisSensorValues.spCap.m_CapacitorVoltage - kSpCapWarnVoltage);
-	m_ClientGraphicTextSpCapStatus->Save();*/
+	textStyleRef.m_StartX = 787;
+	textStyleRef.m_StartY = 949; 
+	textStyleRef.m_Text = fmt::format("SPCAP: {:.1f}%", (m_ChassisSensorValues.spCap.m_CapacitorVoltage - kSpCapWarnVoltage)
+															/ (24.0 - kSpCapWarnVoltage));
+	m_ClientGraphicTextSpCapStatus->Save();
 
+	//当前版本客户端尚未实现以下代码的功能
 	/*auto& floatStyleRef = m_ClientGraphicValueSpCapStatus->GetStyleRef();
 	floatStyleRef.m_Color = 5;
 	floatStyleRef.m_FontSize = 40;
@@ -38,12 +40,12 @@ void ChassisCtrlTask::CalcWheelSpeedTarget()
 	m_WheelSpeedSet = m_WheelKinematicMat * vSet / kWheelRadius / (2.0 * M_PI) * 60; //[4, 3] * [3, 1] --> [4, 1]  轮子转速期望rpm
 	//m_WheelSpeedSet(2) *= -1, m_WheelSpeedSet(3) *= -1;  //3,4号电机转向与轮子相反
 	//限制麦轮最大速度
-	double maxWheelSpeedItem = m_WheelSpeedSet.maxCoeff();
+	/*double maxWheelSpeedItem = m_WheelSpeedSet.maxCoeff();
 	if (maxWheelSpeedItem > kWheelSpeedLimit)
 	{
 		double scaleWheelSpeed = kWheelSpeedLimit / maxWheelSpeedItem;
 		m_WheelSpeedSet *= scaleWheelSpeed;
-	}
+	}*/
 	/*SPDLOG_TRACE("@WheelSpeedSet=[$wheel0={},$wheel1={},$wheel2={},$wheel3={}]", 
 		m_WheelSpeedSet(0), m_WheelSpeedSet(1), m_WheelSpeedSet(2), m_WheelSpeedSet(3));*/
 }
@@ -199,9 +201,9 @@ void ChassisCtrlTask::ChassisModeSet()
 			switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
 			{
 			case kRCSwUp:
-				m_CurChassisMode = Top; break;  //Follow_Gimbal_Yaw
+				m_CurChassisMode = Dodge; break;  //Follow_Gimbal_Yaw
 			case kRCSwMid:
-				m_CurChassisMode = Follow_Gimbal_Yaw;  break;
+				m_CurChassisMode = Openloop_Z;  break;
 			case kRCSwDown:
 				m_CurChassisMode = Disable; break;   //Top
 			default:
@@ -241,22 +243,24 @@ void ChassisCtrlTask::ChassisCtrl()
 			/*SPDLOG_TRACE("@PIDChassisSpeed{}=[$error={}]", i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef-
 				m_Motors[i]->Get().m_RPM);*/
 			//SPDLOG_TRACE("@RPMAndSet{}=[$rpm{}={},$set{}={}]", i, i, m_Motors[i]->Get().m_RPM, i, m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef);
-			/*if (i == 0)
-				SPDLOG_TRACE("@PIDChassisSpeed{}=[$set{}={},$get{}={},$pidout{}={}]",
+			if (i == 0)
+			{
+				SPDLOG_TRACE("@PIDChassisSpeed{}=[$set0{}={},$get0{}={},$pidout0{}={}]",
 					i,
 					i,
 					set,
 					i,
 					get,
 					i,
-					m_CurrentSend[i]);*/
+					m_CurrentSend[i]);
+			}	
 			//m_PIDChassisSpeed[i].PrintDetails(i);
 		}
 	}
 	//m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
 	//如果超级电容快没电了
-	if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
-		ChassisPowerCtrlByCurrent();
+	/*if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+		ChassisPowerCtrlByCurrent();*/
 
 	/*for (size_t i = 0; i < kNumChassisMotors; ++i)
 		SPDLOG_TRACE("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
@@ -339,7 +343,9 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 {
 	//[TODO] 检验三角函数的符号
 	if (m_CurChassisMode == Disable || m_CurChassisMode == Init)
+	{
 		m_VxSet = m_VySet = m_WzSet = 0;
+	}
 	else if (m_CurChassisMode == Follow_Gimbal_Yaw)
 	{
 		RCToChassisSpeed();
@@ -349,7 +355,7 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		double vy = -m_VxSet * sine + m_VySet * cosine;
 		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
 		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
-		m_WzSet = m_PIDChassisAngle.Calc(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis, 0); //符号为负？
+		m_WzSet = -m_PIDChassisAngle.Calc(0, m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis); //符号为负？
 	}
 	else if (m_CurChassisMode == Follow_Chassis_Yaw)
 	{
@@ -372,6 +378,17 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		//m_WzSet = kTopWz;
 		m_WzSet = m_TopWzFilter.Calc(kTopWz);
 	}
+	else if (m_CurChassisMode == Dodge)
+	{
+		RCToChassisSpeed();
+		double cosine = cos(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
+		double sine = sin(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);
+		double vx = m_VxSet * cosine + m_VySet * sine;
+		double vy = -m_VxSet * sine + m_VySet * cosine;
+		m_VxSet = Clamp(vx, -kChassisVxLimit, kChassisVxLimit);
+		m_VySet = Clamp(vy, -kChassisVyLimit, kChassisVyLimit);
+		m_WzSet = -m_PIDChassisAngle.Calc(M_PI / 4.0, m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis); //符号为负？
+	}
 	else if (m_CurChassisMode == Openloop_Z)
 	{
 		RCToChassisSpeed();
@@ -380,4 +397,5 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 
 		//SPDLOG_TRACE("@VSet=[$VxSet={},$VySet={},$WzSet={}]", m_VxSet, m_VySet, m_WzSet);
 	}
+	
 }
