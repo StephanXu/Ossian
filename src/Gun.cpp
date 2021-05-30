@@ -148,7 +148,7 @@ void FeedCtrlTask::FeedModeSet()
 					++pressCnt;
 					m_FeedMode = FeedMode::Semi;
 
-					if(pressCnt > 300)
+					if(pressCnt > 200)
 						m_FeedMode = FeedMode::Auto;
 				}
 				else
@@ -161,19 +161,19 @@ void FeedCtrlTask::FeedModeSet()
 			else
 			{
 				//遥控器模式
-				/*if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
+				if (m_FeedSensorValues.rc.sw[kShootModeChannel] == kRCSwUp)
 					m_FeedMode = FeedMode::Auto;
 				else
-					m_FeedMode = FeedMode::Disable;*/
+					m_FeedMode = FeedMode::Disable;
 
 				//在打开摩擦轮的情况下：左上角的波轮，向下 单发，向上 连发
-				int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
+				/*int16_t thumbWheelValue = DeadbandLimit(m_FeedSensorValues.rc.ch[kShootModeChannel], kGunRCDeadband);
 				if (thumbWheelValue > 0)
 					m_FeedMode = FeedMode::Semi;
 				else if (thumbWheelValue == 0)
 					m_FeedMode = FeedMode::Stop;
 				else
-					m_FeedMode = FeedMode::Auto;
+					m_FeedMode = FeedMode::Auto;*/
 			}
 			
 		}

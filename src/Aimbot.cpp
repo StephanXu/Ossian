@@ -156,15 +156,23 @@ void Aimbot::Process(unsigned char* pImage)
         /*deltaPitch = m_AutoAimFilters[0].Calc(deltaPitch);
         deltaYaw = m_AutoAimFilters[1].Calc(deltaYaw);*/
 
-        if (armorType == ArmorType::Big)
+        /*if (armorType == ArmorType::Big)
         {
             shootMode = (fabs(deltaPitch) < 0.025 && fabs(deltaYaw) < 0.05);
         }
         else if (armorType == ArmorType::Small)
         {
             shootMode = (fabs(deltaPitch) < 0.025 && fabs(deltaYaw) < 0.025);
+        }*/
+        
+        if (armorType == ArmorType::Big)
+        {
+            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.1);
         }
-            
+        else if (armorType == ArmorType::Small)
+        {
+            shootMode = (fabs(deltaPitch) < 0.05 && fabs(deltaYaw) < 0.05);
+        }
 
         /*deltaPitch = DeadbandLimit(deltaPitch, 0.05);
         deltaYaw = DeadbandLimit(deltaYaw, 0.05);*/

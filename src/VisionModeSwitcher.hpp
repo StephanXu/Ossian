@@ -4,6 +4,7 @@
 #include <ossian/Factory.hpp>
 
 #include "Aimbot.hpp"
+#include "Aimbuff.hpp"
 #include "Remote.hpp"
 
 enum class VisionMode
@@ -26,8 +27,11 @@ public:
 	OSSIAN_SERVICE_SETUP(
 		VisionModeSwitcherForRemote(
 			Aimbot* aimbot,
-			ossian::IOData<RemoteStatus>* remoteStatus)
-		);
+			Aimbuff* aimbuff
+#ifndef VISION_ONLY
+			, ossian::IOData<RemoteStatus>* remoteStatus
+#endif // VISION_ONLY
+		));
 
 	~VisionModeSwitcherForRemote() = default;
 
@@ -41,7 +45,12 @@ private:
 
 	VisionMode m_VisionMode;
 	Aimbot& m_Aimbot;
+	Aimbuff& m_Aimbuff;
+
+#ifndef VISION_ONLY
 	ossian::IOData<RemoteStatus>& m_RemoteStatus;
+#endif // !VISION_ONLY
+
 };
 
 #endif // OSSIAN_VISIONMODESWITCHER

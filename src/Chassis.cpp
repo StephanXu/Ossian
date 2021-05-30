@@ -155,11 +155,28 @@ void ChassisCtrlTask::RCToChassisSpeed()
 	
 
 	//一阶低通滤波代替斜坡函数作为底盘速度输入
-	m_VxSet = m_RCInputFilters[0].Calc(vxChannelSet);//0.167
-	m_VySet = m_RCInputFilters[1].Calc(vyChannelSet);//0.333
+	if (vxChannelSet == 0)
+	{
+		m_VxSet = 0;
+		m_RCInputFilters[0].Reset();
+	}
+	else
+	{
+		m_VxSet = m_RCInputFilters[0].Calc(vxChannelSet);//0.167
+		m_VxSet = DeadbandLimit(m_VxSet, kChassisRCDeadband * kChassisVxRCSen);
+	}
 
-	m_VxSet = DeadbandLimit(m_VxSet, kChassisRCDeadband * kChassisVxRCSen);
-	m_VySet = DeadbandLimit(m_VySet, kChassisRCDeadband * kChassisVyRCSen);
+	if (vyChannelSet == 0)
+	{
+		m_VySet = 0;
+		m_RCInputFilters[1].Reset();
+	}
+	else
+	{
+		m_VySet = m_RCInputFilters[1].Calc(vyChannelSet);//0.333
+		m_VySet = DeadbandLimit(m_VySet, kChassisRCDeadband * kChassisVyRCSen);
+	}
+
 }
 
 void ChassisCtrlTask::ChassisModeSet()
@@ -180,20 +197,38 @@ void ChassisCtrlTask::ChassisModeSet()
 		if (m_ChassisSensorValues.keyboardMode)
 		{
 			//键鼠
-			if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("TopMode") &&
-				!(lastKeyboard & kKeyboardMapChassis.at("TopMode")))
+			if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("TopMode"))
 			{
-				if (m_LastChassisMode != Top)
-					m_CurChassisMode = Top;
-				else
-					m_CurChassisMode = Follow_Gimbal_Yaw;
+				if (!(lastKeyboard & kKeyboardMapChassis.at("TopMode")))
+				{
+					if (m_LastChassisMode != Top)
+						m_CurChassisMode = Top;
+					else
+						m_CurChassisMode = Follow_Gimbal_Yaw;
+				}
 			}
-			else if(m_LastChassisMode == Top)
+			else if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("ShieldMode"))
+			{
+				m_CurChassisMode = Shield;
+			}
+			else if (m_ChassisSensorValues.rc.keyboard & kKeyboardMapChassis.at("OpenLoopZMode"))
+			{
+				if (!(lastKeyboard & kKeyboardMapChassis.at("OpenLoopZMode")))
+				{
+					if (m_LastChassisMode != Openloop_Z)
+						m_CurChassisMode = Openloop_Z;
+					else
+						m_CurChassisMode = Follow_Gimbal_Yaw;
+				}
+			}
+			else if (m_LastChassisMode == Top)
+			{
 				m_CurChassisMode = Top;
+			}
 			else
+			{
 				m_CurChassisMode = Follow_Gimbal_Yaw;
-
-			m_CurChassisMode = Follow_Gimbal_Yaw;
+			}
 		}
 		else
 		{
@@ -201,9 +236,9 @@ void ChassisCtrlTask::ChassisModeSet()
 			switch (m_ChassisSensorValues.rc.sw[kChassisModeChannel])
 			{
 			case kRCSwUp:
-				m_CurChassisMode = Dodge; break;  //Follow_Gimbal_Yaw
+				m_CurChassisMode = Follow_Gimbal_Yaw; break;  //Shield Follow_Gimbal_Yaw
 			case kRCSwMid:
-				m_CurChassisMode = Openloop_Z;  break;
+				m_CurChassisMode = Follow_Gimbal_Yaw;  break;
 			case kRCSwDown:
 				m_CurChassisMode = Disable; break;   //Top
 			default:
@@ -235,7 +270,7 @@ void ChassisCtrlTask::ChassisCtrl()
 		CalcWheelSpeedTarget();
 		for (size_t i = 0; i < kNumChassisMotors; ++i)
 		{
-			double set = m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef;
+			double set = m_WheelSpeedSet(i) * kWheelSpeedToMotorRPMCoef; 
 			//double get = m_RPMFdbFilters[i].Calc(m_MotorsStatus.m_RPM[i]);
 			double get = m_MotorsStatus.m_RPM[i];
 			m_CurrentSend[i] = m_PIDChassisSpeed[i].Calc(set, get);
@@ -258,12 +293,25 @@ void ChassisCtrlTask::ChassisCtrl()
 		}
 	}
 	//m_ChassisSensorValues.spCap.m_CapacitorVoltage = 0;
-	//如果超级电容快没电了
-	/*if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
-		ChassisPowerCtrlByCurrent();*/
+	////如果超级电容快没电了
+	//if (m_ChassisSensorValues.spCap.m_CapacitorVoltage < kSpCapWarnVoltage)
+	//	ChassisPowerCtrlByCurrent();
+
+	//for单项赛：如果快死了
+	if(m_ChassisSensorValues.refereeRobotStatus.m_RemainHp < m_ChassisSensorValues.refereeRobotStatus.m_MaxHp * 0.5
+		|| m_ChassisSensorValues.rc.sw[kChassisModeChannel] == kRCSwUp)
+		ChassisPowerCtrlByCurrent();
 
 	/*for (size_t i = 0; i < kNumChassisMotors; ++i)
 		SPDLOG_TRACE("@CurrentSend=[$Motor{}={}]", i, m_CurrentSend[i]);*/
+	SPDLOG_TRACE("@RefereePowerHeatData=[$Power={},$Buffer={},$PowerLimit={}]",
+		m_ChassisSensorValues.refereePowerHeatData.m_ChassisPower,
+		m_ChassisSensorValues.refereePowerHeatData.m_ChassisPowerBuffer,
+		m_ChassisSensorValues.refereeRobotStatus.m_ChassisPowerLimit);
+
+	SPDLOG_TRACE("@SpCap=[$CapPower={}]",
+		m_ChassisSensorValues.spCap.m_CapacitorVoltage);
+
 	m_Chassis->SendCurrentToMotors(m_CurrentSend);
 }
 
@@ -378,7 +426,7 @@ void ChassisCtrlTask::ChassisExpAxisSpeedSet()
 		//m_WzSet = kTopWz;
 		m_WzSet = m_TopWzFilter.Calc(kTopWz);
 	}
-	else if (m_CurChassisMode == Dodge)
+	else if (m_CurChassisMode == Shield)
 	{
 		RCToChassisSpeed();
 		double cosine = cos(m_ChassisSensorValues.gimbalStatus.m_RelativeAngleToChassis);

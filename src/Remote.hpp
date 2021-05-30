@@ -49,7 +49,9 @@ const std::map<std::string, uint16_t> kKeyboardMapChassis{
 	{"Leftward", kKeyPressedOffsetA},
 	{"Rightward", kKeyPressedOffsetD},
 	{"SpeedUp", kKeyPressedOffsetShift},
-	{"TopMode", kKeyPressedOffsetE}
+	{"TopMode", kKeyPressedOffsetE},
+	{"ShieldMode", kKeyPressedOffsetC},
+	{"OpenLoopZMode", kKeyPressedOffsetB}
 };
 
 const std::map<std::string, uint16_t> kKeyboardMapGimbal;

@@ -36,11 +36,11 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 
 			long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
 				std::chrono::high_resolution_clock::now() - m_TimestampInit).count();
-			//std::cerr << interval << std::endl;
+
 			if (interval > 2000 && m_TimestampInit!= std::chrono::high_resolution_clock::time_point())  //在中值处稳定一段时间
 			{
 				std::cerr << "Gimbal Init Done!" << std::endl;
-				m_CurGimbalAngleMode[Pitch] = Gyro;
+				m_CurGimbalAngleMode[Pitch] = Encoding;
 				m_CurGimbalAngleMode[Yaw] = Gyro;
 				m_EcdAngleSet[Pitch] = 0;
 				m_EcdAngleSet[Yaw] = 0;
@@ -108,7 +108,7 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 		switch (m_GimbalSensorValues.rc.sw[kGimbalModeChannel])
 		{
 		case kRCSwUp:
-			m_GimbalCtrlMode = GimbalCtrlMode::Aimbot; break;
+			m_GimbalCtrlMode = GimbalCtrlMode::RC; break;
 		case kRCSwMid:
 			m_GimbalCtrlMode = GimbalCtrlMode::RC; break; //Aimbot
 		case kRCSwDown:
@@ -117,7 +117,7 @@ void GimbalCtrlTask::GimbalCtrlModeSet()
 			m_GimbalCtrlMode = GimbalCtrlMode::Disable; break;
 		}
 	}
-	
+
 }
 
 void GimbalCtrlTask::GimbalCtrlInputProc()
@@ -141,14 +141,14 @@ void GimbalCtrlTask::GimbalCtrlInputProc()
 		//SPDLOG_TRACE("@AngleInput=[$p={},$y={}]", m_AngleInput[Pitch], m_AngleInput[Yaw]);
 		//std::cerr << "AngleInput: " << m_AngleInput[Pitch] << '\t' << m_AngleInput[Yaw] << std::endl;
 	}
-	else if (m_GimbalCtrlMode == GimbalCtrlMode::Aimbot)
+	else if (m_GimbalCtrlMode == GimbalCtrlMode::Aimbot || m_GimbalCtrlMode == GimbalCtrlMode::Windmill)
 	{ 
 		//auto filterdAngles = m_AutoAimPredictor.Predict();
 		//std::cerr << filterdAngles << std::endl;
 		//m_AutoAimPredictor.Correct(m_GimbalSensorValues.autoAimStatus.m_Pitch, m_GimbalSensorValues.autoAimStatus.m_Yaw);
 
-		m_AngleInput[Pitch] = m_PIDAutoAimInput[Pitch].Calc(m_GimbalSensorValues.autoAimStatus.m_Pitch, 0);
-		m_AngleInput[Yaw] = m_PIDAutoAimInput[Yaw].Calc(m_GimbalSensorValues.autoAimStatus.m_Yaw, 0);
+		m_AngleInput[Pitch] = -m_PIDAutoAimInput[Pitch].Calc(m_GimbalSensorValues.autoAimStatus.m_Pitch, 0);
+		m_AngleInput[Yaw] = -m_PIDAutoAimInput[Yaw].Calc(m_GimbalSensorValues.autoAimStatus.m_Yaw, 0);
 
 		/*m_AngleInput[Pitch] = m_PIDAutoAimInput[Pitch].Calc(m_GimbalSensorValues.autoAimStatus.m_Pitch, 0);
 		m_AngleInput[Yaw] = m_PIDAutoAimInput[Yaw].Calc(m_GimbalSensorValues.autoAimStatus.m_Yaw, 0);*/
@@ -163,7 +163,9 @@ void GimbalCtrlTask::GimbalExpAngleSet(MotorPosition position)
 	double curEcdAngle = m_GimbalSensorValues.relativeAngle[position];
 	if (m_GimbalCtrlMode == GimbalCtrlMode::Disable)
 		return;
-	else if (m_GimbalCtrlMode == GimbalCtrlMode::RC || m_GimbalCtrlMode == GimbalCtrlMode::Aimbot)
+	else if (m_GimbalCtrlMode == GimbalCtrlMode::RC 
+		|| m_GimbalCtrlMode == GimbalCtrlMode::Aimbot
+		|| m_GimbalCtrlMode == GimbalCtrlMode::Windmill)
 	{
 		double angleInput = m_AngleInput[position]; 
 		if (m_CurGimbalAngleMode[position] == Gyro)
@@ -234,7 +236,8 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 		else if (m_CurGimbalAngleMode[position] == Encoding)
 		{
 			//[TODO]用电机转速rpm换算出云台角速度
-			double curEcdAngle = m_EcdAngleFilters[position].Calc(m_GimbalSensorValues.relativeAngle[position]);
+			//double curEcdAngle = m_EcdAngleFilters[position].Calc(m_GimbalSensorValues.relativeAngle[position]);
+			double curEcdAngle = m_GimbalSensorValues.relativeAngle[position];
 			/*//初始时刻，无法通过差分计算出角速度
 			if (m_LastEcdTimeStamp[position].time_since_epoch().count() == 0)
 			{
@@ -246,7 +249,10 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 				m_LastEcdTimeStamp[position]).count() / 1000000.0;
 
 			double angleSpeedEcd = ClampLoop(curEcdAngle - m_LastEcdAngle[position], -M_PI, M_PI) / interval; //rad/s*/
-			angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
+			if (m_GimbalCtrlMode == GimbalCtrlMode::Aimbot || m_GimbalCtrlMode == GimbalCtrlMode::Windmill)
+				angleSpeedSet = m_PIDAngleGyroAutoAim[position].Calc(m_EcdAngleSet[position], curEcdAngle);
+			else
+				angleSpeedSet = m_PIDAngleEcd[position].Calc(m_EcdAngleSet[position], curEcdAngle);
 			SPDLOG_TRACE("@pidAngleEcd{}=[$SetAE{}={},$GetAE{}={},$pidoutAE{}={}]",
 							position,
 							position,
@@ -258,6 +264,10 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 			//[TODO] 尝试将速度环的set与get都扩大相同的倍数，便于调参
 		}
 		
+		if(position == Pitch)
+			gyroSpeed = m_MotorsStatus.m_RPM[position];
+		/*if (position == Yaw)
+			angleSpeedSet = 100;*/
 		m_VoltageSend[position] = m_PIDAngleSpeed[position].Calc(angleSpeedSet, gyroSpeed);
 		
 		SPDLOG_TRACE("@pidAngleSpeed{}=[$SetAS{}={},$GetAS{}={}]",
@@ -265,7 +275,9 @@ void GimbalCtrlTask::GimbalCtrl(MotorPosition position)
 			position,
 			angleSpeedSet,
 			position,
-			gyroSpeed);
+			gyroSpeed
+			/*position,
+			m_VoltageSend[position]*/);
 	}
 	m_Gimbal->SendVoltageToMotors(m_VoltageSend);
 }

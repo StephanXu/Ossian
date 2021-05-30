@@ -100,14 +100,16 @@ public:
 		m_Motors[LR]->Writer()->PackAndSend();
 	}
 
-	void SetCapPwr(const double power)
+	void SetCapPwr(double power)
 	{
 		static std::chrono::high_resolution_clock::time_point lastSendSpCapTimestamp 
 			= std::chrono::high_resolution_clock::now();
 		long long interval = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::high_resolution_clock::now() - lastSendSpCapTimestamp).count();
-		if (interval > 100)   //不推荐以太高的频率发送功率数据，推荐10Hz
+		if (interval > 1000)   //不推荐以太高的频率发送功率数据，推荐10Hz
 		{
+			if (power <= 0 || power > 130)
+				power = 60;
 			m_SpCap->SetPower(power);
 			lastSendSpCapTimestamp = std::chrono::high_resolution_clock::now();
 		}
@@ -137,8 +139,8 @@ public:
 
 	//底盘功率控制
 	static constexpr double kBufferTotalCurrentLimit = 45000;
-	static constexpr double kPowerTotalCurrentLimit = 50000;
-	static constexpr double kSpCapWarnVoltage = 12;
+	static constexpr double kPowerTotalCurrentLimit = 53000;
+	static constexpr double kSpCapWarnVoltage = 10;
 
 	//遥控器解析
 	static constexpr size_t kChassisXChannel = 1; ///< 控制底盘 前后 速度的遥控器通道
@@ -147,14 +149,14 @@ public:
 	static constexpr size_t kChassisModeChannel = 0; ///< 选择底盘状态的开关通道
 
 	static constexpr int16_t kChassisRCDeadband = 10;     ///< 摇杆死区
-	static constexpr double kChassisVxRCSen = -0.006;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例0.006
+	static constexpr double kChassisVxRCSen = -0.009;  ///< 遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例0.006
 	static constexpr double kChassisVyRCSen = -0.005; ///< 遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
 	static constexpr double kChassisWzRCSen = 0.01;  ///< 不跟随云台的时候，遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 	static constexpr double kChassisAngleWzRCSen = 0.000005; ///< 跟随底盘yaw模式下，遥控器的yaw遥杆（max 660）增加到车体角度的比例
-	static constexpr double kChassisCtrlPeriod = 0.008;  //底盘控制周期s，用于低通滤波器
+	static constexpr double kChassisCtrlPeriod = 0.012;  //底盘控制周期s，用于低通滤波器
 
 	//底盘运动
-	static constexpr double kChassisVxLimit = 3; ///< m/s 遥控器
+	static constexpr double kChassisVxLimit = 6; ///< m/s 遥控器
 	static constexpr double kChassisVyLimit = 2; ///< m/s 遥控器
 
 	static constexpr double kChassisVxNormal = 3; ///< m/s 键鼠
@@ -187,7 +189,7 @@ public:
 		Follow_Gimbal_Yaw,  ///< 跟随云台
 		Follow_Chassis_Yaw,	///< 遥控器控制底盘旋转，底盘角速度闭环。工程采用。
 		Top,				///< 小陀螺
-		Dodge,				///< 闪避，将两装甲板缝隙对准前方（缝隙 跟随 云台）
+		Shield,				///< 闪避，将两装甲板缝隙对准前方（缝隙 跟随 云台）
 		Openloop_Z			///< 单独调试底盘
 	};
 
@@ -256,7 +258,7 @@ public:
 		m_PIDChassisAngle.SetParams(PIDChassisAngleParams);
 		m_PIDChassisAngle.SetFlagAngleLoop();
 
-		ossian::IOData<RobotStatus>::CallbackHandle handle = 
+		/*ossian::IOData<RobotStatus>::CallbackHandle handle = 
 			robotStatusListener->AddOnChange([=](const RobotStatus& value, const RobotStatus&) {
 				referee->Id(value.m_RobotId);
 				auto iterMapping = kRobotClientMapping.find(value.m_RobotId);
@@ -271,7 +273,7 @@ public:
 				}
 			});
 
-		m_ClientGraphicTextSpCapStatus = m_GraphicClient->AddElement<TextStyle>(0);
+		m_ClientGraphicTextSpCapStatus = m_GraphicClient->AddElement<TextStyle>(0);*/
 
 		//m_ClientGraphicValueSpCapStatus = m_GraphicClient->AddElement<FloatStyle>(0);
 		/*m_RCListener->AddOnChange([](const RemoteStatus& value) {
@@ -395,7 +397,7 @@ public:
 			lastTime = Clock::now();
 
 			UpdateChassisSensorFeedback();
-			FillClientGraphics();
+			//FillClientGraphics();
 
 			if (m_FlagInitChassis)
 				InitChassis();

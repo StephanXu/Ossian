@@ -5,6 +5,7 @@
 #include "InputAdapter.hpp"
 #include "WindmillDetection.hpp"
 #include "Aimbot.hpp"
+#include "Aimbuff.hpp"
 #include "Chassis.hpp"
 #include "Gimbal.hpp"
 #include "Gun.hpp"
@@ -94,13 +95,12 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<IReferee, RefereeAllMessagesMt>(
 		[](IReferee& option)
 		{
-			option.AddReferee("/dev/ttyUSB3");
-			option.Id(103);
+			option.AddReferee("/dev/ttyUSB0");
 		});
 	app.AddService<RemoteMt>(
 		[](RemoteMt& option)
 		{
-			option.Add("/dev/ttyUSB0",
+			option.Add("/dev/ttyUSB2",
 			           100000,
 			           ossian::UARTProperties::FlowControlNone,
 			           ossian::UARTProperties::DataBits8,
@@ -130,7 +130,7 @@ void Startup::ConfigServices(AppBuilder& app)
 	app.AddService<GyroA110Mt<GyroType::Chassis>>(
 		[](GyroA110Mt<GyroType::Chassis>& option)
 		{
-			option.Add("can0", 0x511, 0x512, 0x513);
+			//option.Add("can0", 0x511, 0x512, 0x513);
 		});
 	app.AddService<GyroA110Mt<GyroType::Gimbal>>(
 		[](GyroA110Mt<GyroType::Gimbal>& option)
@@ -155,7 +155,7 @@ void Startup::ConfigServices(AppBuilder& app)
 		{
 			//*******************************组合步兵**************************
 			option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 7, 0x2ff);
-			option.AddMotor(Gimbal::MotorPosition::Yaw, "can1", 6, 0x2ff);
+			option.AddMotor(Gimbal::MotorPosition::Yaw, "can0", 6, 0x2ff);
 
 			//*******************************lyp步兵**************************
 			/*option.AddMotor(Gimbal::MotorPosition::Pitch, "can1", 7, 0x2ff);
@@ -186,10 +186,13 @@ void Startup::ConfigServices(AppBuilder& app)
 #endif // VISION_ONLY
 		});
 
-#ifdef VISION_ONLY
-#else
+	app.AddService<Aimbuff>(
+		[](Aimbuff& option)
+	{
+
+	});
+
 	app.AddService<IVisionModeSwitcher, VisionModeSwitcherForRemote>();
-#endif // VISION_ONLY
 }
 
 void Startup::ConfigPipeline(AppBuilder& app)
@@ -199,7 +202,7 @@ void Startup::ConfigPipeline(AppBuilder& app)
 	app.AddExecutable<IOPeeker<1>>();
 	
 #ifndef VISION_ONLY
-	app.AddExecutable<ClientGraphicWorker>();
+	//app.AddExecutable<ClientGraphicWorker>();
 	app.AddExecutable<ChassisCtrlTask>();
 	app.AddExecutable<GimbalCtrlTask>();
 	app.AddExecutable<FricCtrlTask>();

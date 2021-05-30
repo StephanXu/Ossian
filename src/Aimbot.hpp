@@ -32,17 +32,6 @@
 
 namespace Utils = ossian::Utils;
 
-struct AutoAimStatus
-{
-    bool m_Found;
-    bool m_FlagFire;
-    double m_Pitch; //rad
-    double m_Yaw;   //rad
-    double m_Dist;  //mm
-
-    std::chrono::high_resolution_clock::time_point m_Timestamp;
-};
-
 #pragma pack(push, 1)
 struct AimbotPLCSendMsg
 {
@@ -55,7 +44,18 @@ struct AimbotPLCSendMsg
 };
 #pragma pack(pop)
 
+#pragma pack(push, 1)
+struct AimbotPLCRecvMsg
+{
+    uint8_t m_FrameHead = 0xA5;
+    float m_BulletSpeed;
+    uint8_t m_MyColor;
+    uint8_t m_FrameTail = 0xAA;
+};
+#pragma pack(pop)
+
 constexpr size_t kSendBufSize = sizeof(AimbotPLCSendMsg);
+constexpr size_t kRecvBufSize = sizeof(AimbotPLCRecvMsg);
 
 class Aimbot : public ossian::IODataBuilder<std::mutex, AutoAimStatus>
 {
@@ -74,14 +74,25 @@ public:
     {
 #ifdef WITH_CUDA
         cudaFree(m_pdFrame);
-        delete[]m_phBinary;
+        delete[] m_phBinary;
         m_pdFrame = nullptr;
         m_phBinary = nullptr;
 #endif // WITH_CUDA
     }
 
-    void ParsePLC(const uint8_t* data, const size_t length) {}
 #ifdef VISION_ONLY
+    void ParsePLC(const uint8_t* data, const size_t length)
+    {
+        if (length == kRecvBufSize && data[0] == 0xA5 && data[kRecvBufSize - 1] == 0xAA)
+        {
+            std::memcpy(&m_AimbotPLCRecvMsg, data, kRecvBufSize);
+        }
+        else
+        {
+            std::memset(&m_AimbotPLCRecvMsg, 0, kRecvBufSize);
+        }
+    }
+
     void AddPLCConnector(const std::string& location)
     {
         using namespace ossian::UARTProperties;
@@ -382,7 +393,7 @@ private:
             posInGimbal << filteredState(0), filteredState(1), filteredState(2);
 #endif // USE_PREDICTION
 
-            dist = posInGimbal(2) * scaleDist;
+            dist = fabs(posInGimbal(2) * scaleDist);
             yaw = atan2(posInGimbal(0), posInGimbal(2));
             pitch = atan2(posInGimbal(1), posInGimbal(2));
 
@@ -406,6 +417,12 @@ private:
             if (EnableGravity)
             {
                 pitch += GetPitch(dist / 1000.0, posInGimbal(1) / 1000.0, bulletSpeed);
+                /*pitch = (fabs(pitch) + fabs(GetPitch(dist / 1000.0, posInGimbal(1) / 1000.0, bulletSpeed)))
+                        * (pitch >= 0 ? 1 : -1);*/
+                /*double db = dist / 1000.0 / bulletSpeed;
+                double compensateGravity_pitch_tan = tan(pitch) + (0.5 * 9.8 * db * db) / cos(pitch);
+
+                pitch = atan(compensateGravity_pitch_tan);*/
             }
                
 
@@ -485,11 +502,17 @@ private:
             const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.0760893012372638, 0.402763931163976, 
                 0.0004829922498116148, 0.0008781734366235105, -2.225999824210345);//英雄*/
 			
-            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1769.844828845388, 0, 718.7847242857742,
-            0, 1769.677479561756, 542.4977222327369,
-            0, 0, 1); //组合步兵
-            const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.09623964734070083, 0.6713728356896519, 
-                -0.001002839237022281, -0.0004396521659829322, -3.774671626485426); //组合步兵
+            const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 2356.912254930781, 0, 720.0503254499439,
+                0, 2355.816726575812, 585.5372258072762,
+                0, 0, 1); //zhf步兵
+            const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.08587240444212629, 0.5161812300685514,
+                0.001353666202103872, -0.0008039696206637027, -2.113948853124402); //zhf步兵
+
+            //const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1769.844828845388, 0, 718.7847242857742,
+            //0, 1769.677479561756, 542.4977222327369,
+            //0, 0, 1); //myf步兵
+            //const static cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << -0.09623964734070083, 0.6713728356896519, 
+            //    -0.001002839237022281, -0.0004396521659829322, -3.774671626485426); //myf步兵
 
             //const static cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1764.650199381256, 0, 730.3109193363629,
             //0, 1764.413640636067, 582.6431141360831,
@@ -538,12 +561,43 @@ private:
 
     bool DetectArmor(unsigned char* pImage, Armor& outTarget) noexcept
     {
-        static int enemyColor = -1;
+        static int myColor = -1;
 
 #ifdef VISION_ONLY
-        enemyColor = (*m_Config->Instance()->vision->aimbot->enemyColor == Config::EnemyColor::BLUE) ? 0 : 2;
+        // enemyColor = (*m_Config->Instance()->vision->aimbot->enemyColor == Config::EnemyColor::BLUE) ? 0 : 2;
+        std::cerr << m_AimbotPLCRecvMsg.m_MyColor << std::endl;
+        switch (m_AimbotPLCRecvMsg.m_MyColor)
+        {
+        case 0:
+        {
+            if (myColor < 0)
+            {
+                return false;
+            }
+            break;
+        }
+        case 1: // 我方是红
+        {
+            myColor = 2;
+            break;
+        }
+        case 2: // 我方是蓝
+        {
+            myColor = 0;
+            break;
+        }
+        default:
+        {
+            if (myColor < 0)
+            {
+                return false;
+            }
+            break;
+        }
+            
+        }
 #else
-        if (enemyColor == -1)
+        if (myColor < 0)
         {
             if (m_RobotStatusListener->IsInitialized())
             {
@@ -551,21 +605,21 @@ private:
 
                 if (myRobotId >= 1 && myRobotId <= 9)           // 我方是红
                 {
-                    enemyColor = 0;
+                    myColor = 2;
                 }
                 else if (myRobotId >= 101 && myRobotId <= 109)  // 我方是蓝
                 {
-                    enemyColor = 2;
+                    myColor = 0;
                 }
                 else
                 {
-                    enemyColor = -1;
+                    myColor = -1;
                     return false;
                 }
             }
             else
             {
-                enemyColor = -1;
+                myColor = -1;
                 return false;
             }
         }
@@ -601,7 +655,7 @@ private:
         cv::cuda::threshold(grayBrightness, binaryBrightness, thresBrightness, 255, cv::THRESH_BINARY, cudaStream);
 
         cv::cuda::split(dFrame, channels, cudaStream);
-        cv::cuda::subtract(channels[enemyColor], channels[std::abs(enemyColor - 2)], grayColor, cv::noArray(), -1,
+        cv::cuda::subtract(channels[std::abs(myColor - 2)], channels[myColor], grayColor, cv::noArray(), -1,
             cudaStream);
         cv::cuda::threshold(grayColor, binaryColor, thresColor, 255, cv::THRESH_BINARY, cudaStream);
 
@@ -741,6 +795,7 @@ private:
 #ifdef VISION_ONLY
     std::shared_ptr<ossian::UARTDevice> m_PLCDevice;
     AimbotPLCSendMsg m_AimbotPLCSendMsg{};
+    AimbotPLCRecvMsg m_AimbotPLCRecvMsg{};
     uint8_t m_PLCSendBuf[kSendBufSize];
 #endif // VISION_ONLY
 };

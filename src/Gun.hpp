@@ -326,7 +326,7 @@ public:
 	static constexpr int16_t kFeedJamRPM = 5;     //判断卡弹的拨弹轮转速阈值
 	static constexpr double kMotorEcdToRadCoef = 2 * M_PI / 8192.0 / kSpeedToMotorRPMCoef;  //电机编码值---拨盘旋转角度
 	static constexpr int kNumCells = 8;
-	static constexpr double kDeltaAnglePerBullet = -2.0 * M_PI / kNumCells * 4;  //拨弹轮顺时针旋转
+	static constexpr double kDeltaAnglePerBullet = 2.0 * M_PI / kNumCells;  //拨弹轮逆时针旋转
 
 	static int16_t kFeedSemiSpeed;   //单发时，拨弹轮供弹的转速
 	static int16_t kFeedBurstSpeed;  //点射时，拨弹轮供弹的转速

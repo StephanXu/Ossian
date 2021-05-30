@@ -27,6 +27,7 @@ target_compile_features(Ossian PUBLIC cxx_std_17)
 target_sources(Ossian
         PRIVATE
             "src/Aimbot.cpp"
+            "src/Aimbuff.cpp"
             "src/ColorFilter.cpp"
             "src/Main.cpp"
             "src/Startup.cpp"
@@ -51,6 +52,7 @@ target_sources(Ossian
             "src/DJICRCHelper.cpp"
             "src/ClientGraphicWorker.cpp"
             "src/ServoMotor.cpp"
+            "src/VisionModeSwitcher.cpp"
         )
 target_precompile_headers(Ossian
         PRIVATE

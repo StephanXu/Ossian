@@ -9,6 +9,7 @@
 #include "Remote.hpp"
 #include "GyroA110.hpp"
 #include "Aimbot.hpp"
+#include "Aimbuff.hpp"
 
 #include <chrono>
 #include <array>
@@ -84,6 +85,7 @@ public:
 			m_Motors[i]->SetVoltage(voltageSend[i]);
 		}
 		m_Motors[Pitch]->Writer()->PackAndSend();
+		m_Motors[Yaw]->Writer()->PackAndSend();
 	}
 
 private:
@@ -140,8 +142,8 @@ public:
 	static constexpr size_t kPitchChannel = 3;
 	static constexpr size_t kGimbalModeChannel = 1; //选择云台状态的开关通道
 
-	static constexpr double kYawRCSen = -0.00005; //-0.000005
-	static constexpr double kPitchRCSen = 0.00005; //0.005 0.00001
+	static constexpr double kYawRCSen = -0.00008; //-0.000005
+	static constexpr double kPitchRCSen = 0.0001; //0.005 0.00001
 
 	static constexpr double kYawMouseSen = -0.00012;
 	static constexpr double kPitchMouseSen = -0.0001;
@@ -335,14 +337,19 @@ public:
 		m_GimbalSensorValues.relativeAngle[Yaw] = RelativeEcdToRad(m_MotorsStatus.m_Encoding[Yaw], kYawEcdMid);
 
 		m_GimbalSensorValues.imu = m_GyroListener->Get();
-		m_GimbalSensorValues.imu.m_XAxisSpeed *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imu.m_XAngleSpeed *= kDegreeToRadCoef;
 		m_GimbalSensorValues.imu.m_Roll *= kDegreeToRadCoef;
-		m_GimbalSensorValues.imu.m_YAxisSpeed *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imu.m_YAngleSpeed *= kDegreeToRadCoef;
 		m_GimbalSensorValues.imu.m_Pitch *= kDegreeToRadCoef;
-		m_GimbalSensorValues.imu.m_ZAxisSpeed *= kDegreeToRadCoef;
+		m_GimbalSensorValues.imu.m_ZAngleSpeed *= kDegreeToRadCoef;
 		m_GimbalSensorValues.imu.m_Yaw *= kDegreeToRadCoef;
-		m_GimbalSensorValues.imu.m_ZAxisSpeed = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_ZAxisSpeed
-				- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_XAxisSpeed;
+
+		std::swap(m_GimbalSensorValues.imu.m_Roll, m_GimbalSensorValues.imu.m_Pitch);
+		std::swap(m_GimbalSensorValues.imu.m_XAngleSpeed, m_GimbalSensorValues.imu.m_YAngleSpeed);
+		m_GimbalSensorValues.imu.m_YAngleSpeed *= -1;
+		m_GimbalSensorValues.imu.m_Pitch *= -1;
+		m_GimbalSensorValues.imu.m_ZAngleSpeed = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_ZAngleSpeed
+				- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_XAngleSpeed;
 		/*SPDLOG_TRACE("@RelativeAngle=[$PitchAngle={},$YawAngle={}]",
 			m_GimbalSensorValues.relativeAngle[Pitch],
 			m_GimbalSensorValues.relativeAngle[Yaw]);*/
@@ -375,20 +382,22 @@ public:
 		//m_GimbalSensorValues.imu.m_Wz = cos(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wz
 		//	- sin(m_GimbalSensorValues.relativeAngle[Pitch]) * m_GimbalSensorValues.imu.m_Wx;
 
-		SPDLOG_TRACE("@IMUAngle=[$GPitch={},$GYaw={}]",
-			m_GimbalSensorValues.imu.m_Pitch,
-			m_GimbalSensorValues.imu.m_Yaw);
-		SPDLOG_TRACE("@IMUSpeed=[$WPitch={},$WYaw={}]",
-			m_GimbalSensorValues.imu.m_YAxisSpeed,
-			m_GimbalSensorValues.imu.m_ZAxisSpeed);
-		/*SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
-			m_GimbalSensorValues.imu.m_Hx,
-			m_GimbalSensorValues.imu.m_Hy,
-			m_GimbalSensorValues.imu.m_Hz);*/
+		//SPDLOG_TRACE("@IMUAngle=[$GPitch={},$GYaw={},$GRoll={}]",
+		//	m_GimbalSensorValues.imu.m_Pitch,
+		//	m_GimbalSensorValues.imu.m_Yaw,
+		//	m_GimbalSensorValues.imu.m_Roll);
+		//SPDLOG_TRACE("@IMUSpeed=[$WPitch={},$WYaw={},$WRoll={}]",
+		//	m_GimbalSensorValues.imu.m_YAngleSpeed,
+		//	m_GimbalSensorValues.imu.m_ZAngleSpeed,
+		//	m_GimbalSensorValues.imu.m_XAngleSpeed);
+		///*SPDLOG_DEBUG("@IMUMagnetometer=[$roll_h={},$pitch_h={},$yaw_h={}]",
+		//	m_GimbalSensorValues.imu.m_Hx,
+		//	m_GimbalSensorValues.imu.m_Hy,
+		//	m_GimbalSensorValues.imu.m_Hz);*/
 
-		/*SPDLOG_TRACE("@MotorEncoder=[$EPitch={},$EYaw={}]",
-			m_MotorsStatus.m_Encoding[Pitch],
-			m_MotorsStatus.m_Encoding[Yaw]);*/
+		//SPDLOG_TRACE("@MotorEncoder=[$EPitch={},$EYaw={}]",
+		//	m_MotorsStatus.m_Encoding[Pitch],
+		//	m_MotorsStatus.m_Encoding[Yaw]);
 		//std::cerr << m_GimbalSensorValues.imu.m_Pitch << '\t' << m_GimbalSensorValues.imu.m_Yaw << std::endl;
 	}
 
