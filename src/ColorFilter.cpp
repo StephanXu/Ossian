@@ -31,12 +31,12 @@ ColorFilter::ColorFilter(const ColorFilter &colorFilter)
                      colorFilter.m_Filters.end());
 }
 
-cv::UMat ColorFilter::Filter(const cv::UMat &source) const
+cv::Mat ColorFilter::Filter(const cv::Mat &source) const
 {
-    cv::UMat result{};
+    cv::Mat result{};
     for (auto &&item : m_Filters)
     {
-        cv::UMat mask{};
+        cv::Mat mask{};
         cv::inRange(source, std::get<0>(item), std::get<1>(item), mask);
         if (result.empty())
         {

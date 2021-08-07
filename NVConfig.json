@@ -2,9 +2,9 @@
   "serialPort": {
     "portName": "COM5",
     "baudrate": 230400,
-    "parity": 0,
+    "parity": "NoParity",
     "dataBit": 8,
-    "stopBit": 0,
+    "stopBit": "OneStopBit",
     "synchronize": true,
     "syncInterval": 1
   },
@@ -17,43 +17,130 @@
     "filename": "test.avi"
   },
   "aimbot": {
-    "maxShootRadius": 120.0,
-    "enemyColor": "red",
-    "thres": {
-      "brightness": 30,
-      "thresColor": 50
-    },
-    "lightBar": {
-      "minArea": 15.0,
-      "contourMinSolidity": 0.5,
-      "ellipseMinAspectRatio": 1.8
-    },
-    "armor": {
-      "maxAngleDiff": 7.5,
-      "maxHeightDiffRatio": 0.6,
-      "maxYDiffRatio": 2.0,
-      "minXDiffRatio": 0.5,
+    "enemyColor": "Red",
 
-      "bigArmorRatio": 4.2,
-      "smallArmorRatio": 2.0,
-      "armorMinAspectRatio": 1.0,
-      "armorMaxAspectRatio": 5.5
-    },
+    "brightness": 30,
+    "thresColor": 50,
+
+    "lightBarMinArea": 15.0,
+    "lightBarContourMinSolidity": 0.5,
+    "lightBarEllipseMinAspectRatio": 1.8,
+
+
+    "armorMaxAngleDiff": 7.5,
+    "armorMaxHeightDiffRatio": 0.6,
+    "armorMaxYDiffRatio": 2.0,
+    "armorMinXDiffRatio": 0.5,
+
+    "armorBigArmorRatio": 4.2,
+    "armorSmallArmorRatio": 2.0,
+    "armorMinAspectRatio": 1.0,
+    "armorMaxAspectRatio": 5.5,
+
     "areaNormalizedBase": 1000.0,
     "sightOffsetNormalizedBase": 200.0
   },
   "poseSolver": {
-    "offsetX": 0.0,
-    "offsetZPitch": 131.0,
-    "offsetYPitch": 50.0,
-    "offsetYYaw": -37.0,
-    "offsetZYaw": 213.0,
-
-    "offsetYaw": 0.0,
-    "offsetPitch": 0.55,
+    "cameraToGimbalX": 0.0,
+    "cameraToGimbalY": -40.7,
+    "cameraToGimbalZ": 141.1,
+    "barrelToGimbalY": 40.1,
+    "rotOverlapLen": 100000.0,
 
     "initV": 20.0,
     "initK": 0.026,
-    "gravity": 9.8
+    "gravity": 9.8,
+    "scaleDist": 1.2
+  },
+  "chassis": {
+    "kTopWz": 3,
+    "kVxFilterCoef": 0.17,
+    "kVyFilterCoef": 0.33,
+    "kRPMFdbFilterCoef": 0.25
+  },
+  "gimbal": {
+    "kAngleSpeedFilterCoef": 0.25
+  },
+  "gun": {
+    "kFricSpeed12": 600,
+    "kFricSpeed15": 800,
+    "kFricSpeed18": 1000,
+    "kFricSpeed30": 1200,
+
+    "kFeedNormalRPM": 10,
+    "kFeedSemiRPM": 10,
+    "kFeedBurstRPM": 30,
+    "kFeedAutoRPM": 20
+
+  },
+  "pidWheelSpeed": {
+    "kP": 15000,
+    "kI": 10,
+    "kD": 0,
+    "thOut": 16384,
+    "thIOut": 2000
+  },
+  "pidChassisAngle": {
+    "kP": 40,
+    "kI": 0,
+    "kD": 0,
+    "thOut": 6,
+    "thIOut": 0.2
+  },
+  "pidAngleEcdPitch": {
+    "kP": 15,
+    "kI": 0,
+    "kD": 0,
+    "thOut": 10,
+    "thIOut": -1
+  },
+  "pidAngleGyroPitch": {
+    "kP": 15,
+    "kI": 0,
+    "kD": 0,
+    "thOut": 10,
+    "thIOut": -1
+  },
+  "pidAngleSpeedPitch": {
+    "kP": 2900,
+    "kI": 60,
+    "kD": 0,
+    "thOut": 30000,
+    "thIOut": 10000
+  },
+  "pidAngleEcdYaw": {
+    "kP": 8,
+    "kI": 0,
+    "kD": 0,
+    "thOut": 10,
+    "thIOut": -1
+  },
+  "pidAngleGyroYaw": {
+    "kP": 26,
+    "kI": 0,
+    "kD": 0.3,
+    "thOut": 10,
+    "thIOut": -1
+  },
+  "pidAngleSpeedYaw": {
+    "kP": 3600,
+    "kI": 20,
+    "kD": 0,
+    "thOut": 30000,
+    "thIOut": 5000
+  },
+  "pidFricSpeed": {
+    "kP": 15000,
+    "kI": 10,
+    "kD": 0,
+    "thOut": 16384,
+    "thIOut": 2000
+  },
+  "pidFeedSpeed": {
+    "kP": 800,
+    "kI": 0.5,
+    "kD": 0,
+    "thOut": 10000,
+    "thIOut": 9000
   }
 }

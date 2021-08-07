@@ -10,11 +10,10 @@
  */
 
 #include <opencv2/opencv.hpp>
-#include <nv/nv.hpp>
+#include <ossian/ossian.hpp>
 
 #include "WindmillDetection.hpp"
 #include "ColorFilter.hpp"
-#include "InputModel.hpp"
 
 #include <vector>
 #include <tuple>
@@ -23,29 +22,27 @@
 #include <atomic>
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
-									 ColorFilter& colorFilter,
-									 SerialPortIO* serialPort)
+									 ColorFilter& colorFilter)
 	: m_Valid(false)
 	, m_ColorFilter(colorFilter)
 	, m_TrackSize(sampleNum)
 	, m_Targets(5)
-	, m_SerialPort(serialPort)
 {
 }
 
 WindmillDetection::WindmillDetection(std::size_t sampleNum,
-									 ColorFilter&& colorFilter,
-									 SerialPortIO* serialPort)
-	: WindmillDetection(sampleNum, colorFilter, serialPort)
+									 ColorFilter&& colorFilter)
+	: WindmillDetection(sampleNum, colorFilter)
 {
 }
 
-void WindmillDetection::Process(NautilusVision::IOAP::BaseInputData *input)
+void WindmillDetection::Process()
 {
     //[注意]：这里是不安全的使用方法，应当优化
-    ImageInputData *imageInput = dynamic_cast<ImageInputData *>(input);
+    //ImageInputData *imageInput = dynamic_cast<ImageInputData *>(input);
 
-    cv::UMat image = imageInput->m_Image;
+    //cv::Mat image = imageInput->m_Image;
+    cv::Mat image; ///< [TODO]: Give parameters
     if (image.empty())
     {
         m_Valid = true;
@@ -56,9 +53,9 @@ void WindmillDetection::Process(NautilusVision::IOAP::BaseInputData *input)
     * Convert color space into hsv for filter the color.
     * Get a mask in binary expressing the windmill.
     */
-    cv::UMat hsv{};
+    cv::Mat hsv{};
     cv::cvtColor(image, hsv, cv::COLOR_BGR2HSV);
-    cv::UMat mask{std::move(m_ColorFilter.Filter(hsv))};
+    cv::Mat mask{std::move(m_ColorFilter.Filter(hsv))};
     cv::erode(mask, mask,
               cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3)),
               cv::Point2f(-1, -1), 1);
@@ -128,8 +125,8 @@ void WindmillDetection::Process(NautilusVision::IOAP::BaseInputData *input)
     std::tie(m_Center, m_Radius) = FitRound();
     GenerateTargetPosition(currentTarget, m_Center);
 
-	spdlog::info("Center:({},{}),Radius:{}", m_Center.x, m_Center.y, m_Radius);
-	m_SerialPort->SendData(1, 2, 3, m_SerialPort->FlagHelper(1, 0, 0, 0));
+	SPDLOG_INFO("Center:({},{}),Radius:{}", m_Center.x, m_Center.y, m_Radius);
+	//m_SerialPort->SendData(1, 2, 3, m_SerialPort->FlagHelper(1, 0, 0, 0));
 	//cv::circle(image, Targets()[0], 10,
 	//		   cv::Scalar{ 0, 255, 0 }, 2);
 	//cv::line(image, Targets()[0], Center(),

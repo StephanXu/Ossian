@@ -91,7 +91,7 @@ ALLOW_UNICODE_NAMES    = NO
 # Ukrainian and Vietnamese.
 # The default value is: English.
 
-OUTPUT_LANGUAGE        = Chinese
+OUTPUT_LANGUAGE        = English
 
 # If the BRIEF_MEMBER_DESC tag is set to YES, doxygen will include brief member
 # descriptions after the members that are listed in the file and class
@@ -791,10 +791,10 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = src \
-                         include \
                          doc \
-                         NautilusVision/include/nv \
-                         NautilusVision/src \
+                         docker \
+                         core/include/ossian \
+                         core/src \
                          README.md
 
 # This tag can be used to specify the character encoding of the source files
@@ -990,7 +990,7 @@ FILTER_SOURCE_PATTERNS =
 USE_MDFILE_AS_MAINPAGE = ./README.md
 
 #---------------------------------------------------------------------------
-# Configuration options related to source browsing
+# OssianConfig::Configuration options related to source browsing
 #---------------------------------------------------------------------------
 
 # If the SOURCE_BROWSER tag is set to YES then a list of source files will be
@@ -1095,7 +1095,7 @@ CLANG_ASSISTED_PARSING = NO
 CLANG_OPTIONS          = 
 
 #---------------------------------------------------------------------------
-# Configuration options related to the alphabetical class index
+# OssianConfig::Configuration options related to the alphabetical class index
 #---------------------------------------------------------------------------
 
 # If the ALPHABETICAL_INDEX tag is set to YES, an alphabetical index of all
@@ -1121,7 +1121,7 @@ COLS_IN_ALPHA_INDEX    = 5
 IGNORE_PREFIX          = 
 
 #---------------------------------------------------------------------------
-# Configuration options related to the HTML output
+# OssianConfig::Configuration options related to the HTML output
 #---------------------------------------------------------------------------
 
 # If the GENERATE_HTML tag is set to YES, doxygen will generate HTML output
@@ -1665,7 +1665,7 @@ EXTERNAL_SEARCH_ID     =
 EXTRA_SEARCH_MAPPINGS  = 
 
 #---------------------------------------------------------------------------
-# Configuration options related to the LaTeX output
+# OssianConfig::Configuration options related to the LaTeX output
 #---------------------------------------------------------------------------
 
 # If the GENERATE_LATEX tag is set to YES, doxygen will generate LaTeX output.
@@ -2055,7 +2055,7 @@ PERLMOD_MAKEVAR_PREFIX =
 # C-preprocessor directives found in the sources and include files.
 # The default value is: YES.
 
-ENABLE_PREPROCESSING   = NO
+ENABLE_PREPROCESSING   = YES
 
 # If the MACRO_EXPANSION tag is set to YES, doxygen will expand all macro names
 # in the source code. If set to NO, only conditional compilation will be

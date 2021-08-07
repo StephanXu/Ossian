@@ -1,0 +1,2 @@
+add_subdirectory(HKCamera)
+add_subdirectory(SignalR)

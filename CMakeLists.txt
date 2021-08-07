@@ -1,50 +1,142 @@
-cmake_minimum_required(VERSION 3.12.4)
+cmake_minimum_required(VERSION 3.16.0)
 
-# set project name
-project(NautilusVision)
+project(Ossian VERSION 1.0)
 
-# set thread library
-if(CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} $ENV{CXXFLAGS} -O0 -Wall -g3 -ggdb") 
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} $ENV{CXXFLAGS} -O3 -Wall")
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
-    add_definitions("-pthread")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
-endif(CMAKE_COMPILER_IS_GNUCXX)
+add_executable(Ossian)
 
-# import OpenCV
 find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
-
-# import fmt
 find_package(fmt CONFIG REQUIRED)
-
-# import spdlog
 find_package(spdlog CONFIG REQUIRED)
+find_package(mimalloc 1.6 REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED)
+find_package(CUDA)
 
-# import NautilusVisionFramework
-add_subdirectory(NautilusVision)
-include_directories(${NVF_INCLUDE_DIR})
+message(STATUS "CUDA_FOUND: ${CUDA_FOUND}")
+message(STATUS "OpenCV_LIBS: ${OpenCV_LIBS}")
 
-if(WIN32)
-	set(HKCAMERA_INCLUDE_DIR 3rdparty/HKCamera/includes CACHE STRING INTERNAL)
-	set(HKCAMERA_LIBS MvCameraControl CACHE STRING INTERNAL)
-	include_directories(${HKCAMERA_INCLUDE_DIR})
-	link_directories(3rdparty/HKCamera/libraries/win64)
-endif()
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-aux_source_directory(
-    ./src DIR_SRC
-)
-
-add_executable(${PROJECT_NAME} ${DIR_SRC})
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-target_link_libraries(${PROJECT_NAME}
-	spdlog::spdlog 
-	fmt::fmt
-	${HKCAMERA_LIBS} 
-	${OpenCV_LIBS} 
-	${NVF_LIBS})
-
+add_subdirectory(schema)
+add_subdirectory(core)
+add_subdirectory(3rdparty)
 add_subdirectory(bench)
+add_subdirectory(tests)
+add_subdirectory(tools)
+
+target_compile_features(Ossian PUBLIC cxx_std_17)
+target_sources(Ossian
+        PRIVATE
+            "src/Aimbot.cpp"
+            "src/Aimbuff.cpp"
+            "src/ColorFilter.cpp"
+            "src/Main.cpp"
+            "src/Startup.cpp"
+            "src/Utils.cpp"
+            "src/WindmillDetection.cpp"
+            "src/Gimbal.cpp"
+            "src/Chassis.cpp"
+            "src/OnlineDebug.cpp"
+            "src/Remote.cpp"
+            "src/Capacitor.cpp"
+            "src/Gun.cpp"
+            "src/Referee.cpp"
+            "src/IOPeeker.cpp"
+            "src/CameraPeeker.cpp"
+            "src/Gyro.cpp"
+            "src/GyroA204.cpp"
+            "src/GyroA110.cpp"
+            "src/GyroBlack.cpp"
+            "src/TOFNooploop.cpp"
+            "src/Phototube.cpp"
+            "src/ClientGraphic.cpp"
+            "src/DJICRCHelper.cpp"
+            "src/ClientGraphicWorker.cpp"
+            "src/ServoMotor.cpp"
+            "src/VisionModeSwitcher.cpp"
+        )
+target_precompile_headers(Ossian
+        PRIVATE
+            "src/ColorFilter.hpp"
+            "src/Startup.hpp"
+            "src/Utils.hpp"
+            "src/WindmillDetection.hpp"
+            "src/Remote.hpp"
+            "src/Capacitor.hpp"
+            "src/IOPeeker.hpp"
+            "src/CameraPeeker.hpp"
+            "src/Gyro.hpp"
+            "src/GyroA204.hpp"
+            "src/GyroA110.hpp"
+            "src/OnlineDebug.hpp"
+            "src/TOFNooploop.hpp"
+            "src/Phototube.hpp"
+            "src/DJICRCHelper.hpp"
+            "<mutex>"
+            "<atomic>"
+            "<tuple>"
+            "<thread>"
+            "<vector>"
+            "<chrono>"
+            "<array>"
+            "<functional>"
+        )
+target_include_directories(Ossian
+        PRIVATE
+            src
+            "$<$<BOOL:${CUDA_FOUND}>:${CUDA_INCLUDE_DIRS}>"
+        )
+target_link_libraries(Ossian
+        PRIVATE
+            signalrclient
+            HKCamera
+            spdlog::spdlog
+            fmt::fmt
+            mimalloc
+            Schema
+            ${OpenCV_LIBS}
+            "$<$<BOOL:${CUDA_FOUND}>:${CUDA_LIBRARIES}>"
+            OssianCore
+            Eigen3::Eigen
+            "$<$<BOOL:${ENABLE_GPERF}>:-lprofiler>"
+        )
+
+if(NOT DEFINED VISION_ONLY)
+    set(VISION_ONLY FALSE)
+endif()
+target_compile_definitions(Ossian PRIVATE "$<$<BOOL:${VISION_ONLY}>:VISION_ONLY>")
+
+set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
+set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
+set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
+
+target_compile_options(Ossian
+        PRIVATE
+            "$<${gcc_like_cxx}:$<$<CONFIG:Debug>:-ggdb;-g3>>"
+            "$<${msvc_cxx}:$<$<CONFIG:Debug>:-W3>>"
+        )
+target_link_options(Ossian
+        PRIVATE
+            "-fsanitize=leak"
+            "$<${gcc_like_cxx}:-pthread>"
+        )
+target_compile_definitions(Ossian 
+        PRIVATE 
+            "$<$<BOOL:${CUDA_FOUND}>:WITH_CUDA>"
+            "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE"
+            "$<$<BOOL:${ENABLE_GPERF}>:ENABLE_GPERF>"
+        )
+
+# Copy AppSettings.json to build directory.
+add_custom_target(AppSettingsFile ALL
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/AppSettings.*.json
+    ${CMAKE_CURRENT_BINARY_DIR}/
+)
+add_dependencies(Ossian AppSettingsFile)
+
+# Install
+install(TARGETS Ossian RUNTIME DESTINATION bin)
+# [ATTENTION]: We need the AppSettings file copied correctly as install command
+# can not directly copy them from source directory.
+file(GLOB_RECURSE APP_SETTINGS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/AppSettings.*.json)
+install(FILES ${APP_SETTINGS_FILES} DESTINATION etc/Ossian)

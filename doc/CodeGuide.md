@@ -2,9 +2,9 @@
 
 ## 概述
 
-为方便开发，本项目特制定了本编码规范（下称“本规范”），项目下C/C++代码按照均此规范进行。冲突、遗漏或其他语言可参考[Google开源项目风格指南](https://zh-google-styleguide.readthedocs.io/en/latest/)先行编写。并提交Issue修订本规范。
+为方便开发，本项目特制定了本编码规范（下称“本规范”），项目下C/C++代码按照均此规范进行。冲突、遗漏或其他语言可参考[Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)或其中文版[Google开源项目风格指南](https://zh-google-styleguide.readthedocs.io/en/latest/)先行编写。并提交Issue修订本规范。
 
-本规范风格主要与C#风格相接近，可参考Google开源项目风格指南进行一定改进。
+本规范风格主要与C#风格相接近，可参考Google开源项目风格指南进行一定改进。在设计接口时的主要参考规范为[C++ Core Guidelines](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
     
 ## 命名规范
 
